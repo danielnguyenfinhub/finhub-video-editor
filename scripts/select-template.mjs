@@ -2,8 +2,8 @@
 // out/videos/<slug>/selection.json (it runs brief.mjs first).
 //   node scripts/select-template.mjs <slug> [--public-dir <dir>]   (passed on to brief.mjs)
 //   node scripts/select-template.mjs <slug> --pick <id> --reason "<why>"   (Daniel's override)
-// Hard filters (aspect, language, card length per kind, hold time, face) drop a
-// design outright; the rest are scored with config/selector.json (untuned weights):
+// Hard filters (aspect, language, card length per kind, face) drop a design
+// outright; the rest are scored with config/selector.json (untuned weights):
 //   intent·IntentMatch + shape·DataShapeFit + comp·ComprehensionPrior
 //   + asset·AssetReady − rec·SkinRecency − cost·RenderCost
 // Ties go to the cheaper render, then the design used least recently. A design
@@ -64,14 +64,19 @@ const excluded = (t, b) => {
       const max = limitOf(t.maxChars[l], k);
       if (n > max) return `${k} ${n} chars > ${l} ${k} max ${max}`;
     }
-  if (b.shortestHoldMs !== null && b.shortestHoldMs < t.minHoldMs)
-    return `a card is held ${b.shortestHoldMs} ms < min ${t.minHoldMs} ms`;
   const faces = b.mode === "B" ? ["faceless", "face-optional"] : ["face-required", "face-optional"];
   if (!faces.includes(t.facePolicy)) return `${t.facePolicy}, video is ${b.mode === "B" ? "faceless" : "on camera"}`;
   return null;
 };
 
-const SHAPE_COUNT = { comparison: "comparisons" }; // brief.counts key when it differs from the shape
+// A short hold is the edit's, not the design's: every design shows a cue for
+// the same time, so it's a warning to lengthen the cue, never a reason to drop one.
+const holdWarning = (t, b) =>
+  b.shortestHoldMs !== null && b.shortestHoldMs < t.minHoldMs
+    ? { holdWarning: `a card is held ${b.shortestHoldMs} ms; ${t.id} is designed for ${t.minHoldMs} ms, so lengthen that cue in edit.json` }
+    : {};
+
+const SHAPE_COUNT ={ comparison: "comparisons" }; // brief.counts key when it differs from the shape
 
 const parts = (t, b, history, cfg) => {
   const intent = t.intents.includes(b.intent) ? 1 : b.intents.some((i) => t.intents.includes(i)) ? 0.5 : 0;
@@ -101,7 +106,7 @@ export function rank(brief, manifests, history, cfg) {
   for (const t of manifests) {
     const why = excluded(t, brief);
     if (why) dropped[t.id] = why;
-    else out.push({ id: t.id, ...parts(t, brief, history, cfg), ...(!t.promoted && { unproven: unprovenWhy(t.id) }) });
+    else out.push({ id: t.id, ...parts(t, brief, history, cfg), ...(!t.promoted && { unproven: unprovenWhy(t.id) }), ...holdWarning(t, brief) });
   }
   out.sort((a, b) => !!a.unproven - !!b.unproven || b.score - a.score || a.cost - b.cost || lastUsed(a.id).localeCompare(lastUsed(b.id)));
   return { ranked: out, dropped };
@@ -160,7 +165,7 @@ function main() {
   const dir = join(root, "out", "videos", slug);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "selection.json"), `${text}\n`);
-  console.log(`select ${slug}: ${top.map((r) => `${r.id} ${r.score}${r.unproven ? " (unproven)" : ""}`).join(" · ")}${override ? ` · Daniel picked ${pick}` : ""}`);
+  console.log(`select ${slug}: ${top.map((r) => `${r.id} ${r.score}${r.unproven ? " (unproven)" : ""}${r.holdWarning ? " (short hold)" : ""}`).join(" · ")}${override ? ` · Daniel picked ${pick}` : ""}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

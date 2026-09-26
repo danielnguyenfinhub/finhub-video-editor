@@ -116,7 +116,8 @@ async function main() {
   const shapes = { ...Object.fromEntries(Object.keys(counts).map((k) => [k, k])), comparisons: "comparison" };
   const dataShapes = Object.entries(counts).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).map(([k]) => shapes[k]);
   const intents = intentsOf({ ...counts, hookAsks }, (edit.stats ?? []).length, text, durationS);
-  const holds = [...cues.map((c) => c.toMs - c.fromMs), ...(edit.stats ?? []).map((s) => s.durMs)].filter((n) => n > 0);
+  // Emoji cues carry no text to read, so they don't count as a hold.
+  const holds = [...cues.filter((c) => c.kind !== "emoji").map((c) => c.toMs - c.fromMs), ...(edit.stats ?? []).map((s) => s.durMs)].filter((n) => n > 0);
   const brief = {
     slug,
     mode: faceless ? "B" : "A",

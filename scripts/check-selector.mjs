@@ -83,12 +83,12 @@ check("38-char cue drops scenario (cue max 30)", /^cue 38 chars > vi cue max 30/
 const oldForm = perKind(38);
 check("old single-number brief still judged against every kind", !!oldForm.dropped.scenario && !!oldForm.dropped.checklist, JSON.stringify(oldForm.dropped));
 
-// Hold filter: judged on the brief's shortestHoldMs (raw edit.json spans). Not
-// switched to readingFloor's held time: on the talk timeline cuts shorten a
-// span, so held can be below raw (ty-do: verdict 1570 -> 1495 ms, emoji
-// 1800 -> 941 ms) and would drop every design, classic included.
+// Hold time is the edit's, not the design's (every design shows a cue for the
+// same time), so a short hold warns on the design and never drops it.
 const holdBrief = rank(brief({ shortestHoldMs: 1570 }), manifests, [], cfg);
-check("1570 ms hold drops a 2000 ms design, keeps a 1500 ms one", !!holdBrief.dropped.editorial && !holdBrief.dropped.classic, JSON.stringify(holdBrief.dropped));
+const heldOf = (id) => holdBrief.ranked.find((r) => r.id === id);
+check("1570 ms hold keeps a 2000 ms design, with a warning", !holdBrief.dropped.editorial && /1570 ms/.test(heldOf("editorial")?.holdWarning ?? ""), JSON.stringify(heldOf("editorial")));
+check("no warning when the hold meets the design's minimum", !!heldOf("classic") && !heldOf("classic").holdWarning, JSON.stringify(heldOf("classic")));
 
 // "explain" is the fallback intent, not a bonus on every video.
 check("explain only when nothing else matched", intentsOf({ numbers: 0, steps: 0, comparisons: 0 }, 0, "", 60).join() === "explain");
