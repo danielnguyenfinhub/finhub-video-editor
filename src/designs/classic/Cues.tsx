@@ -3,6 +3,7 @@
 // to SOURCE ms and remapped through the cut list, so beats stay locked to the
 // speech however the silences were trimmed and the pace changed. The panel
 // infographics (kinetic, compare, bars) live in Infographics.tsx.
+import { fitText } from "@remotion/layout-utils";
 import { Audio } from "@remotion/media";
 import type React from "react";
 import {
@@ -39,6 +40,13 @@ const Verdict: React.FC<{ cue: CueOf<"verdict"> }> = ({ cue }) => {
   const { fps } = useVideoConfig();
   const exit = useExit(8);
   const color = cue.ok ? brand.good : brand.bad;
+  // One line only: a wrapped pill drops below the band cue room keeps clear
+  // above Daniel's eyebrows (cueRoom.ts), so long verdicts shrink instead.
+  const pillWidth = 2 * (SAFE.right - 540);
+  const fontSize = Math.min(
+    64,
+    fitText({ text: cue.text, withinWidth: pillWidth - 60, fontFamily: FONT, fontWeight: 900 }).fontSize,
+  );
   const len = 260;
   const stroke = (a: number) =>
     len * (1 - interpolate(frame, [a, a + 12], [0, 1], clamp));
@@ -85,14 +93,15 @@ const Verdict: React.FC<{ cue: CueOf<"verdict"> }> = ({ cue }) => {
         style={{
           fontFamily: FONT,
           fontWeight: 900,
-          fontSize: 64,
+          fontSize,
           color: "#fff",
           background: color,
           padding: "8px 30px",
           borderRadius: 14,
           marginTop: 16,
           // Centred on x 540: this keeps it inside SAFE.right.
-          maxWidth: 2 * (SAFE.right - 540),
+          maxWidth: pillWidth,
+          whiteSpace: "nowrap",
           textAlign: "center",
           transform: `scale(${pop(frame, fps, 6)})`,
         }}
