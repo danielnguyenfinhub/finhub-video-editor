@@ -42,7 +42,7 @@ const LOOK_EFFECTS: Record<Look, EffectsProp> = {
 
 // edit.json "background": "brand" — what sits behind Daniel once the room is
 // removed: navy into brand blue with a soft light behind his head.
-const BrandBackdrop: React.FC = () => (
+export const BrandBackdrop: React.FC = () => (
   <AbsoluteFill
     style={{
       background:

@@ -24,13 +24,14 @@ import type {
 } from "../../mortgage/design";
 import { SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
 import { FONT, retryVideoFetch } from "../../mortgage/style";
 import { toOutMs } from "../../mortgage/timeline";
 import { chapterTransition } from "../../mortgage/transitions";
 import { MotionTrack } from "../classic/Cues";
 import { HookTitle } from "../classic/Frame";
 import { Outro } from "../classic/Outro";
+import { Behind } from "./Behind";
 import {
   ChapterMark,
   LiquidBg,
@@ -132,7 +133,14 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
 };
 
 // Full-frame talking head with a small punch-in on each cut.
-const Talk: React.FC<TalkProps> = ({ seg, index, src, look, foreground }) => {
+const Talk: React.FC<TalkProps> = ({
+  seg,
+  index,
+  src,
+  look,
+  foreground,
+  behind,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const base = seg.zoomed ? 1.12 : 1.02;
@@ -143,11 +151,16 @@ const Talk: React.FC<TalkProps> = ({ seg, index, src, look, foreground }) => {
         0.05;
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
+      {/* The brand backdrop PacedVideo would draw, then the Behind layer
+          (figures, bank logos) under his cut-out: golden rule 3b. */}
+      <BrandBackdrop />
+      {behind}
       <PacedVideo
         seg={seg}
         src={src}
         look={look}
         foreground={foreground}
+        backdrop="none"
         style={{
           transform: `scale(${base + punch})`,
           // Zoom around his mouth (not his forehead), so a punch-in never
@@ -231,6 +244,7 @@ export const studio: Design = {
   Cover,
   Talk,
   Overlay,
+  Behind,
   Outro,
   chapterTransition,
   copy: [

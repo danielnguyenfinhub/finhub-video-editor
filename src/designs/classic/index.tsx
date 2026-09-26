@@ -9,8 +9,9 @@ import {
   useVideoConfig,
 } from "remotion";
 import type { Design, OverlayProps, TalkProps } from "../../mortgage/design";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
+import { Behind } from "./Behind";
 import { Captions, Chapters, StatCards } from "./Captions";
 import { MotionTrack } from "./Cues";
 import {
@@ -35,6 +36,7 @@ const Talk: React.FC<TalkProps> = ({
   src,
   look,
   foreground,
+  behind,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -52,11 +54,16 @@ const Talk: React.FC<TalkProps> = ({
   const drift = interpolate(frame, [0, seg.outDuration], [0, 0.02]);
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
+      {/* The brand backdrop PacedVideo would draw, then the Behind layer
+          (figures, bank logos) under his cut-out: golden rule 3b. */}
+      <BrandBackdrop />
+      {behind}
       <PacedVideo
         seg={seg}
         src={src}
         look={look}
         foreground={foreground}
+        backdrop="none"
         style={{
           transform: `scale(${base + punch + drift})`,
           transformOrigin: "50% 30%",
@@ -109,6 +116,7 @@ export const classic: Design = {
   Cover,
   Talk,
   Overlay,
+  Behind,
   Outro,
   chapterTransition,
   copy: [
