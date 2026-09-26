@@ -14,6 +14,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { CoverProps, Design, TalkProps } from "../../mortgage/design";
+import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import {
@@ -170,9 +171,15 @@ const EDGE_FADE =
 
 // Framing: 0.85 from the top centre, lifted so his chin (source y ~1400 when
 // he leans in) lands at y 1280 and a two-line caption page (top ~1290) sits
-// under it, while his eyes (~y 990) stay below a cue panel (bottom ~y 925).
+// under it; Talk makes room under a cue panel (useCueRoom, "cueRoom": true).
 // The smaller layer ends above the frame's bottom and inside its sides, so
 // its bottom and side edges fade out instead of cutting hard.
+// cueRoomStyle lands the point at `headY` on CUE_HEAD_Y. At this design's
+// 0.85 framing he ends at ~0.47 (not classic's 0.55), so his eyebrows sit
+// closer under his hair line and a leaning-in frame put them at the panel's
+// edge. Passing a headY 110 px above his hair line lands the hair line
+// 0.55 * 110 ~ 60 px lower (y ~860): eyebrows ~y 1010, mouth ~y 1230.
+const CUE_DROP = 110;
 const SCALE = 0.85;
 const LIFT = 1280 - 1400 * SCALE;
 const FRAMING: React.CSSProperties = {
@@ -197,24 +204,29 @@ const Talk: React.FC<TalkProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const drift = interpolate(frame, [0, seg.outDuration], [1, 1.02], clamp);
+  const room = useCueRoom(seg);
   return (
     <AbsoluteFill>
       <CreamBackdrop />
       <MastheadRule />
       {index === 0 ? <HeadlineWatermark /> : null}
       {behind}
-      <AbsoluteFill
-        style={{ transform: `scale(${drift})`, transformOrigin: "50% 65%" }}
-      >
-        <AbsoluteFill style={FRAMING}>
-          <PacedVideo
-            seg={seg}
-            src={src}
-            look={look}
-            foreground={foreground}
-            backdrop="none"
-            style={{ objectFit: "cover" }}
-          />
+      {/* Make room under a cue panel (golden rule 3b). FRAMING puts his hair
+          line (HEAD_Y) at 600; the drift zooms that around y 1248. */}
+      <AbsoluteFill style={cueRoomStyle(room, 1248 - 648 * drift - CUE_DROP)}>
+        <AbsoluteFill
+          style={{ transform: `scale(${drift})`, transformOrigin: "50% 65%" }}
+        >
+          <AbsoluteFill style={FRAMING}>
+            <PacedVideo
+              seg={seg}
+              src={src}
+              look={look}
+              foreground={foreground}
+              backdrop="none"
+              style={{ objectFit: "cover" }}
+            />
+          </AbsoluteFill>
         </AbsoluteFill>
       </AbsoluteFill>
     </AbsoluteFill>

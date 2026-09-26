@@ -22,6 +22,12 @@ import type {
   TalkProps,
 } from "../../mortgage/design";
 import { SAFE, figuresOf, lenderMentionsOf } from "../../mortgage/golden";
+import {
+  CUE_HEAD_Y,
+  CUE_SCALE,
+  HEAD_Y,
+  useCueRoom,
+} from "../../mortgage/cueRoom";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { FONT, foregroundOf, retryVideoFetch } from "../../mortgage/style";
@@ -144,31 +150,33 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
           top: SAFE.top + 320,
         }}
       >
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "6px 16px",
-          fontSize: size,
-          fontWeight: 900,
-          lineHeight: 1.15,
-          color: "#fff",
-          opacity: p,
-          transform: `translateY(${interpolate(p, [0, 1], [40, 0])}px)`,
-        }}
-      >
-        {words.map((w, i) => (
-          <span
-            key={`${w}${i}`}
-            style={{ color: i === words.length - 1 ? brand.highlight : "#fff" }}
-          >
-            {w}
-          </span>
-        ))}
-      </div>
-      <div style={{ marginTop: 30 }}>
-        <SocialHandle platform="facebook" handle={HANDLE} />
-      </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "6px 16px",
+            fontSize: size,
+            fontWeight: 900,
+            lineHeight: 1.15,
+            color: "#fff",
+            opacity: p,
+            transform: `translateY(${interpolate(p, [0, 1], [40, 0])}px)`,
+          }}
+        >
+          {words.map((w, i) => (
+            <span
+              key={`${w}${i}`}
+              style={{
+                color: i === words.length - 1 ? brand.highlight : "#fff",
+              }}
+            >
+              {w}
+            </span>
+          ))}
+        </div>
+        <div style={{ marginTop: 30 }}>
+          <SocialHandle platform="facebook" handle={HANDLE} />
+        </div>
       </div>
       <div
         style={{
@@ -208,13 +216,26 @@ const SCALE = 0.633;
 const CHIN_Y = 1280;
 const EDGE_FADE =
   "linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, #000 80%, transparent)";
-const FRAMING: React.CSSProperties = {
-  transform: `translateY(${CHIN_Y - 1400 * SCALE}px) scale(${SCALE})`,
-  transformOrigin: "0 0",
-  maskImage: EDGE_FADE,
-  WebkitMaskImage: EDGE_FADE,
-  maskComposite: "intersect",
-  WebkitMaskComposite: "source-in",
+// k (useCueRoom, 0..1) eases him to CUE_SCALE (face centre kept at x 342)
+// with his hair line (source HEAD_Y) under the cue panel, which sits 70 px
+// lower here (CUE_PANEL_SHIFT), so his eyebrows clear it (golden rule 3b).
+// He is already small, so the framing moves rather than cueRoomStyle.
+const CUE_HAIR_Y = CUE_HEAD_Y + 70;
+const framing = (k: number): React.CSSProperties => {
+  const s = interpolate(k, [0, 1], [SCALE, CUE_SCALE]);
+  const hair = interpolate(
+    k,
+    [0, 1],
+    [CHIN_Y - (1400 - HEAD_Y) * SCALE, CUE_HAIR_Y],
+  );
+  return {
+    transform: `translate(${540 * (SCALE - s)}px, ${hair - HEAD_Y * s}px) scale(${s})`,
+    transformOrigin: "0 0",
+    maskImage: EDGE_FADE,
+    WebkitMaskImage: EDGE_FADE,
+    maskComposite: "intersect",
+    WebkitMaskComposite: "source-in",
+  };
 };
 
 // Backdrop behind Daniel's cut-out (backdrop="none"); a small punch-in per
@@ -234,6 +255,7 @@ const Talk: React.FC<TalkProps> = ({
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
         0.04;
+  const room = useCueRoom(seg);
   return (
     <AbsoluteFill>
       <SeriesBackdrop />
@@ -244,7 +266,7 @@ const Talk: React.FC<TalkProps> = ({
           transformOrigin: `${540 * SCALE}px ${CHIN_Y}px`,
         }}
       >
-        <AbsoluteFill style={FRAMING}>
+        <AbsoluteFill style={framing(room)}>
           <PacedVideo
             seg={seg}
             src={src}
