@@ -302,9 +302,13 @@ export const Compare: React.FC<{ cue: CueOf<"compare">; rel: Rel }> = ({
 // ---------------------------------------------------------------- bars
 
 // Short enough that the whole panel (overflow headroom included) ends above
-// y ~930 at SAFE.top, where a cueRoom design puts Daniel's hair line.
+// y ~930 at SAFE.top, above where a cueRoom design puts Daniel's eyebrows.
 const BAR_MAX = 180;
 const OVERFLOW_ROOM = 70;
+// A small value still reads as a bar, not a line.
+const MIN_BAR = 24;
+// Bars at least this tall carry their value inside; shorter ones above.
+const VALUE_INSIDE = 72;
 
 const Bar: React.FC<{
   bar: CueOf<"bars">["bars"][number];
@@ -323,7 +327,9 @@ const Bar: React.FC<{
   // reserves for it) and keeps pulsing.
   const h = bar.overflow
     ? BAR_MAX + OVERFLOW_ROOM - 12 + Math.sin(frame / 4) * 8
-    : Math.max(bar.height * BAR_MAX, 60);
+    : Math.max(bar.height * BAR_MAX, MIN_BAR);
+  const shown = Math.max(h * g, MIN_BAR);
+  const inside = h >= VALUE_INSIDE;
   return (
     <div
       style={{
@@ -335,15 +341,33 @@ const Bar: React.FC<{
     >
       <div
         style={{
+          position: "relative",
           height: BAR_MAX,
           display: "flex",
           alignItems: "flex-end",
         }}
       >
+        {inside ? null : (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: shown + 6,
+              textAlign: "center",
+              fontSize: 40,
+              fontWeight: 900,
+              color: brand.text,
+              opacity: interpolate(g, [0.2, 0.5], [0, 1], clamp),
+            }}
+          >
+            {bar.value}
+          </div>
+        )}
         <div
           style={{
             width: 170,
-            height: h * g,
+            height: shown,
             background: `linear-gradient(180deg, ${color}, ${color}99)`,
             borderRadius: bar.overflow ? "0 0 4px 4px" : "16px 16px 4px 4px",
             boxShadow: `0 0 30px ${color}66`,
@@ -358,9 +382,10 @@ const Bar: React.FC<{
               : undefined,
           }}
         >
-          {g > 0.6 ? bar.value : ""}
+          {inside && g > 0.6 ? bar.value : ""}
         </div>
       </div>
+      {/* Full contrast from the start: the chart reads before each bar grows. */}
       <div
         style={{
           fontSize: 32,
@@ -368,7 +393,7 @@ const Bar: React.FC<{
           marginTop: 12,
           textAlign: "center",
           lineHeight: 1.3,
-          opacity: g,
+          color: brand.text,
         }}
       >
         {bar.label}

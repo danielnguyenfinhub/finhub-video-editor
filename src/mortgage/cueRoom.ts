@@ -10,12 +10,13 @@ import { outFrameOf, type Reel } from "./schema";
 import { clamp } from "./style";
 import type { Segment } from "./timeline";
 
-// Top of his hair while a panel is up: under the tallest panel (bars, ~y 930
-// with the panels at SAFE.top). At CUE_SCALE his mouth (~720 px below the
-// hair line at full size) lands ~y 1210 and his chin ~y 1250, above a
-// caption page (~y 1285) even when he sits lower than HEAD_Y.
-export const CUE_SCALE = 0.38;
-export const CUE_HEAD_Y = 935;
+// Where his hair line (HEAD_Y at full size) sits while a panel is up. The
+// panel (ends by y ~930 at SAFE.top) may cover the top of his hair and
+// forehead; his eyebrows (~320 px under the hair line at full size) land
+// ~y 975 and his mouth (~780 px under it) ~y 1230, above a caption page
+// (~y 1285). Daniel's review of PR #75: 0.38 left him too small.
+export const CUE_SCALE = 0.55;
+export const CUE_HEAD_Y = 800;
 // Hair line of the cut-out at full size (the highest it goes, leaning in).
 export const HEAD_Y = 600;
 const EASE_FRAMES = 15;
