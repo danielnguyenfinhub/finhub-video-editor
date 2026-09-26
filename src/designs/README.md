@@ -60,6 +60,11 @@ or `toOutMs` (timeline.ts). Reel data: `reel.edit` (edit.json), `reel.timeline.c
    his head or beside his shoulders (y 420–700 for cards, or the left/right thirds).
    Captions sit below the face (y ≥ 1300). Two elements that can be up at the same
    time (figure + lender logo + chapter + cue card) must have their own places.
+   MotionTrack cue panels (every cue but emoji) sit at SAFE.top and end by
+   y ~930: a full-frame design makes room under them with `useCueRoom(seg)` +
+   `cueRoomStyle(k)` (`src/mortgage/cueRoom.ts`) on the layer holding his
+   cut-out, and sets `"cueRoom": true` in template.json; without it
+   check-golden counts every cue panel as face-hidden time.
 3c. **Logo.** `<LogoMark talkFrames={talkFrames}/>` (`src/mortgage/LogoMark.tsx`) in the
    Overlay: 120 px high on a white tile, top-right inside SAFE, visible only for the
    first and last 10 s of the talk. No other always-on logo. The Cover keeps its own

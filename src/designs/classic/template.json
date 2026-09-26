@@ -39,6 +39,7 @@
   },
   "minHoldMs": 1500,
   "facePolicy": "face-required",
+  "cueRoom": true,
   "renderCost": "high",
   "preview": null,
   "uses": 1,

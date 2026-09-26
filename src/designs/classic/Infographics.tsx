@@ -5,6 +5,7 @@ import { StrikeThrough } from "@remotion/rough-notation";
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
+import { SAFE } from "../../mortgage/golden";
 import type { Cue } from "../../mortgage/schema";
 import { DIM, FONT, clamp, pop, toneColor } from "../../mortgage/style";
 
@@ -37,8 +38,9 @@ export const Panel: React.FC<{
       style={{
         position: "absolute",
         top: 110,
-        left: 50,
-        right: 50,
+        // Inside SAFE across (the Reels buttons sit right of SAFE.right).
+        left: SAFE.left,
+        right: 1080 - SAFE.right,
         padding: "34px 36px",
         borderRadius: 34,
         background:
@@ -123,7 +125,8 @@ export const Kinetic: React.FC<{ cue: CueOf<"kinetic">; rel: Rel }> = ({
           {cue.slam.kicker ? <Kicker>{cue.slam.kicker}</Kicker> : null}
           <div
             style={{
-              fontSize: cue.slam.text.length > 14 ? 96 : 120,
+              // 120 px fits ~10 capitals in the SAFE-wide panel.
+              fontSize: cue.slam.text.length > 10 ? 96 : 120,
               fontWeight: 900,
               color: brand.highlight,
               lineHeight: 1.05,
@@ -298,7 +301,9 @@ export const Compare: React.FC<{ cue: CueOf<"compare">; rel: Rel }> = ({
 
 // ---------------------------------------------------------------- bars
 
-const BAR_MAX = 300;
+// Short enough that the whole panel (overflow headroom included) ends above
+// y ~930 at SAFE.top, where a cueRoom design puts Daniel's hair line.
+const BAR_MAX = 180;
 const OVERFLOW_ROOM = 70;
 
 const Bar: React.FC<{
@@ -409,7 +414,7 @@ export const Bars: React.FC<{ cue: CueOf<"bars">; rel: Rel }> = ({ cue, rel }) =
   const title = pop(frame, fps, 0);
   const n = cue.bars.length;
   return (
-    <Panel style={{ minHeight: 560 }}>
+    <Panel>
       {cue.kicker ? (
         <div
           style={{ fontSize: 40, fontWeight: 700, color: DIM, opacity: title }}
@@ -419,7 +424,7 @@ export const Bars: React.FC<{ cue: CueOf<"bars">; rel: Rel }> = ({ cue, rel }) =
       ) : null}
       <div
         style={{
-          fontSize: 96,
+          fontSize: 84,
           fontWeight: 900,
           color: brand.highlight,
           lineHeight: 1,
@@ -433,11 +438,11 @@ export const Bars: React.FC<{ cue: CueOf<"bars">; rel: Rel }> = ({ cue, rel }) =
           display: "flex",
           justifyContent: "center",
           gap: n > 2 ? 20 : 60,
-          marginTop: cue.bars.some((b) => b.overflow) ? 30 + OVERFLOW_ROOM : 30,
+          marginTop: cue.bars.some((b) => b.overflow) ? 20 + OVERFLOW_ROOM : 20,
         }}
       >
         {cue.bars.map((b) => (
-          <Bar key={b.label} bar={b} at={rel(b.atMs)} width={n > 2 ? 270 : 300} />
+          <Bar key={b.label} bar={b} at={rel(b.atMs)} width={n > 2 ? 260 : 300} />
         ))}
       </div>
       {cue.stamp ? (
