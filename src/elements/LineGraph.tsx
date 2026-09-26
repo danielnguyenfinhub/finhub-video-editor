@@ -24,7 +24,8 @@ export const LineGraph: React.FC<{
   unit?: string; // appended to values, e.g. "%"
   decimals?: number;
   drawFrames?: number;
-}> = ({ data, title, unit = "", decimals = 2, drawFrames = 60 }) => {
+  locale?: string; // e.g. "vi-VN" prints 4,35%; default keeps 4.35%
+}> = ({ data, title, unit = "", decimals = 2, drawFrames = 60, locale }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   if (data.length < 2) return null;
@@ -39,7 +40,15 @@ export const LineGraph: React.FC<{
     PAD.left + (i / (data.length - 1)) * (W - PAD.left - PAD.right);
   const y = (v: number) =>
     PAD.top + (1 - (v - min) / (max - min)) * (H - PAD.top - PAD.bottom);
-  const fmt = (v: number) => `${v.toFixed(decimals)}${unit}`;
+  const fmt = (v: number) =>
+    `${
+      locale
+        ? v.toLocaleString(locale, {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+          })
+        : v.toFixed(decimals)
+    }${unit}`;
 
   const path = `M ${data.map((d, i) => `${x(i)},${y(d.value)}`).join(" L ")}`;
   const progress = interpolate(frame, [0, drawFrames], [0, 1], clamp);

@@ -61,6 +61,21 @@ Every cue has `kind`, `fromMs`, `toMs` (on screen between them) and inner beats 
 | `venn` | `left`, `right`, `label` | talks about shared interest (e.g. Broker / Bạn → LỢI ÍCH CHUNG) |
 | `emoji` | `name` (file in `public/emoji/`, no ".json"), `position?` right/left | reacts emotionally ("rất là lớn") — sparingly |
 | `lenders` | `title?` | talks about banks/lenders (shows the accredited lender logos) |
+| `change` | `kicker?`, `label` (what changed), `from`, `to` (strings, written as said: `"5,89%"`), `swapAtMs` (inside fromMs–toMs), `direction?` up/down (arrow), `tone?`, `rateType?` cash/advertised/other | says an old value became a new one (a rate cut, a repayment drop). The design picks the motion (classic: strike-through; faceless: slide) |
+| `trend` | `kicker?`, `title`, `unit?`, `decimals?` 0–3, `points:[{label,value}]` (2–8, `value` a number), `rateType?` | walks through a value over time (cash-rate path). Every point's value is printed; the axis spans the data |
+
+Numbers kit rules: a `change` whose `from`/`to` contains `%`, or a `trend` with `unit: "%"`, needs
+`rateType` (`"cash"` = RBA cash rate, `"advertised"` = a lender's rate, `"other"`). `"advertised"`
+also needs `compliance.advertisedRate` (comparison rate card). All their text goes through the
+RG 234 check like any other cue.
+
+```json
+{ "kind": "change", "fromMs": 12000, "toMs": 18000, "kicker": "[example]", "label": "[example] Lãi suất tiền mặt",
+  "from": "9,99%", "to": "9,74%", "swapAtMs": 15000, "direction": "down", "rateType": "cash" }
+{ "kind": "trend", "fromMs": 20000, "toMs": 27000, "title": "[example] Lãi suất tiền mặt", "unit": "%", "decimals": 2,
+  "points": [{ "label": "[example] T1", "value": 9.99 }, { "label": "[example] T2", "value": 9.74 }], "rateType": "cash" }
+```
+(Placeholder values, not real rates.)
 
 Keep top-panel cues from overlapping each other and chapter banners in time.
 

@@ -1,0 +1,41 @@
+{
+  "notes": [
+    "TEST FIXTURE for the numbers kit (faceless design): not a real video. Voice and footage are rba-sept-2026's (public/videos/rba-sept-2026, reached as source for the test render only); every figure below is a synthetic placeholder, not a real rate.",
+    "Stills: change mid-cue (before the swap) and swapAtMs + 500 ms; trend mid-cue."
+  ],
+  "source": "rba-sept-2026",
+  "design": "faceless",
+  "title": "Numbers kit: kiểm tra",
+  "cut": { "fillers": false, "stutters": false, "badWords": false },
+  "pacing": { "mode": "off" },
+  "cues": [
+    {
+      "kind": "change",
+      "fromMs": 8131,
+      "toMs": 16000,
+      "kicker": "VÍ DỤ",
+      "label": "Kỳ này lãi suất giảm ở mức",
+      "from": "5,89%",
+      "to": "5,64%",
+      "swapAtMs": 12496,
+      "direction": "down",
+      "rateType": "cash"
+    },
+    {
+      "kind": "trend",
+      "fromMs": 17000,
+      "toMs": 26000,
+      "kicker": "VÍ DỤ",
+      "title": "Lãi suất (số liệu minh hoạ)",
+      "unit": "%",
+      "decimals": 2,
+      "points": [
+        { "label": "Q1", "value": 5.89 },
+        { "label": "Q2", "value": 5.79 },
+        { "label": "Q3", "value": 5.64 },
+        { "label": "Q4", "value": 5.7 }
+      ],
+      "rateType": "cash"
+    }
+  ]
+}

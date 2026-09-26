@@ -93,6 +93,56 @@ const points = z.strictObject({
   items: z.array(beat).min(2).max(5),
 });
 
+// Numbers kit. What kind of rate a figure is: a value with "%" must say, and
+// "advertised" needs compliance.advertisedRate (checked on editSchema).
+const rateType = z.enum(["cash", "advertised", "other"]);
+const RATE_TYPE_NEEDED =
+  'a figure with "%" needs rateType: "cash" (RBA cash rate), "advertised" (a lender\'s rate; needs compliance.advertisedRate) or "other"';
+
+// Old value -> new value (a rate cut, a repayment drop). Values are strings so
+// Vietnamese formats ("5,89%") render untouched; the design picks the motion.
+const change = z
+  .strictObject({
+    kind: z.literal("change"),
+    ...span,
+    kicker: text.optional(),
+    label: text, // what changed
+    from: text,
+    to: text,
+    swapAtMs: ms,
+    direction: z.enum(["up", "down"]).optional(),
+    tone: tone.optional(),
+    rateType: rateType.optional(),
+  })
+  .refine((c) => c.swapAtMs >= c.fromMs && c.swapAtMs <= c.toMs, {
+    message: "swapAtMs must fall between fromMs and toMs",
+    path: ["swapAtMs"],
+  })
+  .refine((c) => c.rateType !== undefined || !`${c.from}${c.to}`.includes("%"), {
+    message: RATE_TYPE_NEEDED,
+    path: ["rateType"],
+  });
+
+// A value over time (the cash-rate path), drawn by src/elements/LineGraph.tsx.
+const trend = z
+  .strictObject({
+    kind: z.literal("trend"),
+    ...span,
+    kicker: text.optional(),
+    title: text,
+    unit: text.optional(),
+    decimals: z.number().int().min(0).max(3).optional(),
+    points: z
+      .array(z.strictObject({ label: text, value: z.number() }))
+      .min(2)
+      .max(8),
+    rateType: rateType.optional(),
+  })
+  .refine((c) => c.rateType !== undefined || c.unit !== "%", {
+    message: RATE_TYPE_NEEDED,
+    path: ["rateType"],
+  });
+
 const cue = z
   .discriminatedUnion("kind", [
     kinetic,
@@ -103,6 +153,8 @@ const cue = z
     emoji,
     lenders,
     points,
+    change,
+    trend,
   ])
   .refine((c) => c.toMs > c.fromMs, "cue toMs must be after fromMs");
 
@@ -240,7 +292,23 @@ export const editSchema = z.strictObject({
     })
     .optional(),
   exemptions: z.array(exemption).optional(),
-});
+})
+  // An advertised rate on a numbers-kit cue needs the comparison-rate card.
+  .superRefine((edit, ctx) => {
+    (edit.cues ?? []).forEach((c, i) => {
+      if (
+        (c.kind === "change" || c.kind === "trend") &&
+        c.rateType === "advertised" &&
+        !edit.compliance?.advertisedRate
+      )
+        ctx.addIssue({
+          code: "custom",
+          path: ["cues", i, "rateType"],
+          message:
+            'rateType "advertised" needs compliance.advertisedRate {rateFigure, comparisonRate, ratesAsAt}',
+        });
+    });
+  });
 
 export type EditJson = z.infer<typeof editSchema>;
 export type Cue = NonNullable<EditJson["cues"]>[number];
@@ -301,6 +369,15 @@ export const onScreenCopy = (edit: EditJson): Record<string, string[]> => {
         return [c.title ?? ""];
       case "points":
         return [c.title, ...c.items.map((i) => i.text)];
+      case "change":
+        return [c.kicker ?? "", c.label, c.from, c.to];
+      case "trend":
+        return [
+          c.kicker ?? "",
+          c.title,
+          c.unit ?? "",
+          ...c.points.map((p) => p.label),
+        ];
     }
   };
   const fields: Record<string, string[]> = {

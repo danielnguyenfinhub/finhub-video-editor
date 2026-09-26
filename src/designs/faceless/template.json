@@ -16,6 +16,8 @@
     "comparisons": "compare cards with VS",
     "steps": "navy-glass numbered points list",
     "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "navy card on the stage: old value slides out, new value slides in (value-swap), arrow in tone colour",
+    "trend": "navy line graph on the stage, drawn left to right, every point's value printed, axis spans the data",
     "captionPosition": "centre stage, drops to a lower band; English line at the bottom"
   },
   "skinAxes": {

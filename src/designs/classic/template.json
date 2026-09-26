@@ -15,6 +15,8 @@
     "comparisons": "compare/bars cue cards (MotionTrack, own)",
     "steps": "chapter banner",
     "eligibility": "verdict cue ✓/✗ (own)",
+    "change": "navy card at the top: old value struck through in amber, new value fades up (arrow in tone colour when a direction is given)",
+    "trend": "navy line graph at the top, drawn left to right, every point's value printed, axis spans the data",
     "captionPosition": "below the face (y ≥ 1300)"
   },
   "skinAxes": {
