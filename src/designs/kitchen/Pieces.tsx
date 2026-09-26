@@ -1,6 +1,7 @@
 // Overlay pieces that stay small and unhurried: a tilted polaroid for numbers
 // (adapted from .claude/elements/storytelling/polaroid-pictures), a plain
 // white tag for a named bank, and a chapter title with a brief amber wash.
+import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import {
   AbsoluteFill,
@@ -19,10 +20,14 @@ const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 const WARM_GREY = "#8C8271";
 const PALE_NAVY = "rgba(11,31,61,0.16)";
 
-// A single tilted polaroid at the top-left of SAFE: a pale-navy ring behind
-// the figure's number (Daniel, 25/09/2026: too small at 216px/30px — now
-// 360px wide with an 84px+ number, kept readable above/left of his head by
-// shrinking the ring, not the text; it may run behind his hair on the right).
+// A single tilted polaroid across the top-left of SAFE, laid out as one row
+// (the number, then its label beside it) so the whole card sits in the band
+// above Daniel's head (SAFE.top to ~560, his hair starts ~570 in a full-frame
+// talk). The old square card (ring over label) ran down to ~760 and his head
+// hid the label. Ends at x 700, clear of the top-right LogoMark.
+const CARD_W = 646;
+const NUMBER_W = 330;
+
 export const Polaroid: React.FC<{ figure: Figure }> = ({ figure }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
@@ -34,72 +39,61 @@ export const Polaroid: React.FC<{ figure: Figure }> = ({ figure }) => {
     clamp,
   );
   const opacity = Math.min(inP, outP);
-  const ringSize = 150;
-  const r = 62;
+  const numberSize = Math.min(
+    88,
+    fitText({
+      text: figure.big,
+      withinWidth: NUMBER_W,
+      fontFamily: FONT,
+      fontWeight: 900,
+    }).fontSize,
+  );
   return (
     <div
       style={{
         position: "absolute",
         top: SAFE.top,
         left: SAFE.left,
-        width: 360,
+        width: CARD_W,
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        gap: 22,
         background: "#fff",
         borderRadius: 18,
-        padding: "20px 24px 26px",
-        boxShadow: "0 18px 40px rgba(60,45,20,0.22)",
-        transform: `rotate(4deg)`,
+        padding: "16px 24px",
+        boxShadow: `0 18px 40px ${brand.navy}38`, // navy at ~22%
+        transform: "rotate(-2deg)",
         opacity,
         fontFamily: FONT,
       }}
     >
       <div
         style={{
-          position: "relative",
-          width: ringSize,
-          height: ringSize,
-          margin: "0 auto",
+          flex: "none",
+          fontWeight: 900,
+          fontSize: numberSize,
+          lineHeight: 1.05,
+          color: brand.textOnCard,
+          whiteSpace: "nowrap",
+          paddingBottom: 6,
+          borderBottom: `8px solid ${PALE_NAVY}`,
         }}
       >
-        <svg width={ringSize} height={ringSize} style={{ display: "block" }}>
-          <circle
-            cx={ringSize / 2}
-            cy={ringSize / 2}
-            r={r}
-            fill="none"
-            stroke={PALE_NAVY}
-            strokeWidth={10}
-          />
-        </svg>
+        {figure.big}
+      </div>
+      {figure.label ? (
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: FONT,
-            fontWeight: 900,
-            fontSize: 88,
-            lineHeight: 1,
+            fontSize: 28,
+            fontWeight: 800,
             color: brand.textOnCard,
-            whiteSpace: "nowrap",
+            lineHeight: 1.25,
           }}
         >
-          {figure.big}
+          {figure.label}
         </div>
-      </div>
-      <div
-        style={{
-          marginTop: 12,
-          fontSize: 36,
-          fontWeight: 800,
-          color: brand.textOnCard,
-          textAlign: "center",
-          lineHeight: 1.25,
-        }}
-      >
-        {figure.label}
-      </div>
+      ) : null}
     </div>
   );
 };
@@ -135,7 +129,7 @@ export const LenderTag: React.FC<{ lender: Lender; frames: number }> = ({
       <span style={{ color: WARM_GREY, fontWeight: 700, fontSize: 26 }}>
         Ngân hàng ·
       </span>
-      <LenderLogo lender={lender} height={36} />
+      <LenderLogo lender={lender} height={60} />
     </div>
   );
 };

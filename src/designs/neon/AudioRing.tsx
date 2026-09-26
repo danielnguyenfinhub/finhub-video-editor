@@ -2,11 +2,14 @@
 // elements/AudioRing.tsx: no own <Audio> (PacedVideo already plays the
 // voice), no centre image (Daniel's cut-out shows through), amber glow, and
 // an explicit `frame` prop (seg.srcFrom + frame * seg.rate) so it follows the
-// paced cut instead of the raw current frame.
-import { useAudioData, visualizeAudio } from "@remotion/media-utils";
+// paced cut instead of the raw current frame. Windowed audio data (via
+// useCoveredAudioData, like elements/Oscilloscope): useAudioData fetched and
+// decoded the whole source.mp4 in every render tab.
+import { visualizeAudio } from "@remotion/media-utils";
 import type React from "react";
 import { useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
+import { useCoveredAudioData } from "../../elements/useCoveredAudioData";
 
 const BARS = 64; // visualizeAudio needs a power of two
 
@@ -18,12 +21,19 @@ export const NeonAudioRing: React.FC<{
   cy?: number;
 }> = ({ src, frame, radius = 260, cx = 540, cy = 620 }) => {
   const { fps } = useVideoConfig();
-  const audioData = useAudioData(src);
+  const at = Math.max(0, Math.round(frame));
+  const { audioData, dataOffsetInSeconds } = useCoveredAudioData({
+    fps,
+    frame: at,
+    src,
+    windowInSeconds: 10,
+  });
   const bars = audioData
     ? visualizeAudio({
         fps,
-        frame: Math.max(0, Math.round(frame)),
+        frame: at,
         audioData,
+        dataOffsetInSeconds,
         numberOfSamples: BARS,
       })
     : new Array<number>(BARS).fill(0);

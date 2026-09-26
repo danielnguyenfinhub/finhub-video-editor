@@ -15,7 +15,12 @@ import {
 import { brand } from "../../brand/theme";
 import { Oscilloscope } from "../../elements/Oscilloscope";
 import type { Figure } from "../../mortgage/golden";
-import { SAFE, figuresOf } from "../../mortgage/golden";
+import {
+  LOGO_HEIGHT,
+  SAFE,
+  figuresOf,
+  logoVisible,
+} from "../../mortgage/golden";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
 import { toSrcMs } from "../../mortgage/timeline";
@@ -29,8 +34,15 @@ const PANEL_TOP = SAFE.top;
 // Exported so other Overlay elements (e.g. LenderLabel's bank tile) can sit
 // just below the panel's worst-case (non-compact) bottom without guessing.
 export const PANEL_MAX_BOTTOM = 700;
+// LogoMark's tile (the 2000x1215 logo at LOGO_HEIGHT plus 22px padding each
+// side) and a gap: a panel up with the logo stops short of it.
+const LOGO_TILE_W = Math.round((LOGO_HEIGHT * 2000) / 1215) + 44;
+const LOGO_GAP = 20;
 
-const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
+const FigureCard: React.FC<{ figure: Figure; right: number }> = ({
+  figure,
+  right,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const enterP = enter(frame, fps);
@@ -48,7 +60,7 @@ const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
         position: "absolute",
         left: SAFE.left,
         top: PANEL_TOP,
-        width: SAFE.right - SAFE.left,
+        width: right - SAFE.left,
         height: compact ? 180 : PANEL_MAX_BOTTOM - PANEL_TOP,
         borderRadius: 24,
         background: "rgba(6,19,42,0.85)",
@@ -76,7 +88,7 @@ const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
           fontWeight: 700,
           color: "#fff",
           marginTop: 6,
-          maxWidth: SAFE.right - SAFE.left - 68,
+          maxWidth: right - SAFE.left - 68,
         }}
       >
         {figure.label}
@@ -106,13 +118,17 @@ const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
 };
 
 // A circular amber-ringed PiP of Daniel's voice, bottom-left inside SAFE.
-const PipOscilloscope: React.FC<{ src: string; reel: Reel }> = ({
+// `from`: the Sequence's start on the talk timeline. Inside it
+// useCurrentFrame() counts from 0, so the talk frame is from + frame (the
+// local frame alone read the voice from the first seconds of the video).
+const PipOscilloscope: React.FC<{ src: string; reel: Reel; from: number }> = ({
   src,
   reel,
+  from,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const outMs = (frame / fps) * 1000;
+  const outMs = ((from + frame) / fps) * 1000;
   const srcMs = toSrcMs(reel.timeline.segments, outMs, fps);
   const srcFrame = (srcMs / 1000) * fps;
   return (
@@ -147,9 +163,18 @@ const PipOscilloscope: React.FC<{ src: string; reel: Reel }> = ({
 
 // Behind layer: the data panel only (golden rule 3b — charts render behind
 // Daniel's cut-out, never over Overlay/his face).
-export const FiguresBehindLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
+export const FiguresBehindLayer: React.FC<{
+  reel: Reel;
+  talkFrames: number;
+}> = ({ reel, talkFrames }) => {
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
+  // A panel up at any frame the logo shows stops short of it for its whole
+  // hold (no width jump when the logo leaves).
+  const withLogo = (f: Figure) =>
+    Array.from({ length: f.frames }, (_, i) => f.fromFrame + i).some((fr) =>
+      logoVisible(fr, talkFrames, fps),
+    );
   return (
     <>
       {figures.map((f) => (
@@ -158,7 +183,12 @@ export const FiguresBehindLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
           from={f.fromFrame}
           durationInFrames={f.frames}
         >
-          <FigureCard figure={f} />
+          <FigureCard
+            figure={f}
+            right={
+              withLogo(f) ? SAFE.right - LOGO_TILE_W - LOGO_GAP : SAFE.right
+            }
+          />
         </Sequence>
       ))}
     </>
@@ -181,7 +211,7 @@ export const FiguresPipLayer: React.FC<{ reel: Reel; src: string }> = ({
           from={f.fromFrame}
           durationInFrames={f.frames}
         >
-          <PipOscilloscope src={src} reel={reel} />
+          <PipOscilloscope src={src} reel={reel} from={f.fromFrame} />
         </Sequence>
       ))}
     </>

@@ -41,6 +41,9 @@ import { ChapterCard, LenderTag, Polaroid } from "./Pieces";
 const HOOK_FRAMES = 105;
 const LABEL = "TÌNH HUỐNG MINH HOẠ";
 const NAME = "Daniel Nguyen";
+// Cover cut-out scale: head top at 1920 - (1920 - 580) * 0.64 ~ 1060, under
+// the subtitle bubble (ends ~900).
+const COVER_SCALE = 0.64;
 
 const LogoTile: React.FC<{ height?: number }> = ({ height = 120 }) => (
   <div
@@ -94,9 +97,11 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
         {subtitle}
       </MessageBubble>
     </div>
-    <div
-      style={{ position: "absolute", left: 0, right: 0, top: 940, bottom: 0 }}
-    >
+    {/* His whole cut-out, scaled down from the bottom so his head (top
+        ~580 at full size) lands below the subtitle bubble instead of being
+        cropped: a box from y 940 with objectFit cover cut the top of his
+        head off. */}
+    <AbsoluteFill>
       <Freeze frame={0}>
         <OffthreadVideo
           src={foregroundOf(src)}
@@ -108,13 +113,12 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            objectPosition: "50% 100%",
-            transform: "scale(1.05)",
+            transform: `scale(${COVER_SCALE})`,
             transformOrigin: "50% 100%",
           }}
         />
       </Freeze>
-    </div>
+    </AbsoluteFill>
     <LogoTile />
   </AbsoluteFill>
 );

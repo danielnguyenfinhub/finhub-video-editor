@@ -18,7 +18,7 @@ import { FONT, clamp } from "../../mortgage/style";
 // wide on its tile) never sits on the card — checked against a still, not
 // just the logo's own SAFE.right anchor. This is Behind-layer content
 // (rendered behind Daniel's cut-out), so it may extend below his real face
-// box (see index.tsx REAL_FACE) — that overlap is the intended "he's in
+// box — that overlap is the intended "he's in
 // front of the card" look.
 export const ARTEFACT = {
   left: SAFE.left,
@@ -132,7 +132,8 @@ const ArtefactContent: React.FC<{
 const Card: React.FC<{
   children: React.ReactNode;
   transform?: string;
-}> = ({ children, transform }) => (
+  opacity?: number;
+}> = ({ children, transform, opacity = 1 }) => (
   <div
     style={{
       position: "absolute",
@@ -144,6 +145,7 @@ const Card: React.FC<{
       borderRadius: 28,
       background: "#fff",
       boxShadow: "0 40px 90px rgba(0,0,0,0.5)",
+      opacity,
       transform: `perspective(900px) rotateX(3deg) ${transform ?? ""}`,
     }}
   >
@@ -175,6 +177,27 @@ export const ArtefactCover: React.FC<{
 
 const HOOK_FRAMES = 105;
 const CHAPTER_TEAR_FRAMES = 10;
+const SWAP_FRAMES = 8;
+
+// How far a cue panel (MotionTrack, drawn at the top of SAFE in the Overlay)
+// is in, 0..1: the artefact fades out under it and back after, so the two
+// never stack. Emoji cues are small and don't take the card's place.
+export const cueUp = (reel: Reel, frame: number, fps: number): number => {
+  const outFrame = outFrameOf(reel.timeline, fps);
+  return Math.max(
+    0,
+    ...(reel.edit.cues ?? [])
+      .filter((c) => c.kind !== "emoji")
+      .map((c) => {
+        const a = outFrame(c.fromMs);
+        const b = outFrame(c.toMs);
+        return Math.min(
+          interpolate(frame, [a, a + SWAP_FRAMES], [0, 1], clamp),
+          interpolate(frame, [b - SWAP_FRAMES, b], [1, 0], clamp),
+        );
+      }),
+  );
+};
 
 // Overlay: the card stays up through the whole talk, pushing in (Ken Burns)
 // over the first HOOK_FRAMES, and its kicker briefly "tears" to the chapter
@@ -194,8 +217,10 @@ export const Artefact: React.FC<{ reel: Reel }> = ({ reel }) => {
   const tearFrame = active ? frame - active.from : -1;
   const tear = interpolate(tearFrame, [0, CHAPTER_TEAR_FRAMES], [0, 1], clamp);
   const push = interpolate(frame, [0, HOOK_FRAMES], [1, 1.06], clamp);
+  const away = cueUp(reel, frame, fps);
+  if (away >= 1) return null;
   return (
-    <Card transform={`scale(${push})`}>
+    <Card transform={`scale(${push})`} opacity={1 - away}>
       <div style={{ transformOrigin: "50% 22%" }}>
         <ArtefactContent
           kicker={kicker}

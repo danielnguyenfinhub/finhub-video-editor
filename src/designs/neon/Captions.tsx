@@ -1,77 +1,87 @@
-// "neon" captions: TikTok-style, one big glowing word at a time, built
-// directly from reel.timeline.captions (a leading space marks the start of a
-// word; a token without one glues onto the previous word, e.g. "4" + ".1").
-// Numbers and keywords (emphasised) hold a bigger size and a stronger glow.
+// "neon" captions: a short 2-4 word phrase per page on a dark pill, the word
+// being spoken glowing amber and popping, the rest soft white. One word per
+// page read as single syllables (Vietnamese tokens run ~200 ms each), so the
+// pages come from the shared pager (PagedCaptions) with a short combine
+// window. Keywords and numbers (emphasised) stay amber.
+import type { TikTokPage } from "@remotion/captions";
 import type React from "react";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import {
-  Sequence,
   interpolate,
   spring,
   useCurrentFrame,
+  useDelayRender,
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { SAFE } from "../../mortgage/golden";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import type { Reel } from "../../mortgage/schema";
-import { emphasised, FONT } from "../../mortgage/style";
-import type { OutCaption } from "../../mortgage/timeline";
+import { emphasised, FONT, reelFontReady } from "../../mortgage/style";
 
-type Word = { text: string; startMs: number; endMs: number };
+// 72 px at 1.1 leading: a two-line page stays at or below y 1300 (under
+// his mouth) when it sits on SAFE.bottom.
+const SIZE = 72;
+// ~3 syllables a page: short enough to read at a glance, long enough to read
+// as a phrase, not a syllable.
+const COMBINE_MS = 700;
 
-const mergeWords = (caps: OutCaption[]): Word[] => {
-  const out: Word[] = [];
-  for (const c of caps) {
-    const prev = out[out.length - 1];
-    if (prev && !c.text.startsWith(" ")) {
-      prev.text += c.text;
-      prev.endMs = c.endMs;
-    } else {
-      out.push({ text: c.text, startMs: c.startMs, endMs: c.endMs });
-    }
-  }
-  return out;
-};
-
-const NeonWord: React.FC<{ text: string; big: boolean }> = ({ text, big }) => {
+const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
+  page,
+  keywords,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const pop = spring({ frame, fps, config: { damping: 13, stiffness: 220 } });
-  const scale = interpolate(pop, [0, 1], [0.7, 1]);
-  const glow = big ? 34 : 20;
-  const size = big ? 143 : 110;
-  // Golden rule 3: big-word captions y >= 1300, bottom <= SAFE.bottom.
-  // Anchor from the bottom so the word's own height never pushes past
-  // SAFE.bottom regardless of font size.
+  const nowMs = page.startMs + (frame / fps) * 1000;
+  const hit = emphasised(
+    page.tokens.map((t) => t.text),
+    keywords,
+  );
+  const enter = spring({ frame, fps, config: { damping: 14, stiffness: 220 } });
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: SAFE.left,
-        right: 1080 - SAFE.right,
-        bottom: 1920 - SAFE.bottom,
-        textAlign: "center",
-        fontFamily: FONT,
-      }}
-    >
-      <span
+    <CaptionZone>
+      <div
         style={{
-          display: "inline-block",
+          maxWidth: "100%",
+          fontFamily: FONT,
+          fontSize: SIZE,
           fontWeight: 900,
-          fontSize: size,
-          color: "#FFF4DA",
-          // A dark pill behind the glowing word: it sits over Daniel's chin
-          // in a full-frame talk (his rule 5, legible over moving video).
-          background: "rgba(7, 20, 42, 0.62)",
-          padding: "0 28px",
-          borderRadius: 999,
-          transform: `scale(${scale})`,
-          textShadow: `0 0 6px #fff, 0 0 ${glow}px ${brand.highlight}, 0 0 ${glow * 2}px ${brand.highlight}`,
+          lineHeight: 1.1,
+          textAlign: "center",
+          // A dark pill behind the phrase: it sits over Daniel's chest in a
+          // full-frame talk, legible over moving video.
+          background: `${brand.navy}9E`, // navy at ~62%
+          padding: "4px 28px 10px",
+          borderRadius: 48,
+          transform: `scale(${interpolate(enter, [0, 1], [0.85, 1])})`,
         }}
       >
-        {text}
-      </span>
-    </div>
+        {page.tokens.map((t, i) => {
+          const active = nowMs >= t.fromMs && nowMs < t.toMs;
+          const pop = active
+            ? interpolate(nowMs, [t.fromMs, t.fromMs + 120], [1.18, 1.08], {
+                extrapolateRight: "clamp",
+              })
+            : 1;
+          const glow = active ? 30 : hit.has(i) ? 14 : 0;
+          return (
+            <span
+              key={t.fromMs}
+              style={{
+                display: "inline-block",
+                whiteSpace: "pre",
+                color: active || hit.has(i) ? brand.highlight : "#fff",
+                transform: `scale(${pop})`,
+                textShadow: glow
+                  ? `0 0 6px #fff, 0 0 ${glow}px ${brand.highlight}, 0 0 ${glow * 2}px ${brand.highlight}`
+                  : `0 0 8px ${brand.navy}`,
+              }}
+            >
+              {t.text}
+            </span>
+          );
+        })}
+      </div>
+    </CaptionZone>
   );
 };
 
@@ -79,38 +89,23 @@ export const NeonCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
 }) => {
-  const { fps } = useVideoConfig();
-  const words = useMemo(
-    () => mergeWords(reel.timeline.captions),
-    [reel.timeline.captions],
-  );
-  const hit = useMemo(
-    () =>
-      emphasised(
-        words.map((w) => w.text),
-        keywords,
-      ),
-    [words, keywords],
-  );
+  const { delayRender, continueRender, cancelRender } = useDelayRender();
+  const [handle] = useState(() => delayRender("loading Be Vietnam Pro"));
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    reelFontReady()
+      .then(() => {
+        setReady(true);
+        continueRender(handle);
+      })
+      .catch(cancelRender);
+  }, [handle, continueRender, cancelRender]);
+  if (!ready) return null;
   return (
-    <>
-      {words.map((w, i) => {
-        const from = Math.round((w.startMs / 1000) * fps);
-        const to = Math.round((w.endMs / 1000) * fps);
-        const dur = Math.max(1, to - from);
-        const text = w.text.trim();
-        if (!text) return null;
-        return (
-          <Sequence
-            key={`${w.startMs}-${i}`}
-            from={from}
-            durationInFrames={dur}
-            layout="none"
-          >
-            <NeonWord text={text} big={hit.has(i)} />
-          </Sequence>
-        );
-      })}
-    </>
+    <PagedCaptions
+      reel={reel}
+      combineWithinMs={COMBINE_MS}
+      render={(page) => <Page page={page} keywords={keywords} />}
+    />
   );
 };
