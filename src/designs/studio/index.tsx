@@ -22,6 +22,7 @@ import type {
   OverlayProps,
   TalkProps,
 } from "../../mortgage/design";
+import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
@@ -149,25 +150,31 @@ const Talk: React.FC<TalkProps> = ({
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
         0.05;
+  const room = useCueRoom(seg);
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       {/* The brand backdrop PacedVideo would draw, then the Behind layer
           (figures, bank logos) under his cut-out: golden rule 3b. */}
       <BrandBackdrop />
       {behind}
-      <PacedVideo
-        seg={seg}
-        src={src}
-        look={look}
-        foreground={foreground}
-        backdrop="none"
-        style={{
-          transform: `scale(${base + punch})`,
-          // Zoom around his mouth (not his forehead), so a punch-in never
-          // pushes the mouth down into the caption band above SAFE.bottom.
-          transformOrigin: "50% 60%",
-        }}
-      />
+      {/* The zoom below lifts his hair line (HEAD_Y) to 1152 - 552 * zoom. */}
+      <AbsoluteFill
+        style={cueRoomStyle(room, 1152 - (1152 - HEAD_Y) * (base + punch))}
+      >
+        <PacedVideo
+          seg={seg}
+          src={src}
+          look={look}
+          foreground={foreground}
+          backdrop="none"
+          style={{
+            transform: `scale(${base + punch})`,
+            // Zoom around his mouth (not his forehead), so a punch-in never
+            // pushes the mouth down into the caption band above SAFE.bottom.
+            transformOrigin: "50% 60%",
+          }}
+        />
+      </AbsoluteFill>
       {/* Bottom shade so captions and the voice note read over any footage. */}
       <AbsoluteFill
         style={{

@@ -11,7 +11,7 @@
 //      never by cutting the card early.
 // Designs decide how these look, never whether they appear.
 import { findLenderMentions, type LenderMention } from "./lenders";
-import { onScreenCopy, type EditJson, type Reel } from "./schema";
+import { onScreenCopy, type Cue, type EditJson, type Reel } from "./schema";
 import { toOutMs, toSrcMs } from "./timeline";
 
 // Reading-time floor (WP5, 26/09/2026). UNTUNED starting values, one place:
@@ -321,22 +321,43 @@ export const lenderMentionsOf = (reel: Reel): LenderMention[] =>
 // UNTUNED: a first guess at 4 s; tune it once Daniel has watched a few.
 export const CUTAWAY_MAX_MS = 4000;
 
+// A MotionTrack cue that draws a panel over the top of the frame (every kind
+// but emoji, a small corner sticker). In a full-frame design the panel covers
+// Daniel's face unless the design makes room (src/mortgage/cueRoom.ts).
+export const isCuePanel = (c: Cue): boolean => c.kind !== "emoji";
+
 export type FaceHidden = {
   totalMs: number; // face-hidden time on the talk timeline
   longestMs: number; // longest single face-hidden stretch
+  cueMs: number; // of which: cue panels (0 when the design makes room)
   tooLong: { atMs: number; durMs: number }[]; // cutaways over CUTAWAY_MAX_MS
   overNumbers: { atMs: number; big: string }[]; // cutaways covering a number
 };
 
 // atMs as in edit.json (source ms) so a report points at the visual to fix.
-export const faceHiddenOf = (reel: Reel, fps: number): FaceHidden => {
+// cueRoom: the design shrinks Daniel under cue panels (template.json
+// "cueRoom"); otherwise every cue panel counts as face-hidden time. Panels
+// are reported, never failed: tooLong / overNumbers are about cutaways only.
+export const faceHiddenOf = (
+  reel: Reel,
+  fps: number,
+  { cueRoom = false }: { cueRoom?: boolean } = {},
+): FaceHidden => {
+  const out = (ms: number) => toOutMs(reel.timeline.segments, ms, fps);
   const cut = (reel.edit.visuals ?? []).flatMap((v) => {
-    const a = v.mode === "cutaway" ? toOutMs(reel.timeline.segments, v.atMs, fps) : null;
+    const a = v.mode === "cutaway" ? out(v.atMs) : null;
     return a === null ? [] : [{ v, a, b: a + v.durMs }];
   });
-  // Overlapping cutaways are one stretch of hidden face.
+  const cues = cueRoom
+    ? []
+    : (reel.edit.cues ?? []).filter(isCuePanel).flatMap((c) => {
+        const a = out(c.fromMs);
+        const b = out(c.toMs);
+        return a === null || b === null ? [] : [{ a, b }];
+      });
+  // Overlapping cutaways and panels are one stretch of hidden face.
   const merged: [number, number][] = [];
-  for (const { a, b } of [...cut].sort((x, y) => x.a - y.a)) {
+  for (const { a, b } of [...cut, ...cues].sort((x, y) => x.a - y.a)) {
     const last = merged[merged.length - 1];
     if (last && a <= last[1]) last[1] = Math.max(last[1], b);
     else merged.push([a, b]);
@@ -345,6 +366,7 @@ export const faceHiddenOf = (reel: Reel, fps: number): FaceHidden => {
   return {
     totalMs: merged.reduce((t, [a, b]) => t + b - a, 0),
     longestMs: Math.max(0, ...merged.map(([a, b]) => b - a)),
+    cueMs: cues.reduce((t, { a, b }) => t + b - a, 0),
     tooLong: cut
       .filter(({ v }) => v.durMs > CUTAWAY_MAX_MS)
       .map(({ v }) => ({ atMs: v.atMs, durMs: v.durMs })),

@@ -28,6 +28,7 @@ import {
   type CueOf,
   type Rel,
 } from "./Infographics";
+import { SAFE } from "../../mortgage/golden";
 import { outFrameOf, type Cue, type Reel } from "../../mortgage/schema";
 import { FONT, clamp, pop } from "../../mortgage/style";
 
@@ -90,7 +91,8 @@ const Verdict: React.FC<{ cue: CueOf<"verdict"> }> = ({ cue }) => {
           padding: "8px 30px",
           borderRadius: 14,
           marginTop: 16,
-          maxWidth: 980,
+          // Centred on x 540: this keeps it inside SAFE.right.
+          maxWidth: 2 * (SAFE.right - 540),
           textAlign: "center",
           transform: `scale(${pop(frame, fps, 6)})`,
         }}

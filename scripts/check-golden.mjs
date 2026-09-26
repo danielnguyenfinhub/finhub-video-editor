@@ -123,6 +123,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const two = fh([cutaway(8000, 2000), cutaway(9000, 2000)]);
   // Output ms: pacing speeds the talk up, so the second starts < 1 s after the first.
   check("overlapping cutaways merge", two.longestMs === two.totalMs && two.longestMs > 2000 && two.longestMs < 4000, JSON.stringify(two));
+  // A cue panel hides the face unless the design makes room; an emoji never does.
+  const cueReel = reelOf(w, { cues: [
+    { kind: "verdict", fromMs: 2000, toMs: 5000, ok: true, text: "Đúng" },
+    { kind: "emoji", fromMs: 6000, toMs: 8000, name: "fire", position: "left" },
+  ] });
+  const panel = faceHiddenOf(cueReel, FPS);
+  check("cue panel counted as face-hidden", panel.cueMs > 2000 && panel.totalMs === panel.cueMs && panel.tooLong.length === 0, JSON.stringify(panel));
+  check("cueRoom design: panels not counted", faceHiddenOf(cueReel, FPS, { cueRoom: true }).totalMs === 0);
 
   // Reading-time floor: NFC length (a decomposed "ộ" counts once), the number
   // minimum, a short stat stretched into free time, a cue boxed in by the next
@@ -173,8 +181,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const l = lenderMentionsOf(reel);
     console.log(`${slug}: ${l.length} bank mentions`);
     for (const x of l) console.log(`  ${(x.startMs / 1000).toFixed(1)}s ${x.lender.name}`);
-    const h = faceHiddenOf(reel, FPS);
+    const design = edit.design ?? "classic";
+    const { cueRoom = false } = JSON.parse(readFileSync(`src/designs/${design}/template.json`, "utf8"));
+    const h = faceHiddenOf(reel, FPS, { cueRoom });
     console.log(`${slug}: face hidden ${(h.totalMs / 1000).toFixed(1)} s in total, longest ${(h.longestMs / 1000).toFixed(1)} s (limit ${CUTAWAY_MAX_MS / 1000} s per cutaway, untuned)`);
+    console.log(cueRoom
+      ? `${slug}: ${design} makes room under cue panels (template.json cueRoom)`
+      : `${slug}: of which cue panels ${(h.cueMs / 1000).toFixed(1)} s: ${design} does not make room (template.json cueRoom), so they count as covering his face; check a still at each (report only)`);
     for (const x of h.tooLong) check(`cutaway at ${x.atMs} ms is ${(x.durMs / 1000).toFixed(1)} s, over the face limit`, false);
     for (const x of h.overNumbers) console.log(`FLAG cutaway at ${x.atMs} ms covers the spoken number ${x.big}: a figure drawn behind Daniel is hidden with him; move or shorten it`);
     const r = readingFindings(reel);

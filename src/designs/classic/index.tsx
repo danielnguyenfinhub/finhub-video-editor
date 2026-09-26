@@ -9,6 +9,8 @@ import {
   useVideoConfig,
 } from "remotion";
 import type { Design, OverlayProps, TalkProps } from "../../mortgage/design";
+import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
+import { SAFE } from "../../mortgage/golden";
 import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
 import { Behind } from "./Behind";
@@ -52,23 +54,27 @@ const Talk: React.FC<TalkProps> = ({
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
         0.05;
   const drift = interpolate(frame, [0, seg.outDuration], [0, 0.02]);
+  const room = useCueRoom(seg);
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       {/* The brand backdrop PacedVideo would draw, then the Behind layer
           (figures, bank logos) under his cut-out: golden rule 3b. */}
       <BrandBackdrop />
       {behind}
-      <PacedVideo
-        seg={seg}
-        src={src}
-        look={look}
-        foreground={foreground}
-        backdrop="none"
-        style={{
-          transform: `scale(${base + punch + drift})`,
-          transformOrigin: "50% 30%",
-        }}
-      />
+      {/* Zooms around y 576, so his hair line stays near HEAD_Y. */}
+      <AbsoluteFill style={cueRoomStyle(room)}>
+        <PacedVideo
+          seg={seg}
+          src={src}
+          look={look}
+          foreground={foreground}
+          backdrop="none"
+          style={{
+            transform: `scale(${base + punch + drift})`,
+            transformOrigin: "50% 30%",
+          }}
+        />
+      </AbsoluteFill>
       {/* Daniel's voice as mirrored bars low on the frame, following the
           paced source; white with a shadow so it reads over the footage. */}
       <div
@@ -95,7 +101,8 @@ const Talk: React.FC<TalkProps> = ({
 
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => (
   <>
-    <MotionTrack reel={reel} />
+    {/* Panels in the safe band; Talk makes room under them (cueRoom). */}
+    <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
     <Chrome talkFrames={talkFrames} />
     <StatCards reel={reel} />
     <Chapters reel={reel} />
