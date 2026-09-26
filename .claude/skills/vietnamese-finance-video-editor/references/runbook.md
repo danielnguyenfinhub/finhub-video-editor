@@ -70,7 +70,7 @@ Run A1.3 in parallel with A2–A4. It doesn't depend on the edit.
 | # | Step | Who | Run / do | Makes | Gate |
 |---|---|---|---|---|---|
 | A3.1 | Daniel named a template? | — | If yes, use it; the choice is logged as an override (`select-template.mjs <slug> --pick <id>` once WP6 merges). Skip to A3.4 | — | — |
-| A3.2 | Selector **[TODAY]** | Claude | `node scripts/select-template.mjs <slug>` (`--public-dir <dir>` when the media lives elsewhere) | `out/videos/<slug>/selection.json` (top 3 and scores; promoted designs rank above `unproven` ones) | Take the top pick unless a hard reason is written down |
+| A3.2 | Selector **[TODAY]** | Claude | `node scripts/select-template.mjs <slug>` (`--public-dir <dir>` when the media lives elsewhere) | `out/videos/<slug>/selection.json` (top 3 and scores; promoted designs rank above `unproven` ones) | Take the top pick unless a hard reason is written down; when `confident` is false, show Daniel the `closeCall` pair and let him choose |
 | A3.3 | Variety check | Claude | `python .claude/skills/vietnamese-finance-video-editor/scripts/main.py check <axes.json>`. Novelty applies to **skin** only (≥ 4 of 7: cover, captions style, framing, transitions, texture, sound, cta). Keep **grammar** (the graphics axis: how numbers, comparisons and steps are shown; caption position) consistent per data shape | Check output | Pass, or change skin axes; never edit the log to pass |
 | A3.4 | Set design | Claude | `"design": "<id>"` in `edit.json` | — | — |
 
