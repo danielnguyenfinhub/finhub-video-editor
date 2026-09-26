@@ -6,6 +6,7 @@ import type React from "react";
 import {
   AbsoluteFill,
   Sequence,
+  interpolate,
   spring,
   useCurrentFrame,
   useVideoConfig,
@@ -13,7 +14,9 @@ import {
 import type { Design, OverlayProps, TalkProps } from "../../mortgage/design";
 import { SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
-import { toOutMs } from "../../mortgage/timeline";
+import { outFrameOf, type Reel } from "../../mortgage/schema";
+import { clamp } from "../../mortgage/style";
+import { toOutMs, type Segment } from "../../mortgage/timeline";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
 import { MotionTrack } from "../classic/Cues";
@@ -28,6 +31,43 @@ import { Lenders } from "./Lenders";
 const HOOK_FRAMES = 105;
 const CHAPTER_FRAMES_S = 2.5;
 
+// Framing. Talking: 0.85 (0.92 on alternate "zoomed" cuts), centred, lifted
+// so his chin (source y ~1400 when he leans in) lands at CHIN_Y and a
+// two-line caption page (top ~1290) sits under it. While a cue panel is up
+// (top of SAFE down to ~y 925), he shrinks to CUE_SCALE with the top of his
+// head at CUE_HEAD_Y, under the panel and over the captions, then grows back.
+// The layer ends inside the frame, so its sides and bottom fade out.
+const SCALE = 0.85;
+const ZOOMED_SCALE = 0.92;
+const CHIN_Y = 1280;
+const CUE_SCALE = 0.46;
+const CUE_HEAD_Y = 935; // source hair line ~y 600
+const CUE_EASE = 12;
+const EDGE_FADE =
+  "linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, #000 80%, transparent)";
+
+// 0..1: how far into a cue panel the talk is. Talk gets no reel (the Design
+// contract), so it reads the composition's resolved props; an emoji cue is a
+// small corner sticker, not a panel, and leaves him as he is.
+const useCuePanel = (seg: Segment): number => {
+  const frame = useCurrentFrame();
+  const { fps, props } = useVideoConfig();
+  const reel = (props as { reel?: Reel }).reel;
+  if (!reel) return 0;
+  const t = seg.outFrom + frame;
+  const outFrame = outFrameOf(reel.timeline, fps);
+  return (reel.edit.cues ?? [])
+    .filter((c) => c.kind !== "emoji")
+    .reduce((k, c) => {
+      const a = outFrame(c.fromMs);
+      const b = Math.max(a + 1, outFrame(c.toMs));
+      return Math.max(
+        k,
+        interpolate(t, [a - CUE_EASE, a, b, b + CUE_EASE], [0, 1, 1, 0], clamp),
+      );
+    }, 0);
+};
+
 // Ice-blue backdrop behind Daniel's cut-out; a gentle punch-in on each cut.
 const Talk: React.FC<TalkProps> = ({
   seg,
@@ -39,7 +79,14 @@ const Talk: React.FC<TalkProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const base = seg.zoomed ? 1.08 : 1.0;
+  const cue = useCuePanel(seg);
+  const talkScale = seg.zoomed ? ZOOMED_SCALE : SCALE;
+  const s = interpolate(cue, [0, 1], [talkScale, CUE_SCALE]);
+  const y = interpolate(
+    cue,
+    [0, 1],
+    [CHIN_Y - 1400 * talkScale, CUE_HEAD_Y - 600 * CUE_SCALE],
+  );
   const punch =
     index === 0
       ? 0
@@ -49,17 +96,31 @@ const Talk: React.FC<TalkProps> = ({
     <AbsoluteFill>
       <Backdrop />
       {behind}
-      <PacedVideo
-        seg={seg}
-        src={src}
-        look={look}
-        foreground={foreground}
-        backdrop="none"
+      <AbsoluteFill
         style={{
-          transform: `scale(${base + punch})`,
-          transformOrigin: "50% 30%",
+          transform: `scale(${1 + punch})`,
+          transformOrigin: `50% ${CHIN_Y}px`,
         }}
-      />
+      >
+        <AbsoluteFill
+          style={{
+            transform: `translate(${540 * (1 - s)}px, ${y}px) scale(${s})`,
+            transformOrigin: "0 0",
+            maskImage: EDGE_FADE,
+            WebkitMaskImage: EDGE_FADE,
+            maskComposite: "intersect",
+            WebkitMaskComposite: "source-in",
+          }}
+        >
+          <PacedVideo
+            seg={seg}
+            src={src}
+            look={look}
+            foreground={foreground}
+            backdrop="none"
+          />
+        </AbsoluteFill>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };

@@ -1,10 +1,11 @@
-// The right-hand tracker (x 700-960, y 360-1000 inside SAFE): "HÀNH TRÌNH" plus
-// a horizontal-bar list built from reel.edit.stats (golden rule 1's "stat"
-// figures ARE this bar list — never rendered a second time as cards), then
+// The right-hand tracker (x 620-960, y 690-1290 inside SAFE): "HÀNH TRÌNH", the
+// reel.edit.stats numbers as Daniel reaches them (golden rule 1's "stat"
+// figures ARE this list — never rendered a second time as cards), then
 // "ĐÃ NHẮC TỚI" with a rotated stack of bank logos (adapted from the rotate +
 // stacked-offset feel of .claude/elements/commerce/product-collection, minus
 // its Interactive.* wrapper and scroll behaviour: here every seen bank stays
 // stacked, newest on top, instead of carousel-scrolling through them).
+import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
@@ -12,13 +13,15 @@ import { SAFE } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { LenderMention } from "../../mortgage/lenders";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
-import { FONT, clamp } from "../../mortgage/style";
+import { FONT } from "../../mortgage/style";
 
-const X = SAFE.right - 260;
-const WIDTH = 260; // to SAFE.right (960)
-const BAR_H = 30;
-const BAR_GAP = 20;
-const GROW_FRAMES = 18;
+// x 620-960: right of his head and neck (x ~200-490 at y < 1300), so the
+// wider column still sits clear of him.
+const WIDTH = 340;
+const X = SAFE.right - WIDTH;
+const NUMBER_MIN = 40;
+const NUMBER_MAX = 48;
+const ROWS = 2;
 // Sidebar headings start below the LogoMark (top SAFE.top + 70, 120px tall
 // on its tile): golden rule, y >= SAFE.top + 270.
 // The auto-figure card (a transient counter for a spoken number with no
@@ -28,9 +31,10 @@ const GROW_FRAMES = 18;
 // the top of the sidebar; the tracker always starts below it, whether or not
 // this reel ever has an auto figure, so the two can never collide.
 const AUTO_CARD_TOP = SAFE.top + 270;
-const AUTO_CARD_RESERVED = 170; // card height (~120) + gap, clear of HEADING_TOP
+const AUTO_CARD_RESERVED = 150; // card height (~105) + gap, clear of HEADING_TOP
 const HEADING_TOP = AUTO_CARD_TOP + AUTO_CARD_RESERVED;
-const LENDER_TOP = HEADING_TOP + 480;
+// Heading (38) + two rows (number 53 + two label lines 60, gap 16) + note.
+const LENDER_TOP = HEADING_TOP + 330;
 
 // Fades the whole sidebar to 0 while any edit.json cue is on screen, so a
 // kinetic/compare/bars/verdict/venn/emoji/lenders card never fights the
@@ -47,75 +51,77 @@ export const useSidebarFade = (reel: Reel): number => {
   return cueActive ? 0 : 1;
 };
 
-type Bar = { label: string; big: string; atFrame: number };
+type Row = { label: string; big: string; atFrame: number };
 
-const TrackerBar: React.FC<{
-  bar: Bar;
-  top: number;
-  current: boolean;
-  frame: number;
-}> = ({ bar, top, current, frame }) => {
-  const grown = interpolate(
-    frame,
-    [bar.atFrame, bar.atFrame + GROW_FRAMES],
-    [0, 1],
-    clamp,
+// Stats are a mix of amounts and words ("$4,1 TỶ", "TỔNG CHI PHÍ"), not
+// values on one scale, so a row is the number itself, large, over its label
+// (wrapping, never cut): no bar pretending to compare them.
+const StatRow: React.FC<{ row: Row; current: boolean }> = ({
+  row,
+  current,
+}) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const p = spring({
+    frame: frame - row.atFrame,
+    fps,
+    config: { damping: 14, stiffness: 180 },
+  });
+  const size = Math.max(
+    NUMBER_MIN,
+    Math.min(
+      NUMBER_MAX,
+      fitText({
+        text: row.big,
+        withinWidth: WIDTH,
+        fontFamily: FONT,
+        fontWeight: 900,
+      }).fontSize,
+    ),
   );
-  const color = current ? brand.accent : "#7FC4FF";
   return (
-    <div style={{ position: "absolute", left: 0, top, width: WIDTH }}>
+    <div
+      style={{
+        fontFamily: FONT,
+        opacity: p,
+        transform: `translateX(${interpolate(p, [0, 1], [40, 0])}px)`,
+      }}
+    >
       <div
         style={{
-          fontFamily: FONT,
-          fontSize: 26,
-          color: brand.textDim,
-          marginBottom: 6,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          fontSize: size,
+          fontWeight: 900,
+          lineHeight: 1.1,
+          color: current ? brand.accent : "#fff",
         }}
       >
-        {bar.label} · {bar.big}
+        {row.big}
       </div>
       <div
         style={{
-          width: "100%",
-          height: BAR_H,
-          borderRadius: BAR_H / 2,
-          background: "rgba(255,255,255,0.12)",
+          fontSize: 24,
+          lineHeight: 1.25,
+          color: brand.textDim,
         }}
       >
-        <div
-          style={{
-            height: "100%",
-            width: `${grown * 100}%`,
-            borderRadius: BAR_H / 2,
-            background: color,
-            boxShadow: current ? `0 0 18px ${brand.accent}` : undefined,
-          }}
-        />
+        {row.label}
       </div>
     </div>
   );
 };
 
-// The "HÀNH TRÌNH" bar-chart tracker. Every reel.edit.stats figure is one bar;
-// the most recently reached one glows amber, the rest stay light blue.
+// The "HÀNH TRÌNH" tracker: each reel.edit.stats figure appears when Daniel
+// reaches it; the latest ROWS stay listed (the newest in amber), older ones
+// give way so the column never runs into the lender stack or the captions.
 export const Tracker: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
   const frame = useCurrentFrame();
   const outFrame = outFrameOf(reel.timeline, fps);
-  const stats = reel.edit.stats ?? [];
-  if (stats.length === 0) return null;
-  const bars: Bar[] = stats.map((s) => ({
-    label: s.label,
-    big: s.big,
-    atFrame: outFrame(s.atMs),
-  }));
-  let currentIndex = -1;
-  bars.forEach((b, i) => {
-    if (frame >= b.atFrame) currentIndex = i;
-  });
+  const reached: Row[] = (reel.edit.stats ?? [])
+    .map((s) => ({ label: s.label, big: s.big, atFrame: outFrame(s.atMs) }))
+    .filter((r) => frame >= r.atFrame);
+  if (reached.length === 0) return null;
+  const shown = reached.slice(-ROWS);
   return (
     <div
       style={{ position: "absolute", left: X, top: HEADING_TOP, width: WIDTH }}
@@ -127,32 +133,29 @@ export const Tracker: React.FC<{ reel: Reel }> = ({ reel }) => {
           fontSize: 24,
           letterSpacing: 3,
           color: brand.accent,
-          marginBottom: 22,
+          marginBottom: 14,
         }}
       >
         HÀNH TRÌNH
       </div>
-      <div style={{ position: "relative" }}>
-        {bars.map((b, i) => (
-          <TrackerBar
-            key={b.atFrame}
-            bar={b}
-            top={i * (BAR_H + 30 + BAR_GAP)}
-            current={i === currentIndex}
-            frame={frame}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {shown.map((r, i) => (
+          <StatRow
+            key={r.atFrame}
+            row={r}
+            current={i === shown.length - 1}
           />
         ))}
       </div>
       <div
         style={{
-          marginTop: bars.length * (BAR_H + 30 + BAR_GAP) + 4,
+          marginTop: 8,
           fontFamily: FONT,
           fontSize: 16,
           color: "rgba(201,211,230,0.6)",
-          lineHeight: 1.3,
         }}
       >
-        ví dụ minh hoạ · cộng dồn qua các tập
+        ví dụ minh hoạ
       </div>
     </div>
   );
@@ -261,7 +264,7 @@ export const LenderTracker: React.FC<{ mentions: LenderMention[] }> = ({
           fontSize: 24,
           letterSpacing: 3,
           color: brand.accent,
-          marginBottom: 40,
+          marginBottom: 20,
         }}
       >
         ĐÃ NHẮC TỚI

@@ -140,7 +140,13 @@ const ChatCaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
                   <span
                     key={t.fromMs}
                     style={{
-                      color: isKey || active ? brand.primary : undefined,
+                      // Navy on the amber chip (brand blue on pale amber
+                      // read too faint); the spoken plain word turns blue.
+                      color: isKey
+                        ? brand.textOnCard
+                        : active
+                          ? brand.primary
+                          : undefined,
                       opacity: nowMs >= t.fromMs ? 1 : 0.5,
                       borderRadius: isKey ? 6 : undefined,
                       background: isKey ? AMBER_HIGHLIGHT : undefined,

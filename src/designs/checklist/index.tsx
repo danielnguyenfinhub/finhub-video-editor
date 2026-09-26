@@ -47,21 +47,24 @@ import { NotebookBackdrop } from "./Paper";
 import { ProgressTrack, StepColumn, type FrameMention } from "./StepColumn";
 
 const HOOK_FRAMES = 105;
-// Bottom-right anchor for Daniel's cut-out: a fixed box narrower than the
-// frame (starting past x 620) so the left column stays free for the step
-// cards, with the cut-out itself scaled down 0.85 inside it, anchored to the
-// box's own bottom-right corner.
-const ANCHOR_BOX: React.CSSProperties = {
+// Daniel on the right at 0.6 (face x ~700-1000), bleeding off the right
+// edge, lifted so his chin (source y ~1440 when he leans in) lands at y 1270:
+// a two-line caption page (top ~1290) sits under it. The layer's left and
+// bottom edges end inside the frame, so they fade out instead of cutting hard.
+// The step column (Behind) is x 54-614: at its height (y < 1200) he is head
+// and neck only, right of x 690.
+const SCALE = 0.6;
+const EDGE_FADE =
+  "linear-gradient(to right, transparent, #000 14%), linear-gradient(to bottom, #000 80%, transparent)";
+const FRAMING: React.CSSProperties = {
   position: "absolute",
-  right: 0,
-  bottom: 0,
-  width: 460,
-  height: 1500,
-  overflow: "hidden",
-};
-const ANCHOR_INNER: React.CSSProperties = {
-  transform: "scale(0.85)",
-  transformOrigin: "bottom right",
+  inset: 0,
+  transform: `translate(${850 - 540 * SCALE}px, ${1270 - 1440 * SCALE}px) scale(${SCALE})`,
+  transformOrigin: "0 0",
+  maskImage: EDGE_FADE,
+  WebkitMaskImage: EDGE_FADE,
+  maskComposite: "intersect",
+  WebkitMaskComposite: "source-in",
 };
 
 // ---------------------------------------------------------------- cover
@@ -95,11 +98,13 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
       >
         <Img src={LOGO} style={{ height: LOGO_HEIGHT, display: "block" }} />
       </div>
+      {/* The track inside SAFE, left of the logo tile; the title below the
+          tile (SAFE.top + 170) so a long title never runs under it. */}
       <div
         style={{
           position: "absolute",
           left: SAFE.left,
-          top: SAFE.top - 80,
+          top: SAFE.top,
           width: 560,
           opacity: p,
         }}
@@ -110,7 +115,7 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
         style={{
           position: "absolute",
           left: SAFE.left,
-          top: SAFE.top,
+          top: SAFE.top + 170,
           width: 900,
           fontSize: size,
           fontWeight: 900,
@@ -122,7 +127,7 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
       >
         {title}
       </div>
-      <div style={ANCHOR_BOX}>
+      <div style={FRAMING}>
         <Freeze frame={0}>
           <OffthreadVideo
             src={foregroundOf(src)}
@@ -130,12 +135,7 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
             muted
             transparent
             {...retryVideoFetch}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              ...ANCHOR_INNER,
-            }}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </Freeze>
       </div>
@@ -145,22 +145,18 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
 
 // ---------------------------------------------------------------- talk
 
-// Daniel is anchored bottom-right, scaled 0.85 inside ANCHOR_BOX (right:0,
-// bottom:0, 460x1500): his visible box is 460*0.85=391 wide, so it starts at
-// x=1080-391=689. The step column (Behind) sits at SAFE.left..SAFE.left+560
-// = x54-614, well clear of that box and of his face inside it.
+// Daniel framed by FRAMING (above); the step column sits behind him.
 const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => (
   <AbsoluteFill>
     <NotebookBackdrop />
     {behind}
-    <div style={ANCHOR_BOX}>
+    <div style={FRAMING}>
       <PacedVideo
         seg={seg}
         src={src}
         look={look}
         foreground={foreground}
         backdrop="none"
-        style={ANCHOR_INNER}
       />
     </div>
   </AbsoluteFill>

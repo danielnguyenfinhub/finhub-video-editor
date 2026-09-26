@@ -1,6 +1,7 @@
 // "scenario" overlay pieces: the hook counter, spoken-number figures, a bank
 // chip in a column header slot with a one-time shine sweep, and the chapter
 // strip.
+import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import {
   AbsoluteFill,
@@ -94,23 +95,34 @@ export const ScenarioHook: React.FC<{
 
 export const ILLUSTRATIVE = "Ví dụ minh hoạ · tuỳ hoàn cảnh từng người";
 
+// Left-aligned in the A half: the number runs above Daniel's head (top ~y
+// 800), its label and note wrap in the left column (to x ~350), beside his
+// head rather than behind it.
+const FIGURE_TEXT_WIDTH = 300;
+
 export const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const p = spring({ frame, fps, config: { damping: 14, stiffness: 170 } });
   const big = figure.source === "stat";
-  const size = big ? 128 : 92;
-  const lineW = interpolate(frame, [6, 20], [0, big ? 260 : 180], clamp);
+  const size = Math.min(
+    big ? 112 : 92,
+    fitText({
+      text: figure.big,
+      withinWidth: SAFE.right - SAFE.left,
+      fontFamily: FONT,
+      fontWeight: 900,
+    }).fontSize,
+  );
+  const lineW = interpolate(frame, [6, 20], [0, big ? 220 : 160], clamp);
   return (
     <div
       style={{
         position: "absolute",
         left: SAFE.left,
         right: 1080 - SAFE.right,
-        // Spans the full width, including LogoMark's corner (first/last
-        // 10 s), so it sits under it rather than behind it.
+        // Under LogoMark's corner (first/last 10 s), not behind it.
         top: SAFE.top + 170,
-        textAlign: "center",
         fontFamily: FONT,
         opacity: p,
         transform: `translateY(${interpolate(p, [0, 1], [30, 0])}px)`,
@@ -121,7 +133,9 @@ export const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
           fontSize: size,
           fontWeight: 900,
           color: "#fff",
-          lineHeight: 1,
+          // Room above the cap height for a stacked diacritic ("TỶ"), which
+          // would otherwise poke up into LogoMark's tile.
+          lineHeight: 1.3,
         }}
       >
         {figure.big}
@@ -131,15 +145,17 @@ export const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
           width: lineW,
           height: 6,
           background: brand.accent,
-          margin: "10px auto 0",
+          marginTop: 4,
           borderRadius: 3,
         }}
       />
       <div
         style={{
           marginTop: 12,
-          fontSize: big ? 34 : 28,
+          width: FIGURE_TEXT_WIDTH,
+          fontSize: big ? 30 : 28,
           fontWeight: 700,
+          lineHeight: 1.2,
           color: "#fff",
         }}
       >
@@ -149,7 +165,8 @@ export const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
         <div
           style={{
             marginTop: 8,
-            fontSize: 24,
+            width: FIGURE_TEXT_WIDTH,
+            fontSize: 22,
             fontWeight: 600,
             color: brand.textDim,
           }}

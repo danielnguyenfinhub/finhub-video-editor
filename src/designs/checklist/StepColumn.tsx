@@ -19,7 +19,7 @@ import { LenderLogo } from "../../mortgage/LenderLogo";
 import { FONT, clamp, enter } from "../../mortgage/style";
 
 const COLUMN_LEFT = SAFE.left;
-const COLUMN_WIDTH = 560; // x 54-614, clear of Daniel's scaled anchor box
+const COLUMN_WIDTH = 560; // x 54-614, left of Daniel's head (x ~690+)
 const CARD_GAP = 10;
 
 // -------------------------------------------------------------- progress bar
@@ -397,7 +397,9 @@ export const StepColumn: React.FC<{
         />
         {looseFigure ? <LooseFigureCard figure={looseFigure} /> : null}
         {looseMention ? <LoosePolaroidCard mention={looseMention} /> : null}
-        {chapters.map((c, i) => (
+        {/* A step shows once Daniel reaches it: the agenda never gives away
+            the titles ahead (the "k/N" track counts them). */}
+        {chapters.slice(0, currentIndex + 1).map((c, i) => (
           <StepCard
             key={c.title + c.startFrame}
             index={i}
