@@ -3,7 +3,7 @@
 // Timing comes from the same core data as every design (toOutMs on the paced
 // timeline); only the drawing differs.
 import type { TikTokPage } from "@remotion/captions";
-import { captionPages } from "../../mortgage/captionPages";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import { fitText } from "@remotion/layout-utils";
 import { Audio } from "@remotion/media";
 import { Trail } from "@remotion/motion-blur";
@@ -56,13 +56,7 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   );
   const p = enter(frame, fps);
   return (
-    <AbsoluteFill
-      style={{
-        height: SAFE.bottom,
-        alignItems: "center",
-        justifyContent: "flex-end",
-      }}
-    >
+    <CaptionZone>
       <div
         style={{
           width: 900,
@@ -117,46 +111,20 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           );
         })}
       </div>
-    </AbsoluteFill>
+    </CaptionZone>
   );
 };
 
 const Captions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
-}) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 1200,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        if (dur <= 0) return null;
-        return (
-          <Sequence
-            key={page.startMs}
-            from={from}
-            durationInFrames={dur}
-            layout="none"
-          >
-            <CaptionPage page={page} keywords={keywords} />
-          </Sequence>
-        );
-      })}
-    </>
-  );
-};
+}) => (
+  <PagedCaptions
+    reel={reel}
+    combineWithinMs={1200}
+    render={(page) => <CaptionPage page={page} keywords={keywords} />}
+  />
+);
 
 // ---------------------------------------------------------------- stats
 
@@ -230,9 +198,7 @@ const StatNotes: React.FC<{ reel: Reel }> = ({ reel }) => {
         return (
           <Sequence key={c.atMs} from={from} durationInFrames={frames}>
             <BandWide.Provider
-              value={
-                !logoDuring(from, frames, reel.timeline.talkFrames, fps)
-              }
+              value={!logoDuring(from, frames, reel.timeline.talkFrames, fps)}
             >
               <StatNote big={c.big} label={c.label} />
             </BandWide.Provider>

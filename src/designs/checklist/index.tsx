@@ -39,7 +39,7 @@ import {
   retryVideoFetch,
 } from "../../mortgage/style";
 import { chapterTransition } from "../../mortgage/transitions";
-import { captionPages } from "../../mortgage/captionPages";
+import { PagedCaptions } from "../../mortgage/PagedCaptions";
 import { MotionTrack } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
 import { BoxCaptionPage } from "./BoxCaption";
@@ -235,39 +235,13 @@ const Hook: React.FC<{
 const Captions: React.FC<{
   reel: OverlayProps["reel"];
   keywords: string[];
-}> = ({ reel, keywords }) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 1200,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        if (dur <= 0) return null;
-        return (
-          <Sequence
-            key={page.startMs}
-            from={from}
-            durationInFrames={dur}
-            layout="none"
-          >
-            <BoxCaptionPage page={page} keywords={keywords} />
-          </Sequence>
-        );
-      })}
-    </>
-  );
-};
+}> = ({ reel, keywords }) => (
+  <PagedCaptions
+    reel={reel}
+    combineWithinMs={1200}
+    render={(page) => <BoxCaptionPage page={page} keywords={keywords} />}
+  />
+);
 
 // ---------------------------------------------------------------- behind
 // Golden rule 3b: figures, chapter cards and the lender polaroid render

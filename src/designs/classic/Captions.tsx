@@ -1,11 +1,10 @@
 // Talk-timeline text overlays: karaoke captions, stat cards and chapter banners.
 import type { TikTokPage } from "@remotion/captions";
-import { captionPages } from "../../mortgage/captionPages";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import { fitText } from "@remotion/layout-utils";
 import { Underline } from "@remotion/rough-notation";
 import type React from "react";
 import {
-  AbsoluteFill,
   Sequence,
   interpolate,
   useCurrentFrame,
@@ -15,7 +14,6 @@ import { brand } from "../../brand/theme";
 import type { Reel } from "../../mortgage/schema";
 import { toOutMs } from "../../mortgage/timeline";
 import { FONT, STROKE, emphasised, enter } from "../../mortgage/style";
-import { SAFE } from "../../mortgage/golden";
 import { BoxCaptionPage } from "./BoxCaption";
 
 // ---------------------------------------------------------------- captions
@@ -33,19 +31,10 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   );
   const p = enter(frame, fps);
   return (
-    <AbsoluteFill
-      style={{
-        justifyContent: "flex-end",
-        alignItems: "center",
-        // Golden rule: captions below FACE. Anchored to SAFE.bottom and growing
-        // upward, one or two lines sit clear of the mouth, even on a 1.13x
-        // zoom-cut (y 1180 crossed it), and never enter the bottom UI.
-        height: SAFE.bottom, // not bottom: AbsoluteFill sets height 100%, which wins
-      }}
-    >
+    <CaptionZone>
       <div
         style={{
-          width: 960,
+          width: "100%",
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
@@ -82,7 +71,7 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           );
         })}
       </div>
-    </AbsoluteFill>
+    </CaptionZone>
   );
 };
 
@@ -90,37 +79,12 @@ export const Captions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
 }) => {
-  const { fps } = useVideoConfig();
   const Page = reel.edit.captionStyle === "box" ? BoxCaptionPage : CaptionPage;
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 900,
-    breakOnSilenceAfterMs: 350,
-  });
   return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const nextStart = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          nextStart - from,
-        );
-        if (dur <= 0) return null;
-        return (
-          <Sequence
-            key={page.startMs}
-            from={from}
-            durationInFrames={dur}
-            layout="none"
-          >
-            <Page page={page} keywords={keywords} />
-          </Sequence>
-        );
-      })}
-    </>
+    <PagedCaptions
+      reel={reel}
+      render={(page) => <Page page={page} keywords={keywords} />}
+    />
   );
 };
 

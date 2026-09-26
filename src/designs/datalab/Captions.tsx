@@ -4,16 +4,9 @@
 // with a black outline, centred inside SAFE.
 import type { TikTokPage } from "@remotion/captions";
 import type React from "react";
-import {
-  Sequence,
-  interpolate,
-  spring,
-  useCurrentFrame,
-  useVideoConfig,
-} from "remotion";
+import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
-import { captionPages } from "../../mortgage/captionPages";
-import { SAFE } from "../../mortgage/golden";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, emphasised } from "../../mortgage/style";
 
@@ -31,18 +24,7 @@ const PoppingPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
     keywords,
   );
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: SAFE.left,
-        right: 1080 - SAFE.right,
-        // Bottom-anchored so the box grows upward and its bottom edge never
-        // passes SAFE.bottom, whatever the page's line count.
-        bottom: 1920 - SAFE.bottom,
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
+    <CaptionZone>
       <div
         style={{
           textAlign: "center",
@@ -91,37 +73,16 @@ const PoppingPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           );
         })}
       </div>
-    </div>
+    </CaptionZone>
   );
 };
 
 export const PoppingCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
-}) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 900,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        return dur > 0 ? (
-          <Sequence key={page.startMs} from={from} durationInFrames={dur}>
-            <PoppingPage page={page} keywords={keywords} />
-          </Sequence>
-        ) : null;
-      })}
-    </>
-  );
-};
+}) => (
+  <PagedCaptions
+    reel={reel}
+    render={(page) => <PoppingPage page={page} keywords={keywords} />}
+  />
+);

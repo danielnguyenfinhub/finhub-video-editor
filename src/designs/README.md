@@ -66,9 +66,13 @@ or `toOutMs` (timeline.ts). Reel data: `reel.edit` (edit.json), `reel.timeline.c
    logo at the same size and place.
 4. **Background always removed.** `foreground` is always set; design the backdrop.
 5. **Keywords light up.** In captions use `emphasised(tokens, keywords)` (style.ts) to
-   colour finance keywords and numbers with `brand.highlight`; use `captionPages`
-   (`src/mortgage/captionPages.ts`) for sentence-aware pages. Measure text only after
-   `reelFontReady()` with `useDelayRender` (see studio/PillCaptions.tsx).
+   colour finance keywords and numbers with `brand.highlight`. Captions go through
+   `src/mortgage/PagedCaptions.tsx`: `<PagedCaptions reel render={(page) => …}/>` owns
+   the sentence-aware pages and their timing (never copy the loop:
+   `scripts/check-captions.mjs` fails on it), and the page draws inside
+   `<CaptionZone>` (bottom edge at `SAFE.bottom`, grows upward; `left`/`right`/`bottom`
+   to narrow it). Measure text only after `reelFontReady()` with `useDelayRender` (see
+   studio/PillCaptions.tsx).
 5b. **A visual change every 1.5–3 s.** Punch-in on cuts, a word pop, a card, a logo: the
    template must never sit still for more than 3 s (Daniel's rule). A text or number
    hold wins over this: the core holds each card and cue for its reading time

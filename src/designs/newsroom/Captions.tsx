@@ -6,7 +6,6 @@ import type { TikTokPage } from "@remotion/captions";
 import type React from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-  Sequence,
   interpolate,
   spring,
   useCurrentFrame,
@@ -14,7 +13,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { captionPages } from "../../mortgage/captionPages";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import { SAFE } from "../../mortgage/golden";
 import { LENDER_BAR_HEIGHT } from "./Pieces";
 import type { Reel } from "../../mortgage/schema";
@@ -92,17 +91,7 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   const started = nowMs >= page.tokens[0].fromMs;
   const activeIdx = Math.round(Math.min(at, page.tokens.length - 1));
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: SAFE.left,
-        right: 1080 - SAFE.right,
-        bottom: 1920 - CAPTION_BOTTOM,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-end",
-      }}
-    >
+    <CaptionZone bottom={CAPTION_BOTTOM}>
       <div
         style={{
           position: "relative",
@@ -156,37 +145,16 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           );
         })}
       </div>
-    </div>
+    </CaptionZone>
   );
 };
 
 export const NewsroomCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
-}) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 900,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        return dur > 0 ? (
-          <Sequence key={page.startMs} from={from} durationInFrames={dur}>
-            <CaptionPage page={page} keywords={keywords} />
-          </Sequence>
-        ) : null;
-      })}
-    </>
-  );
-};
+}) => (
+  <PagedCaptions
+    reel={reel}
+    render={(page) => <CaptionPage page={page} keywords={keywords} />}
+  />
+);

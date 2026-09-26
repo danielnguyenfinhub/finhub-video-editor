@@ -2,16 +2,9 @@
 // pages via captionPages), keywords lit in brand.primary. Centred inside SAFE.
 import type { TikTokPage } from "@remotion/captions";
 import type React from "react";
-import {
-  AbsoluteFill,
-  interpolate,
-  Sequence,
-  useCurrentFrame,
-  useVideoConfig,
-} from "remotion";
+import { interpolate, useCurrentFrame } from "remotion";
 import { brand } from "../../brand/theme";
-import { captionPages } from "../../mortgage/captionPages";
-import { SAFE } from "../../mortgage/golden";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import type { Reel } from "../../mortgage/schema";
 import { emphasised, FONT } from "../../mortgage/style";
 
@@ -31,15 +24,7 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
     keywords,
   );
   return (
-    <AbsoluteFill
-      style={{
-        justifyContent: "flex-end",
-        alignItems: "center",
-        // Anchor to the bottom of SAFE so the strip grows upward and its
-        // bottom edge never crosses SAFE.bottom, whatever the page length.
-        height: SAFE.bottom, // not bottom: AbsoluteFill sets height 100%, which wins
-      }}
-    >
+    <CaptionZone>
       <div
         style={{
           width: 900,
@@ -72,43 +57,19 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           </span>
         ))}
       </div>
-    </AbsoluteFill>
+    </CaptionZone>
   );
 };
 
 export const KitchenCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
-}) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 1400,
-    breakOnSilenceAfterMs: 500,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const nextStart = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 500) / 1000) * fps),
-          nextStart - from,
-        );
-        if (dur <= 0) return null;
-        return (
-          <Sequence
-            key={page.startMs}
-            from={from}
-            durationInFrames={dur}
-            layout="none"
-          >
-            <CaptionPage page={page} keywords={keywords} />
-          </Sequence>
-        );
-      })}
-    </>
-  );
-};
+}) => (
+  <PagedCaptions
+    reel={reel}
+    combineWithinMs={1400}
+    breakOnSilenceAfterMs={500}
+    tailMs={500}
+    render={(page) => <CaptionPage page={page} keywords={keywords} />}
+  />
+);

@@ -5,14 +5,12 @@ import { Highlight } from "@remotion/rough-notation";
 import type React from "react";
 import { useEffect, useState } from "react";
 import {
-  Sequence,
   interpolate,
   useCurrentFrame,
   useDelayRender,
   useVideoConfig,
 } from "remotion";
-import { captionPages } from "../../mortgage/captionPages";
-import { SAFE } from "../../mortgage/golden";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import type { Reel } from "../../mortgage/schema";
 import {
   FONT,
@@ -37,51 +35,49 @@ const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
     keywords,
   );
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: SAFE.left,
-        // 4 lines max at this size fits before SAFE.bottom (1473).
-        top: 1310,
-        width: 500,
-        fontFamily: FONT,
-        fontSize: SIZE,
-        fontWeight: 900,
-        lineHeight: 1.35,
-        textAlign: "left",
-        color: "#fff",
-        paintOrder: "stroke fill",
-        WebkitTextStroke: `${SIZE / 8}px #000`,
-        textShadow: STROKE,
-      }}
-    >
-      {page.tokens.map((t, i) => {
-        const active = nowMs >= t.fromMs && nowMs < t.toMs;
-        const color = hit.has(i) ? "#FFB938" : "#fff";
-        const word = (
-          <span key={t.fromMs} style={{ color }}>
-            {t.text}
-          </span>
-        );
-        return active ? (
-          <Highlight
-            key={`m${t.fromMs}`}
-            progress={interpolate(
-              nowMs,
-              [t.fromMs, t.fromMs + 120],
-              [0, 1],
-              clamp,
-            )}
-            color="rgba(245,165,36,0.55)"
-            padding={{ left: 4, right: 4, top: 2, bottom: 2 }}
-          >
-            {word}
-          </Highlight>
-        ) : (
-          word
-        );
-      })}
-    </div>
+    <CaptionZone align="flex-start">
+      <div
+        style={{
+          width: 500,
+          fontFamily: FONT,
+          fontSize: SIZE,
+          fontWeight: 900,
+          lineHeight: 1.35,
+          textAlign: "left",
+          color: "#fff",
+          paintOrder: "stroke fill",
+          WebkitTextStroke: `${SIZE / 8}px #000`,
+          textShadow: STROKE,
+        }}
+      >
+        {page.tokens.map((t, i) => {
+          const active = nowMs >= t.fromMs && nowMs < t.toMs;
+          const color = hit.has(i) ? "#FFB938" : "#fff";
+          const word = (
+            <span key={t.fromMs} style={{ color }}>
+              {t.text}
+            </span>
+          );
+          return active ? (
+            <Highlight
+              key={`m${t.fromMs}`}
+              progress={interpolate(
+                nowMs,
+                [t.fromMs, t.fromMs + 120],
+                [0, 1],
+                clamp,
+              )}
+              color="rgba(245,165,36,0.55)"
+              padding={{ left: 4, right: 4, top: 2, bottom: 2 }}
+            >
+              {word}
+            </Highlight>
+          ) : (
+            word
+          );
+        })}
+      </div>
+    </CaptionZone>
   );
 };
 
@@ -89,7 +85,6 @@ export const ReactionCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
 }) => {
-  const { fps } = useVideoConfig();
   const { delayRender, continueRender, cancelRender } = useDelayRender();
   const [handle] = useState(() => delayRender("loading Be Vietnam Pro"));
   const [ready, setReady] = useState(false);
@@ -102,28 +97,10 @@ export const ReactionCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
       .catch(cancelRender);
   }, [handle, continueRender, cancelRender]);
   if (!ready) return null;
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 900,
-    breakOnSilenceAfterMs: 350,
-  });
   return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        return dur > 0 ? (
-          <Sequence key={page.startMs} from={from} durationInFrames={dur}>
-            <Page page={page} keywords={keywords} />
-          </Sequence>
-        ) : null;
-      })}
-    </>
+    <PagedCaptions
+      reel={reel}
+      render={(page) => <Page page={page} keywords={keywords} />}
+    />
   );
 };

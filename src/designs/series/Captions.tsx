@@ -1,5 +1,5 @@
 // Rounded white box captions (copied from classic/BoxCaption.tsx), repositioned
-// to the free right-bottom of the frame (x 400-960, y ~1400) since Daniel's
+// to the free right-bottom of the frame (x 400-960, bottom at SAFE.bottom) since Daniel's
 // cut-out sits bottom-left. Keywords pop (scale 1.2, brand.primary) instead of
 // classic's underline.
 import type { TikTokPage } from "@remotion/captions";
@@ -8,15 +8,13 @@ import { createRoundedTextBox } from "@remotion/rounded-text-box";
 import type React from "react";
 import { useEffect, useState } from "react";
 import {
-  AbsoluteFill,
-  Sequence,
   interpolate,
   useCurrentFrame,
   useDelayRender,
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { captionPages } from "../../mortgage/captionPages";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, emphasised, enter, reelFontReady } from "../../mortgage/style";
 
@@ -82,14 +80,7 @@ const SeriesCaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
     lines.slice(0, li).reduce((n, l) => n + l.length, 0),
   );
   return (
-    <AbsoluteFill
-      style={{
-        justifyContent: "flex-start",
-        alignItems: "flex-end",
-        top: 1350,
-        right: 60,
-      }}
-    >
+    <CaptionZone left={400} align="flex-end">
       <div
         style={{
           position: "relative",
@@ -150,37 +141,16 @@ const SeriesCaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           ))}
         </div>
       </div>
-    </AbsoluteFill>
+    </CaptionZone>
   );
 };
 
 export const SeriesCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
-}) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 900,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        return dur > 0 ? (
-          <Sequence key={page.startMs} from={from} durationInFrames={dur}>
-            <SeriesCaptionPage page={page} keywords={keywords} />
-          </Sequence>
-        ) : null;
-      })}
-    </>
-  );
-};
+}) => (
+  <PagedCaptions
+    reel={reel}
+    render={(page) => <SeriesCaptionPage page={page} keywords={keywords} />}
+  />
+);

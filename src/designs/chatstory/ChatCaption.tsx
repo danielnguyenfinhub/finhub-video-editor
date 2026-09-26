@@ -1,6 +1,6 @@
 // edit.json's captions in "chatstory": a white rounded box per line — same
 // approach as classic/BoxCaption.tsx (createRoundedTextBox, measured with the
-// real font via captionPages()) — but keywords/numbers light on a pale amber
+// real font, pages from PagedCaptions) — but keywords/numbers light on a pale amber
 // halo instead of an underline, and the currently-spoken word turns
 // brand.primary. The halo is a box-shadow spread, not padding, so it never
 // changes the measured line width the box was sized for.
@@ -10,8 +10,6 @@ import { createRoundedTextBox } from "@remotion/rounded-text-box";
 import type React from "react";
 import { useEffect, useState } from "react";
 import {
-  AbsoluteFill,
-  Sequence,
   interpolate,
   spring,
   useCurrentFrame,
@@ -19,7 +17,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { captionPages } from "../../mortgage/captionPages";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import { FONT, emphasised, enter, reelFontReady } from "../../mortgage/style";
 import type { Reel } from "../../mortgage/schema";
 
@@ -97,9 +95,7 @@ const ChatCaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
     lines.slice(0, li).reduce((n, l) => n + l.length, 0),
   );
   return (
-    <AbsoluteFill
-      style={{ justifyContent: "flex-start", alignItems: "center", top: 1300 }}
-    >
+    <CaptionZone>
       <div
         style={{
           position: "relative",
@@ -161,43 +157,16 @@ const ChatCaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           ))}
         </div>
       </div>
-    </AbsoluteFill>
+    </CaptionZone>
   );
 };
 
 export const ChatCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
-}) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 900,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const nextStart = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          nextStart - from,
-        );
-        if (dur <= 0) return null;
-        return (
-          <Sequence
-            key={page.startMs}
-            from={from}
-            durationInFrames={dur}
-            layout="none"
-          >
-            <ChatCaptionPage page={page} keywords={keywords} />
-          </Sequence>
-        );
-      })}
-    </>
-  );
-};
+}) => (
+  <PagedCaptions
+    reel={reel}
+    render={(page) => <ChatCaptionPage page={page} keywords={keywords} />}
+  />
+);
