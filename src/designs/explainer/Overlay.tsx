@@ -25,6 +25,7 @@ import type { EditJson, Reel } from "../../mortgage/schema";
 import { FONT, clamp, emphasised, enter } from "../../mortgage/style";
 import { toOutMs } from "../../mortgage/timeline";
 import { CueTrack } from "./Cues";
+import { Figures } from "./Figures";
 import {
   BAND,
   BandWide,
@@ -128,7 +129,14 @@ const Captions: React.FC<{ reel: Reel; keywords: string[] }> = ({
 
 // ---------------------------------------------------------------- stats
 
-const StatNote: React.FC<{ big: string; label: string }> = ({ big, label }) => {
+// width: the note as drawn (NoteBand scales it to the band); bandStyle moves
+// it in the band (Figures.tsx pins automatic figures to its left end).
+export const StatNote: React.FC<{
+  big: string;
+  label: string;
+  width?: number;
+  bandStyle?: React.CSSProperties;
+}> = ({ big, label, width = 760, bandStyle }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const inP = enter(frame, fps);
@@ -138,19 +146,24 @@ const StatNote: React.FC<{ big: string; label: string }> = ({ big, label }) => {
     [0, 1],
     clamp,
   );
-  // Long figures shrink to the note (640 px of text), never above 110 px.
+  // Long figures shrink to the note (its width less 120 px of padding),
+  // never above 110 px.
   const size = Math.min(
     110,
-    fitText({ text: big, withinWidth: 640, fontFamily: FONT, fontWeight: 900 })
-      .fontSize,
+    fitText({
+      text: big,
+      withinWidth: width - 120,
+      fontFamily: FONT,
+      fontWeight: 900,
+    }).fontSize,
   );
   return (
-    <NoteBand width={760}>
+    <NoteBand width={width} style={bandStyle}>
       <Audio src={staticFile("sfx/ding.wav")} volume={() => 0.3} />
       <Sticky
         rotate={0}
         style={{
-          width: 760,
+          width,
           textAlign: "center",
           fontFamily: FONT,
           color: INK,
@@ -425,6 +438,7 @@ export const Overlay: React.FC<OverlayProps> = ({
     <CueTrack reel={reel} />
     <ProgressLine talkFrames={talkFrames} />
     <StatNotes reel={reel} />
+    <Figures reel={reel} talkFrames={talkFrames} />
     <ChapterTabs reel={reel} />
     <Captions reel={reel} keywords={keywords} />
     {reel.edit.hook ? (

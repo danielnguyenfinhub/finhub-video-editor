@@ -124,9 +124,20 @@ const STAT_SCALE = 0.8;
 
 // A speech-bubble callout that wobbles in (Elements: commerce/
 // product-discount-callout, makeCallout from @remotion/shapes).
-export const StatCallout: React.FC<{ big: string; label: string }> = ({
+// x, y: the drawn bubble's top-left (default: the stat slot); scale shrinks
+// it from the pointer tip.
+export const StatCallout: React.FC<{
+  big: string;
+  label: string;
+  x?: number;
+  y?: number;
+  scale?: number;
+}> = ({
   big,
   label,
+  x = 190 + 350 * (1 - STAT_SCALE),
+  y = STAT_TOP,
+  scale = STAT_SCALE,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -144,12 +155,12 @@ export const StatCallout: React.FC<{ big: string; label: string }> = ({
     <div
       style={{
         position: "absolute",
-        left: 190,
-        top: STAT_TOP - 310 * (1 - STAT_SCALE),
+        left: x - 350 * (1 - scale),
+        top: y - 310 * (1 - scale),
         width: 700,
         height: 310,
         transformOrigin: "50% 100%",
-        transform: `scale(${pop * STAT_SCALE}) rotate(${interpolate(
+        transform: `scale(${pop * scale}) rotate(${interpolate(
           frame,
           [0, 7, 14, 20, 26],
           [0, 8, -6, 3, 0],
