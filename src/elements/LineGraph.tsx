@@ -14,7 +14,6 @@ import { FONT, clamp } from "../mortgage/style";
 export type GraphPoint = { label: string; value: number };
 
 const W = 920;
-const H = 560;
 const PAD = { left: 70, right: 70, top: 60, bottom: 90 };
 const GRID = 4;
 
@@ -25,7 +24,18 @@ export const LineGraph: React.FC<{
   decimals?: number;
   drawFrames?: number;
   locale?: string; // e.g. "vi-VN" prints 4,35%; default keeps 4.35%
-}> = ({ data, title, unit = "", decimals = 2, drawFrames = 60, locale }) => {
+  height?: number; // of the plot; shorter fits a panel band without zooming out
+  valueSize?: number; // font size of each point's printed value
+}> = ({
+  data,
+  title,
+  unit = "",
+  decimals = 2,
+  drawFrames = 60,
+  locale,
+  height: H = 560,
+  valueSize = 32,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   if (data.length < 2) return null;
@@ -131,7 +141,7 @@ export const LineGraph: React.FC<{
                   x={x(i)}
                   y={y(d.value) - 28}
                   textAnchor="middle"
-                  fontSize={32}
+                  fontSize={valueSize}
                   fontWeight={800}
                   fill="#fff"
                 >
