@@ -1,12 +1,10 @@
 // "scenario" captions: a moving amber pill slides from word to word as
 // Daniel says them, copied from designs/studio/PillCaptions.tsx and adapted
-// — the pill is brand.accent (not brand.primary) and the caption block sits
-// centred at y≈1350 inside SAFE.
+// — the pill is brand.accent (not brand.primary). Placed by CaptionZone.
 import type { TikTokPage } from "@remotion/captions";
 import type React from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-  Sequence,
   interpolate,
   spring,
   useCurrentFrame,
@@ -14,7 +12,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { captionPages } from "../../mortgage/captionPages";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, emphasised, reelFontReady } from "../../mortgage/style";
 
@@ -22,7 +20,6 @@ const SIZE = 72;
 const PAD_X = 14;
 const PAD_Y = 10;
 const MOVE_FRAMES = 5;
-const CAPTION_TOP = 1350;
 
 type Box = { left: number; top: number; width: number; height: number };
 
@@ -89,16 +86,7 @@ const PillPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
       : interpolate(Math.min(at, boxes.length - 1), idx, boxes.map(pick));
   const started = nowMs >= page.tokens[0].fromMs;
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: 80,
-        right: 80,
-        top: CAPTION_TOP,
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
+    <CaptionZone>
       <div
         style={{
           position: "relative",
@@ -145,37 +133,16 @@ const PillPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           </span>
         ))}
       </div>
-    </div>
+    </CaptionZone>
   );
 };
 
 export const ScenarioPillCaptions: React.FC<{
   reel: Reel;
   keywords: string[];
-}> = ({ reel, keywords }) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 900,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        return dur > 0 ? (
-          <Sequence key={page.startMs} from={from} durationInFrames={dur}>
-            <PillPage page={page} keywords={keywords} />
-          </Sequence>
-        ) : null;
-      })}
-    </>
-  );
-};
+}> = ({ reel, keywords }) => (
+  <PagedCaptions
+    reel={reel}
+    render={(page) => <PillPage page={page} keywords={keywords} />}
+  />
+);

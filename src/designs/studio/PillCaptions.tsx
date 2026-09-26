@@ -6,7 +6,6 @@ import type { TikTokPage } from "@remotion/captions";
 import type React from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-  Sequence,
   interpolate,
   spring,
   useCurrentFrame,
@@ -14,8 +13,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { captionPages } from "../../mortgage/captionPages";
-import { SAFE } from "../../mortgage/golden";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, emphasised, reelFontReady } from "../../mortgage/style";
 
@@ -89,19 +87,7 @@ const PillPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
       : interpolate(Math.min(at, boxes.length - 1), idx, boxes.map(pick));
   const started = nowMs >= page.tokens[0].fromMs;
   return (
-    <div
-      style={{
-        // Grows up from SAFE.bottom, clear of Daniel's mouth.
-        position: "absolute",
-        left: 80,
-        right: 80,
-        top: 0,
-        height: SAFE.bottom,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-end",
-      }}
-    >
+    <CaptionZone>
       <div
         style={{
           position: "relative",
@@ -148,37 +134,16 @@ const PillPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           </span>
         ))}
       </div>
-    </div>
+    </CaptionZone>
   );
 };
 
 export const PillCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
-}) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 900,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        return dur > 0 ? (
-          <Sequence key={page.startMs} from={from} durationInFrames={dur}>
-            <PillPage page={page} keywords={keywords} />
-          </Sequence>
-        ) : null;
-      })}
-    </>
-  );
-};
+}) => (
+  <PagedCaptions
+    reel={reel}
+    render={(page) => <PillPage page={page} keywords={keywords} />}
+  />
+);

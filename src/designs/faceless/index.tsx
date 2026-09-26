@@ -9,14 +9,13 @@ import { useMemo } from "react";
 import {
   AbsoluteFill,
   Img,
-  Sequence,
   interpolate,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
 import type { TikTokPage } from "@remotion/captions";
 import { brand } from "../../brand/theme";
-import { captionPages } from "../../mortgage/captionPages";
+import { PagedCaptions } from "../../mortgage/PagedCaptions";
 import type {
   CoverProps,
   Design,
@@ -253,33 +252,16 @@ const Captions: React.FC<{
   reel: Reel;
   keywords: string[];
   level: number[];
-}> = ({ reel, keywords, level }) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 1100,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 300) / 1000) * fps),
-          next - from,
-        );
-        return dur > 0 ? (
-          <Sequence key={page.startMs} from={from} durationInFrames={dur}>
-            <Page page={page} keywords={keywords} from={from} level={level} />
-          </Sequence>
-        ) : null;
-      })}
-    </>
-  );
-};
+}> = ({ reel, keywords, level }) => (
+  <PagedCaptions
+    reel={reel}
+    combineWithinMs={1100}
+    tailMs={300}
+    render={(page, from) => (
+      <Page page={page} keywords={keywords} from={from} level={level} />
+    )}
+  />
+);
 
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   const level = useBusyLevel(reel, talkFrames);

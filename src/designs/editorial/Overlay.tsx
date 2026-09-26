@@ -20,7 +20,7 @@ import type { OverlayProps } from "../../mortgage/design";
 import { lenderMentionsOf, SAFE } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import { LogoMark } from "../../mortgage/LogoMark";
-import { captionPages } from "../../mortgage/captionPages";
+import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
 import { FONT, clamp, emphasised, enter } from "../../mortgage/style";
 import { StaggerTitle } from "../../elements/StaggerTitle";
@@ -28,7 +28,6 @@ import { MotionTrack } from "../classic/Cues";
 import { INK, MASTHEAD_BOTTOM } from "./Masthead";
 
 const HOOK_FRAMES = 105;
-const CAPTION_TOP = SAFE.bottom - 93; // y >= 1300, bottom stays <= SAFE.bottom
 // The Finance Hub logo doesn't show during the hook (logoVisible starts at
 // HOOK_FRAMES), so the hook owns the full SAFE width. On a full-frame talk
 // the only space clear of Daniel's face is above his head: y 420-580
@@ -61,7 +60,7 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   );
   const p = enter(frame, fps);
   return (
-    <AbsoluteFill style={{ top: CAPTION_TOP, alignItems: "center" }}>
+    <CaptionZone>
       <div
         style={{
           width: 900,
@@ -108,46 +107,20 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           );
         })}
       </div>
-    </AbsoluteFill>
+    </CaptionZone>
   );
 };
 
 const Captions: React.FC<{ reel: Reel; keywords: string[] }> = ({
   reel,
   keywords,
-}) => {
-  const { fps } = useVideoConfig();
-  const pages = captionPages({
-    captions: reel.timeline.captions,
-    combineWithinMs: 1200,
-    breakOnSilenceAfterMs: 350,
-  });
-  return (
-    <>
-      {pages.map((page, i) => {
-        const from = Math.round((page.startMs / 1000) * fps);
-        const next = pages[i + 1]
-          ? Math.round((pages[i + 1].startMs / 1000) * fps)
-          : Infinity;
-        const dur = Math.min(
-          Math.round(((page.durationMs + 400) / 1000) * fps),
-          next - from,
-        );
-        if (dur <= 0) return null;
-        return (
-          <Sequence
-            key={page.startMs}
-            from={from}
-            durationInFrames={dur}
-            layout="none"
-          >
-            <CaptionPage page={page} keywords={keywords} />
-          </Sequence>
-        );
-      })}
-    </>
-  );
-};
+}) => (
+  <PagedCaptions
+    reel={reel}
+    combineWithinMs={1200}
+    render={(page) => <CaptionPage page={page} keywords={keywords} />}
+  />
+);
 
 // ---------------------------------------------------------------- hook
 

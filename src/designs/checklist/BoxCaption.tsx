@@ -1,22 +1,22 @@
 // Copied from src/designs/classic/BoxCaption.tsx (per src/designs/README.md)
-// with the vertical position moved to y≈1380 so the box sits below the step
-// column (which starts at y=420) instead of classic's y=1180.
-// ponytail: fixed at 1380 rather than measuring the column's real bottom
-// (card height varies with figures/polaroids); revisit if a caption ever
-// overlaps a tall step column.
+// in the shared CaptionZone (bottom edge at SAFE.bottom, growing upward), below
+// the step column (which starts at y=420).
+// ponytail: a two-line page tops out near y 1300 without measuring the
+// column's real bottom (card height varies with figures/polaroids); revisit if
+// a caption ever overlaps a tall step column.
 import type { TikTokPage } from "@remotion/captions";
 import { measureText } from "@remotion/layout-utils";
 import { createRoundedTextBox } from "@remotion/rounded-text-box";
 import type React from "react";
 import { useEffect, useState } from "react";
 import {
-  AbsoluteFill,
   interpolate,
   useCurrentFrame,
   useDelayRender,
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
+import { CaptionZone } from "../../mortgage/PagedCaptions";
 import { FONT, emphasised, enter, reelFontReady } from "../../mortgage/style";
 
 const SIZE = 66;
@@ -25,7 +25,6 @@ const LINE_HEIGHT = 1.3;
 const PAD = 26;
 const RADIUS = 18;
 const MAX_LINE = 880;
-const CAPTION_TOP = 1380;
 
 // Page words, keeping each word's own spacing (a glued ".1" stays in "4.1").
 const lineText = (tokens: TikTokPage["tokens"]) =>
@@ -84,13 +83,7 @@ export const BoxCaptionPage: React.FC<{
     lines.slice(0, li).reduce((n, l) => n + l.length, 0),
   );
   return (
-    <AbsoluteFill
-      style={{
-        justifyContent: "flex-start",
-        alignItems: "center",
-        top: CAPTION_TOP,
-      }}
-    >
+    <CaptionZone>
       <div
         style={{
           position: "relative",
@@ -152,6 +145,6 @@ export const BoxCaptionPage: React.FC<{
           ))}
         </div>
       </div>
-    </AbsoluteFill>
+    </CaptionZone>
   );
 };

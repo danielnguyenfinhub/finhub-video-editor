@@ -9,7 +9,6 @@ import { createRoundedTextBox } from "@remotion/rounded-text-box";
 import type React from "react";
 import { useEffect, useState } from "react";
 import {
-  AbsoluteFill,
   interpolate,
   useCurrentFrame,
   useDelayRender,
@@ -17,7 +16,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import { FONT, emphasised, enter, reelFontReady } from "../../mortgage/style";
-import { SAFE } from "../../mortgage/golden";
+import { CaptionZone } from "../../mortgage/PagedCaptions";
 
 const SIZE = 66;
 const WEIGHT = 800; // a weight reelFontReady() loads, so the measure is exact
@@ -83,16 +82,7 @@ export const BoxCaptionPage: React.FC<{
     lines.slice(0, li).reduce((n, l) => n + l.length, 0),
   );
   return (
-    <AbsoluteFill
-      style={{
-        justifyContent: "flex-end",
-        alignItems: "center",
-        // Golden rule: captions below FACE. Anchored to SAFE.bottom and growing
-        // upward, one or two lines sit clear of the mouth, even on a 1.13x
-        // zoom-cut (y 1180 crossed it), and never enter the bottom UI.
-        height: SAFE.bottom, // not bottom: AbsoluteFill sets height 100%, which wins
-      }}
-    >
+    <CaptionZone>
       <div
         style={{
           position: "relative",
@@ -154,6 +144,6 @@ export const BoxCaptionPage: React.FC<{
           ))}
         </div>
       </div>
-    </AbsoluteFill>
+    </CaptionZone>
   );
 };
