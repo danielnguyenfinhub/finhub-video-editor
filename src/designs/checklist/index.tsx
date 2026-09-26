@@ -27,6 +27,12 @@ import {
   figuresOf,
   lenderMentionsOf,
 } from "../../mortgage/golden";
+import {
+  CUE_HEAD_Y,
+  CUE_SCALE,
+  HEAD_Y,
+  useCueRoom,
+} from "../../mortgage/cueRoom";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
@@ -56,16 +62,29 @@ const HOOK_FRAMES = 105;
 const SCALE = 0.6;
 const EDGE_FADE =
   "linear-gradient(to right, transparent, #000 14%), linear-gradient(to bottom, #000 80%, transparent)";
-const FRAMING: React.CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  transform: `translate(${850 - 540 * SCALE}px, ${1270 - 1440 * SCALE}px) scale(${SCALE})`,
-  transformOrigin: "0 0",
-  maskImage: EDGE_FADE,
-  WebkitMaskImage: EDGE_FADE,
-  maskComposite: "intersect",
-  WebkitMaskComposite: "source-in",
+// k (useCueRoom, 0..1) eases him to CUE_SCALE (face centre kept at x 850)
+// with his hair line (source HEAD_Y) on CUE_HEAD_Y, so his eyebrows clear a
+// cue panel (golden rule 3b). He is already small, so the framing moves
+// rather than the shared cueRoomStyle shrinking him again.
+const framing = (k: number): React.CSSProperties => {
+  const s = interpolate(k, [0, 1], [SCALE, CUE_SCALE]);
+  const hair = interpolate(
+    k,
+    [0, 1],
+    [1270 - (1440 - HEAD_Y) * SCALE, CUE_HEAD_Y],
+  );
+  return {
+    position: "absolute",
+    inset: 0,
+    transform: `translate(${850 - 540 * s}px, ${hair - HEAD_Y * s}px) scale(${s})`,
+    transformOrigin: "0 0",
+    maskImage: EDGE_FADE,
+    WebkitMaskImage: EDGE_FADE,
+    maskComposite: "intersect",
+    WebkitMaskComposite: "source-in",
+  };
 };
+const FRAMING = framing(0);
 
 // ---------------------------------------------------------------- cover
 
@@ -146,21 +165,24 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
 // ---------------------------------------------------------------- talk
 
 // Daniel framed by FRAMING (above); the step column sits behind him.
-const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => (
-  <AbsoluteFill>
-    <NotebookBackdrop />
-    {behind}
-    <div style={FRAMING}>
-      <PacedVideo
-        seg={seg}
-        src={src}
-        look={look}
-        foreground={foreground}
-        backdrop="none"
-      />
-    </div>
-  </AbsoluteFill>
-);
+const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
+  const room = useCueRoom(seg);
+  return (
+    <AbsoluteFill>
+      <NotebookBackdrop />
+      {behind}
+      <div style={framing(room)}>
+        <PacedVideo
+          seg={seg}
+          src={src}
+          look={look}
+          foreground={foreground}
+          backdrop="none"
+        />
+      </div>
+    </AbsoluteFill>
+  );
+};
 
 // ---------------------------------------------------------------- hook
 

@@ -28,6 +28,12 @@ import {
   figuresOf,
   lenderMentionsOf,
 } from "../../mortgage/golden";
+import {
+  CUE_HEAD_Y,
+  CUE_SCALE,
+  HEAD_Y,
+  useCueRoom,
+} from "../../mortgage/cueRoom";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import type { Cue } from "../../mortgage/schema";
@@ -73,13 +79,25 @@ const SCALE = 0.6;
 const CHIN_Y = 1270;
 const EDGE_FADE =
   "linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 78%, transparent)";
-const FRAMING: React.CSSProperties = {
-  transform: `translate(${540 * (1 - SCALE)}px, ${CHIN_Y - 1440 * SCALE}px) scale(${SCALE})`,
-  transformOrigin: "0 0",
-  maskImage: EDGE_FADE,
-  WebkitMaskImage: EDGE_FADE,
-  maskComposite: "intersect",
-  WebkitMaskComposite: "source-in",
+// k (useCueRoom, 0..1) eases him to CUE_SCALE with his hair line (source
+// HEAD_Y) on CUE_HEAD_Y, so his eyebrows clear a cue panel (golden rule 3b);
+// he is already small here, so the design's framing moves rather than the
+// shared cueRoomStyle shrinking him again.
+const framing = (k: number): React.CSSProperties => {
+  const s = interpolate(k, [0, 1], [SCALE, CUE_SCALE]);
+  const hair = interpolate(
+    k,
+    [0, 1],
+    [CHIN_Y - (1440 - HEAD_Y) * SCALE, CUE_HEAD_Y],
+  );
+  return {
+    transform: `translate(${540 * (1 - s)}px, ${hair - HEAD_Y * s}px) scale(${s})`,
+    transformOrigin: "0 0",
+    maskImage: EDGE_FADE,
+    WebkitMaskImage: EDGE_FADE,
+    maskComposite: "intersect",
+    WebkitMaskComposite: "source-in",
+  };
 };
 // The cover still: his whole 9:16 frame, 950 tall, bottom-centre.
 const COVER_H = 950;
@@ -221,6 +239,7 @@ const Talk: React.FC<TalkProps> = ({
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
         0.05;
+  const room = useCueRoom(seg);
   return (
     <AbsoluteFill style={{ backgroundColor: brand.background }}>
       <SplitBackdrop seed={index} />
@@ -231,7 +250,7 @@ const Talk: React.FC<TalkProps> = ({
           transformOrigin: `50% ${CHIN_Y}px`,
         }}
       >
-        <AbsoluteFill style={FRAMING}>
+        <AbsoluteFill style={framing(room)}>
           <PacedVideo
             seg={seg}
             src={src}
@@ -334,13 +353,15 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
       <MotionTrack
-          reel={{
-            ...reel,
-            edit: {
-              ...reel.edit,
-              cues: reel.edit.cues?.filter((c) => c.kind !== "compare"),
-            },
-          }} panelOffset={SAFE.top - 110} />
+        reel={{
+          ...reel,
+          edit: {
+            ...reel.edit,
+            cues: reel.edit.cues?.filter((c) => c.kind !== "compare"),
+          },
+        }}
+        panelOffset={SAFE.top - 110}
+      />
       {(reel.edit.chapters ?? []).map((c, i) => (
         <Sequence
           key={c.atMs}
