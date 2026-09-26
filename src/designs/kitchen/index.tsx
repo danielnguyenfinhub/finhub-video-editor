@@ -23,6 +23,7 @@ import type {
 } from "../../mortgage/design";
 import { figuresOf, lenderMentionsOf, SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
+import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
 import {
@@ -132,21 +133,27 @@ const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
     [0, Math.max(1, seg.outDuration)],
     [0, 0.015],
   );
+  const zoom = 1.05 + drift;
+  const room = useCueRoom(seg);
   return (
     <AbsoluteFill>
       <KitchenBackdrop />
       {behind}
-      <PacedVideo
-        seg={seg}
-        src={src}
-        look={look}
-        foreground={foreground}
-        backdrop="none"
-        style={{
-          transform: `scale(${1.05 + drift})`,
-          transformOrigin: "50% 60%",
-        }}
-      />
+      {/* Makes room under cue panels (golden rule 3b). The zoom is around
+          y 1152, so his hair line (HEAD_Y) sits at 1152 - 552 * zoom. */}
+      <AbsoluteFill style={cueRoomStyle(room, 1152 - (1152 - HEAD_Y) * zoom)}>
+        <PacedVideo
+          seg={seg}
+          src={src}
+          look={look}
+          foreground={foreground}
+          backdrop="none"
+          style={{
+            transform: `scale(${zoom})`,
+            transformOrigin: "50% 60%",
+          }}
+        />
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };

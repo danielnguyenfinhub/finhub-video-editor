@@ -24,6 +24,7 @@ import type {
 } from "../../mortgage/design";
 import { LOGO_HEIGHT, SAFE, lenderMentionsOf } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
+import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import {
   FONT,
@@ -154,19 +155,25 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
 
 // Talk draws its own backdrop (PacedVideo runs with backdrop="none"), then
 // the design's Behind layer (charts), then Daniel's cut-out on top.
-const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => (
-  <AbsoluteFill style={{ backgroundColor: "#000" }}>
-    <DataLabBackdrop />
-    {behind}
-    <PacedVideo
-      seg={seg}
-      src={src}
-      look={look}
-      foreground={foreground}
-      backdrop="none"
-    />
-  </AbsoluteFill>
-);
+// The cut-out layer makes room under cue panels (golden rule 3b).
+const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
+  const room = useCueRoom(seg);
+  return (
+    <AbsoluteFill style={{ backgroundColor: "#000" }}>
+      <DataLabBackdrop />
+      {behind}
+      <AbsoluteFill style={cueRoomStyle(room)}>
+        <PacedVideo
+          seg={seg}
+          src={src}
+          look={look}
+          foreground={foreground}
+          backdrop="none"
+        />
+      </AbsoluteFill>
+    </AbsoluteFill>
+  );
+};
 
 // Golden rule 3b: figure cards render behind Daniel's cut-out.
 const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => (
