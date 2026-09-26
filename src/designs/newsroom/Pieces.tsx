@@ -113,7 +113,12 @@ export const GlitchLabel: React.FC<{
 // it reads above Daniel's head (golden rule: figures render in Behind, sized
 // so the top and label clear FACE.top). One real bar for a "stat" figure, a
 // compact counter-with-growing-bar for an "auto" figure.
-export const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
+// `right` (px from the frame's right edge) lets the card stop short of the
+// top-right LogoMark while the logo is up (index.tsx Behind).
+export const FigureCard: React.FC<{ figure: Figure; right?: number }> = ({
+  figure,
+  right = X_RIGHT,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const drop = spring({ frame, fps, config: { damping: 15, stiffness: 160 } });
@@ -125,7 +130,7 @@ export const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
       style={{
         position: "absolute",
         left: X_LEFT,
-        right: X_RIGHT,
+        right,
         top,
         background: "#fff",
         borderRadius: 20,

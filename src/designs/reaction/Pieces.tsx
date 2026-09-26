@@ -13,7 +13,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { SAFE, type Figure } from "../../mortgage/golden";
+import { LOGO_HEIGHT, SAFE, type Figure } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { FONT, LOGO, STROKE, clamp, enter } from "../../mortgage/style";
@@ -27,20 +27,21 @@ export const Backdrop: React.FC = () => (
 );
 
 // The FinHub logo, always on a white tile — used by the Cover only (its own
-// logo, golden rule 3c). The Overlay renders LogoMark instead.
-export const LogoBadge: React.FC<{ top?: number }> = ({ top = 300 }) => (
+// logo, golden rule 3c: LogoMark's size and place, top-right inside SAFE).
+// The Overlay renders LogoMark instead.
+export const LogoBadge: React.FC = () => (
   <div
     style={{
       position: "absolute",
-      top,
-      right: 60,
+      top: SAFE.top,
+      right: 1080 - SAFE.right,
       padding: "10px 16px",
       borderRadius: 18,
       background: "#fff",
       boxShadow: "0 6px 18px rgba(0,0,0,0.3)",
     }}
   >
-    <Img src={LOGO} style={{ height: 56, display: "block" }} />
+    <Img src={LOGO} style={{ height: LOGO_HEIGHT, display: "block" }} />
   </div>
 );
 
@@ -145,16 +146,20 @@ export const SoWhatCard: React.FC<{ figure: Figure }> = ({ figure }) => {
         transform: `scale(${interpolate(p, [0, 1], [0.6, 1])})`,
       }}
     >
-      <div
-        style={{
-          fontSize: small ? 22 : 26,
-          letterSpacing: 4,
-          fontWeight: 900,
-          color: brand.highlight,
-        }}
-      >
-        NGHĨA LÀ
-      </div>
+      {/* "NGHĨA LÀ" states a conclusion: only over Daniel's own stats,
+          never over an automatic figure (just a number he said). */}
+      {small ? null : (
+        <div
+          style={{
+            fontSize: 26,
+            letterSpacing: 4,
+            fontWeight: 900,
+            color: brand.highlight,
+          }}
+        >
+          NGHĨA LÀ
+        </div>
+      )}
       <div
         style={{
           fontSize: small ? 56 : 80,

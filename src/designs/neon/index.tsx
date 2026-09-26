@@ -24,7 +24,13 @@ import type {
   OverlayProps,
   TalkProps,
 } from "../../mortgage/design";
-import { figuresOf, lenderMentionsOf, SAFE } from "../../mortgage/golden";
+import {
+  figuresOf,
+  lenderMentionsOf,
+  LOGO_HEIGHT,
+  logoVisible,
+  SAFE,
+} from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
@@ -113,12 +119,14 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
     <AbsoluteFill style={{ fontFamily: FONT }}>
       <NeonBackdrop />
       <CoverRing />
+      {/* Below the logo tile (SAFE.top + its 120 px logo + padding): at
+          top 500 the title ran under the logo. */}
       <div
         style={{
           position: "absolute",
           left: SAFE.left,
           right: RIGHT_EDGE,
-          top: 500,
+          top: SAFE.top + LOGO_HEIGHT + 40,
         }}
       >
         <NeonTitle text={title} fontSize={size} />
@@ -314,9 +322,19 @@ const Overlay: React.FC<OverlayProps> = ({
 
 // Golden rule 1/3b: figuresOf's gauge rings render BEHIND Daniel's cut-out
 // (a halo around his head), never in Overlay.
-const Behind: React.FC<OverlayProps> = ({ reel }) => {
+// LogoMark's tile (the 2000x1215 logo at LOGO_HEIGHT plus 16px padding each
+// side, this design's tile style) and a gap: a figure up with the logo stops
+// short of it (at SAFE width the number ran under the logo).
+const LOGO_TILE_W = Math.round((LOGO_HEIGHT * 2000) / 1215) + 32;
+const LOGO_GAP = 20;
+
+const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => {
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
+  const withLogo = (from: number, frames: number) =>
+    Array.from({ length: frames }, (_, i) => from + i).some((fr) =>
+      logoVisible(fr, talkFrames, fps),
+    );
   return (
     <>
       {figures.map((f) => (
@@ -326,7 +344,15 @@ const Behind: React.FC<OverlayProps> = ({ reel }) => {
           durationInFrames={f.frames}
           layout="none"
         >
-          <GaugeRing big={f.big} label={f.label} small={f.source === "auto"} />
+          <GaugeRing
+            big={f.big}
+            label={f.label}
+            right={
+              withLogo(f.fromFrame, f.frames)
+                ? RIGHT_EDGE + LOGO_TILE_W + LOGO_GAP
+                : undefined
+            }
+          />
         </Sequence>
       ))}
     </>

@@ -1,5 +1,5 @@
-// "datalab" — Phòng số liệu: the numbers are the star, Daniel steps aside so
-// the chart can fill the screen. Dark blueprint backdrop, giant counting
+// "datalab" — Phòng số liệu: the numbers are the star, a data panel above
+// Daniel's head (he stays centred). Dark blueprint backdrop, giant counting
 // hook, popping-word captions, a data panel for every figure with a
 // voice-oscilloscope PiP, bank "data labels" on a leader line, and mono-ish
 // chapter cards. Cues, chapter transitions and the outro reuse the core's
@@ -22,7 +22,7 @@ import type {
   OverlayProps,
   TalkProps,
 } from "../../mortgage/design";
-import { SAFE, lenderMentionsOf } from "../../mortgage/golden";
+import { LOGO_HEIGHT, SAFE, lenderMentionsOf } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import {
@@ -65,7 +65,7 @@ const CoverLogo: React.FC = () => {
         opacity: interpolate(frame, [0, 8], [0, 1], clamp),
       }}
     >
-      <Img src={LOGO} style={{ height: 120, display: "block" }} />
+      <Img src={LOGO} style={{ height: LOGO_HEIGHT, display: "block" }} />
     </div>
   );
 };
@@ -112,7 +112,9 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
           position: "absolute",
           left: SAFE.left,
           right: 1080 - SAFE.right,
-          top: SAFE.top + 130,
+          // Under the logo tile (SAFE.top + 120 px logo + padding): at
+          // SAFE.top + 130 the title's first line ran under it.
+          top: SAFE.top + LOGO_HEIGHT + 50,
           fontSize: size,
           fontWeight: 900,
           color: "#fff",
@@ -167,8 +169,8 @@ const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => (
 );
 
 // Golden rule 3b: figure cards render behind Daniel's cut-out.
-const Behind: React.FC<OverlayProps> = ({ reel }) => (
-  <FiguresBehindLayer reel={reel} />
+const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => (
+  <FiguresBehindLayer reel={reel} talkFrames={talkFrames} />
 );
 
 const Overlay: React.FC<OverlayProps> = ({

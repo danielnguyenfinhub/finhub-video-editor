@@ -1,7 +1,9 @@
 // Popping-word captions (adapted from
 // .claude/elements/captions/popping-word-captions/): each word pops in as
-// Daniel says it, the current word held larger in brand.highlight. White 900
-// with a black outline, centred inside SAFE.
+// Daniel says it, the current word held larger. White 900 with a black
+// outline, centred inside SAFE. The pop is a transform on a fixed layout:
+// animating fontSize re-flowed the lines every frame (words jumped between
+// lines); each word keeps a side margin the grown word scales into.
 import type { TikTokPage } from "@remotion/captions";
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
@@ -11,6 +13,10 @@ import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, emphasised } from "../../mortgage/style";
 
 const SIZE = 72;
+const CURRENT_SCALE = 1.08;
+// Side margin per word, in em: room for CURRENT_SCALE without touching the
+// neighbour (a short word grows by less than this).
+const GROW_ROOM = 0.1;
 
 const PoppingPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   page,
@@ -53,17 +59,16 @@ const PoppingPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
           });
           const isCurrent = nowMs >= t.fromMs && nowMs < t.toMs;
           const scale = isCurrent
-            ? 1.2
-            : interpolate(pop, [0, 1], [0.6, 1], clamp);
+            ? CURRENT_SCALE
+            : interpolate(pop, [0, 1], [0.8, 1], clamp);
           return (
             <span key={t.fromMs}>
               {i > 0 && t.text.startsWith(" ") ? " " : ""}
               <span
                 style={{
                   display: "inline-block",
-                  // Size, not transform: a scaled inline-block keeps its
-                  // layout box, so the grown word covered the space next to it.
-                  fontSize: SIZE * scale,
+                  margin: `0 ${GROW_ROOM}em`,
+                  transform: `scale(${scale})`,
                   color: hit.has(i) ? brand.highlight : "#fff",
                 }}
               >

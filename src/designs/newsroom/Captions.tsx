@@ -15,7 +15,6 @@ import {
 import { brand } from "../../brand/theme";
 import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import { SAFE } from "../../mortgage/golden";
-import { LENDER_BAR_HEIGHT } from "./Pieces";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, emphasised, reelFontReady } from "../../mortgage/style";
 
@@ -25,16 +24,21 @@ const LINE_HEIGHT = 1.15;
 const PAD_X = 16;
 const PAD_Y = 10;
 const MOVE_FRAMES = 5;
-// Captions sit on top of the bottom bar (the ticker, or the taller bank bar
-// during a mention) and grow upward, so a two-line page never runs into it.
-const CAPTION_BOTTOM = SAFE.bottom - LENDER_BAR_HEIGHT - 14;
+// Captions sit on SAFE.bottom, below Daniel's mouth, and grow upward. While a
+// bottom bar (the ticker, or the taller bank bar during a mention) is up at
+// any point of the page, the page sits on top of that bar instead, so it
+// never runs into it and never jumps mid-page. (A permanent ticker pushed
+// every page up over his mouth.)
+const BAR_GAP = 14;
+const TAIL_MS = 400; // PagedCaptions' default tail
 
 type Box = { left: number; top: number; width: number; height: number };
 
-const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
-  page,
-  keywords,
-}) => {
+const CaptionPage: React.FC<{
+  page: TikTokPage;
+  keywords: string[];
+  bottom: number;
+}> = ({ page, keywords, bottom }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const refs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -91,7 +95,7 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   const started = nowMs >= page.tokens[0].fromMs;
   const activeIdx = Math.round(Math.min(at, page.tokens.length - 1));
   return (
-    <CaptionZone bottom={CAPTION_BOTTOM}>
+    <CaptionZone bottom={bottom}>
       <div
         style={{
           position: "relative",
@@ -149,12 +153,30 @@ const CaptionPage: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   );
 };
 
-export const NewsroomCaptions: React.FC<{ reel: Reel; keywords: string[] }> = ({
-  reel,
-  keywords,
-}) => (
-  <PagedCaptions
-    reel={reel}
-    render={(page) => <CaptionPage page={page} keywords={keywords} />}
-  />
-);
+export const NewsroomCaptions: React.FC<{
+  reel: Reel;
+  keywords: string[];
+  // Height of the bottom bars at a talk frame (0 when none is up).
+  barAt: (frame: number) => number;
+}> = ({ reel, keywords, barAt }) => {
+  const { fps } = useVideoConfig();
+  const bottomFor = (page: TikTokPage, from: number) => {
+    const shownMs = page.durationMs;
+    const frames = Math.round(((shownMs + TAIL_MS) / 1000) * fps);
+    let bar = 0;
+    for (let f = from; f <= from + frames; f++) bar = Math.max(bar, barAt(f));
+    return bar ? SAFE.bottom - bar - BAR_GAP : SAFE.bottom;
+  };
+  return (
+    <PagedCaptions
+      reel={reel}
+      render={(page, from) => (
+        <CaptionPage
+          page={page}
+          keywords={keywords}
+          bottom={bottomFor(page, from)}
+        />
+      )}
+    />
+  );
+};

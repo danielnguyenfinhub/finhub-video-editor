@@ -18,7 +18,7 @@ import type {
   OverlayProps,
   TalkProps,
 } from "../../mortgage/design";
-import { figuresOf, lenderMentionsOf } from "../../mortgage/golden";
+import { figuresOf, lenderMentionsOf, SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { foregroundOf, retryVideoFetch } from "../../mortgage/style";
@@ -36,13 +36,6 @@ const CUTOUT_STYLE = {
   transform: "scale(0.62)",
   transformOrigin: "100% 100%",
 } as const;
-
-// He's cut out small bottom-right (CUTOUT_STYLE above), not full-frame, so
-// golden.ts FACE (drawn for a full-frame talk) doesn't describe him here.
-// His actual face box at this scale/anchor (Daniel, 25/09/2026) — everything
-// in the Overlay (front) layer must stay out of it; Behind-layer content
-// (the artefact card, so-what cards) may sit under his cut-out on purpose.
-const REAL_FACE = { left: 600, right: 1000, top: 1000, bottom: 1300 } as const;
 
 const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
   <AbsoluteFill>
@@ -63,7 +56,7 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
       />
     </Freeze>
     <ArtefactCover title={title} subtitle={subtitle} />
-    <LogoBadge top={300} />
+    <LogoBadge />
   </AbsoluteFill>
 );
 
@@ -121,8 +114,11 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   const { fps } = useVideoConfig();
   return (
     <>
-      {/* Cue panels shifted into the safe band; grain stays full-frame. */}
-      <MotionTrack reel={reel} panelOffset={REAL_FACE.bottom - 110} />
+      {/* Cue panels at the top of SAFE, in the artefact's place (the
+          artefact steps out while a cue is up, Artefact.tsx cueUp), above
+          his cut-out; grain stays full-frame. The old offset (his face
+          bottom - 110) put them at y 1300+, over captions and off frame. */}
+      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
       {lenderMentionsOf(reel).map((m) => {
         // Mentions are already on the talk timeline (ms), not source ms:
         // passing them through outFrame shifted the tag past the mention.

@@ -17,7 +17,7 @@ import { brand } from "../../brand/theme";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { FONT, LOGO, clamp } from "../../mortgage/style";
-import { FACE, SAFE } from "../../mortgage/golden";
+import { SAFE } from "../../mortgage/golden";
 import { NeonTitle } from "./NeonTitle";
 
 const RIGHT_MARGIN = 1080 - SAFE.right;
@@ -40,117 +40,121 @@ export const LogoTile: React.FC = () => (
   </div>
 );
 
-// Golden rule 1/3b: the gauge renders in Behind (behind Daniel's cut-out), a
-// halo around his head. The number + label must read ABOVE his head (SAFE.top
-// .. FACE.top, y 420-480) so his silhouette never hides them; the ring itself
-// is decorative and may sit partly behind him lower down, down to y 760.
+// Golden rule 1/3b: the gauge renders in Behind (behind Daniel's cut-out).
+// The number (>= 120 px, fitText) and its label (32 px) read in the band
+// ABOVE his head (SAFE.top to ~600, where his hair starts in a full-frame
+// talk), so his silhouette never hides them. A percentage also gets a gauge
+// ring beside the number, filled to its value; any other figure gets no ring
+// (a ring always filling to 100% said nothing).
+const NUMBER_MAX = 120;
+const LABEL_SIZE = 32;
+
+// "0,4%" -> 0.004; null when the figure isn't a percentage.
+const percentOf = (big: string): number | null => {
+  const m = big.match(/(\d+(?:[.,]\d+)?)\s*%/);
+  return m ? Math.min(1, parseFloat(m[1].replace(",", ".")) / 100) : null;
+};
+
+// `right`: px from the frame's right edge the block stops at (index.tsx
+// narrows it while the top-right LogoMark is up).
 export const GaugeRing: React.FC<{
   big: string;
   label: string;
-  small?: boolean;
-}> = ({ big, label, small }) => {
+  right?: number;
+}> = ({ big, label, right = RIGHT_MARGIN }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const size = small ? 220 : 280;
-  const stroke = small ? 10 : 14;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const fillFrames = 40;
-  const progress = interpolate(frame, [0, fillFrames], [0, 1], clamp);
   const pop = spring({ frame, fps, config: { damping: 14, stiffness: 180 } });
-  const numberSize = small ? 32 : 44;
+  const pct = percentOf(big);
   const { fontSize } = fitText({
     text: big,
-    withinWidth: SAFE.right - SAFE.left - 100,
+    withinWidth: 1080 - right - SAFE.left - (pct === null ? 0 : 130),
     fontFamily: FONT,
     fontWeight: 900,
   });
-  const ringTop = FACE.top; // 480: halo starts where his head does
+  const size = 104;
+  const stroke = 12;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const fill = interpolate(frame, [0, 40], [0, pct ?? 0], clamp);
+  const ring = (
+    <svg
+      width={size}
+      height={size}
+      style={{
+        flex: "none",
+        transform: "rotate(-90deg)",
+        filter: `drop-shadow(0 0 8px ${brand.highlight})`,
+      }}
+    >
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        stroke="rgba(255,255,255,0.15)"
+        strokeWidth={stroke}
+        fill="none"
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        stroke={brand.highlight}
+        strokeWidth={stroke}
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - fill)}
+      />
+    </svg>
+  );
   return (
     <>
-      {/* number + label: pinned above FACE.top so they never sit behind him */}
       <div
         style={{
           position: "absolute",
-          left: 0,
-          right: 0,
+          left: SAFE.left,
+          right,
           top: SAFE.top,
-          height: ringTop - SAFE.top,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
           transform: `scale(${pop})`,
+          transformOrigin: "50% 0%",
           fontFamily: FONT,
+          textAlign: "center",
         }}
       >
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 24,
             fontWeight: 900,
-            color: "#FFF4DA",
-            fontSize: Math.min(fontSize, numberSize),
-            textAlign: "center",
-            textShadow: `0 0 6px #fff, 0 0 18px ${brand.highlight}`,
+            color: "#fff",
+            fontSize: Math.min(fontSize, NUMBER_MAX),
+            lineHeight: 1,
+            whiteSpace: "nowrap",
+            textShadow: `0 0 6px #fff, 0 0 18px ${brand.highlight}, 0 4px 18px rgba(0,0,0,0.6)`,
           }}
         >
+          {pct === null ? null : ring}
           {big}
         </div>
-        <div
-          style={{
-            marginTop: 2,
-            fontWeight: 700,
-            fontSize: small ? 13 : 15,
-            letterSpacing: 3,
-            textTransform: "uppercase",
-            color: brand.highlight,
-            maxWidth: size + 100,
-            textAlign: "center",
-            lineHeight: 1.2,
-          }}
-        >
-          {label}
-        </div>
-      </div>
-      {/* halo ring, decorative, behind his head */}
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: ringTop,
-          display: "flex",
-          justifyContent: "center",
-          transform: `scale(${pop})`,
-        }}
-      >
-        <svg
-          width={size}
-          height={size}
-          style={{
-            transform: "rotate(-90deg)",
-            filter: `drop-shadow(0 0 12px ${brand.highlight})`,
-          }}
-        >
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            stroke="rgba(255,255,255,0.12)"
-            strokeWidth={stroke}
-            fill="none"
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            stroke={brand.highlight}
-            strokeWidth={stroke}
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={c}
-            strokeDashoffset={c * (1 - progress)}
-          />
-        </svg>
+        {label ? (
+          <div
+            style={{
+              marginTop: 8,
+              fontWeight: 800,
+              fontSize: LABEL_SIZE,
+              lineHeight: 1.2,
+              color: brand.highlight,
+              textShadow: "0 2px 10px rgba(0,0,0,0.8)",
+            }}
+          >
+            {label}
+          </div>
+        ) : null}
       </div>
     </>
   );

@@ -22,7 +22,14 @@ import type {
   OverlayProps,
   TalkProps,
 } from "../../mortgage/design";
-import { figuresOf, lenderMentionsOf, SAFE } from "../../mortgage/golden";
+import {
+  figuresOf,
+  lenderMentionsOf,
+  LOGO_HEIGHT,
+  logoVisible,
+  SAFE,
+  type Figure,
+} from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
@@ -42,6 +49,7 @@ import {
   ChapterCard,
   FigureCard,
   GlitchLabel,
+  LENDER_BAR_HEIGHT,
   LenderBar,
   LogoTile,
   NewsBar,
@@ -53,6 +61,45 @@ const X_LEFT = SAFE.left;
 const X_RIGHT = 1080 - SAFE.right;
 // NewsTicker's own bar is a fixed 84px tall (src/elements/NewsTicker.tsx).
 const TICKER_HEIGHT = 84;
+// The ticker stays up this long after a figure's card, then leaves so
+// captions can drop back to SAFE.bottom (below Daniel's mouth).
+const TICKER_TAIL_S = 3;
+// LogoMark's tile: the 2000x1215 logo at LOGO_HEIGHT plus 22px padding each
+// side, and a gap, so a figure card up with the logo stops short of it.
+const LOGO_TILE_W = Math.round((LOGO_HEIGHT * 2000) / 1215) + 44;
+const LOGO_GAP = 20;
+
+// One ticker window per figure, from its card to TICKER_TAIL_S after it, each
+// listing only the figures already said (a running list: the old ticker
+// showed every number from frame 0, before Daniel said them). A window ends
+// where the next begins.
+type TickerWindow = { from: number; to: number; items: string[] };
+const tickerWindows = (figures: Figure[], fps: number): TickerWindow[] => {
+  const sorted = [...figures].sort((a, b) => a.fromFrame - b.fromFrame);
+  const windows = sorted.map((f, i) => ({
+    from: f.fromFrame,
+    to: Math.min(
+      f.fromFrame + f.frames + TICKER_TAIL_S * fps,
+      sorted[i + 1]?.fromFrame ?? Infinity,
+    ),
+    items: sorted
+      .slice(0, i + 1)
+      .flatMap((g) => (g.source === "stat" ? [g.big, g.label] : [g.big])),
+  }));
+  return windows.filter((w) => w.to > w.from);
+};
+
+// Height the bottom bars (ticker, lender bar) take at a talk frame: captions
+// sit above it, or on SAFE.bottom when it's 0.
+const barHeightAt =
+  (windows: TickerWindow[], mentions: { from: number; to: number }[]) =>
+  (frame: number) =>
+    Math.max(
+      windows.some((w) => frame >= w.from && frame < w.to) ? TICKER_HEIGHT : 0,
+      mentions.some((m) => frame >= m.from && frame < m.to)
+        ? LENDER_BAR_HEIGHT
+        : 0,
+    );
 // The LogoMark now waits for the hook to end (golden.ts logoVisible), so the
 // hook uses the full safe width and stays on one line above Daniel's head.
 const HOOK_RIGHT = X_RIGHT;
@@ -79,33 +126,38 @@ const Cover: React.FC<CoverProps> = ({
     <AbsoluteFill style={{ fontFamily: FONT }}>
       <NewsroomBackdrop />
       <NewsBar text="TIN NÓNG · TÀI CHÍNH" />
+      {/* Title and subtitle in one column under the logo tile (SAFE.top +
+          120 px logo + 28 px padding): at top 480 the title ran under it. */}
       <div
         style={{
           position: "absolute",
           left: X_LEFT,
           right: X_RIGHT,
-          top: 480,
-          fontWeight: 900,
-          fontSize: size,
-          lineHeight: 1.15,
-          textAlign: "center",
-          color: "#fff",
-          textShadow: "0 8px 30px rgba(0,0,0,0.55)",
+          top: SAFE.top + LOGO_HEIGHT + 50,
         }}
       >
-        {words.map((w, i) => (
-          <span
-            key={`${w}${i}`}
-            style={{ color: hit.has(i) ? brand.highlight : "#fff" }}
-          >
-            {w}{" "}
-          </span>
-        ))}
-      </div>
-      <div
-        style={{ position: "absolute", left: X_LEFT, right: X_RIGHT, top: 630 }}
-      >
-        <Typewriter text={subtitle} color="#fff" fontSize={44} />
+        <div
+          style={{
+            fontWeight: 900,
+            fontSize: size,
+            lineHeight: 1.15,
+            textAlign: "center",
+            color: "#fff",
+            textShadow: "0 8px 30px rgba(0,0,0,0.55)",
+          }}
+        >
+          {words.map((w, i) => (
+            <span
+              key={`${w}${i}`}
+              style={{ color: hit.has(i) ? brand.highlight : "#fff" }}
+            >
+              {w}{" "}
+            </span>
+          ))}
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <Typewriter text={subtitle} color="#fff" fontSize={44} />
+        </div>
       </div>
       <div
         style={{
@@ -241,9 +293,15 @@ const Hook: React.FC<{ big: string; sub?: string }> = ({ big, sub }) => {
 
 // Figures render BEHIND Daniel's cut-out (golden rule: charts never cover his
 // face). Same props and frame 0 as Overlay.
-const Behind: React.FC<OverlayProps> = ({ reel }) => {
+const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => {
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
+  // A card up at any frame the logo shows stops short of it for its whole
+  // hold (no width jump when the logo leaves).
+  const withLogo = (f: Figure) =>
+    Array.from({ length: f.frames }, (_, i) => f.fromFrame + i).some((fr) =>
+      logoVisible(fr, talkFrames, fps),
+    );
   return (
     <>
       {figures.map((f) => (
@@ -252,7 +310,10 @@ const Behind: React.FC<OverlayProps> = ({ reel }) => {
           from={f.fromFrame}
           durationInFrames={f.frames}
         >
-          <FigureCard figure={f} />
+          <FigureCard
+            figure={f}
+            right={withLogo(f) ? X_RIGHT + LOGO_TILE_W + LOGO_GAP : undefined}
+          />
         </Sequence>
       ))}
     </>
@@ -263,14 +324,19 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
   const mentions = lenderMentionsOf(reel);
-  const tickerItems = figures.flatMap((f) =>
-    f.source === "stat" ? [f.big, f.label] : [f.big],
+  const windows = tickerWindows(figures, fps);
+  const barAt = barHeightAt(
+    windows,
+    mentions.map((m) => ({
+      from: Math.round((m.startMs / 1000) * fps),
+      to: Math.round((m.endMs / 1000) * fps),
+    })),
   );
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
       <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
-      <NewsroomCaptions reel={reel} keywords={keywords} />
+      <NewsroomCaptions reel={reel} keywords={keywords} barAt={barAt} />
       {(reel.edit.chapters ?? []).map((c, i) => (
         <At
           key={c.atMs}
@@ -281,19 +347,26 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
           <ChapterCard index={i} title={c.title} />
         </At>
       ))}
-      {tickerItems.length > 0 ? (
-        <div
-          style={{
-            position: "absolute",
-            top: SAFE.bottom - TICKER_HEIGHT,
-            left: 0,
-            width: "100%",
-            height: TICKER_HEIGHT,
-          }}
+      {windows.map((w) => (
+        <Sequence
+          key={w.from}
+          from={w.from}
+          durationInFrames={w.to - w.from}
+          layout="none"
         >
-          <NewsTicker items={tickerItems} label="SỐ LIỆU" />
-        </div>
-      ) : null}
+          <div
+            style={{
+              position: "absolute",
+              top: SAFE.bottom - TICKER_HEIGHT,
+              left: 0,
+              width: "100%",
+              height: TICKER_HEIGHT,
+            }}
+          >
+            <NewsTicker items={w.items} label="SỐ LIỆU" />
+          </div>
+        </Sequence>
+      ))}
       {mentions.map((m) => {
         const from = Math.round((m.startMs / 1000) * fps);
         const frames = Math.max(
