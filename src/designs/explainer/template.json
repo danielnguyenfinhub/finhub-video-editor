@@ -13,6 +13,8 @@
     "comparisons": "sticky-note compare cards (own)",
     "steps": "chapter title in pen + book-flip",
     "eligibility": "pen tick/cross (own)",
+    "change": "index card: old value crossed out in pen, new value written under it in marker, pen arrow in tone ink when a direction is given (own)",
+    "trend": "navy line graph taped to the page, drawn left to right, every point's value printed (own)",
     "captionPosition": "marker on the paper below the card"
   },
   "skinAxes": {
@@ -37,6 +39,7 @@
   },
   "minHoldMs": 2000,
   "facePolicy": "face-required",
+  "cueRoom": true,
   "renderCost": "med",
   "preview": null,
   "uses": 1,

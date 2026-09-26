@@ -47,7 +47,12 @@ const Verdict: React.FC<{ cue: CueOf<"verdict"> }> = ({ cue }) => {
   const pillWidth = 2 * (SAFE.right - 540);
   const fontSize = Math.min(
     64,
-    fitText({ text: cue.text, withinWidth: pillWidth - 60, fontFamily: FONT, fontWeight: 900 }).fontSize,
+    fitText({
+      text: cue.text,
+      withinWidth: pillWidth - 60,
+      fontFamily: FONT,
+      fontWeight: 900,
+    }).fontSize,
   );
   const len = 260;
   const stroke = (a: number) =>
@@ -227,10 +232,19 @@ const Lenders: React.FC<{ cue: CueOf<"lenders"> }> = ({ cue }) => (
 // ---------------------------------------------------------------- numbers kit
 
 // Which way a design shows a `change` value, and how far it shrinks the
-// 920 px trend graph to fit its panel band. Classic: a strike-through, and
-// the graph small enough to end above y ~930 (cueRoom).
-export type NumbersLook = { change: "swap" | "strike"; trendZoom: number };
-const CLASSIC_NUMBERS: NumbersLook = { change: "strike", trendZoom: 0.69 };
+// 920 px trend graph (and optionally its plot height) to fit its panel band.
+// Classic: a strike-through, and a wide, short graph that ends above y ~930
+// (cueRoom) with its values at 36 px on screen.
+export type NumbersLook = {
+  change: "swap" | "strike";
+  trendZoom: number;
+  trendHeight?: number;
+};
+const CLASSIC_NUMBERS: NumbersLook = {
+  change: "strike",
+  trendZoom: 0.9,
+  trendHeight: 390,
+};
 // The cards bring their own navy card; Panel only places and moves them.
 const BARE: React.CSSProperties = {
   padding: 0,
@@ -239,11 +253,11 @@ const BARE: React.CSSProperties = {
   boxShadow: "none",
 };
 
-const Change: React.FC<{ cue: CueOf<"change">; rel: Rel; look: NumbersLook }> = ({
-  cue,
-  rel,
-  look,
-}) => (
+const Change: React.FC<{
+  cue: CueOf<"change">;
+  rel: Rel;
+  look: NumbersLook;
+}> = ({ cue, rel, look }) => (
   <Panel style={BARE}>
     <ChangeCard
       kicker={cue.kicker}
@@ -258,7 +272,10 @@ const Change: React.FC<{ cue: CueOf<"change">; rel: Rel; look: NumbersLook }> = 
   </Panel>
 );
 
-const Trend: React.FC<{ cue: CueOf<"trend">; look: NumbersLook }> = ({ cue, look }) => (
+const Trend: React.FC<{ cue: CueOf<"trend">; look: NumbersLook }> = ({
+  cue,
+  look,
+}) => (
   <Panel style={{ ...BARE, textAlign: "center" }}>
     <div style={{ display: "inline-block", textAlign: "left" }}>
       <TrendCard
@@ -268,6 +285,7 @@ const Trend: React.FC<{ cue: CueOf<"trend">; look: NumbersLook }> = ({ cue, look
         decimals={cue.decimals}
         points={cue.points}
         zoom={look.trendZoom}
+        height={look.trendHeight}
       />
     </div>
   </Panel>

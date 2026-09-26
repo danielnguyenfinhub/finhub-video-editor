@@ -14,6 +14,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { LenderRow } from "../../brand/LenderRow";
+import { TrendCard } from "../../elements/TrendCard";
 import { NotoEmoji } from "../../brand/NotoEmoji";
 import { brand } from "../../brand/theme";
 import {
@@ -25,14 +26,7 @@ import {
 import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
 import { FONT, clamp, pop } from "../../mortgage/style";
 import { Points, useExit, type CueOf, type Rel } from "../classic/Infographics";
-import {
-  BandWide,
-  INK,
-  MARKER,
-  NOTE,
-  NoteBand,
-  logoDuring,
-} from "./Paper";
+import { BandWide, INK, MARKER, NOTE, NoteBand, logoDuring } from "./Paper";
 
 // brand.good/bad are for dark backgrounds; these are the ink versions that
 // read on paper.
@@ -77,11 +71,11 @@ const IndexCard: React.FC<{
 const Kicker: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div
     style={{
-      fontSize: 38,
+      fontSize: 36,
       fontWeight: 800,
       letterSpacing: 2,
       color: brand.primary,
-      marginBottom: 10,
+      marginBottom: 6,
     }}
   >
     {children}
@@ -100,8 +94,10 @@ const Kinetic: React.FC<{ cue: CueOf<"kinetic">; rel: Rel }> = ({
   const { fps } = useVideoConfig();
   const slamAt = rel(cue.slam.atMs);
   const slam = pop(frame, fps, slamAt);
+  // Sized with the rows below so the card ends by y ~830, above Daniel's
+  // eyebrows in the taped photo (golden rule 3b).
   const size = Math.min(
-    96,
+    86,
     fitText({
       text: cue.slam.text,
       withinWidth: 820,
@@ -116,9 +112,9 @@ const Kinetic: React.FC<{ cue: CueOf<"kinetic">; rel: Rel }> = ({
         <div
           key={s.atMs}
           style={{
-            fontSize: 58,
+            fontSize: 50,
             fontWeight: 700,
-            lineHeight: 1.4,
+            lineHeight: 1.25,
             opacity: Math.min(1, pop(frame, fps, rel(s.atMs))),
           }}
         >
@@ -140,7 +136,7 @@ const Kinetic: React.FC<{ cue: CueOf<"kinetic">; rel: Rel }> = ({
       ))}
       <div
         style={{
-          marginTop: 18,
+          marginTop: 8,
           opacity: Math.min(1, slam),
           transform: `scale(${interpolate(slam, [0, 1], [1.5, 1])})`,
           transformOrigin: "left center",
@@ -306,8 +302,9 @@ const Compare: React.FC<{ cue: CueOf<"compare">; rel: Rel }> = ({
 
 // ---------------------------------------------------------------- bars
 
-const BAR_MAX = 300;
-const OVERFLOW = 90;
+// The bars card ends by y ~830 like the venn card, above Daniel's eyebrows.
+const BAR_MAX = 200;
+const OVERFLOW = 70;
 
 // Hand-drawn bars: an ink outline draws itself, then the fill rises. An
 // overflowing bar is drawn taller than the scale.
@@ -534,6 +531,155 @@ const Venn: React.FC<{ cue: CueOf<"venn"> }> = ({ cue }) => {
   );
 };
 
+// ---------------------------------------------------------------- numbers kit
+
+const ARROW = {
+  down: "M 30 6 L 30 74 M 8 50 L 30 74 L 52 50",
+  up: "M 30 74 L 30 6 M 8 30 L 30 6 L 52 30",
+};
+
+// A value changing on an index card: the old value is crossed out in pen at
+// swapAtMs and the new one is written under it in marker, with a pen arrow
+// (tone ink) when the cue gives a direction. Paper version of ChangeCard.
+const Change: React.FC<{ cue: CueOf<"change">; rel: Rel }> = ({ cue, rel }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const swapAt = rel(cue.swapAtMs);
+  const to = pop(frame, fps, swapAt);
+  const from = cue.from.normalize("NFC");
+  const next = cue.to.normalize("NFC");
+  const fit = (t: string, max: number, within: number) =>
+    Math.min(
+      max,
+      fitText({
+        text: t,
+        withinWidth: within,
+        fontFamily: FONT,
+        fontWeight: 900,
+      }).fontSize,
+    );
+  const arrow = cue.direction
+    ? evolvePath(
+        interpolate(frame, [swapAt + 4, swapAt + 16], [0, 1], clamp),
+        ARROW[cue.direction],
+      )
+    : null;
+  return (
+    <IndexCard>
+      {cue.kicker ? <Kicker>{cue.kicker.normalize("NFC")}</Kicker> : null}
+      <div style={{ fontSize: 46, fontWeight: 800, lineHeight: 1.25 }}>
+        {cue.label.normalize("NFC")}
+      </div>
+      <div style={{ marginTop: 10, opacity: to < 1 ? 1 : 0.55 }}>
+        <CrossedOff
+          progress={interpolate(frame, [swapAt - 10, swapAt], [0, 1], clamp)}
+          color={BAD_INK}
+          strokeWidth={6}
+          iterations={1}
+          seed={81}
+        >
+          <span
+            style={{
+              fontSize: fit(from, 80, 820),
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {from}
+          </span>
+        </CrossedOff>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 24,
+          opacity: Math.min(1, to),
+          transform: `translateY(${interpolate(to, [0, 1], [20, 0], clamp)}px)`,
+        }}
+      >
+        <Highlight
+          progress={interpolate(
+            frame,
+            [swapAt + 4, swapAt + 14],
+            [0, 1],
+            clamp,
+          )}
+          color={MARKER}
+          iterations={1}
+          seed={83}
+        >
+          <span
+            style={{
+              fontSize: fit(next, 110, 740),
+              fontWeight: 900,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {next}
+          </span>
+        </Highlight>
+        {arrow && cue.direction ? (
+          <svg width={60} height={80} style={{ flexShrink: 0 }}>
+            <path
+              d={ARROW[cue.direction]}
+              fill="none"
+              stroke={toneInk(cue.tone ?? "neutral")}
+              strokeWidth={9}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray={arrow.strokeDasharray}
+              strokeDashoffset={arrow.strokeDashoffset}
+            />
+          </svg>
+        ) : null}
+      </div>
+    </IndexCard>
+  );
+};
+
+// A value over time: the shared navy TrendCard (LineGraph, vi-VN values)
+// taped to the page like a printout, with a short plot so the card ends by
+// y ~830, above Daniel's eyebrows.
+const Trend: React.FC<{ cue: CueOf<"trend"> }> = ({ cue }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const p = pop(frame, fps, 0);
+  const exit = useExit();
+  return (
+    <NoteBand width={920}>
+      <div
+        style={{
+          position: "relative",
+          opacity: Math.min(1, p) * (1 - exit),
+          transform: `translateY(${interpolate(p, [0, 1], [-90, 0]) - exit * 140}px) rotate(-1deg)`,
+        }}
+      >
+        <TrendCard
+          kicker={cue.kicker}
+          title={cue.title}
+          unit={cue.unit}
+          decimals={cue.decimals}
+          points={cue.points}
+          height={330}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: -18,
+            right: 60,
+            width: 150,
+            height: 44,
+            background: "rgba(255,255,255,0.55)",
+            boxShadow: "0 2px 6px rgba(11,31,61,0.15)",
+            transform: "rotate(4deg)",
+          }}
+        />
+      </div>
+    </NoteBand>
+  );
+};
+
 // ---------------------------------------------------------------- emoji, lenders
 
 const Emoji: React.FC<{ cue: CueOf<"emoji"> }> = ({ cue }) => {
@@ -592,6 +738,10 @@ const CueView: React.FC<{ cue: Cue; rel: Rel }> = ({ cue, rel }) => {
       return <Emoji cue={cue} />;
     case "lenders":
       return <Lenders cue={cue} />;
+    case "change":
+      return <Change cue={cue} rel={rel} />;
+    case "trend":
+      return <Trend cue={cue} />;
     // No paper-style version yet: the classic navy panel.
     case "points":
       return <Points cue={cue} rel={rel} />;
@@ -644,9 +794,7 @@ export const CueTrack: React.FC<{ reel: Reel }> = ({ reel }) => {
             layout="none"
           >
             <BandWide.Provider
-              value={
-                !logoDuring(from, frames, reel.timeline.talkFrames, fps)
-              }
+              value={!logoDuring(from, frames, reel.timeline.talkFrames, fps)}
             >
               <CueView cue={c} rel={(ms) => outFrame(ms) - from} />
             </BandWide.Provider>

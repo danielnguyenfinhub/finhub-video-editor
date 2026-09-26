@@ -1,7 +1,9 @@
 // A value over time for the `trend` cue: the existing LineGraph (draws itself,
 // every point's value printed, y-axis spanning the data range), with the
 // cue's kicker as a tag above it and values in Vietnamese format (4,35%).
-// `zoom` lets a design fit the 920 px graph into its panel band.
+// `zoom` lets a design fit the 920 px graph into its panel band; `height`
+// shortens the plot instead. Values print at 40 px so a zoomed-out graph
+// still reads (>= 32 px on screen down to zoom 0.8).
 import type React from "react";
 import { brand } from "../brand/theme";
 import { FONT } from "../mortgage/style";
@@ -14,7 +16,8 @@ export const TrendCard: React.FC<{
   decimals?: number;
   points: GraphPoint[];
   zoom?: number;
-}> = ({ kicker, title, unit, decimals, points, zoom = 1 }) => (
+  height?: number;
+}> = ({ kicker, title, unit, decimals, points, zoom = 1, height }) => (
   <div style={{ zoom, fontFamily: FONT }}>
     {kicker ? (
       <div
@@ -40,6 +43,8 @@ export const TrendCard: React.FC<{
       unit={unit?.normalize("NFC")}
       decimals={decimals}
       locale="vi-VN"
+      height={height}
+      valueSize={40}
     />
   </div>
 );
