@@ -112,6 +112,15 @@ export function rank(brief, manifests, history, cfg) {
   return { ranked: out, dropped };
 }
 
+// Scores this close are a judgement call, not a pick: Daniel chooses between the two.
+export const CLOSE_CALL = 2;
+export const confidenceOf = (ranked) => {
+  const [a, b] = ranked;
+  if (!b) return { confident: true };
+  const gap = r2(Math.abs(a.score - b.score));
+  return gap >= CLOSE_CALL ? { confident: true } : { confident: false, closeCall: `${a.id} ${a.score} vs ${b.id} ${b.score} (gap ${gap} < ${CLOSE_CALL}): ask Daniel` };
+};
+
 /** Daniel's --pick: any design, recorded with its rank and why it would not have been picked. */
 export const overrideOf = (pick, reason, { ranked, dropped }, manifests) => ({
   id: pick,
@@ -147,6 +156,7 @@ function main() {
   const { ranked, dropped } = rank(brief, manifests, history, cfg);
   const top = ranked.slice(0, 3);
   const override = pick && overrideOf(pick, reason, { ranked, dropped }, manifests);
+  const confidence = confidenceOf(ranked);
   const line = (v) => JSON.stringify(v);
   const text = [
     "{",
@@ -154,6 +164,8 @@ function main() {
     `  "brief": ${line({ mode: brief.mode, intent: brief.intent, dataShapes: brief.dataShapes, durationS: brief.durationS })},`,
     `  "weights": ${line(cfg.status)},`,
     `  "pick": ${line(pick ?? top[0]?.id ?? null)},`,
+    `  "confident": ${line(confidence.confident)},`,
+    ...(confidence.closeCall ? [`  "closeCall": ${line(confidence.closeCall)},`] : []),
     ...(override ? [`  "override": ${line(override)},`] : []),
     `  "top": [`,
     top.map((r) => `    ${line(r)}`).join(",\n"),
@@ -166,6 +178,7 @@ function main() {
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "selection.json"), `${text}\n`);
   console.log(`select ${slug}: ${top.map((r) => `${r.id} ${r.score}${r.unproven ? " (unproven)" : ""}${r.holdWarning ? " (short hold)" : ""}`).join(" · ")}${override ? ` · Daniel picked ${pick}` : ""}`);
+  if (!override && confidence.closeCall) console.log(`close call: ${confidence.closeCall}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { intentsOf } from "./brief.mjs";
-import { loadManifests, overrideOf, rank } from "./select-template.mjs";
+import { confidenceOf, loadManifests, overrideOf, rank } from "./select-template.mjs";
 
 const cfg = JSON.parse(readFileSync(join(import.meta.dirname, "..", "config", "selector.json"), "utf8"));
 const manifests = loadManifests();
@@ -94,6 +94,12 @@ check("no warning when the hold meets the design's minimum", !!heldOf("classic")
 check("explain only when nothing else matched", intentsOf({ numbers: 0, steps: 0, comparisons: 0 }, 0, "", 60).join() === "explain");
 const dataIntents = intentsOf({ numbers: 5, steps: 0, comparisons: 3 }, 4, "", 120);
 check("data video has no free explain", !dataIntents.includes("explain"), dataIntents.join());
+
+// A near-tie between the top two is flagged for Daniel, a clear lead is not.
+const near = confidenceOf([{ id: "a", score: 6.1 }, { id: "b", score: 6 }]);
+check("0.1 gap is a close call", !near.confident && /gap 0\.1/.test(near.closeCall), JSON.stringify(near));
+check("2-point gap is confident", confidenceOf([{ id: "a", score: 6 }, { id: "b", score: 4 }]).confident);
+check("a single candidate is confident", confidenceOf([{ id: "a", score: 1 }]).confident);
 
 if (failed) process.exit(1);
 console.log("selector ok");
