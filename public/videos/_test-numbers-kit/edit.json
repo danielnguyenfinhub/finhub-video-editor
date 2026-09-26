@@ -1,0 +1,38 @@
+{
+  "notes": [
+    "TEST FIXTURE for the numbers kit (classic design): not a real video. Talk and footage are the ty-do recording; every figure below is a synthetic placeholder, not a real rate.",
+    "Stills: change mid-cue (before the swap) and swapAtMs + 500 ms; trend mid-cue."
+  ],
+  "source": "ty-do",
+  "design": "classic",
+  "title": "Numbers kit: kiểm tra",
+  "cues": [
+    {
+      "kind": "change",
+      "fromMs": 20160,
+      "toMs": 26700,
+      "kicker": "VÍ DỤ",
+      "label": "Kỳ này lãi suất giảm ở mức",
+      "from": "5,89%",
+      "to": "5,64%",
+      "swapAtMs": 25600,
+      "rateType": "cash"
+    },
+    {
+      "kind": "trend",
+      "fromMs": 39120,
+      "toMs": 46500,
+      "kicker": "VÍ DỤ",
+      "title": "Lãi suất (số liệu minh hoạ)",
+      "unit": "%",
+      "decimals": 2,
+      "points": [
+        { "label": "Q1", "value": 5.89 },
+        { "label": "Q2", "value": 5.79 },
+        { "label": "Q3", "value": 5.64 },
+        { "label": "Q4", "value": 5.7 }
+      ],
+      "rateType": "cash"
+    }
+  ]
+}

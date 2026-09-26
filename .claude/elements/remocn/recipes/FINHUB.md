@@ -33,6 +33,12 @@ disagree, this file wins.
 For a talking-head edit, a recipe shapes the design's graphic beats around Daniel; it
 never replaces the locked core (cuts, captions, compliance card).
 
+**Numbers kit is live** (edit.json cues `change` and `trend`): `value-swap` and
+`strikethrough-replace` are vendored in `src/elements/remocn/` and drawn by
+`src/elements/ChangeCard.tsx`; `trend` reuses `src/elements/LineGraph.tsx` via `TrendCard`,
+not remocn's `animated-line-chart`. Counters stay as they are (`rolling-number` and
+`number-wheel` are integer-only).
+
 ## Overrides — these beat the recipes
 
 - **Canvas**: recipes assume 1280×720 16:9. FinHub is 1080×1920 @ 30 fps, 4:5-safe

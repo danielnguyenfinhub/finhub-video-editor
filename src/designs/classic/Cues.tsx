@@ -15,6 +15,8 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { ChangeCard } from "../../elements/ChangeCard";
+import { TrendCard } from "../../elements/TrendCard";
 import { LenderRow } from "../../brand/LenderRow";
 import { NotoEmoji } from "../../brand/NotoEmoji";
 import { brand } from "../../brand/theme";
@@ -222,8 +224,65 @@ const Lenders: React.FC<{ cue: CueOf<"lenders"> }> = ({ cue }) => (
   </Panel>
 );
 
-const CueView: React.FC<{ cue: Cue; rel: Rel }> = ({ cue, rel }) => {
+// ---------------------------------------------------------------- numbers kit
+
+// Which way a design shows a `change` value, and how far it shrinks the
+// 920 px trend graph to fit its panel band. Classic: a strike-through, and
+// the graph small enough to end above y ~930 (cueRoom).
+export type NumbersLook = { change: "swap" | "strike"; trendZoom: number };
+const CLASSIC_NUMBERS: NumbersLook = { change: "strike", trendZoom: 0.69 };
+// The cards bring their own navy card; Panel only places and moves them.
+const BARE: React.CSSProperties = {
+  padding: 0,
+  background: "none",
+  border: "none",
+  boxShadow: "none",
+};
+
+const Change: React.FC<{ cue: CueOf<"change">; rel: Rel; look: NumbersLook }> = ({
+  cue,
+  rel,
+  look,
+}) => (
+  <Panel style={BARE}>
+    <ChangeCard
+      kicker={cue.kicker}
+      label={cue.label}
+      from={cue.from}
+      to={cue.to}
+      swapAt={rel(cue.swapAtMs)}
+      direction={cue.direction}
+      tone={cue.tone}
+      prefer={look.change}
+    />
+  </Panel>
+);
+
+const Trend: React.FC<{ cue: CueOf<"trend">; look: NumbersLook }> = ({ cue, look }) => (
+  <Panel style={{ ...BARE, textAlign: "center" }}>
+    <div style={{ display: "inline-block", textAlign: "left" }}>
+      <TrendCard
+        kicker={cue.kicker}
+        title={cue.title}
+        unit={cue.unit}
+        decimals={cue.decimals}
+        points={cue.points}
+        zoom={look.trendZoom}
+      />
+    </div>
+  </Panel>
+);
+
+const CueView: React.FC<{ cue: Cue; rel: Rel; look: NumbersLook }> = ({
+  cue,
+  rel,
+  look,
+}) => {
   switch (cue.kind) {
+    case "change":
+      return <Change cue={cue} rel={rel} look={look} />;
+    case "trend":
+      return <Trend cue={cue} look={look} />;
     case "kinetic":
       return <Kinetic cue={cue} rel={rel} />;
     case "compare":
@@ -291,11 +350,12 @@ const sfxFor = (reel: Reel): Sfx[] => [
 
 // `panelOffset` moves only the cue panels (they sit at top 110 in classic);
 // the film grain and light leaks stay full-frame. Designs built to the 4:5
-// safe band pass SAFE.top - 110.
-export const MotionTrack: React.FC<{ reel: Reel; panelOffset?: number }> = ({
-  reel,
-  panelOffset = 0,
-}) => {
+// safe band pass SAFE.top - 110. `numbers` is the design's NumbersLook.
+export const MotionTrack: React.FC<{
+  reel: Reel;
+  panelOffset?: number;
+  numbers?: NumbersLook;
+}> = ({ reel, panelOffset = 0, numbers = CLASSIC_NUMBERS }) => {
   const { fps } = useVideoConfig();
   const outFrame = outFrameOf(reel.timeline, fps);
   return (
@@ -317,7 +377,11 @@ export const MotionTrack: React.FC<{ reel: Reel; panelOffset?: number }> = ({
               durationInFrames={Math.max(1, outFrame(c.toMs) - from)}
               layout="none"
             >
-              <CueView cue={c} rel={(ms) => outFrame(ms) - from} />
+              <CueView
+                cue={c}
+                rel={(ms) => outFrame(ms) - from}
+                look={numbers}
+              />
             </Sequence>
           );
         })}

@@ -28,7 +28,7 @@ import { PacedVideo } from "../../mortgage/PacedVideo";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, LOGO, clamp, emphasised, enter } from "../../mortgage/style";
 import { chapterTransition } from "../../mortgage/transitions";
-import { MotionTrack } from "../classic/Cues";
+import { MotionTrack, type NumbersLook } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
 import {
   ChapterPills,
@@ -52,6 +52,9 @@ const SMALL = 58;
 // ponytail: a two-line dropped page rises ~60 px into the stage's bottom;
 // cap the page to one line if a long page ever meets a stat label.
 const LOW_BOTTOM = 1920 - (STAGE.bottom + 14 + Math.ceil(SMALL * 1.3));
+// Numbers kit: change values slide (value-swap); the trend graph is shrunk
+// to end at the bottom of the stage (panels start at PANEL_TOP).
+const FACELESS_NUMBERS: NumbersLook = { change: "swap", trendZoom: 0.84 };
 
 const Cover: React.FC<CoverProps> = ({ title, subtitle, keywords }) => {
   const frame = useCurrentFrame();
@@ -269,7 +272,11 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
     <>
       <FootageVeil level={level} />
       {/* Panels start below the LogoMark tile (SAFE.top + 120). */}
-      <MotionTrack reel={reel} panelOffset={PANEL_TOP - 110} />
+      <MotionTrack
+        reel={reel}
+        panelOffset={PANEL_TOP - 110}
+        numbers={FACELESS_NUMBERS}
+      />
       <StageLayer reel={reel} />
       <ChapterPills reel={reel} />
       <Captions reel={reel} keywords={keywords} level={level} />
