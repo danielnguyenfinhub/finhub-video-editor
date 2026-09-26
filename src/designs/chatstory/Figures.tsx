@@ -4,6 +4,7 @@
 // a hand-drawn amber circle (adapted from .claude/elements/text/
 // circle-marker), the figure's label as the polaroid caption. It swings in
 // (Polaroid's spring rotation) and lifts out at the end of its Sequence.
+import { fitText } from "@remotion/layout-utils";
 import { Circle } from "@remotion/rough-notation";
 import type React from "react";
 import {
@@ -77,7 +78,15 @@ const FigureCard: React.FC<{ f: Figure }> = ({ f }) => {
             style={{
               fontFamily: FONT,
               fontWeight: 900,
-              fontSize: f.source === "stat" ? 40 : 60,
+              fontSize: Math.min(
+                f.source === "stat" ? 40 : 60,
+                fitText({
+                  text: f.big,
+                  withinWidth: BIG_WIDTH,
+                  fontFamily: FONT,
+                  fontWeight: 900,
+                }).fontSize,
+              ),
               color: "#0B1F3D",
               whiteSpace: "nowrap",
             }}
@@ -94,6 +103,9 @@ const FigureCard: React.FC<{ f: Figure }> = ({ f }) => {
 // is, so it never disappears behind his head — only its own drop shadow may
 // touch him.
 const CARD_WIDTH = 220;
+// The number's room inside it: less the polaroid's 18px sides and the
+// circle's 14px padding on each side, so "$4,1 TỶ" never runs past the card.
+const BIG_WIDTH = CARD_WIDTH - 2 * 18 - 2 * 14;
 
 // Rendered in the design's Behind layer (between the backdrop and Daniel's
 // cut-out): anchored at the top of SAFE, beside his left shoulder, so the

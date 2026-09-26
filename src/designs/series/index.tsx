@@ -129,15 +129,23 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
       <SeriesBackdrop />
       <StripBar text={stripLine(subtitle)} />
       <StripLogo />
-      <div style={{ position: "absolute", left: 60, top: SAFE.top - 40 }}>
+      {/* Under the strip (SAFE.top..+60), left of the logo tile. */}
+      <div style={{ position: "absolute", left: 60, top: SAFE.top + 90 }}>
         <EpisodeRing number={episode?.ep} />
       </div>
+      {/* Title and handle in one flow, below the ring and the logo tile
+          (which ends at SAFE.top + 218), so neither can run under the tile
+          however many lines the title takes. */}
       <div
         style={{
           position: "absolute",
           left: 60,
-          right: 100,
-          top: 620,
+          right: 1080 - SAFE.right,
+          top: SAFE.top + 320,
+        }}
+      >
+      <div
+        style={{
           display: "flex",
           flexWrap: "wrap",
           gap: "6px 16px",
@@ -158,8 +166,9 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
           </span>
         ))}
       </div>
-      <div style={{ position: "absolute", left: 60, top: 950 }}>
+      <div style={{ marginTop: 30 }}>
         <SocialHandle platform="facebook" handle={HANDLE} />
+      </div>
       </div>
       <div
         style={{
@@ -190,8 +199,26 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
   );
 };
 
-// Backdrop behind Daniel's cut-out (backdrop="none"); anchored bottom-left at
-// ~0.9 scale so the sidebar (x 700-960) stays free; a small punch-in per cut.
+// Daniel at 0.63 from the left edge (x 0-684, the sidebar at x 700-960 stays
+// free), lifted so his chin (source y ~1400 when he leans in) lands at
+// CHIN_Y: a caption page (x 400-960, top ~1290 for two lines) sits under it.
+// The layer ends above the frame's bottom and short of the sidebar, so its
+// right and bottom edges fade out instead of cutting hard.
+const SCALE = 0.633;
+const CHIN_Y = 1280;
+const EDGE_FADE =
+  "linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, #000 80%, transparent)";
+const FRAMING: React.CSSProperties = {
+  transform: `translateY(${CHIN_Y - 1400 * SCALE}px) scale(${SCALE})`,
+  transformOrigin: "0 0",
+  maskImage: EDGE_FADE,
+  WebkitMaskImage: EDGE_FADE,
+  maskComposite: "intersect",
+  WebkitMaskComposite: "source-in",
+};
+
+// Backdrop behind Daniel's cut-out (backdrop="none"); a small punch-in per
+// cut, centred on his chin line so the caption gap holds.
 const Talk: React.FC<TalkProps> = ({
   seg,
   index,
@@ -211,29 +238,22 @@ const Talk: React.FC<TalkProps> = ({
     <AbsoluteFill>
       <SeriesBackdrop />
       {behind}
-      <div
+      <AbsoluteFill
         style={{
-          position: "absolute",
-          left: 0,
-          bottom: 0,
-          width: 760,
-          height: "100%",
+          transform: `scale(${1 + punch})`,
+          transformOrigin: `${540 * SCALE}px ${CHIN_Y}px`,
         }}
       >
-        <PacedVideo
-          seg={seg}
-          src={src}
-          look={look}
-          foreground={foreground}
-          backdrop="none"
-          style={{
-            transform: `scale(${0.9 + punch})`,
-            transformOrigin: "0% 100%",
-            objectFit: "contain",
-            objectPosition: "bottom left",
-          }}
-        />
-      </div>
+        <AbsoluteFill style={FRAMING}>
+          <PacedVideo
+            seg={seg}
+            src={src}
+            look={look}
+            foreground={foreground}
+            backdrop="none"
+          />
+        </AbsoluteFill>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };
@@ -279,8 +299,8 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
 
 // Charts drawn between the backdrop and Daniel's cut-out (golden rule 3b):
 // the journey tracker, the auto-figure counter card and the "seen so far"
-// lender stack. The sidebar sits at x 700-960, he's anchored bottom-left at
-// 0.9 scale, so he barely reaches it — but this keeps it behind him, and
+// lender stack. The sidebar sits at x 620-960, right of his head (x 0-684
+// layer, face x ~200-490), so he barely reaches it — but this keeps it behind him, and
 // fades it out while a cue card is up so the two never fight for space.
 const Behind: React.FC<OverlayProps> = ({ reel }) => {
   const { fps } = useVideoConfig();
@@ -319,7 +339,7 @@ export const series: Design = {
     "PHẦN",
     "HÀNH TRÌNH",
     "ĐÃ NHẮC TỚI",
-    "ví dụ minh hoạ · cộng dồn qua các tập",
+    "ví dụ minh hoạ",
     HANDLE,
     "VS",
     "Các ngân hàng Finance Hub làm việc cùng",

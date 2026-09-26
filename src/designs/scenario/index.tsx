@@ -64,6 +64,27 @@ const LOGO_BOX: React.CSSProperties = {
   boxShadow: "0 6px 18px rgba(0,0,0,0.3)",
 };
 
+// Daniel at 0.6, centred, lifted so his chin (source y ~1440 when he leans
+// in) lands at CHIN_Y: a two-line caption page (top ~1290) sits under it,
+// and his head (top ~y 800) stays under the compare columns' rows and the
+// figure card's label. The layer's sides and bottom end inside the frame, so
+// they fade out instead of cutting hard across his shoulders.
+const SCALE = 0.6;
+const CHIN_Y = 1270;
+const EDGE_FADE =
+  "linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 78%, transparent)";
+const FRAMING: React.CSSProperties = {
+  transform: `translate(${540 * (1 - SCALE)}px, ${CHIN_Y - 1440 * SCALE}px) scale(${SCALE})`,
+  transformOrigin: "0 0",
+  maskImage: EDGE_FADE,
+  WebkitMaskImage: EDGE_FADE,
+  maskComposite: "intersect",
+  WebkitMaskComposite: "source-in",
+};
+// The cover still: his whole 9:16 frame, 950 tall, bottom-centre.
+const COVER_H = 950;
+const COVER_W = (COVER_H * 1080) / 1920;
+
 // Same split as the talk: "A"/"B" headers top-left/top-right, the title
 // centred over the divider, Daniel's cut-out bottom-centre.
 const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
@@ -147,14 +168,20 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
           {subtitle}
         </div>
       </div>
+      {/* Sized to the video's own 9:16 box so the edge fade lands on the
+          cut-out's sides, not on empty letterbox. */}
       <div
         style={{
           position: "absolute",
           left: "50%",
           bottom: 0,
-          width: 700,
-          height: 950,
-          marginLeft: -350,
+          width: COVER_W,
+          height: COVER_H,
+          marginLeft: -COVER_W / 2,
+          maskImage: EDGE_FADE,
+          WebkitMaskImage: EDGE_FADE,
+          maskComposite: "intersect",
+          WebkitMaskComposite: "source-in",
         }}
       >
         <Freeze frame={0}>
@@ -175,8 +202,7 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
   );
 };
 
-// The split backdrop behind Daniel, who straddles the divider at 0.75 scale
-// anchored bottom-centre so the top of SAFE stays free. The divider nudges
+// The split backdrop behind Daniel, who straddles the divider. The divider nudges
 // left or right on every cut (a fresh spring each time Talk remounts). The
 // design's Behind layer (charts, columns, bank chips) renders between the
 // backdrop and Daniel's cut-out so it never covers his face.
@@ -199,27 +225,22 @@ const Talk: React.FC<TalkProps> = ({
     <AbsoluteFill style={{ backgroundColor: brand.background }}>
       <SplitBackdrop seed={index} />
       {behind}
-      <div
+      <AbsoluteFill
         style={{
-          position: "absolute",
-          left: "50%",
-          bottom: 0,
-          width: 1080 * 0.75,
-          height: 1920 * 0.75,
-          marginLeft: -(1080 * 0.375),
           transform: `scale(${1 + punch})`,
-          transformOrigin: "50% 100%",
+          transformOrigin: `50% ${CHIN_Y}px`,
         }}
       >
-        <PacedVideo
-          seg={seg}
-          src={src}
-          look={look}
-          foreground={foreground}
-          backdrop="none"
-          style={{ objectFit: "contain" }}
-        />
-      </div>
+        <AbsoluteFill style={FRAMING}>
+          <PacedVideo
+            seg={seg}
+            src={src}
+            look={look}
+            foreground={foreground}
+            backdrop="none"
+          />
+        </AbsoluteFill>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };

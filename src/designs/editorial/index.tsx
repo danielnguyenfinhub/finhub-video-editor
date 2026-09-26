@@ -165,6 +165,25 @@ const Cover: React.FC<CoverProps> = ({
   );
 };
 
+const EDGE_FADE =
+  "linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, #000 80%, transparent)";
+
+// Framing: 0.85 from the top centre, lifted so his chin (source y ~1400 when
+// he leans in) lands at y 1280 and a two-line caption page (top ~1290) sits
+// under it, while his eyes (~y 990) stay below a cue panel (bottom ~y 925).
+// The smaller layer ends above the frame's bottom and inside its sides, so
+// its bottom and side edges fade out instead of cutting hard.
+const SCALE = 0.85;
+const LIFT = 1280 - 1400 * SCALE;
+const FRAMING: React.CSSProperties = {
+  transform: `translate(${540 * (1 - SCALE)}px, ${LIFT}px) scale(${SCALE})`,
+  transformOrigin: "0 0",
+  maskImage: EDGE_FADE,
+  WebkitMaskImage: EDGE_FADE,
+  maskComposite: "intersect",
+  WebkitMaskComposite: "source-in",
+};
+
 // A slow 1.02 zoom drift on Daniel's cut-out over the segment so the frame
 // is never perfectly still (golden rule 5b), independent of caption/marker
 // pop-ins which cover the same rule for text.
@@ -187,14 +206,16 @@ const Talk: React.FC<TalkProps> = ({
       <AbsoluteFill
         style={{ transform: `scale(${drift})`, transformOrigin: "50% 65%" }}
       >
-        <PacedVideo
-          seg={seg}
-          src={src}
-          look={look}
-          foreground={foreground}
-          backdrop="none"
-          style={{ objectFit: "cover" }}
-        />
+        <AbsoluteFill style={FRAMING}>
+          <PacedVideo
+            seg={seg}
+            src={src}
+            look={look}
+            foreground={foreground}
+            backdrop="none"
+            style={{ objectFit: "cover" }}
+          />
+        </AbsoluteFill>
       </AbsoluteFill>
     </AbsoluteFill>
   );
