@@ -30,6 +30,12 @@ import {
   mortgageReelComposition,
   mortgageReelSchema,
 } from "./mortgage/MortgageReel";
+import {
+  ListingReel,
+  calculateListingReelMetadata,
+  listingReelComposition,
+  listingReelSchema,
+} from "./listing/ListingReel";
 import { gradientBg, palette } from "./showcase/palette";
 import { poppins } from "./showcase/font";
 import { BrandKitDemo } from "./brand/BrandKitDemo";
@@ -92,6 +98,16 @@ export const RemotionRoot: React.FC = () => {
           schema={mortgageReelSchema}
           defaultProps={{ slug: "ty-do", reel: null }}
           calculateMetadata={calculateMortgageReelMetadata}
+        />
+      </Folder>
+      <Folder name="GlobalRE">
+        {/* Global RE listing videos: one public/listings/<slug>/ per listing (docs/agents/listing-video.md). */}
+        <Composition
+          {...listingReelComposition}
+          component={ListingReel}
+          schema={listingReelSchema}
+          defaultProps={{ slug: "", lang: "vi" as const, data: null }}
+          calculateMetadata={calculateListingReelMetadata}
         />
       </Folder>
       <Folder name="Brand">

@@ -21,8 +21,8 @@ const walk = (dir) =>
     const p = join(dir, f);
     return statSync(p).isDirectory() ? walk(p) : /\.(tsx?|mjs|js)$/.test(f) ? [p] : [];
   });
-// What MortgageReel renders; src/showcase is English demo reels.
-const RENDERED = ["mortgage", "designs", "elements", "brand"].map((d) => join(ROOT, "src", d));
+// What MortgageReel and ListingReel render; src/showcase is English demo reels.
+const RENDERED = ["mortgage", "designs", "elements", "brand", "listing"].map((d) => join(ROOT, "src", d));
 for (const file of RENDERED.filter(existsSync).flatMap(walk)) {
   // Comments often quote an import as an example; only real code counts.
   const code = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'])\/\/.*$/gm, "$1");
