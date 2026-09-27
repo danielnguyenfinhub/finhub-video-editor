@@ -4,8 +4,6 @@
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
-  OffthreadVideo,
   Sequence,
   interpolate,
   spring,
@@ -20,8 +18,7 @@ import type {
 } from "../../mortgage/design";
 import { figuresOf, lenderMentionsOf, SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
-import { PacedVideo } from "../../mortgage/PacedVideo";
-import { foregroundOf, retryVideoFetch } from "../../mortgage/style";
+import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
 import { MotionTrack } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
@@ -40,21 +37,16 @@ const CUTOUT_STYLE = {
 const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
   <AbsoluteFill>
     <Backdrop />
-    <Freeze frame={0}>
-      <OffthreadVideo
-        src={foregroundOf(src)}
-        trimBefore={coverFrame}
-        muted
-        transparent
-        {...retryVideoFetch}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          ...CUTOUT_STYLE,
-        }}
-      />
-    </Freeze>
+    <CoverCutOut
+      src={src}
+      trimBefore={coverFrame}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        ...CUTOUT_STYLE,
+      }}
+    />
     <ArtefactCover title={title} subtitle={subtitle} />
     <LogoBadge />
   </AbsoluteFill>

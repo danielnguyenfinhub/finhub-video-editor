@@ -76,6 +76,13 @@ export type MortgageReelProps = z.infer<typeof mortgageReelSchema> & {
   reel: Reel | null;
 };
 
+// Designs that break in quick mode (the opaque full frame hides what their
+// cut-out let through): editorial's Behind column covers his face once drawn
+// on top; checklist, datalab and kitchen covers put him over their title.
+// Quick mode renders these in classic instead (buildReel).
+// ponytail: whole-design fallback; fix a cover's layer order to drop it here.
+const QUICK_FALLBACK = new Set(["editorial", "checklist", "datalab", "kitchen"]);
+
 const fetchJson = async (slug: string, path: string): Promise<unknown> => {
   const res = await fetch(staticFile(path));
   if (!res.ok)
@@ -97,7 +104,19 @@ export const buildReel = (
   designOverride?: string,
 ): { reel: Reel; durationInFrames: number } => {
   const parsed = parseEdit(editJson, slug);
-  const edit = designOverride ? { ...parsed, design: designOverride } : parsed;
+  const picked = designOverride
+    ? { ...parsed, design: designOverride }
+    : parsed;
+  const fallback =
+    picked.background === "vignette" &&
+    QUICK_FALLBACK.has(picked.design ?? DEFAULT_DESIGN);
+  if (fallback)
+    console.warn(
+      `MortgageReel "${slug}": design "${picked.design}" does not work in quick mode ` +
+        `("background": "vignette"), so this video renders in "classic". ` +
+        `Remove "background" (and make the cut-out) to keep "${picked.design}".`,
+    );
+  const edit = fallback ? { ...picked, design: "classic" } : picked;
   // Throws for an unknown name, listing the designs there are.
   const design = getDesign(edit.design ?? DEFAULT_DESIGN);
   if (!Array.isArray(words) || words.length === 0)
@@ -147,7 +166,10 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
   );
   const [words, cutOut, ...found] = await Promise.all([
     fetchJson(slug, recordingPath(slug, source, "words.json")),
-    fetch(staticFile(cutOutPath), { method: "HEAD" }),
+    // Quick mode and room mode need no cut-out; not asking keeps a 404 out of the log.
+    background === "vignette" || background === "room"
+      ? null
+      : fetch(staticFile(cutOutPath), { method: "HEAD" }),
     ...assets.map((a) => fetch(staticFile(a), { method: "HEAD" })),
   ]);
   const missing = assets.filter((_, i) => !(found[i] as Response).ok);
@@ -156,9 +178,9 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
       `MortgageReel "${slug}": visuals point at files that aren't in public/: ${missing.join(", ")}. ` +
         `Add them with \`node scripts/library.mjs add\` or change the visual.`,
     );
-  // Golden rule: the background is always removed, so the cut-out must exist
-  // (unless this video keeps the room: edit.json "background": "room").
-  if (!cutOut.ok && background !== "room")
+  // Golden rule: the background is always removed, so the cut-out must exist,
+  // unless edit.json opts out ("background": "vignette" or "room").
+  if (cutOut && !cutOut.ok)
     throw new Error(
       `MortgageReel "${slug}": public/${cutOutPath} is missing. ` +
         `Run \`npm run review\`, open http://localhost:4100/matte.html?slug=${slug} and wait for "Saved".`,
@@ -237,6 +259,9 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
       : staticFile(recordingPath(slug, edit.source, "foreground.webm"));
   const keywords = [...KEYWORDS, ...(edit.keywords ?? [])];
   const talk = timeline.talkFrames;
+  // Quick mode: the full frame is opaque and would hide a Behind layer, so it
+  // draws on top of Daniel instead (under the Overlay).
+  const quick = edit.background === "vignette";
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       <TransitionSeries>
@@ -266,7 +291,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
                 look={edit.look}
                 foreground={foreground}
                 behind={
-                  design.Behind ? (
+                  design.Behind && !quick ? (
                     // A negative `from` puts the layer on the talk timeline
                     // (frame 0 = first word) inside this segment's sequence.
                     <Sequence from={-seg.outFrom} layout="none">
@@ -323,6 +348,20 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
             src={src}
             foreground={foreground}
             frameStyle={design.visualFrame}
+          />
+        </Sequence>
+      ) : null}
+      {quick && design.Behind ? (
+        <Sequence
+          from={TALK_START_FRAME}
+          durationInFrames={talk - OUTRO_TRANSITION}
+          layout="none"
+        >
+          <design.Behind
+            reel={reel}
+            keywords={keywords}
+            talkFrames={talk}
+            src={src}
           />
         </Sequence>
       ) : null}

@@ -20,6 +20,9 @@ or stage `render` (A7.2). It has the checks, the verdict rules and the report fo
 
 ## Independence
 
+Check every `rule` and `checked` entry in the editor skill's `references/corrections.md`
+whose scope matches this video; a broken one is a FIX.
+
 Read the artefacts (`edit.json`, `words.json`, `script.json`, `facts.json`, the stills, the
 mp4), not the builder's summary. Re-run every check yourself. Look at every still you make.
 If a file can't be opened or a command can't run, the verdict is BLOCK, not PASS.

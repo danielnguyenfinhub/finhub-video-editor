@@ -20,6 +20,10 @@ your own work for the record: `video-qc` and `video-compliance-reviewer` do that
 
 Where it matters:
 
+- **Background:** removed (the matted cut-out) unless Daniel asked for quick mode; then set
+  `"background": "vignette"` and skip the matte. Never choose it yourself. Rules: golden rule 4
+  in `src/designs/README.md`.
+
 - **Template (A3.2 / B4.1):** `node scripts/select-template.mjs <slug> [--public-dir <dir>]` (it runs `brief.mjs`).
   Take the top pick unless you write a hard reason in `notes`; if `selection.json` has `"confident": false`, put its `closeCall` in `open_questions` for Daniel instead of picking; Daniel's named template →
   `--pick <id> --reason "<his words>"`. Then the variety check (A3.3) and `"design"` (A3.4).
@@ -40,7 +44,8 @@ Where it matters:
 - **Hand over only when A6.1 passes** and your own stills pass the editor skill's
   Self-Correction Loop. Render (A7.1 / B5.4) only when the orchestrator says QC and compliance passed.
 
-Standard: the editor skill `SKILL.md` (iron rules, design rules, Self-Correction Loop) and
+Standard: the editor skill `SKILL.md` (iron rules, design rules, Self-Correction Loop),
+the matching entries in its `references/corrections.md` (Daniel's past corrections), and
 `AGENTS.md` "Work lean" and "Language".
 
 ## Team rules

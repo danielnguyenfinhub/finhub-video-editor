@@ -68,16 +68,32 @@ Read list per task, on top of this file. `refs/` is `.claude/skills/vietnamese-f
 
 | Task | Files | Bytes |
 |---|---|---|
-| Mode A edit (existing design, re-edit) | editor `SKILL.md`, `refs/landmines.md`, `refs/edit-json.md` | 25,631 |
-| New design (each new talking-head video): Mode A plus | `refs/design-space.md`, `refs/design-architecture.md`, `refs/toolkit.md`, `refs/editing-principles.md`, `.claude/elements/CATALOG.md`, remocn index | +41,893 = 67,524 |
-| Mode B faceless | `refs/faceless-script.md`, `video-production-team` and `video-compliance-review` SKILL.md, the five `video-*` agents | 47,165 |
+| Mode A edit (existing design, re-edit) | editor `SKILL.md`, `refs/landmines.md`, `refs/edit-json.md`, `refs/corrections.md` | 37,460 |
+| New design (each new talking-head video): Mode A plus | `refs/design-space.md`, `refs/design-architecture.md`, `refs/toolkit.md`, `refs/editing-principles.md`, `.claude/elements/CATALOG.md`, remocn index | +45,727 = 83,187 |
+| Mode B faceless | `refs/faceless-script.md`, `refs/corrections.md`, `video-production-team` and `video-compliance-review` SKILL.md, the five `video-*` agents | 51,081 |
 | Repo or tooling change | [code-changes](docs/agents/code-changes.md), [project-structure](docs/agents/project-structure.md), [mortgage-reel](docs/agents/mortgage-reel.md) | 7,738 |
+
+## Corrections: the templates get better with every video
+
+Daniel's feedback is the most valuable input this repo gets; never spend it on one video.
+The log and its rules: `.claude/skills/vietnamese-finance-video-editor/references/corrections.md`.
+
+- **Before editing a video**, read the entries whose scope matches (`all`, the design, A or B)
+  and apply them. On top of `editing-principles.md` "Craft rules", the professional baseline.
+- **When Daniel corrects a video** ("too small", "covers my head", "too busy"), write the
+  entry before the fix: the rule for every video, not this one, and what caused it.
+- **Promote**: second time, or "always"/"never" → the rule goes into its home
+  (`src/designs/README.md`, editor `SKILL.md`); measurable → a check script fails on it.
+- **Report** what you logged or promoted in the completion message ("Logged: text too
+  small → rule, now checked by …"), so Daniel sees the loop working.
+- The repo is public: no client names, figures or documents in an entry. Personal memory
+  may point to the log but is not the record; the repo file is.
 
 ## Harnesses
 
 ### Harness: video production team
 
-**Trigger:** when Daniel asks to edit his footage ("edit my video", "I recorded a video about…") or for a video from a document or topic (faceless), including follow-ups on one ("redo the paper edit", "re-run QC", "fix what compliance flagged"), use the `video-production-team` skill. It runs the whole runbook for both pipelines with its agents in `.claude/agents/`; `vietnamese-finance-video-editor` is the standard its editor follows.
+**Trigger:** when Daniel asks to edit his footage ("edit my video", "I recorded a video about…") or for a video from a document or topic (faceless), including follow-ups on one ("redo the paper edit", "re-run QC", "fix what compliance flagged"), use the `video-production-team` skill. It runs the whole runbook for both pipelines with its agents in `.claude/agents/`; `vietnamese-finance-video-editor` is the standard its editor follows. `npm run video-status [-- <slug>]` shows where each run stands and whether it's ready (free).
 
 ### Harness: refactor team
 
@@ -86,6 +102,7 @@ Read list per task, on top of this file. `refs/` is `.claude/skills/vietnamese-f
 ## Conventions
 
 - Videos are bilingual, Vietnamese + English: see "Language" near the top of this file before writing any on-screen text or captions.
+- Background: removed by default (matted cut-out); quick mode (`"background": "vignette"`, no matting, dark edges) only when Daniel opts in. The rules: `src/designs/README.md`, golden rule 4.
 - Register new compositions in `src/Root.tsx`; one component per file under `src/`.
 - Drive all animation from `useCurrentFrame()`/`interpolate()`/`spring()` — never from wall-clock time.
 - In components, take `delayRender`/`continueRender`/`cancelRender` from `useDelayRender()` (render-scoped, the documented recommendation) rather than importing the global functions; every scene here does.

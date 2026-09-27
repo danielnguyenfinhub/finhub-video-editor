@@ -7,9 +7,7 @@ import { Star } from "@remotion/shapes";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
   Img,
-  OffthreadVideo,
   interpolate,
   spring,
   useCurrentFrame,
@@ -19,7 +17,7 @@ import { BadgeRow } from "../../brand/BadgeRow";
 import { brand } from "../../brand/theme";
 import type { CoverProps, Design, TalkProps } from "../../mortgage/design";
 import { SAFE } from "../../mortgage/golden";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import { CTA_BUTTON } from "../../mortgage/schema";
 import {
   FONT,
@@ -27,7 +25,6 @@ import {
   clamp,
   emphasised,
   enter,
-  retryVideoFetch,
 } from "../../mortgage/style";
 import { chapterTransition } from "../../mortgage/transitions";
 import { Oscilloscope } from "../../elements/Oscilloscope";
@@ -264,15 +261,12 @@ const Cover: React.FC<CoverProps> = ({
               border: "10px solid #fff",
             }}
           >
-            <Freeze frame={0}>
-              <OffthreadVideo
-                src={src}
-                trimBefore={coverFrame}
-                muted
-                {...retryVideoFetch}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </Freeze>
+            <CoverCutOut
+              room
+              src={src}
+              trimBefore={coverFrame}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
           </div>
         </Circle>
       </div>

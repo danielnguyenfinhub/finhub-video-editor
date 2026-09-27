@@ -240,11 +240,14 @@ export const editSchema = z.strictObject({
   // The room behind Daniel is always replaced (golden rule, 25/09/2026): every
   // video needs foreground.webm next to source.mp4 (made once with
   // review/matte.html); the render stops with instructions if it is missing.
-  // Kept as a field so old edit.json files still validate.
-  // "room": Daniel's per-video exception (27/09/2026): keep his real room, no
-  // cut-out needed. Needs a design whose Cover and Talk handle an undefined
-  // `foreground` (charts drawn in front, not behind).
-  background: z.enum(["brand", "room"]).optional(),
+  // Absent or "brand" (old edit.json files) is that rule. Two per-video
+  // exceptions, both Daniel's opt-in, need no cut-out and no matting:
+  // "vignette" is quick mode: the full frame plays with its edges faded to
+  // black (PacedVideo.tsx) and Behind layers draw on top.
+  // "room" (27/09/2026): his real room, laid out by the design; it needs a
+  // design whose Cover and Talk handle an undefined `foreground` (kitchen,
+  // editorial).
+  background: z.enum(["brand", "vignette", "room"]).optional(),
   // A fix swaps that word everywhere, or, with atMs (the word's startMs in
   // words.json, ±300 ms), only there; with atMs, "to" may be "" to hide a
   // misheard extra word ("trả lời" → "tính" + "").

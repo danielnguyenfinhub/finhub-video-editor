@@ -6,9 +6,7 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
   Img,
-  OffthreadVideo,
   interpolate,
   useCurrentFrame,
   useVideoConfig,
@@ -17,14 +15,13 @@ import { brand } from "../../brand/theme";
 import type { CoverProps, Design, TalkProps } from "../../mortgage/design";
 import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import type { Reel } from "../../mortgage/schema";
 import {
   FONT,
   LOGO,
   clamp,
   emphasised,
-  retryVideoFetch,
 } from "../../mortgage/style";
 import { chapterTransition } from "../../mortgage/transitions";
 import {
@@ -147,30 +144,27 @@ const Cover: React.FC<CoverProps> = ({
       </div>
       {/* Daniel stands below the headline, scaled from the bottom edge so
           his head starts under the text (the whole title reads as a
-          thumbnail) and his face ends inside SAFE.bottom. The cut-out, or
-          with "background": "room" the full frame as a photo clipped under
-          the standfirst (the room above it would sit behind the text). */}
-      <Freeze frame={0}>
-        <OffthreadVideo
-          src={foreground ?? src}
-          trimBefore={coverFrame}
-          muted
-          transparent={Boolean(foreground)}
-          {...retryVideoFetch}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            transform: `scale(${COVER_CUTOUT_SCALE})`,
-            transformOrigin: "50% 100%",
-            clipPath: foreground
-              ? undefined
-              : `inset(${COVER_PHOTO_CLIP}px 0 0 0 round 28px)`,
-          }}
-        />
-      </Freeze>
+          thumbnail) and his face ends inside SAFE.bottom. The cut-out (or
+          quick mode's framed full frame), or with "background": "room" the
+          recorded frame as a photo clipped under the standfirst (the room
+          above it would sit behind the text). */}
+      <CoverCutOut
+        src={src}
+        trimBefore={coverFrame}
+        room={!foreground}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: `scale(${COVER_CUTOUT_SCALE})`,
+          transformOrigin: "50% 100%",
+          clipPath: foreground
+            ? undefined
+            : `inset(${COVER_PHOTO_CLIP}px 0 0 0 round 28px)`,
+        }}
+      />
       <div
         style={{
           position: "absolute",

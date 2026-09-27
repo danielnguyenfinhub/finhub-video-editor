@@ -138,6 +138,14 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
 Each agent reads the files before its own; a re-run agent reads its previous file first.
 The video's own files follow the runbook (`public/videos/<slug>/`, `out/videos/<slug>/`).
 
+## Where a run stands — `npm run video-status -- <slug>`
+
+Reads `team/` and prints the stages passed, the next one, or the gate it waits on (flags,
+script lock, matte, approval before posting), with a readiness verdict (`ready` / `warning`
+/ `blocked`: ffmpeg, python, uncommitted work, the prepared recording, preflight) and each
+fix. No slug: one line per video. Free (no model call); run it at Phase 0 on an existing
+slug instead of re-reading the team files, and fix anything `blocked` before starting.
+
 ## Partial re-runs — start at the phase that owns the fix
 
 | Daniel says / finding owner | Start at | Then |

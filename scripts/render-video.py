@@ -105,10 +105,14 @@ def main() -> None:
     # The rest of edit.json is validated by the render itself.
     edit = read_edit(PUBLIC, slug)
     source = edit.get("source")
-    # Golden rule: the background is always removed, so the cut-out must exist
-    # (unless this video keeps the room: edit.json "background": "room").
+    # Golden rule: the background is always removed, so the cut-out must exist,
+    # unless edit.json opts out: quick mode ("vignette") or the real room ("room").
     cut_out = recording_dir(PUBLIC, slug, source) / "foreground.webm"
-    if edit.get("background") != "room" and not cut_out.exists():
+    if edit.get("background") == "vignette":
+        print("Quick mode: background not removed (full frame, dark edges); no cut-out needed.")
+    elif edit.get("background") == "room":
+        print("Room mode: background not removed (the design lays out the room); no cut-out needed.")
+    elif not cut_out.exists():
         raise SystemExit(
             f"{cut_out} is missing. Run `npm run review`, open "
             f'http://localhost:4100/matte.html?slug={slug} and wait for "Saved".')

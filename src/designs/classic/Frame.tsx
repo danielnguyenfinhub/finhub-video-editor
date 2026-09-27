@@ -6,9 +6,7 @@ import { Audio } from "@remotion/media";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
   Img,
-  OffthreadVideo,
   Sequence,
   Solid,
   interpolate,
@@ -18,6 +16,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
+import { CoverCutOut } from "../../mortgage/PacedVideo";
 import type { EditJson } from "../../mortgage/schema";
 import {
   FONT,
@@ -25,7 +24,6 @@ import {
   clamp,
   emphasised,
   enter,
-  retryVideoFetch,
 } from "../../mortgage/style";
 
 // ---------------------------------------------------------------- cover
@@ -57,15 +55,12 @@ export const Cover: React.FC<{
           transformOrigin: "50% 30%",
         }}
       >
-        <Freeze frame={0}>
-          <OffthreadVideo
-            src={src}
-            trimBefore={coverFrame}
-            muted
-            {...retryVideoFetch}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </Freeze>
+        <CoverCutOut
+          room
+          src={src}
+          trimBefore={coverFrame}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
       </AbsoluteFill>
       <AbsoluteFill
         style={{

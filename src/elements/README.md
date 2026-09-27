@@ -3,7 +3,9 @@
 Reusable, checked building blocks for designs and one-off videos, each one file,
 brand-coloured by default, Vietnamese-safe (letters keep their marks, line
 heights leave room for them). Every element renders in the `ElementCatalog`
-composition (Studio → "Elements"), which is how each was verified.
+composition (Studio → "Elements"), which is how each was verified. After adding
+or changing an element, run `node scripts/check-element-copy.mjs`: it puts every
+string in this folder (catalog samples, built-in text) through the RG 234 guard.
 
 | Element | What it does | Remotion APIs |
 |---|---|---|
@@ -34,6 +36,9 @@ composition (Studio → "Elements"), which is how each was verified.
 | `Oscilloscope` | live waveform line of the voice; `frame` = moment in the audio, so it follows the paced cut (explainer design, under the captions) | `useCoveredAudioData` (useWindowedAudioData that holds the frame until its window is in), `getWaveformPortion`, `createSmoothSvgPath` |
 | `MirroredSpectrum` | frequency bars mirrored from the centre, same `frame` rule (classic design, low on the frame) | `useCoveredAudioData`, `visualizeAudio` |
 | `NoiseField` | breathing dot-grid background | `@remotion/noise` `noise3D` |
+| `WordHighlight` | hook line lit word by word; words in *asterisks* fill amber | `interpolate` |
+| `NotificationStack` | phone-style alerts sliding in (hook), count badge on the first; up to 4 | `spring` |
+| `QuoteCard` | client review quoted word for word; DRAFT watermark (`ReviewStamp`) and a do-not-publish line until `consentConfirmed` | `interpolate` |
 | `starWipe` | custom transition presentation: next scene grows from a star | `@remotion/transitions`, `@remotion/shapes` `makeStar`, `@remotion/paths` `translatePath` |
 | `BehindWord` | a spoken keyword drawn huge behind Daniel (render it from a design's `Behind` layer; his cut-out covers part of it); `pickBehindWords()` shows which words it will use. Needs a cut-out, so it isn't in `ElementCatalog` | `@remotion/layout-utils` `fitText`, `spring` |
 | `beats.ts` | `useAudioMap("music/<name>.mp3")` loads the track's beat map from `scripts/analyze-beats.py`; `snapToBeat(ms, beats)` moves a moment onto the nearest beat (within 150 ms) | `useDelayRender`, `staticFile` |
@@ -47,3 +52,12 @@ has loaded, at a weight that is loaded; clip paths avoid shared SVG ids;
 sample text is RG 234-clean). Snippets not taken: editor UI (timeline,
 gizmos, snapping), AWS/Lambda/server code, and ones that duplicate what
 exists (captions, ducking, loudness, 3D, Lottie, grain/vignette via `look`).
+
+Design concepts for `WordHighlight`, `NotificationStack` and `QuoteCard`
+inspired by reactvideoeditor/remotion-templates (MIT). The pack's other seven
+map to what exists: lower third → `src/brand/LowerThird` (+ finhub-lower-third
+skill); stat counter → the hook's `countTo` (`HookTitle`), stat cards and
+`ChangeCard`; comparison chart → the `compare` / `bars` cues; line chart →
+`LineGraph` (`trend` cue); animated list and progress steps → the `points` cue
+and the checklist design's `StepColumn`; end card → each design's `Outro` and
+the locked `ComplianceCard`.

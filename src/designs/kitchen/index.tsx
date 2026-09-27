@@ -7,10 +7,8 @@ import { fade } from "@remotion/transitions/fade";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
   Img,
   interpolate,
-  OffthreadVideo,
   Sequence,
   useCurrentFrame,
   useVideoConfig,
@@ -24,12 +22,11 @@ import type {
 import { figuresOf, lenderMentionsOf, SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
 import {
   FONT,
   LOGO,
-  retryVideoFetch,
 } from "../../mortgage/style";
 import { MotionTrack } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
@@ -63,40 +60,28 @@ const LogoTile: React.FC<{ height?: number }> = ({ height = 120 }) => (
   </div>
 );
 
-// Daniel on the cover, scaled down from the bottom so his head (top ~580 at
-// full size) lands below the subtitle bubble instead of being cropped: his
-// cut-out, or with "background": "room" the whole frame as a rounded photo.
-const CoverPerson: React.FC<{
-  src: string;
-  coverFrame: number;
-  cutOut?: boolean;
-}> = ({ src, coverFrame, cutOut = false }) => (
+// Daniel on the cover with "background": "room": the whole frame as a rounded
+// photo, scaled down from the bottom so his head (top ~580 at full size) lands
+// below the subtitle bubble. (The cut-out and quick mode draw in Cover.)
+const CoverRoomPhoto: React.FC<{ src: string; coverFrame: number }> = ({
+  src,
+  coverFrame,
+}) => (
   <AbsoluteFill
     style={{
       transform: `scale(${COVER_SCALE})`,
       transformOrigin: "50% 100%",
     }}
   >
-    <Freeze frame={0}>
-      <OffthreadVideo
-        src={src}
-        trimBefore={coverFrame}
-        muted
-        transparent={cutOut}
-        {...retryVideoFetch}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          ...(cutOut
-            ? {}
-            : {
-                borderRadius: 48,
-                boxShadow: "0 30px 70px rgba(60,45,20,0.35)",
-              }),
-        }}
-      />
-    </Freeze>
+    <CoverCutOut
+      src={src}
+      trimBefore={coverFrame}
+      room
+      style={{
+        borderRadius: 48,
+        boxShadow: "0 30px 70px rgba(60,45,20,0.35)",
+      }}
+    />
   </AbsoluteFill>
 );
 
@@ -113,7 +98,7 @@ const Cover: React.FC<CoverProps> = ({
     <KitchenBackdrop />
     {/* "background": "room": the full frame as a photo on the table, under
         the bubbles (it is opaque, so it must not cover them). */}
-    {foreground ? null : <CoverPerson src={src} coverFrame={coverFrame} />}
+    {foreground ? null : <CoverRoomPhoto src={src} coverFrame={coverFrame} />}
     {/* Title and subtitle stack in one column below the logo tile's
         footprint (it ends ~y564), so a two-line title pushes the subtitle
         down instead of hiding it. The title is thumbnail-sized when short. */}
@@ -145,7 +130,25 @@ const Cover: React.FC<CoverProps> = ({
         {subtitle}
       </MessageBubble>
     </div>
-    {foreground ? <CoverPerson src={foreground} coverFrame={coverFrame} cutOut /> : null}
+    {/* His whole cut-out, scaled down from the bottom so his head (top
+        ~580 at full size) lands below the subtitle bubble instead of being
+        cropped: a box from y 940 with objectFit cover cut the top of his
+        head off. Room mode draws its photo (CoverPerson) behind instead. */}
+    {foreground ? (
+      <AbsoluteFill>
+        <CoverCutOut
+          src={src}
+          trimBefore={coverFrame}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: `scale(${COVER_SCALE})`,
+            transformOrigin: "50% 100%",
+          }}
+        />
+      </AbsoluteFill>
+    ) : null}
     <LogoTile />
   </AbsoluteFill>
 );

@@ -70,6 +70,8 @@ npm run review
 
 Then open `http://localhost:4100/matte.html?slug=my-slug` in the Claude app's browser and wait for **Saved**. It takes about **13× the video's length** (a 3½-minute video took about 45 minutes). The first run downloads a 26 MB model. The render refuses to start without this file.
 
+**Quick mode** (only when you ask for it): `"background": "vignette"` in `edit.json` skips this step. You stay bright in the centre of the full frame and the room fades to black at the edges. Use it for time-sensitive videos (rate or RBA news) or a recording with no cut-out yet; sit centred when you record, and check the room shows nothing private.
+
 ### 3. Edit: `edit.json`
 
 Claude writes this file from the transcript. Its main fields (the full list is in [`src/mortgage/schema.ts`](src/mortgage/schema.ts)):
@@ -210,7 +212,7 @@ Every template follows the same golden rules, enforced in [`src/mortgage/golden.
 - A number you say gets a chart or card.
 - Keywords are highlighted.
 - A bank you name gets its logo.
-- The background is always removed.
+- The background is always removed, unless you opt into quick mode (dark edges instead).
 - Charts sit *behind* you, never over your face.
 - The Finance Hub logo pops in after the hook and again in the last 10 seconds.
 - Nothing important leaves the 9:16 or 4:5 safe zones.
@@ -220,6 +222,38 @@ Every template follows the same golden rules, enforced in [`src/mortgage/golden.
 `node scripts/check-golden.mjs my-slug` shows which numbers and banks it found in a video.
 
 ---
+
+## Where is each video up to?
+
+```bash
+npm run video-status
+npm run video-status -- <slug>
+```
+
+The first lists every video and where it stands (done, next step, or waiting for you). The
+second checks one video can run (ffmpeg, the recording, the edit) and gives the one-line fix
+for anything blocking it. Both are free and change nothing.
+
+## Teaching Claude your taste
+
+Say what's wrong in plain words ("text too small", "that panel covers my head", "too
+busy"). Claude fixes this video and writes your correction down as a rule for every future
+video, in [corrections.md](.claude/skills/vietnamese-finance-video-editor/references/corrections.md).
+Every session reads it before editing, and QC checks each video against it.
+
+A correction gets stronger each time it proves itself:
+
+| Stage | What it means |
+|---|---|
+| `noted` | Said once; written in the log. |
+| `rule` | Said twice, or you said "always"/"never"; it's now in the design rules. |
+| `checked` | A script fails the video if it's broken, so it can't slip back. |
+
+Claude tells you in its report what it logged. If you change your mind, say so: the old
+rule is marked replaced, not deleted, so it can't come back. The rules sit on a
+professional baseline (hook in 3 s, captions carry the message with the sound off, the
+voice louder than the music, one thing on screen at a time); see "Craft rules" in
+[editing-principles.md](.claude/skills/vietnamese-finance-video-editor/references/editing-principles.md).
 
 ## Compliance
 

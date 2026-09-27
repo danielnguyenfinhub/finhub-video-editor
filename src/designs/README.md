@@ -11,10 +11,9 @@ export const <id>: Design = { id, Cover, Talk, Overlay, Outro, chapterTransition
 ```
 
 - `Cover({ src, coverFrame, title, subtitle, keywords })` — 75 frames, crossfades into
-  the talk. For a still of Daniel: `<Freeze frame={0}><OffthreadVideo src
-  trimBefore={coverFrame} muted {...retryVideoFetch}/></Freeze>`; for his cut-out on
-  your backdrop, the same with `src={foregroundOf(src)}` and `transparent`
-  (`foregroundOf` in `src/mortgage/style.ts` swaps `source.mp4` for `foreground.webm`).
+  the talk. For Daniel's cut-out on your backdrop: `<CoverCutOut src={src}
+  trimBefore={coverFrame} style={…}/>` (`src/mortgage/PacedVideo.tsx`); add `room` for
+  the recorded frame instead. It freezes the frame and handles quick mode (rule 4).
 - `Talk({ seg, index, src, look, foreground })` — MUST render
   `<PacedVideo seg src look foreground style={…} />`. PacedVideo owns audio and pacing.
   With `foreground` it draws the brand gradient behind Daniel's cut-out; pass
@@ -69,7 +68,32 @@ or `toOutMs` (timeline.ts). Reel data: `reel.edit` (edit.json), `reel.timeline.c
    Overlay: 120 px high on a white tile, top-right inside SAFE, visible only for the
    first and last 10 s of the talk. No other always-on logo. The Cover keeps its own
    logo at the same size and place.
-4. **Background always removed.** `foreground` is always set; design the backdrop.
+4. **Background: removed, or quick mode (Daniel, 27/09/2026).** `foreground` is always
+   set; design the backdrop.
+   1. Default: background removed. The recording is matted once (modnet →
+      `public/recordings/<id>/foreground.webm`, reused by every video from that
+      recording) and Daniel sits on the design's brand backdrop. Every standard video.
+   2. Quick mode, opt-in only: edit.json `"background": "vignette"`. No matting: the
+      full frame plays with its edges darkened to near-black (`vignette()` in
+      `PacedVideo.tsx`), Daniel bright and sharp in the centre. Use when speed matters
+      (rate/RBA news, time-sensitive posts) or when a recording has no cut-out yet.
+      Behind layers draw on top of him; designs that can't work this way (editorial,
+      checklist, datalab, kitchen: `QUICK_FALLBACK` in `MortgageReel.tsx`) render in
+      classic, with a warning in the render log.
+   3. While Daniel talks, the raw room is never shown as-is: removed (1) or
+      vignetted (2). One exception (Daniel, 27/09/2026): a cover may use the recorded
+      frame as its still photo (classic, explainer and studio do). No blur mode, no
+      tinted room.
+   4. Quick mode needs Daniel centred when recording: face inside the middle ~60% of
+      the frame.
+   5. Privacy: in quick mode, and on any cover that shows the recorded frame, the room
+      is visible, so before render the compliance reviewer checks the cover still (and,
+      in quick mode, a mid-video still) for anything
+      client-identifying in the background (documents, screens, names, other people).
+      Anything found → BLOCK; switch to (1) or re-record.
+   6. `check-golden <slug>` labels quick-mode videos "background: vignette (quick
+      mode, not removed)"; they never count as background-removed.
+   A design draws Daniel only through `PacedVideo` and `CoverCutOut`, which do all of this.
 5. **Keywords light up.** In captions use `emphasised(tokens, keywords)` (style.ts) to
    colour finance keywords and numbers with `brand.highlight`. Captions go through
    `src/mortgage/PagedCaptions.tsx`: `<PagedCaptions reel render={(page) => …}/>` owns

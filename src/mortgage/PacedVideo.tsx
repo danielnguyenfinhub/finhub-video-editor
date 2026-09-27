@@ -14,12 +14,14 @@ import type React from "react";
 import {
   AbsoluteFill,
   Audio,
+  Freeze,
   OffthreadVideo,
   interpolate,
+  useVideoConfig,
   type EffectsProp,
 } from "remotion";
-import type { Look } from "./schema";
-import { retryVideoFetch } from "./style";
+import type { Look, Reel } from "./schema";
+import { foregroundOf, retryVideoFetch } from "./style";
 import type { Segment } from "./timeline";
 
 // edit.json `look` recipes. Values stay inside each effect's documented range
@@ -38,6 +40,72 @@ const LOOK_EFFECTS: Record<Look, EffectsProp> = {
     colorCorrection({ contrast: 1.1 }),
     vignette({ amount: 0.3 }),
   ],
+};
+
+// edit.json "background": "vignette" (quick mode, opt-in): no cut-out, so no
+// matting step. Daniel plays full frame and the room fades to black at the
+// edges; his face (inside the central ellipse, half the frame each way) is
+// untouched. Black only. Distances are in frame units from the centre: 1 is
+// the frame edge, √2 a corner; black from 0.9 out. Tuned on chon-ngan-hang.
+const QUICK_VIGNETTE = vignette({
+  amount: 1,
+  radius: 0.5,
+  feather: 0.4,
+  roundness: 1,
+});
+
+// Read from the composition's resolved props (the Design contract hands Talk
+// and Cover no reel), the way useCueRoom does.
+export const useQuickMode = (): boolean => {
+  const { props } = useVideoConfig();
+  return (props as { reel?: Reel | null }).reel?.edit.background === "vignette";
+};
+
+// Daniel on a design's Cover: his cut-out (transparent, over the design's
+// backdrop), or in quick mode the full frame under the same vignette. Frozen
+// on `trimBefore`, the cover frame. src: the source.mp4 URL. `room`: the
+// design shows the recorded frame, not the cut-out, outside quick mode.
+export const CoverCutOut: React.FC<{
+  src: string;
+  trimBefore: number;
+  style?: React.CSSProperties;
+  room?: boolean;
+}> = ({ src, trimBefore, style, room }) => {
+  const quick = useQuickMode();
+  const fill = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    ...style,
+  } as const;
+  return (
+    <Freeze frame={0}>
+      {quick ? (
+        <Video
+          src={src}
+          trimBefore={trimBefore}
+          muted
+          objectFit={fill.objectFit === "contain" ? "contain" : "cover"}
+          style={fill}
+          effects={[QUICK_VIGNETTE]}
+          disallowFallbackToOffthreadVideo
+          delayRenderRetries={retryVideoFetch.delayRenderRetries}
+          delayRenderTimeoutInMilliseconds={
+            retryVideoFetch.delayRenderTimeoutInMilliseconds
+          }
+        />
+      ) : (
+        <OffthreadVideo
+          src={room ? src : foregroundOf(src)}
+          trimBefore={trimBefore}
+          muted
+          transparent={!room}
+          {...retryVideoFetch}
+          style={fill}
+        />
+      )}
+    </Freeze>
+  );
 };
 
 // edit.json "background": "brand" — what sits behind Daniel once the room is
@@ -64,6 +132,7 @@ export const PacedVideo: React.FC<{
   // "none": the design draws its own backdrop behind this component.
   backdrop?: "brand" | "none";
 }> = ({ seg, src, look, style, muted, foreground, backdrop = "brand" }) => {
+  const quick = useQuickMode();
   const dur = seg.outDuration;
   const shared = {
     src,
@@ -91,11 +160,14 @@ export const PacedVideo: React.FC<{
   // `transparent` keeps the cut-out's alpha (<OffthreadVideo> otherwise
   // extracts opaque JPEG frames).
   const player = (props: typeof shared, transparent = false) =>
-    look ? (
+    look || quick ? (
       <Video
         {...props}
         objectFit="cover"
-        effects={LOOK_EFFECTS[look]}
+        effects={[
+          ...(look ? LOOK_EFFECTS[look] : []),
+          ...(quick ? [QUICK_VIGNETTE] : []),
+        ]}
         disallowFallbackToOffthreadVideo
         delayRenderRetries={retryVideoFetch.delayRenderRetries}
         delayRenderTimeoutInMilliseconds={
@@ -109,7 +181,8 @@ export const PacedVideo: React.FC<{
         transparent={transparent}
       />
     );
-  if (!foreground) return player(shared);
+  // Quick mode: the full frame, with the voice, covers the design's backdrop.
+  if (!foreground || quick) return player(shared);
   return (
     <AbsoluteFill>
       {muted ? null : (
