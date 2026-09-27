@@ -3,7 +3,6 @@
 // whichever card is current — the golden-rule figure (a one-bar chart) and
 // lender polaroid for whatever Daniel is saying right now.
 import { fitText } from "@remotion/layout-utils";
-import { CrossedOff } from "@remotion/rough-notation";
 import type React from "react";
 import {
   AbsoluteFill,
@@ -17,9 +16,11 @@ import { SAFE, type Figure } from "../../mortgage/golden";
 import type { LenderMention } from "../../mortgage/lenders";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import { FONT, clamp, enter } from "../../mortgage/style";
+import { COLUMN_RIGHT } from "./ColumnCues";
 
 const COLUMN_LEFT = SAFE.left;
-const COLUMN_WIDTH = 560; // x 54-614, left of Daniel's head (x ~690+)
+// Same column as the cue panels (ColumnCues COLUMN_RIGHT), clear of his head.
+const COLUMN_WIDTH = COLUMN_RIGHT - SAFE.left;
 const CARD_GAP = 10;
 
 // -------------------------------------------------------------- progress bar
@@ -76,7 +77,7 @@ const MiniBarChart: React.FC<{ figure: Figure }> = ({ figure }) => {
     38,
     fitText({
       text: figure.big,
-      withinWidth: 380,
+      withinWidth: 260,
       fontFamily: FONT,
       fontWeight: 900,
     }).fontSize,
@@ -117,7 +118,7 @@ const MiniBarChart: React.FC<{ figure: Figure }> = ({ figure }) => {
             fontWeight: 600,
             fontSize: 18,
             color: "#5B6B80",
-            maxWidth: 360,
+            maxWidth: 260,
           }}
         >
           {figure.label}
@@ -191,7 +192,10 @@ const StepCard: React.FC<{
   mention?: FrameMention;
 }> = ({ index, title, state, becameDoneAtFrame, figure, mention }) => {
   const frame = useCurrentFrame();
-  const strike =
+  // A done step gets a green tick drawn into its number circle. Not a red
+  // strike-through: a finished step is not a wrong one (good/bad colours
+  // mean good/bad), and a video may strike out a myth in a kinetic cue.
+  const tick =
     becameDoneAtFrame === null
       ? 0
       : interpolate(
@@ -225,7 +229,7 @@ const StepCard: React.FC<{
           height: 40,
           flexShrink: 0,
           borderRadius: "50%",
-          background: brand.textOnCard,
+          background: state === "done" ? brand.good : brand.textOnCard,
           color: brand.accent,
           display: "flex",
           alignItems: "center",
@@ -235,7 +239,23 @@ const StepCard: React.FC<{
           fontSize: 22,
         }}
       >
-        {index + 1}
+        {state === "done" ? (
+          <svg width={26} height={26} viewBox="0 0 26 26">
+            <path
+              d="M5 13.5 L10.5 19 L21 7"
+              fill="none"
+              stroke={brand.textOnCard}
+              strokeWidth={4}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              pathLength={1}
+              strokeDasharray={1}
+              strokeDashoffset={1 - tick}
+            />
+          </svg>
+        ) : (
+          index + 1
+        )}
       </div>
       <div style={{ flex: 1 }}>
         <div
@@ -245,21 +265,10 @@ const StepCard: React.FC<{
             fontSize: 28,
             color: brand.textOnCard,
             lineHeight: 1.2,
+            textWrap: "balance",
           }}
         >
-          {state === "done" ? (
-            <CrossedOff
-              progress={strike}
-              color={brand.bad}
-              strokeWidth={5}
-              iterations={1}
-              seed={index + 1}
-            >
-              {title}
-            </CrossedOff>
-          ) : (
-            title
-          )}
+          {title}
         </div>
         {figure ? <MiniBarChart figure={figure} /> : null}
       </div>

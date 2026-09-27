@@ -166,8 +166,8 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
   );
   const [words, cutOut, ...found] = await Promise.all([
     fetchJson(slug, recordingPath(slug, source, "words.json")),
-    // Quick mode needs no cut-out; not asking keeps a 404 out of the log.
-    background === "vignette"
+    // Quick mode and room mode need no cut-out; not asking keeps a 404 out of the log.
+    background === "vignette" || background === "room"
       ? null
       : fetch(staticFile(cutOutPath), { method: "HEAD" }),
     ...assets.map((a) => fetch(staticFile(a), { method: "HEAD" })),
@@ -179,7 +179,7 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
         `Add them with \`node scripts/library.mjs add\` or change the visual.`,
     );
   // Golden rule: the background is always removed, so the cut-out must exist,
-  // unless edit.json opts into quick mode ("background": "vignette").
+  // unless edit.json opts out ("background": "vignette" or "room").
   if (cutOut && !cutOut.ok)
     throw new Error(
       `MortgageReel "${slug}": public/${cutOutPath} is missing. ` +
@@ -253,9 +253,10 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
   const { edit, timeline } = reel;
   const design = getDesign(edit.design ?? DEFAULT_DESIGN);
   const src = staticFile(recordingPath(slug, edit.source, "source.mp4"));
-  const foreground = staticFile(
-    recordingPath(slug, edit.source, "foreground.webm"),
-  );
+  const foreground =
+    edit.background === "room"
+      ? undefined
+      : staticFile(recordingPath(slug, edit.source, "foreground.webm"));
   const keywords = [...KEYWORDS, ...(edit.keywords ?? [])];
   const talk = timeline.talkFrames;
   // Quick mode: the full frame is opaque and would hide a Behind layer, so it
@@ -267,6 +268,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
         <TransitionSeries.Sequence durationInFrames={COVER_FRAMES}>
           <design.Cover
             src={src}
+            foreground={foreground}
             coverFrame={Math.round(
               ((edit.coverFrameMs ?? DEFAULT_COVER_FRAME_MS) * FPS) / 1000,
             )}

@@ -373,7 +373,9 @@ export const MotionTrack: React.FC<{
   reel: Reel;
   panelOffset?: number;
   numbers?: NumbersLook;
-}> = ({ reel, panelOffset = 0, numbers = CLASSIC_NUMBERS }) => {
+  // The WebGL light leak on each chapter cut; a calm design turns it off.
+  leak?: boolean;
+}> = ({ reel, panelOffset = 0, numbers = CLASSIC_NUMBERS, leak = true }) => {
   const { fps } = useVideoConfig();
   const outFrame = outFrameOf(reel.timeline, fps);
   return (
@@ -405,7 +407,7 @@ export const MotionTrack: React.FC<{
         })}
       </div>
       {/* One WebGL light leak per chapter cut; at most one mounted at a time. */}
-      {(reel.edit.chapters ?? []).map((c, i) => (
+      {(leak ? (reel.edit.chapters ?? []) : []).map((c, i) => (
         <Sequence
           key={c.atMs}
           from={Math.max(0, outFrame(c.atMs) - 12)}

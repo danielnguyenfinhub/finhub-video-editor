@@ -85,10 +85,10 @@ export const Polaroid: React.FC<{ figure: Figure }> = ({ figure }) => {
       {figure.label ? (
         <div
           style={{
-            fontSize: 28,
+            fontSize: 36, // readable on a phone (Daniel, 27/09/2026)
             fontWeight: 800,
             color: brand.textOnCard,
-            lineHeight: 1.25,
+            lineHeight: 1.2,
           }}
         >
           {figure.label}
@@ -161,6 +161,12 @@ export const ChapterCard: React.FC<{ title: string }> = ({ title }) => {
           fontSize: 48,
           fontWeight: 800,
           color: brand.textOnCard,
+          // A white tag, so the title reads over his real room too
+          // ("background": "room"), not only over the cream backdrop.
+          background: "#fff",
+          padding: "8px 24px",
+          borderRadius: 18,
+          boxShadow: "0 10px 26px rgba(60,45,20,0.16)",
         }}
       >
         {title}

@@ -42,6 +42,7 @@ const offset = (TALK_START_FRAME * 1000) / FPS;
 
 const groups = [];
 for (const c of captions) {
+  if (!c.text.trim()) continue; // a word hidden by a timed caption fix ("to": "")
   const g = groups[groups.length - 1];
   if (g && g.words.length < MAX_WORDS && c.endMs - g.startMs <= MAX_MS) {
     g.words.push(c.text.trim());

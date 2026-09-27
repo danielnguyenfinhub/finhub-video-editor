@@ -1,0 +1,210 @@
+{
+  "source": "pre-approval-tu-dong",
+  "title": "Pre-approval tự động có tốt không?",
+  "pacing": {
+    "mode": "auto"
+  },
+  "chapters": [
+    {
+      "atMs": 26760,
+      "title": "Có nhiều cách pre-approval",
+      "effect": "fade"
+    },
+    {
+      "atMs": 60420,
+      "title": "Rủi ro nằm ở đâu?",
+      "effect": "fade"
+    },
+    {
+      "atMs": 94920,
+      "title": "Khi khách đi đấu giá",
+      "effect": "fade"
+    }
+  ],
+  "stats": [],
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 42200,
+      "toMs": 54500,
+      "title": "System approval là gì?",
+      "items": [
+        {
+          "text": "Điền thông tin vào hệ thống",
+          "atMs": 44180
+        },
+        {
+          "text": "Thông tin đúng tiêu chuẩn",
+          "atMs": 46820
+        },
+        {
+          "text": "Hệ thống xét, không qua assessor",
+          "atMs": 50080
+        },
+        {
+          "text": "Có letter pre-approval",
+          "atMs": 52360
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 64000,
+      "toMs": 87400,
+      "title": "Vấn đề lộ ra khi nào?",
+      "items": [
+        {
+          "text": "Có pre-approval từ hệ thống",
+          "atMs": 64620
+        },
+        {
+          "text": "Khách tìm được nhà",
+          "atMs": 77260
+        },
+        {
+          "text": "Người xem kỹ hồ sơ",
+          "atMs": 79180
+        },
+        {
+          "text": "Lộ ra vấn đề",
+          "atMs": 80580
+        },
+        {
+          "text": "Đúng lúc cần nhanh",
+          "atMs": 85520
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 105320,
+      "toMs": 113600,
+      "ok": true,
+      "text": "ASSESSOR XEM TRƯỚC"
+    },
+    {
+      "kind": "compare",
+      "fromMs": 126300,
+      "toMs": 132300,
+      "vsAtMs": 129960,
+      "cards": [
+        {
+          "title": "Chỉ hệ thống xem",
+          "atMs": 126300,
+          "rows": [
+            {
+              "label": "Tốc độ",
+              "value": "Nhanh",
+              "tone": "neutral",
+              "atMs": 126620
+            },
+            {
+              "label": "Rủi ro",
+              "value": "Vẫn có",
+              "tone": "bad",
+              "atMs": 128140
+            }
+          ]
+        },
+        {
+          "title": "Assessor xem trước",
+          "atMs": 129960,
+          "rows": [
+            {
+              "label": "Rủi ro",
+              "value": "Giảm bớt",
+              "tone": "good",
+              "atMs": 130280
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "compliance": {
+    "illustrativeNumbers": false
+  },
+  "notes": [
+    "Tóm tắt: Một ngân hàng báo Daniel có thể duyệt hồ sơ bằng hệ thống (system approval), không cần assessor. Daniel giải thích system approval: điền thông tin, nếu hợp lệ thì có letter pre-approval ngay, rất nhanh. Rủi ro: khi khách tìm được nhà và có người duyệt hồ sơ thật thì mới lộ vấn đề, lúc cần nhanh thì lại chậm. Kết luận: Daniel ưu tiên hồ sơ được assessor xem trước (đặc biệt khách đi đấu giá) để biết trước điều kiện và vấn đề; hệ thống nhanh nhưng có rủi ro; việc của broker là giảm rủi ro cho khách.",
+    "Hook 0ms: \"Hôm trước thì có một ngân hàng gửi thông báo cho mình...\" (ngân hàng không nêu tên).",
+    "Chuyển ý: 26760 giải thích system approval; 60420 rủi ro của system approval; 94920 cách Daniel làm (assessor xem trước, khách đấu giá); 122060 kết luận.",
+    "Số liệu: không có con số, lãi suất, phí hay thời hạn nào được nói. Không có chuyện thuế. Không nêu tên ngân hàng.",
+    "Watch-words (RG 234): 53260 \"ngay\" (letter pre-approval ngay, mô tả system approval); 59160 \"rất là nhanh\"; 108140 \"bảo đảm\" (để bảo đảm những điều kiện...); 114180 \"bảo đảm\" (để bảo đảm nếu khách tìm được nhà...); 126620 \"hơi nhanh thật, nhưng rủi ro cũng có\"; 138440 \"bảo đảm\" (mọi thứ suôn sẻ hơn). Tất cả là nghĩa \"để chắc rằng\" hoặc mô tả sản phẩm của bên thứ ba, không phải cam kết với khách. Không có tốt nhất / rẻ nhất / miễn phí / chắc chắn.",
+    "Cần compliance xem (ghi âm ~08/06/2026): 0ms một ngân hàng (không tên) nói có thể duyệt bằng system; 36120 \"một số ngân hàng bây giờ tăng lượng hồ sơ system approval\" (nhận định về nhóm lender); 42200-53500 mô tả system approval: không cần người duyệt, cho letter pre-approval ngay (nhận định sản phẩm); 88200 \"có thể là những broker họ mới, họ cứ nghĩ gửi hồ sơ vào thì mọi thứ không sao\" (nhận xét về broker khác).",
+    "Cắt: 28960-29900 \"khi mà một,\" (nói lại: \"khi mình nộp hồ sơ\"); 54560-55660 \"Thì điều đó...\" (bỏ dở, nói lại bằng \"Nó sẽ đem lại...\"). Lặp \"gọi gọi\" (91720) và \"làm làm\" (131320) để auto-cut xử lý.",
+    "Sửa phụ đề: diệt→duyệt (51080 \"người duyệt\"), tổng,→tờ, (69680 \"giấy tờ\"), xuân→suôn và xẻ→sẻ (141560 \"suôn sẻ\"); mỗi từ chỉ xuất hiện một lần trong words.json.",
+    "Chưa chắc (để Daniel nghe lại): 3840 \"tao\"; 56560 \"được lại\" có thể là \"đem lại\"; 61940 \"vì hồi đó\"; 91920 \"gọi\" có thể là \"gửi\" (gửi hồ sơ vào).",
+    "Design (editor, 27/09/2026): editorial (EDITORIAL, 'GÓC NHÌN' opinion page), first use. Selector top pick explainer fails the variety check (= interest-in-advance skin); override recorded in selection.json. main.py check: 7/7/7 skin axes changed vs ty-do, interest-in-advance, bid-explained. Signature moments: hook 'DUYỆT BẰNG HỆ THỐNG' (0 ms); points 'System approval là gì?' 42200-54500; points 'Vấn đề lộ ra khi nào?' 64000-87400 (no graphic on the 88200 broker remark); verdict 'ASSESSOR XEM TRƯỚC' 105320; compare 122400-132300 ends before the closing logo. No 'ngay', 'nhanh chóng' or approval promise on screen. Caption fix gọi→gửi (91920) NOT applied: a flat swap would also change the three correct 'gọi là' (33660, 40520, 63360)."
+  ],
+  "remove": [
+    [
+      28950,
+      29910
+    ],
+    [
+      54550,
+      55670
+    ],
+    [
+      88150,
+      93600
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "diệt",
+      "to": "duyệt"
+    },
+    {
+      "from": "tổng,",
+      "to": "tờ,"
+    },
+    {
+      "from": "xuân",
+      "to": "suôn"
+    },
+    {
+      "from": "xẻ",
+      "to": "sẻ"
+    }
+  ],
+  "design": "editorial",
+  "subtitle": "Góc nhìn của Daniel Nguyen · Finance Hub",
+  "coverFrameMs": 45000,
+  "hook": {
+    "big": "DUYỆT BẰNG HỆ THỐNG",
+    "sub": "Có thật sự tốt không? Rủi ro nằm ở đâu?"
+  },
+  "keywords": [
+    "assessor",
+    "system approval",
+    "rủi ro",
+    "đấu giá",
+    "tự động"
+  ],
+  "music": {
+    "file": "music/serious-documentary.mp3",
+    "volume": 0.2
+  },
+  "cta": {
+    "question": "Bạn sắp đi xem nhà hoặc đấu giá?"
+  },
+  "visuals": [],
+  "post": {
+    "title": "Pre-approval tự động có tốt không?",
+    "caption": "Khoảng tháng 6/2026, một ngân hàng báo với Daniel rằng họ có thể xét hồ sơ pre-approval bằng hệ thống (system approval), không phải chờ assessor xem hồ sơ. Cách này có thể cho bạn letter pre-approval sớm hơn, nhưng có khi vấn đề trong hồ sơ chỉ lộ ra sau khi bạn đã tìm được nhà và có người xem kỹ hồ sơ, đúng lúc bạn cần mọi thứ đi nhanh. Vì vậy, đặc biệt với khách đi đấu giá, tụi mình ưu tiên để assessor xem hồ sơ trước, để biết trước những điều kiện cần lưu ý. Đây là thông tin chung, chưa xét đến hoàn cảnh riêng của bạn. Nhắn tin cho Finance Hub nếu bạn muốn trao đổi về hồ sơ vay của mình.\n\n—\n\nAround June 2026 a lender told Daniel it could now assess some pre-approvals by system, without waiting for an assessor to review the file. That can get you a pre-approval letter sooner, but a problem in the application may only come up after you've found a home and a person reviews the file properly, just when you need things to move. So, especially for auction buyers, we prefer to have an assessor review the file first, so any conditions are known up front. This is general information only and doesn't take your personal circumstances into account. Message Finance Hub if you'd like to talk about your application.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#preapproval",
+      "#muanha",
+      "#daugia",
+      "#auction",
+      "#homeloans"
+    ]
+  },
+  "background": "room",
+  "cut": {
+    "stutters": false
+  }
+}

@@ -240,11 +240,26 @@ export const editSchema = z.strictObject({
   // The room behind Daniel is always replaced (golden rule, 25/09/2026): every
   // video needs foreground.webm next to source.mp4 (made once with
   // review/matte.html); the render stops with instructions if it is missing.
-  // Absent or "brand" (old edit.json files) is that rule. "vignette" is quick
-  // mode, Daniel's opt-in: no cut-out and no matting; the full frame plays with
-  // its edges faded to black (PacedVideo.tsx) and Behind layers draw on top.
-  background: z.enum(["brand", "vignette"]).optional(),
-  captionFixes: z.array(z.strictObject({ from: text, to: text })).optional(),
+  // Absent or "brand" (old edit.json files) is that rule. Two per-video
+  // exceptions, both Daniel's opt-in, need no cut-out and no matting:
+  // "vignette" is quick mode: the full frame plays with its edges faded to
+  // black (PacedVideo.tsx) and Behind layers draw on top.
+  // "room" (27/09/2026): his real room, laid out by the design; it needs a
+  // design whose Cover and Talk handle an undefined `foreground` (kitchen,
+  // editorial).
+  background: z.enum(["brand", "vignette", "room"]).optional(),
+  // A fix swaps that word everywhere, or, with atMs (the word's startMs in
+  // words.json, ±300 ms), only there; with atMs, "to" may be "" to hide a
+  // misheard extra word ("trả lời" → "tính" + "").
+  captionFixes: z
+    .array(
+      z
+        .strictObject({ from: text, to: z.string(), atMs: z.number().optional() })
+        .refine((f) => f.to !== "" || f.atMs !== undefined, {
+          message: 'an empty "to" needs "atMs"',
+        }),
+    )
+    .optional(),
   keywords: z.array(text).optional(),
   // English line under the Vietnamese captions, one per scene, in source ms.
   // Written by scripts/voice-video.mjs from script.json (faceless videos).

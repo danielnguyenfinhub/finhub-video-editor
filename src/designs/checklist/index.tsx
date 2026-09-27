@@ -25,12 +25,7 @@ import {
   figuresOf,
   lenderMentionsOf,
 } from "../../mortgage/golden";
-import {
-  CUE_HEAD_Y,
-  CUE_SCALE,
-  HEAD_Y,
-  useCueRoom,
-} from "../../mortgage/cueRoom";
+import { CUE_HEAD_Y, CUE_SCALE, HEAD_Y } from "../../mortgage/cueRoom";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
@@ -45,6 +40,7 @@ import { PagedCaptions } from "../../mortgage/PagedCaptions";
 import { MotionTrack } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
 import { BoxCaptionPage } from "./BoxCaption";
+import { ColumnCueTrack, inColumn, useSideCueRoom } from "./ColumnCues";
 import { NotebookBackdrop } from "./Paper";
 import { ProgressTrack, StepColumn, type FrameMention } from "./StepColumn";
 
@@ -84,18 +80,41 @@ const FRAMING = framing(0);
 
 // ---------------------------------------------------------------- cover
 
+const COVER_TITLE_WIDTH = 600;
+// Greedy split into at most 3 lines of about equal length (words kept whole).
+const coverLines = (title: string, max = 3): string[] => {
+  const target = title.length / max + 2;
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of title.split(/\s+/).filter(Boolean)) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (cur && next.length > target && lines.length < max - 1) {
+      lines.push(cur);
+      cur = w;
+    } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+};
+
 const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const p = enter(frame, fps, 4);
+  // Up to 3 lines in the left column (x 54-654, clear of Daniel), sized so
+  // the longest line fits: one fitted line of a long title came out ~40 px.
+  const lines = coverLines(title);
   const size = Math.min(
-    100,
-    fitText({
-      text: title,
-      withinWidth: 880,
-      fontFamily: FONT,
-      fontWeight: 900,
-    }).fontSize,
+    110,
+    ...lines.map(
+      (text) =>
+        fitText({
+          text,
+          withinWidth: COVER_TITLE_WIDTH,
+          fontFamily: FONT,
+          fontWeight: 900,
+        }).fontSize,
+    ),
   );
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
@@ -131,16 +150,20 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
           position: "absolute",
           left: SAFE.left,
           top: SAFE.top + 170,
-          width: 900,
+          width: COVER_TITLE_WIDTH,
           fontSize: size,
           fontWeight: 900,
-          lineHeight: 1.25,
+          lineHeight: 1.15,
           color: brand.textOnCard,
           opacity: p,
           transform: `translateY(${interpolate(p, [0, 1], [30, 0])}px)`,
         }}
       >
-        {title}
+        {lines.map((l) => (
+          <div key={l} style={{ whiteSpace: "nowrap" }}>
+            {l}
+          </div>
+        ))}
       </div>
       <div style={FRAMING}>
         <CoverCutOut
@@ -157,7 +180,8 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
 
 // Daniel framed by FRAMING (above); the step column sits behind him.
 const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
-  const room = useCueRoom(seg);
+  // Column cues (kinetic, points, bars) sit left of him: no move for those.
+  const room = useSideCueRoom(seg);
   return (
     <AbsoluteFill>
       <NotebookBackdrop />
@@ -291,7 +315,20 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
-      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
+      {/* Kinetic, points and bars cues are drawn in the left column by
+          ColumnCueTrack (never over Daniel's head, clear of the logo tile);
+          MotionTrack gets every other cue kind. */}
+      <MotionTrack
+        reel={{
+          ...reel,
+          edit: {
+            ...reel.edit,
+            cues: (reel.edit.cues ?? []).filter((c) => !inColumn(c)),
+          },
+        }}
+        panelOffset={SAFE.top - 110}
+      />
+      <ColumnCueTrack reel={reel} panelOffset={SAFE.top - 110} />
       <Captions reel={reel} keywords={keywords} />
       {reel.edit.hook ? (
         <Sequence durationInFrames={HOOK_FRAMES}>

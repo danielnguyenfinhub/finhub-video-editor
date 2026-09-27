@@ -26,6 +26,7 @@ import { FONT, clamp, emphasised, enter } from "../../mortgage/style";
 import { StaggerTitle } from "../../elements/StaggerTitle";
 import { MotionTrack } from "../classic/Cues";
 import { INK, MASTHEAD_BOTTOM } from "./Masthead";
+import { ROOM_KINDS, RoomCues } from "./RoomCues";
 
 const HOOK_FRAMES = 105;
 // The Finance Hub logo doesn't show during the hook (logoVisible starts at
@@ -308,14 +309,26 @@ const ChapterBanner: React.FC<{ index: number; title: string }> = ({
     [0, 1],
     clamp,
   );
+  // One line, fitted to the band: a wrapped title reached down over his head.
+  const titleSize = Math.min(
+    56,
+    fitText({
+      text: title,
+      withinWidth: HOOK_BAND.width,
+      fontFamily: FONT,
+      fontWeight: 900,
+    }).fontSize,
+  );
   return (
     <AbsoluteFill style={{ opacity: 1 - outP }}>
+      {/* The hook's band above his head (y 420-580): chapters never share
+          the screen with the hook or the logo (first/last 10 s of talk). */}
       <div
         style={{
           position: "absolute",
-          left: SAFE.left,
-          top: MASTHEAD_BOTTOM + 20,
-          maxWidth: 700,
+          left: HOOK_BAND.left,
+          top: HOOK_BAND.top,
+          width: HOOK_BAND.width,
           transform: `translateX(${interpolate(inP, [0, 1], [-600, 0])}px)`,
         }}
       >
@@ -334,10 +347,11 @@ const ChapterBanner: React.FC<{ index: number; title: string }> = ({
           style={{
             fontFamily: FONT,
             fontWeight: 900,
-            fontSize: 56,
+            fontSize: titleSize,
             color: INK,
             marginTop: 8,
             lineHeight: 1.1,
+            whiteSpace: "nowrap",
           }}
         >
           {title}
@@ -375,7 +389,30 @@ export const Overlay: React.FC<OverlayProps> = ({
 }) => (
   <>
     {/* Cue panels shifted into the safe band; grain stays full-frame. */}
-    <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
+    {/* leak off: the WebGL light leak on each chapter cut flooded the cream
+        page orange mid-transition (QC, pre-approval-tu-dong). */}
+    {reel.edit.background === "room" ? (
+      <>
+        {/* Room mode: points, verdict and compare drawn by RoomCues (their
+            bottom edge drives the photo in Talk), the rest by MotionTrack. */}
+        <MotionTrack
+          reel={{
+            ...reel,
+            edit: {
+              ...reel.edit,
+              cues: (reel.edit.cues ?? []).filter(
+                (c) => !ROOM_KINDS.has(c.kind),
+              ),
+            },
+          }}
+          panelOffset={SAFE.top - 110}
+          leak={false}
+        />
+        <RoomCues reel={reel} />
+      </>
+    ) : (
+      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} leak={false} />
+    )}
     <LenderSidebar reel={reel} />
     <Chapters reel={reel} />
     <Captions reel={reel} keywords={keywords} />

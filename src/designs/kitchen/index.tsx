@@ -33,14 +33,16 @@ import { Outro } from "../classic/Outro";
 import { KitchenBackdrop } from "./Backdrop";
 import { KitchenHook, MessageBubble } from "./Bubbles";
 import { KitchenCaptions } from "./Captions";
+import { RoomVideo } from "./RoomVideo";
 import { ChapterCard, LenderTag, Polaroid } from "./Pieces";
 
 const HOOK_FRAMES = 105;
-const LABEL = "TÌNH HUỐNG MINH HOẠ";
 const NAME = "Daniel Nguyen";
 // Cover cut-out scale: head top at 1920 - (1920 - 580) * 0.64 ~ 1060, under
 // the subtitle bubble (ends ~900).
 const COVER_SCALE = 0.64;
+// Titles up to this long get the thumbnail-sized 84px (two lines at most).
+const COVER_BIG_CHARS = 32;
 
 const LogoTile: React.FC<{ height?: number }> = ({ height = 120 }) => (
   <div
@@ -58,33 +60,67 @@ const LogoTile: React.FC<{ height?: number }> = ({ height = 120 }) => (
   </div>
 );
 
+// Daniel on the cover with "background": "room": the whole frame as a rounded
+// photo, scaled down from the bottom so his head (top ~580 at full size) lands
+// below the subtitle bubble. (The cut-out and quick mode draw in Cover.)
+const CoverRoomPhoto: React.FC<{ src: string; coverFrame: number }> = ({
+  src,
+  coverFrame,
+}) => (
+  <AbsoluteFill
+    style={{
+      transform: `scale(${COVER_SCALE})`,
+      transformOrigin: "50% 100%",
+    }}
+  >
+    <CoverCutOut
+      src={src}
+      trimBefore={coverFrame}
+      room
+      style={{
+        borderRadius: 48,
+        boxShadow: "0 30px 70px rgba(60,45,20,0.35)",
+      }}
+    />
+  </AbsoluteFill>
+);
+
 // ---------------------------------------------------------------- cover
 
-const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
+const Cover: React.FC<CoverProps> = ({
+  src,
+  foreground,
+  coverFrame,
+  title,
+  subtitle,
+}) => (
   <AbsoluteFill style={{ fontFamily: FONT }}>
     <KitchenBackdrop />
+    {/* "background": "room": the full frame as a photo on the table, under
+        the bubbles (it is opaque, so it must not cover them). */}
+    {foreground ? null : <CoverRoomPhoto src={src} coverFrame={coverFrame} />}
+    {/* Title and subtitle stack in one column below the logo tile's
+        footprint (it ends ~y564), so a two-line title pushes the subtitle
+        down instead of hiding it. The title is thumbnail-sized when short. */}
     <div
       style={{
         position: "absolute",
         left: SAFE.left,
-        top: SAFE.top,
-        color: "#8C8271",
-        fontWeight: 800,
-        fontSize: 28,
-        letterSpacing: 4,
+        top: SAFE.top + 170,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 36,
       }}
     >
-      {LABEL}
-    </div>
-    <div style={{ position: "absolute", left: SAFE.left, top: SAFE.top + 170 }}>
-      {/* Below the logo tile's footprint (it ends ~y564), so the bubble can
-          use the full SAFE width for 2 lines at 64px without ducking under
-          it. The old top+60 placement sat title text under the logo. */}
-      <MessageBubble fontSize={64} maxWidth={SAFE.right - SAFE.left}>
+      {/* ponytail: two sizes by length, not fitText; 3+ lines at 84px would
+          reach his head (~1060), so long titles keep 64px. */}
+      <MessageBubble
+        fontSize={title.length <= COVER_BIG_CHARS ? 84 : 64}
+        maxWidth={SAFE.right - SAFE.left}
+      >
         {title}
       </MessageBubble>
-    </div>
-    <div style={{ position: "absolute", left: SAFE.left, top: SAFE.top + 400 }}>
       <MessageBubble
         fontSize={40}
         weight={700}
@@ -97,20 +133,22 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
     {/* His whole cut-out, scaled down from the bottom so his head (top
         ~580 at full size) lands below the subtitle bubble instead of being
         cropped: a box from y 940 with objectFit cover cut the top of his
-        head off. */}
-    <AbsoluteFill>
-      <CoverCutOut
-        src={src}
-        trimBefore={coverFrame}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          transform: `scale(${COVER_SCALE})`,
-          transformOrigin: "50% 100%",
-        }}
-      />
-    </AbsoluteFill>
+        head off. Room mode draws its photo (CoverPerson) behind instead. */}
+    {foreground ? (
+      <AbsoluteFill>
+        <CoverCutOut
+          src={src}
+          trimBefore={coverFrame}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: `scale(${COVER_SCALE})`,
+            transformOrigin: "50% 100%",
+          }}
+        />
+      </AbsoluteFill>
+    ) : null}
     <LogoTile />
   </AbsoluteFill>
 );
@@ -119,13 +157,23 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
 
 const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
   const frame = useCurrentFrame();
+  const room = useCueRoom(seg);
+  if (!foreground)
+    // "background": "room": a photo card under the top band (RoomVideo.tsx);
+    // figures are drawn in front of it, in that band.
+    return (
+      <AbsoluteFill>
+        <KitchenBackdrop />
+        <RoomVideo seg={seg} src={src} look={look} />
+        {behind}
+      </AbsoluteFill>
+    );
   const drift = interpolate(
     frame,
     [0, Math.max(1, seg.outDuration)],
     [0, 0.015],
   );
   const zoom = 1.05 + drift;
-  const room = useCueRoom(seg);
   return (
     <AbsoluteFill>
       <KitchenBackdrop />
@@ -179,7 +227,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
-      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
+      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} leak={false} />
       <KitchenCaptions reel={reel} keywords={keywords} />
       {mentions.map((m) => {
         const from = Math.round((m.startMs / 1000) * fps);
@@ -225,7 +273,6 @@ export const kitchen: Design = {
   Outro,
   chapterTransition: () => fade(),
   copy: [
-    LABEL,
     "Ngân hàng ·",
     "VS",
     "Các ngân hàng Finance Hub làm việc cùng",

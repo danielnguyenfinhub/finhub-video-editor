@@ -8,6 +8,7 @@ import type { Segment, TransitionKind } from "./timeline";
 
 export type CoverProps = {
   src: string;
+  foreground?: string; // undefined when edit.json "background" is "room"
   coverFrame: number;
   title: string;
   subtitle: string;
@@ -20,7 +21,7 @@ export type TalkProps = {
   index: number;
   src: string;
   look?: Look;
-  foreground?: string; // the cut-out (always set: golden rule)
+  foreground?: string; // the cut-out; undefined when edit.json "background" is "room"
   // The design's Behind layer, already on the talk timeline: render it
   // between the backdrop and PacedVideo so charts sit behind Daniel.
   behind?: React.ReactNode;

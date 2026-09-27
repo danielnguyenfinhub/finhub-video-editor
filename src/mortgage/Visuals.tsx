@@ -68,7 +68,7 @@ const Shot: React.FC<{
   reel: Reel;
   from: number;
   src: string;
-  foreground: string;
+  foreground?: string;
   look?: Look;
   frameStyle: React.CSSProperties;
 }> = ({ v, reel, from, src, foreground, look, frameStyle }) => {
@@ -147,7 +147,7 @@ const Shot: React.FC<{
 export const Visuals: React.FC<{
   reel: Reel;
   src: string;
-  foreground: string;
+  foreground?: string;
   frameStyle?: React.CSSProperties;
 }> = ({ reel, src, foreground, frameStyle = PLAIN_FRAME }) => {
   const { fps } = useVideoConfig();

@@ -39,7 +39,8 @@ const FIGURE_PAD_Y = 8;
 const FigurePanel: React.FC<{
   big: string;
   label: string;
-}> = ({ big, label }) => {
+  column: boolean;
+}> = ({ big, label, column }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const inP = enter(frame, fps);
@@ -62,17 +63,21 @@ const FigurePanel: React.FC<{
   );
   return (
     <AbsoluteFill style={{ opacity: 1 - outP }}>
-      {/* Decorative full-height column behind him (unchanged position). */}
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: MASTHEAD_BOTTOM,
-          bottom: 0,
-          width: COLUMN_WIDTH,
-          background: "rgba(11,31,61,0.94)",
-        }}
-      />
+      {/* Decorative full-height column behind him (unchanged position).
+          Left out with "background": "room": drawn in front of the opaque
+          video, it would cover his face. */}
+      {column ? (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: MASTHEAD_BOTTOM,
+            bottom: 0,
+            width: COLUMN_WIDTH,
+            background: "rgba(11,31,61,0.94)",
+          }}
+        />
+      ) : null}
       {/* Kicker, big figure and label sit ABOVE his head (y 420-580) — the
           only place a big number reads clean on a full-frame talk. */}
       <div
@@ -139,7 +144,11 @@ const Figures: React.FC<{ reel: Reel }> = ({ reel }) => {
           from={f.fromFrame}
           durationInFrames={f.frames}
         >
-          <FigurePanel big={f.big} label={f.label} />
+          <FigurePanel
+            big={f.big}
+            label={f.label}
+            column={reel.edit.background !== "room"}
+          />
         </Sequence>
       ))}
     </>
