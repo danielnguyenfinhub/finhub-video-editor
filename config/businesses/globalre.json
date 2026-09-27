@@ -1,0 +1,47 @@
+{
+  "id": "globalre",
+  "name": "Global RE",
+  "legalName": "Global RE Pty Ltd",
+  "tagline": "Property Specialist",
+  "office": "386B-C Cabramatta Road W, Cabramatta NSW 2166",
+  "phone": "02 8798 3557",
+  "website": "globalre.com.au",
+  "logo": "businesses/globalre/logo.png",
+  "colors": {
+    "gold": "#E4BA61",
+    "goldLight": "#F8D988",
+    "ink": "#111111",
+    "night": "#0E1726",
+    "cream": "#F7F1E3"
+  },
+  "licensee": "deric",
+  "voice": {
+    "engine": "google",
+    "name": "Sadachbia",
+    "style": {
+      "vi": "Đọc như giọng quảng cáo bất động sản trên truyền hình: hào hứng, sang trọng, rõ ràng, tự tin, mời gọi. Đọc tên thương hiệu bằng tiếng Anh: ",
+      "en": "Read this like a premium TV real estate commercial: excited, warm, clear, confident and inviting. Say the brand name in English, spelling out the letters R and E: "
+    },
+    "spokenName": {
+      "vi": "Glô-bồ A Ri",
+      "en": "Global R.E."
+    }
+  },
+  "agents": {
+    "deric": {
+      "name": "Deric Truong Sanh Ly",
+      "displayName": "(Deric) Truong Sanh Ly",
+      "title": "Client Service Manager",
+      "mobile": "0433 851 338",
+      "phone": "02 8798 3557",
+      "email": "deric@globalre.com.au",
+      "photo": "businesses/globalre/agent-deric.jpg",
+      "licence": {
+        "number": "20161359",
+        "type": "Class 1 Real Estate – Sales or Leasing (Property – Individual)",
+        "expires": "2030-07-13",
+        "source": "NSW Fair Trading public register, read 2026-09-28"
+      }
+    }
+  }
+}

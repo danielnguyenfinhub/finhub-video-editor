@@ -46,3 +46,16 @@ __pycache__/
 
 # Repowise index written by the repo-audit-tools skill (node .claude/skills/repo-audit-tools/scripts/audit.mjs)
 /.repowise/
+
+# Global RE listing videos (docs/agents/listing-video.md): the agent's listing
+# folders in, finished videos out. Only the notes and the fill-in template are
+# tracked: listings, photos and videos are real client material (public repo).
+/3 - GLOBAL RE LISTINGS/*
+!/3 - GLOBAL RE LISTINGS/README.txt
+!/3 - GLOBAL RE LISTINGS/_TEMPLATE/
+/4 - GLOBAL RE FINISHED VIDEOS/*
+!/4 - GLOBAL RE FINISHED VIDEOS/README.txt
+# Agent headshots are personal; business logos can be committed.
+/public/businesses/*/agent-*.jpg
+# Prepared listings (photos, voice, script) stay local.
+/public/listings/

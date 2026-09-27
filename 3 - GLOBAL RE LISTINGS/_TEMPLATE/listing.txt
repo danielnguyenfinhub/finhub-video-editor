@@ -1,0 +1,76 @@
+# GLOBAL RE — THÔNG TIN NHÀ / LISTING DETAILS
+# Điền sau dấu hai chấm. Để trống nếu không có. Dòng bắt đầu bằng # là ghi chú.
+# Fill in after the colon. Leave blank if it doesn't apply. Lines starting with # are notes.
+# Chỉ ghi điều có thật: video chỉ nói những gì có ở đây hoặc thấy được trong ảnh.
+# Only write what is true: the video only says what is here or visible in the photos.
+
+Nhân viên / Agent: deric
+Loại tin (bán hoặc thuê) / Listing type (sale or rent): sale
+
+Số nhà và tên đường / Street address:
+Khu vực / Suburb:
+Mã bưu điện / Postcode:
+Tiểu bang / State: NSW
+
+# house, unit, townhouse, land, duplex
+Loại nhà / Property type: house
+Phòng ngủ / Bedrooms:
+Phòng tắm / Bathrooms:
+Chỗ đậu xe / Car spaces:
+# Diện tích: theo sổ đất hoặc bản vẽ khảo sát. Areas: from the title or survey plan.
+Diện tích đất m² / Land size m²:
+Diện tích trong nhà m² / Internal size m²:
+
+# Bán: đúng giá quảng cáo, ví dụ "$1,250,000", "$1,200,000 - $1,300,000", "Contact agent", "Auction"
+# KHÔNG viết "Offers over" hay "$1.2m+" (luật NSW cấm). Never "Offers over" or "$1.2m+" (banned in NSW).
+# Khoảng giá: chênh lệch không quá 10%. A range may be at most 10% wide.
+# Thuê: MỘT giá cố định theo tuần, ví dụ "$650 per week" (không khoảng giá, không "offers").
+# Sale: the exact advertised price. Rent: ONE fixed weekly rent, e.g. "$650 per week".
+Giá / Price:
+
+# Chỉ khi bán: giá bán ước tính trong hợp đồng đại lý. KHÔNG hiện trong video; giá quảng cáo không được thấp hơn.
+# Sale only: the estimated selling price in the agency agreement. NEVER shown; the advertised price can't be lower.
+Giá bán ước tính / Estimated selling price:
+
+# Trả lời yes hoặc no. Answer yes or no.
+Nhà đang có người thuê? / Tenanted? (yes/no): no
+# Chỉ khi có người thuê: đã có đồng ý bằng văn bản cho chụp ảnh chưa? Không có thì không làm video.
+# Only if tenanted: written consent for photos? Without it the video is not made.
+Người thuê đồng ý cho chụp ảnh? / Tenant consent for photos obtained? (yes/no):
+Ngày giờ đấu giá / Auction date and time:
+Ngày dọn vào (cho thuê) / Available from (rent):
+
+# Một dòng cho mỗi giờ xem nhà, bắt đầu bằng "-". One line per open home, starting with "-".
+Giờ xem nhà / Open home times:
+-
+
+# Một dòng cho mỗi đặc điểm, bắt đầu bằng "-". One line per feature, starting with "-".
+Đặc điểm nổi bật / Key features:
+-
+-
+-
+
+# Chỉ những gì anh/chị biết chắc, đo bằng km hoặc mét trên bản đồ (không viết "gần", "vài phút").
+# Only what you know is true, measured in km or metres on a map (not "close to", "5 min walk").
+# Ví dụ / e.g. "- Cabramatta station, 1.2 km"
+Gần đó / Nearby:
+-
+
+# Tuỳ chọn: thứ tự và nội dung ảnh. Optional: photo order and what each shows.
+# Ví dụ / e.g. "- 1.jpg = front"
+Ghi chú ảnh / Photo order notes:
+-
+
+# Tuỳ chọn: thông tin quan trọng phải công khai cho người mua/thuê (hiện ở cuối video).
+# Optional: material facts to disclose (PSAR s 60), shown at the end of the video.
+Thông tin phải công khai / Material facts to disclose:
+-
+
+# Ảnh đã sửa (xoá đồ, đổi màu trời, dàn dựng ảo): video ghi "Hình ảnh đã chỉnh sửa / Image edited".
+# Edited photos (items removed, sky replaced, virtual staging): labelled in the video.
+Ảnh đã chỉnh sửa / Edited photos:
+-
+
+# Tuỳ chọn: điều video KHÔNG được nói. Optional: anything the video must NOT say.
+Không được nói / Do not say:
+-
