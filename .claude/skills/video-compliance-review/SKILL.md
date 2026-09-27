@@ -48,7 +48,7 @@ Inputs: `public/videos/<slug>/edit.json` (including its `visuals`), the design i
 7. **Core untouched.** `git diff --stat origin/main -- src/mortgage src/brand` is empty, or the editor's report names an agreed core change → otherwise BLOCK.
 8. **B-roll and images (`visuals`).** Each asset's `.meta.json` in `public/library/` has a `licence`; none → FIX. A clip that shows a bank's branding, a number, or a person in a way that implies endorsement or a client → FIX.
 9. **Legibility.** Compliance text or a condition that's clipped, covered or too small to read in a still → FIX.
-10. **Room privacy (quick mode only, `"background": "vignette"`).** The room is partly visible. Look at a cover still and a mid-video still for anything client-identifying in the background: documents, screens, names, other people. Anything found → BLOCK (switch to the removed background or re-record). No such stills → BLOCK (ask the editor). Golden rule 4 in `src/designs/README.md`.
+10. **Room privacy (quick mode, `"background": "vignette"`, and any cover that uses the recorded frame: classic, explainer, studio).** The room is visible. Look at the cover still, and in quick mode also a mid-video still, for anything client-identifying in the background: documents, screens, names, other people. Anything found → BLOCK (switch to the removed background or re-record). No such stills → BLOCK (ask the editor). Golden rule 4 in `src/designs/README.md`.
 
 ## Verdict
 
