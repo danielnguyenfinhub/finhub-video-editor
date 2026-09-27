@@ -37,5 +37,12 @@ __pycache__/
 /public/videos/*/voice/
 /.omnivoice/
 
+# Daniel's footage in, finished videos out (README "The short version"): the
+# media stays local, only each folder's README.txt is tracked.
+/1 - PUT FOOTAGE HERE/*
+!/1 - PUT FOOTAGE HERE/README.txt
+/2 - FINISHED VIDEOS/*
+!/2 - FINISHED VIDEOS/README.txt
+
 # Repowise index written by the repo-audit-tools skill (node .claude/skills/repo-audit-tools/scripts/audit.mjs)
 /.repowise/
