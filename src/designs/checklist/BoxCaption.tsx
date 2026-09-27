@@ -37,7 +37,11 @@ const measure = (text: string) =>
     fontSize: SIZE,
     fontWeight: WEIGHT,
     additionalStyles: { lineHeight: LINE_HEIGHT },
-    validateFontIsLoaded: true,
+    // Off: we only measure after reelFontReady() resolved. The check compares
+    // against a span with no font-family, which inherits the page font; when
+    // that is Be Vietnam Pro too, both measures match and it throws although
+    // the font IS loaded (frame 630 of chon-ngan-hang, "ưu tiên sẽ khác nhau.").
+    validateFontIsLoaded: false,
   });
 
 export const BoxCaptionPage: React.FC<{

@@ -26,6 +26,7 @@ import { FONT, clamp, emphasised, enter } from "../../mortgage/style";
 import { StaggerTitle } from "../../elements/StaggerTitle";
 import { MotionTrack } from "../classic/Cues";
 import { INK, MASTHEAD_BOTTOM } from "./Masthead";
+import { ROOM_KINDS, RoomCues } from "./RoomCues";
 
 const HOOK_FRAMES = 105;
 // The Finance Hub logo doesn't show during the hook (logoVisible starts at
@@ -388,7 +389,30 @@ export const Overlay: React.FC<OverlayProps> = ({
 }) => (
   <>
     {/* Cue panels shifted into the safe band; grain stays full-frame. */}
-    <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
+    {/* leak off: the WebGL light leak on each chapter cut flooded the cream
+        page orange mid-transition (QC, pre-approval-tu-dong). */}
+    {reel.edit.background === "room" ? (
+      <>
+        {/* Room mode: points, verdict and compare drawn by RoomCues (their
+            bottom edge drives the photo in Talk), the rest by MotionTrack. */}
+        <MotionTrack
+          reel={{
+            ...reel,
+            edit: {
+              ...reel.edit,
+              cues: (reel.edit.cues ?? []).filter(
+                (c) => !ROOM_KINDS.has(c.kind),
+              ),
+            },
+          }}
+          panelOffset={SAFE.top - 110}
+          leak={false}
+        />
+        <RoomCues reel={reel} />
+      </>
+    ) : (
+      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} leak={false} />
+    )}
     <LenderSidebar reel={reel} />
     <Chapters reel={reel} />
     <Captions reel={reel} keywords={keywords} />

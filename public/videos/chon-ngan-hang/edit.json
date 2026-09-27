@@ -1,0 +1,309 @@
+{
+  "source": "chon-ngan-hang",
+  "design": "checklist",
+  "title": "Chọn Ngân Hàng Đừng Chỉ Nhìn Lãi Suất",
+  "coverFrameMs": 80000,
+  "hook": {
+    "big": "ĐỪNG CHỈ NHÌN LÃI SUẤT",
+    "sub": "Chọn ngân hàng theo tiêu chí nào?"
+  },
+  "pacing": {
+    "mode": "auto"
+  },
+  "music": {
+    "file": "music/hopeful-inspiring.mp3",
+    "volume": 0.25
+  },
+  "keywords": [
+    "tiêu chí",
+    "mục đích",
+    "rủi ro",
+    "refinance"
+  ],
+  "chapters": [
+    {
+      "atMs": 51260,
+      "title": "Khả năng duyệt hồ sơ",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 79420,
+      "title": "Số tiền ngân hàng cho vay",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 96080,
+      "title": "Tốc độ duyệt hồ sơ",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 123440,
+      "title": "Rồi mới đến lãi suất",
+      "effect": "pushCut"
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 134200,
+      "durMs": 3000,
+      "big": "3–4 ngân hàng",
+      "label": "vẫn đủ cả 3 tiêu chí trên"
+    }
+  ],
+  "cues": [
+    {
+      "kind": "kinetic",
+      "fromMs": 22120,
+      "toMs": 36000,
+      "kicker": "Chọn ngân hàng",
+      "struck": [
+        {
+          "text": "Chỉ nhìn lãi suất",
+          "atMs": 22120,
+          "strikeMs": 24420
+        }
+      ],
+      "slam": {
+        "text": "Mục đích vay",
+        "atMs": 24880
+      },
+      "sub": {
+        "text": "Mua nhà hay refinance?",
+        "atMs": 26260
+      }
+    },
+    {
+      "kind": "points",
+      "fromMs": 147660,
+      "toMs": 188040,
+      "title": "Khi refinance: thứ tự đổi",
+      "items": [
+        {
+          "text": "Có khả năng duyệt hồ sơ",
+          "atMs": 153520
+        },
+        {
+          "text": "Vay đủ số tiền cần",
+          "atMs": 160440
+        },
+        {
+          "text": "Rồi ưu tiên lãi suất thấp",
+          "atMs": 170480
+        },
+        {
+          "text": "Đợi 2–3 tuần cũng không sao",
+          "atMs": 186080
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 266220,
+      "toMs": 279940,
+      "title": "Vì sao hỏi nhiều giấy tờ?",
+      "items": [
+        {
+          "text": "Bắt đầu từ lãi suất thấp",
+          "atMs": 269320
+        },
+        {
+          "text": "Không bắt đầu từ chỗ dễ",
+          "atMs": 277740
+        }
+      ]
+    },
+    {
+      "kind": "bars",
+      "fromMs": 285600,
+      "toMs": 299160,
+      "kicker": "Mượn dễ thì lãi suất cao",
+      "title": "Lãi suất",
+      "bars": [
+        {
+          "label": "Ít rủi ro",
+          "value": "Thấp",
+          "height": 0.45,
+          "tone": "good",
+          "atMs": 293200
+        },
+        {
+          "label": "Nhiều rủi ro",
+          "value": "Cao",
+          "height": 0.85,
+          "tone": "bad",
+          "atMs": 296900
+        }
+      ]
+    }
+  ],
+  "cta": {
+    "question": "Bạn đang cân nhắc chọn ngân hàng nào?"
+  },
+  "compliance": {
+    "illustrativeNumbers": true,
+    "conditionsNote": true
+  },
+  "notes": [
+    "STORY EDIT (A2, 27/09/2026). Recorded ~08/06/2026: every statement about lender behaviour, turnaround times or rates is as at June 2026.",
+    "SUMMARY: Daniel explains how Finance Hub chooses a lender, and that the order of priorities depends on the loan purpose. Buying: (1) the lender most likely to approve the application on the client's circumstances, (2) the lender that lends the most, because more borrowing power helps against other buyers, (3) approval speed, so the client can put a deposit down first; only then the interest rate, choosing the lowest among the 3-4 lenders that qualify. Refinancing: still must be approved and lend enough, but then the rate comes first because the client can wait 2-3 weeks; a buyer cannot. Everything serves the client's goals and needs. We ask many questions and more documents so we can start from the lender with the lowest rate the client qualifies for and work down, not start from the easy option, because a lender that lends easily charges a higher rate: lower risk means lower rate, more risk means higher rate.",
+    "HOOK (0.00-7.96 s): 'Các bạn nào mà hiện tại đang có ý định vay mượn và muốn hiểu rõ rằng tụi mình khi mà chọn ngân hàng cho các bạn thì chọn trên tiêu chí nào?'",
+    "TOPIC CHANGES: 22.12 s loan purpose decides priorities (mua vs chuyển đổi ngân hàng) | 36.56 s buying a home | 51.26 s criterion 1 approval likelihood | 79.42 s criterion 2 loan amount | 96.08 s criterion 3 approval speed | 123.44 s then interest rate | 147.66 s refinancing reverses the order | 196.00 s cash-out/valuation (CUT) | 218.92 s it all serves the client's goals | 227.20 s why we ask many questions / documents | 279.94 s easy lender = higher rate, risk-based pricing.",
+    "NUMBERS: 134.20 s '3-4 ngân hàng vẫn đủ tiêu chí' (a count, no maths; illustrative). 186.30 s 'có thể đợi 2 tuần, 3 tuần' for a refinance (turnaround expectation as at June 2026; general, not a promise). No dollar amounts, rates, percentages or fees are spoken. Nothing to recompute; nothing wrong.",
+    "WATCH-WORDS (spoken, not cut, not reworded; for compliance): 51.26 s 'cho các bạn mượn cao nhất có thể' | 55.68 s 'cơ hội chấp nhận hồ sơ … cao nhất' | 79.42 s 'số tiền nhiều nhất' | 143.46 s 'chọn người thấp nhất' (lowest rate among qualifying lenders) | 169.98 s 'ngân hàng nào lãi suất thấp' | 268.18 s 'bảo đảm' (context list; 'bảo đảm việc là tụi mình bắt đầu từ…' describes our process, not an outcome guarantee) | 268.82-274.12 s 'tiền lời thấp nhất có thể' | 279.12 s 'dễ dàng' (negation: 'không phải bắt đầu từ cái gì đó gọi là dễ dàng') | 282.52-288.98 s generalisation 'ngân hàng nào cho các bạn mượn dễ thì … phải trả lãi suất cao' | 289.98-299.08 s risk-based pricing generalisation. In CUT spans: 19.68 s 'dễ dàng', 59.56 s 'bảo đảm', 208.14 s 'định giá … cao nhất'.",
+    "PERSONAL ADVICE: none. 43.98-50.72 s 'dựa trên điều kiện cá nhân của các bạn' is a description of process; kept because it frames the rest as depending on the client's circumstances.",
+    "TAX TALK: none. RATE TALK: general only (lowest rate among qualifying lenders; refinance prioritises rate; easy lending = higher rate). No specific rate, product or lender rate stated.",
+    "BANK NAMES: none spoken. Generic 'lenders', 'brokers' (both in the cut aside).",
+    "CLIENT DATA: none. No names other than Daniel, no addresses, no client figures.",
+    "PAPER EDIT: kept order is unchanged (hook -> purpose -> buying 1/2/3 -> rate last -> refinance -> client goals -> why we ask many questions -> easy lender = higher rate). 12 remove spans. Kept talk ~168 s of speech before auto silence/filler cuts and auto pacing; estimated finished length ~150-160 s. Getting to 90-120 s would mean dropping a reason (purchasing power 86.34-95.44 s, deposit-first 100.78-108.78 s), the refinance condition 153.18-162.86 s, or the client-goals line 218.92-226.88 s; the refinance condition cannot go (without it refinance reads as 'just lowest rate'). Optional further cuts if Daniel wants ~135-140 s: 86340-95440 and 218920-226880.",
+    "CAPTION FIX DEPENDENCY: 'tương'->'tiền' and 'lai'->'lời' are safe only while 8320-21600 stays removed (16.88 s 'trong tương lai' is correct there). If that span is restored, replace these two with a context rule in fixWord (prev 'tính').",
+    "VERIFY (listen): 276.90 s 'thì mình đi lập từ' (guess: 'đi lần xuống' / 'đi dần xuống'; left as is) | 43.98 s 'mỗi hồ nhìn vào' (Whisper dropped 'sơ'; caption reads 'hồ') | 298.52 s 'tương lai' fixed to 'tiền lời' (could be 'tiền lãi') | 163.22 s 'cho tiền ngân hàng nào lãi suất thấp' (extra 'tiền'?).",
+    "DESIGN (A3, video-editor 27/09/2026): checklist (first use). select-template picked explainer 4.3 vs classic 2.65, not confident (close call). Hard reason for override: both close-call designs repeat a recent video's skin exactly (explainer = interest-in-advance, classic = ty-do; 0 of 7 skin axes differ), so they fail the variety check; the talk is a ranked 1-2-3-then-rate list, which is checklist's data shape (numbered step cards + k/N progress). Close call left for Daniel in open_questions.",
+    "SIGNATURE MOMENTS: hook 0 s 'ĐỪNG CHỈ NHÌN LÃI SUẤT' over empty 0/4 track | 22.1 s turn: 'Chỉ nhìn lãi suất' struck, 'Mục đích vay' slams | 51.3/79.4/96.1/123.4 s steps 1-4 tick in (pushCut) | 134.2 s '3–4 ngân hàng' bar in step 4 | 147.7 s refinance order (points, 2–3 tuần as said) | 266.2 s why we ask for documents (points) | 285.6 s close: risk vs rate bars.",
+    "B-ROLL: none placed; library has no hit for house hunting/deposit (100.8 s) or paperwork/documents (264.9 s). Pipeline A does not download.",
+    "DESIGN EDITS (checklist, first use): done steps now get a green tick in the number circle instead of a red strike-through (a met priority is not a wrong one; red strike is kept for the myth in the kinetic cue); cover title wraps to up to 3 lines in the left column (x 54-654) sized to the longest line (was one fitted line, ~40 px). Stills checked with a STAND-IN cut-out in a scratch public dir; re-still with the real foreground.webm before render.",
+    "COMPLIANCE FIX (04_compliance_final, 27/09/2026): chapter 1 -> \"Khả năng duyệt hồ sơ\", chapter 2 -> \"Số tiền ngân hàng cho vay\", refinance item 1 -> \"Có khả năng duyệt hồ sơ\" (the tick implied approval); compliance.conditionsNote true; timed caption fix lợi->lời at 273.24 s."
+  ],
+  "remove": [
+    [
+      8320,
+      21600
+    ],
+    [
+      22120,
+      22520
+    ],
+    [
+      36560,
+      36960
+    ],
+    [
+      43980,
+      44380
+    ],
+    [
+      51260,
+      51660
+    ],
+    [
+      59020,
+      79240
+    ],
+    [
+      83020,
+      86060
+    ],
+    [
+      109320,
+      113740
+    ],
+    [
+      117960,
+      123040
+    ],
+    [
+      128440,
+      133180
+    ],
+    [
+      137180,
+      137640
+    ],
+    [
+      173300,
+      184040
+    ],
+    [
+      188040,
+      193580
+    ],
+    [
+      196000,
+      218760
+    ],
+    [
+      231580,
+      264860
+    ],
+    [
+      289100,
+      289880
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "dây",
+      "to": "vay"
+    },
+    {
+      "from": "vai",
+      "to": "vay"
+    },
+    {
+      "from": "dự",
+      "to": "duyệt"
+    },
+    {
+      "from": "khẩu",
+      "to": "hồ"
+    },
+    {
+      "from": "xuất",
+      "to": "suất"
+    },
+    {
+      "from": "xuất,",
+      "to": "suất,"
+    },
+    {
+      "from": "đổ",
+      "to": "để"
+    },
+    {
+      "from": "tương",
+      "to": "tiền"
+    },
+    {
+      "from": "lai",
+      "to": "lời"
+    },
+    {
+      "from": "đỉnh",
+      "to": "định"
+    },
+    {
+      "from": "tân",
+      "to": "tờ"
+    },
+    {
+      "from": "lợi",
+      "to": "lời",
+      "atMs": 273240
+    },
+    {
+      "from": "Vậy",
+      "to": "",
+      "atMs": 299160
+    },
+    {
+      "from": "thôi.",
+      "to": "",
+      "atMs": 299420
+    }
+  ],
+  "post": {
+    "title": "Chọn ngân hàng: đừng chỉ nhìn lãi suất",
+    "caption": "Khi mua nhà, tụi mình xem trước ngân hàng nào có khả năng duyệt hồ sơ của bạn, cho vay đủ số tiền bạn cần và duyệt hồ sơ nhanh, rồi mới so lãi suất giữa những ngân hàng vẫn đủ các tiêu chí đó. Khi refinance, thứ tự ưu tiên thay đổi. Đây là thông tin chung, chưa xét đến hoàn cảnh riêng của bạn. Nhắn tin cho Finance Hub nếu bạn muốn trao đổi về khoản vay của mình.\n\n—\n\nWhen you're buying, we first look at which lender is likely to approve your application, lend the amount you need and give an answer quickly, and only then compare rates across the lenders that still meet those criteria. Refinancing changes the order. This is general information only and doesn't take your personal circumstances into account. Message Finance Hub if you'd like to talk about your loan.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#vayvon",
+      "#muanha",
+      "#refinance",
+      "#laisuat",
+      "#homeloans"
+    ]
+  },
+  "cut": {
+    "fillers": false
+  }
+}

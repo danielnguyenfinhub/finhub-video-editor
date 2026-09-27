@@ -37,3 +37,13 @@ if (atGot !== atWant) {
   process.exit(1);
 }
 console.log("timed caption fixes ok");
+
+// The last word keeps a longer tail (LAST_PAD_AFTER_MS) than words mid-talk.
+const tail = [" Vậy", " thôi."].map((text, i) => ({ text, startMs: 1000 + i * 300, endMs: 1250 + i * 300, timestampMs: null, confidence: 1 }));
+const tl = t.buildTimeline(tail, {}, 30);
+const lastSeg = tl.segments[tl.segments.length - 1];
+if (lastSeg.srcTo < Math.floor((1550 + 390) * 30 / 1000)) {
+  console.error(`last word tail: segment ends at frame ${lastSeg.srcTo}, want >= ~${Math.floor(1940 * 30 / 1000)}`);
+  process.exit(1);
+}
+console.log("last word tail ok");

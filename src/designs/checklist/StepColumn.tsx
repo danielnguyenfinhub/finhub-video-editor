@@ -16,9 +16,11 @@ import { SAFE, type Figure } from "../../mortgage/golden";
 import type { LenderMention } from "../../mortgage/lenders";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import { FONT, clamp, enter } from "../../mortgage/style";
+import { COLUMN_RIGHT } from "./ColumnCues";
 
 const COLUMN_LEFT = SAFE.left;
-const COLUMN_WIDTH = 560; // x 54-614, left of Daniel's head (x ~690+)
+// Same column as the cue panels (ColumnCues COLUMN_RIGHT), clear of his head.
+const COLUMN_WIDTH = COLUMN_RIGHT - SAFE.left;
 const CARD_GAP = 10;
 
 // -------------------------------------------------------------- progress bar
@@ -75,7 +77,7 @@ const MiniBarChart: React.FC<{ figure: Figure }> = ({ figure }) => {
     38,
     fitText({
       text: figure.big,
-      withinWidth: 380,
+      withinWidth: 260,
       fontFamily: FONT,
       fontWeight: 900,
     }).fontSize,
@@ -116,7 +118,7 @@ const MiniBarChart: React.FC<{ figure: Figure }> = ({ figure }) => {
             fontWeight: 600,
             fontSize: 18,
             color: "#5B6B80",
-            maxWidth: 360,
+            maxWidth: 260,
           }}
         >
           {figure.label}
@@ -263,6 +265,7 @@ const StepCard: React.FC<{
             fontSize: 28,
             color: brand.textOnCard,
             lineHeight: 1.2,
+            textWrap: "balance",
           }}
         >
           {title}

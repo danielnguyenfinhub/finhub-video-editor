@@ -36,10 +36,10 @@ import { Outro } from "../classic/Outro";
 import { KitchenBackdrop } from "./Backdrop";
 import { KitchenHook, MessageBubble } from "./Bubbles";
 import { KitchenCaptions } from "./Captions";
+import { RoomVideo } from "./RoomVideo";
 import { ChapterCard, LenderTag, Polaroid } from "./Pieces";
 
 const HOOK_FRAMES = 105;
-const LABEL = "TÌNH HUỐNG MINH HOẠ";
 const NAME = "Daniel Nguyen";
 // Cover cut-out scale: head top at 1920 - (1920 - 580) * 0.64 ~ 1060, under
 // the subtitle bubble (ends ~900).
@@ -114,19 +114,6 @@ const Cover: React.FC<CoverProps> = ({
     {/* "background": "room": the full frame as a photo on the table, under
         the bubbles (it is opaque, so it must not cover them). */}
     {foreground ? null : <CoverPerson src={src} coverFrame={coverFrame} />}
-    <div
-      style={{
-        position: "absolute",
-        left: SAFE.left,
-        top: SAFE.top,
-        color: "#8C8271",
-        fontWeight: 800,
-        fontSize: 28,
-        letterSpacing: 4,
-      }}
-    >
-      {LABEL}
-    </div>
     {/* Title and subtitle stack in one column below the logo tile's
         footprint (it ends ~y564), so a two-line title pushes the subtitle
         down instead of hiding it. The title is thumbnail-sized when short. */}
@@ -167,19 +154,27 @@ const Cover: React.FC<CoverProps> = ({
 
 const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
   const frame = useCurrentFrame();
+  const room = useCueRoom(seg);
+  if (!foreground)
+    // "background": "room": a photo card under the top band (RoomVideo.tsx);
+    // figures are drawn in front of it, in that band.
+    return (
+      <AbsoluteFill>
+        <KitchenBackdrop />
+        <RoomVideo seg={seg} src={src} look={look} />
+        {behind}
+      </AbsoluteFill>
+    );
   const drift = interpolate(
     frame,
     [0, Math.max(1, seg.outDuration)],
     [0, 0.015],
   );
   const zoom = 1.05 + drift;
-  const room = useCueRoom(seg);
   return (
     <AbsoluteFill>
       <KitchenBackdrop />
-      {/* Figures go behind his cut-out; with "background": "room" the video
-          is opaque, so they are drawn in front of it (below). */}
-      {foreground ? behind : null}
+      {behind}
       {/* Makes room under cue panels (golden rule 3b). The zoom is around
           y 1152, so his hair line (HEAD_Y) sits at 1152 - 552 * zoom. */}
       <AbsoluteFill style={cueRoomStyle(room, 1152 - (1152 - HEAD_Y) * zoom)}>
@@ -195,7 +190,6 @@ const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
           }}
         />
       </AbsoluteFill>
-      {foreground ? null : behind}
     </AbsoluteFill>
   );
 };
@@ -230,7 +224,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
-      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
+      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} leak={false} />
       <KitchenCaptions reel={reel} keywords={keywords} />
       {mentions.map((m) => {
         const from = Math.round((m.startMs / 1000) * fps);
@@ -276,7 +270,6 @@ export const kitchen: Design = {
   Outro,
   chapterTransition: () => fade(),
   copy: [
-    LABEL,
     "Ngân hàng ·",
     "VS",
     "Các ngân hàng Finance Hub làm việc cùng",

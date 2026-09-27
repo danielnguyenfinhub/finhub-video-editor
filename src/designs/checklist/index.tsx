@@ -27,12 +27,7 @@ import {
   figuresOf,
   lenderMentionsOf,
 } from "../../mortgage/golden";
-import {
-  CUE_HEAD_Y,
-  CUE_SCALE,
-  HEAD_Y,
-  useCueRoom,
-} from "../../mortgage/cueRoom";
+import { CUE_HEAD_Y, CUE_SCALE, HEAD_Y } from "../../mortgage/cueRoom";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
@@ -49,6 +44,7 @@ import { PagedCaptions } from "../../mortgage/PagedCaptions";
 import { MotionTrack } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
 import { BoxCaptionPage } from "./BoxCaption";
+import { ColumnCueTrack, inColumn, useSideCueRoom } from "./ColumnCues";
 import { NotebookBackdrop } from "./Paper";
 import { ProgressTrack, StepColumn, type FrameMention } from "./StepColumn";
 
@@ -193,7 +189,8 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
 
 // Daniel framed by FRAMING (above); the step column sits behind him.
 const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
-  const room = useCueRoom(seg);
+  // Column cues (kinetic, points, bars) sit left of him: no move for those.
+  const room = useSideCueRoom(seg);
   return (
     <AbsoluteFill>
       <NotebookBackdrop />
@@ -327,7 +324,20 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
-      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
+      {/* Kinetic, points and bars cues are drawn in the left column by
+          ColumnCueTrack (never over Daniel's head, clear of the logo tile);
+          MotionTrack gets every other cue kind. */}
+      <MotionTrack
+        reel={{
+          ...reel,
+          edit: {
+            ...reel.edit,
+            cues: (reel.edit.cues ?? []).filter((c) => !inColumn(c)),
+          },
+        }}
+        panelOffset={SAFE.top - 110}
+      />
+      <ColumnCueTrack reel={reel} panelOffset={SAFE.top - 110} />
       <Captions reel={reel} keywords={keywords} />
       {reel.edit.hook ? (
         <Sequence durationInFrames={HOOK_FRAMES}>

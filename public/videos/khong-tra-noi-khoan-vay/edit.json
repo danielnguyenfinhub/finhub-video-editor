@@ -1,0 +1,200 @@
+{
+  "source": "khong-tra-noi-khoan-vay",
+  "design": "kitchen",
+  "background": "room",
+  "title": "Không trả nổi khoản vay?",
+  "subtitle": "Đây là việc cần làm",
+  "coverFrameMs": 47760,
+  "hook": {
+    "big": "Tháng này không trả nổi tiền nhà?"
+  },
+  "pacing": {
+    "mode": "auto"
+  },
+  "remove": [
+    [
+      44560,
+      46160
+    ],
+    [
+      92660,
+      93240
+    ],
+    [
+      101540,
+      103980
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "quy",
+      "to": "suy"
+    },
+    {
+      "from": "nào",
+      "to": "nợ"
+    },
+    {
+      "from": "việc",
+      "to": "tùy"
+    },
+    {
+      "from": "trả",
+      "to": "tính",
+      "atMs": 72260
+    },
+    {
+      "from": "lời",
+      "to": "",
+      "atMs": 72420
+    },
+    {
+      "from": "thiếu",
+      "to": "trả",
+      "atMs": 92100
+    }
+  ],
+  "keywords": [
+    "gọi ngân hàng",
+    "trước",
+    "default",
+    "credit score"
+  ],
+  "music": {
+    "file": "music/hopeful-inspiring.mp3",
+    "volume": 0.2
+  },
+  "chapters": [
+    {
+      "atMs": 9140,
+      "title": "Sai lầm hay gặp",
+      "effect": "fade"
+    },
+    {
+      "atMs": 76000,
+      "title": "Tóm lại",
+      "effect": "fade"
+    },
+    {
+      "atMs": 83580,
+      "title": "Như khi mình nợ ai đó",
+      "effect": "fade"
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 72000,
+      "durMs": 3300,
+      "big": "Lưu ý",
+      "label": "Phí và lãi khi được hỗ trợ: tùy ngân hàng"
+    },
+    {
+      "atMs": 100420,
+      "durMs": 3500,
+      "big": "Lưu ý",
+      "label": "Ngân hàng sẽ xem xét từng trường hợp"
+    }
+  ],
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 27180,
+      "toMs": 38300,
+      "title": "Nếu trả trễ",
+      "items": [
+        {
+          "text": "Trễ hơn 14 ngày: có thể được báo cáo vào hồ sơ tín dụng",
+          "atMs": 28560
+        },
+        {
+          "text": "Quá hạn 60 ngày: có thể bị ghi vỡ nợ",
+          "atMs": 36160
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 38480,
+      "toMs": 44500,
+      "title": "Vỡ nợ (default) còn cần:",
+      "items": [
+        {
+          "text": "Nợ quá hạn từ $150",
+          "atMs": 38680
+        },
+        {
+          "text": "Thông báo bằng văn bản",
+          "atMs": 39400
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 47620,
+      "toMs": 60600,
+      "title": "Khi gặp khó khăn",
+      "items": [
+        {
+          "text": "Nên gọi ngân hàng trước hạn trả",
+          "atMs": 47760
+        },
+        {
+          "text": "Ngân hàng có thể sắp xếp theo hoàn cảnh của bạn",
+          "atMs": 52040
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 63920,
+      "toMs": 70600,
+      "title": "Thỏa thuận hỗ trợ khó khăn:",
+      "items": [
+        {
+          "text": "Không ảnh hưởng điểm tín dụng",
+          "atMs": 65120
+        },
+        {
+          "text": "Nhưng vẫn ghi trong hồ sơ tín dụng 12 tháng",
+          "atMs": 67880
+        }
+      ]
+    }
+  ],
+  "cta": {
+    "question": "Bạn muốn trao đổi về khoản vay của mình?"
+  },
+  "compliance": {
+    "illustrativeNumbers": false,
+    "conditionsNote": true
+  },
+  "notes": [
+    "SUMMARY: Daniel (talking head, single take, raw 115.1 s, recorded ~08/06/2026) tells viewers who can't make this month's home-loan repayment what to do. Problem: most people just pay late, act as if nothing happened, then scramble to catch up. Consequence: late > 14 days gets reported to credit reporting; unpaid within 60 days the lender can list a default. Solution: before the due date, call the bank and tell them; banks have hardship arrangements tailored to your situation; if you only need a month it's fine and (he says) they then can't mark your credit score and won't charge late fees. Analogy: owing anyone money, you tell them before the deadline and most people are understanding. Close: a 30-year loan means everyone hits hard times at some point, so call the bank.",
+    "HOOK 0-8800: 'Nếu mà hiện tại các bạn đang trong hoàn cảnh khó khăn mà nghĩ rằng tháng này mà các bạn không thể trả tiền nhà cho ngân hàng đó, thì các bạn phải nên làm gì?'",
+    "TOPICS: 9140 the mistake (pay late, catch up later) | 21260 consequence for credit score | 25980 14-day reporting rule | 33540 60-day default rule | 40220 solution: call the bank before the due date | 49480 banks arrange around your situation | 60700 one month is fine, no credit mark, no late fee (claims) | 76000 conclusion: contact the bank beforehand | 83580 common-sense analogy (owing someone) | 100060 banks always have solutions | 107460 30-year loan, everyone hits hardship | 113260 CTA 'Nên gọi ngân hàng nha.'",
+    "NUMBERS (all spoken ~08/06/2026; rules, not maths — compliance must check against current source as at 27/09/2026): 28560 '14 ngày' = late more than 14 days → lender 'sẽ phải báo cáo' to credit reporting (CR Code repayment-history threshold is 14 days overdue; 'phải' overstates: only CCR-participating lenders report). 36160 '60 ngày' = unpaid within 60 days → lender 'có quyền' list a default (Privacy Act s6Q also needs ≥ $150 overdue and written notice; conditions not spoken). 62240 'một tháng' = if you only need one month 'không sao' (claim, no rule cited). 108800 '30 năm' = typical loan term, illustrative. No arithmetic in the talk; nothing to recompute.",
+    "CLAIMS TO CHECK (not numbers but rules): 63920-70720 with an arrangement the lender 'không có quyền' affect your credit score (since 1/7/2022 financial hardship information is reported on the file for 12 months, though not used in scoring; claim is simplified). 70880-73940 'họ cũng không trả lời phí trễ' — caption garbled, likely 'không tính phí trễ' (no late fees): lender-dependent, not a rule. No NCC s72 hardship notice, 21-day response timeframe or AFCA mentioned.",
+    "WATCH-WORDS: 43780 'tốt nhất' (CONTEXT_VI) in 'thì tốt nhất trước khi ... nên gọi đến ngân hàng' — advice sense, not characterising our offer. Soft absolutes for compliance: 63240 'không sao', 64820-66060 'họ không có quyền', 101360 'họ luôn có ... giải pháp'. General advice throughout ('các bạn nên gọi ngân hàng') — needs the general-advice disclaimer.",
+    "TAX: none. BANKS: none named (generic 'ngân hàng'). CLIENT DATA: none (owing-someone example is hypothetical).",
+    "CUTS: [44560,46160] restart 'ngày hàng thời hết hàng, thời hàng' (misheard 'hạn'); leaves 'tốt nhất trước khi phải trả tiền đó' — same condition (before payment is due). [92660,93240] false start 'Trước khi mình,'. [101540,103980] restart 'có những, gọi là có dịch vụ để,'; leaves 'họ luôn có những giải pháp để giúp'. Total 4.62 s.",
+    "CAPTION FIXES: 'quy'→'suy' (94280 'có suy tính'); 'nào'→'nợ' (90920 'mình thiếu nợ ai đó'; the other 'nào.' at 55280 has a full stop so is untouched). Both exact-token, unique in this file.",
+    "VERIFY (Daniel): 52780 'thì việc vào hoàn cảnh' (guess 'tùy vào hoàn cảnh'); 72260 'trả lời phí trễ' (guess 'tính phí trễ'); 92100 'thiếu hết' (guess 'trả hết'?); 94280 'suy tính' guess.",
+    "DESIGN (editor, 27/09/2026): kitchen. Selector top pick explainer overridden (taken by pre-approval-tu-dong in this batch, and it was interest-in-advance's skin); reaction (news, slam-in) is the wrong tone for a hardship how-to. kitchen = warm, unhurried, slow crossfades: calm and reassuring. Axes: cover chat-bubble question over his room as a rounded photo on cream; captions sentence-paced cream tags; framing full-frame room footage (background room, Daniel 27/09: no cut-out), 1.05 slow drift, video shrinks under cue panels onto cream; graphics points panels (MotionTrack) for the rules and notes, white chapter tags; transitions slow crossfades; texture cream + pale amber liquid contours + grain (cover and cue room); sound hopeful-inspiring bed at 0.2 + soft clicks; cta classic white card. main.py check: pass, 7/7 skin axes differ from ty-do, interest-in-advance, bid-explained; 6/7 from chon-ngan-hang (checklist, not yet logged).",
+    "SIGNATURE MOMENTS: 0 hook bubble 'Tháng này không trả nổi tiền nhà?' | 27180-44500 points 'Nếu trả trễ': 14 days (may be reported), 60 days (may be listed as default), default footnote ($150 + written notice) | 47620 turn 'Khi gặp khó khăn': call the bank before the due date; the bank may arrange around your situation | 64340 Daniel decision A (27/09): note 'Không ảnh hưởng điểm tín dụng / Nhưng vẫn ghi trong hồ sơ tín dụng 12 tháng' while he says họ không có quyền ... credit score | 76000 chapter Tóm lại | CTA.",
+    "ON-SCREEN SOFTENING (orchestrator 27/09): speech untouched; on-screen text says 14 days có thể được báo cáo; the default footnote adds $150 overdue and written notice. Numbers on screen: 14, 60, $150, 12 tháng (Daniel's note) and the list numbers 1-3 of the points panels. No stats, no auto figures (bare 14/60/30 are not auto-charted). No banks named.",
+    "CAPTION FIX 27/09 (orchestrator best guess, stays on Daniel's verify list): việc->tùy (52940, the only 'việc' token). NOT applied: trả lời->tính at 72260 ('trả' is used 8 times, a token swap would break the others; captionFixes cannot bind to a time) and thiếu->trả at 92100 ('thiếu' at 90920 is right: thiếu nợ ai đó)."
+  ],
+  "post": {
+    "title": "Không trả nổi khoản vay? Đây là việc cần làm",
+    "caption": "Nếu tháng này bạn không trả kịp tiền nhà, đừng im lặng rồi trả trễ. Trả trễ hơn 14 ngày có thể được báo cáo vào hồ sơ tín dụng; quá hạn 60 ngày có thể bị ghi vỡ nợ (default), khi nợ quá hạn từ $150 và đã có thông báo bằng văn bản. Hãy liên hệ ngân hàng trước hạn trả để hỏi về hỗ trợ khó khăn tài chính; ngân hàng sẽ xem xét từng trường hợp. Thỏa thuận hỗ trợ khó khăn không ảnh hưởng điểm tín dụng, nhưng vẫn được ghi trong hồ sơ tín dụng 12 tháng. Phí và lãi trong thời gian được hỗ trợ tùy ngân hàng. Đây là thông tin chung, chưa xét đến hoàn cảnh riêng của bạn. Nhắn tin cho Finance Hub nếu bạn muốn trao đổi về khoản vay của mình.\n\nCan't make this month's home loan repayment? A payment more than 14 days late may be reported on your credit file, and after 60 days overdue a default can be listed, once at least $150 is overdue and you've had written notice. Contact your lender before the due date and ask about financial hardship assistance; the lender assesses each case. A hardship arrangement doesn't lower your credit score, but it stays on your credit file for 12 months. Fees and interest during an arrangement depend on the lender. This is general information only and doesn't take your personal circumstances into account. Message Finance Hub if you'd like to talk about your loan.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#vayvon",
+      "#muanha",
+      "#khokhantaichinh",
+      "#homeloans",
+      "#financialhardship"
+    ]
+  }
+}

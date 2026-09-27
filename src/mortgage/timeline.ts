@@ -88,6 +88,10 @@ const MAX_GAP_MS = 380;
 // Breathing room kept around speech so word onsets/tails aren't clipped.
 const PAD_BEFORE_MS = 90;
 const PAD_AFTER_MS = 160;
+// The talk's last word: Whisper often ends a trailing word early ("Vậy thôi."
+// lost its vowel tail with a click, chon-ngan-hang 27/09/2026), and nothing
+// follows it, so keep more (capped at the recording's end).
+const LAST_PAD_AFTER_MS = 400;
 // Chapter transitions overlap both segments; they get extra silent padding so
 // the overlap never plays two pieces of speech at once.
 export const CHAPTER_TRANSITION_FRAMES = 10;
@@ -439,7 +443,8 @@ export const buildTimeline = (
       PAD_BEFORE_MS +
       (transitionAfterRun.has(i - 1) ? transitionPadMs * rate : 0);
     const padAfter =
-      PAD_AFTER_MS + (transitionAfterRun.has(i) ? transitionPadMs * rate : 0);
+      (next ? PAD_AFTER_MS : LAST_PAD_AFTER_MS) +
+      (transitionAfterRun.has(i) ? transitionPadMs * rate : 0);
     const srcFrom = msToFrame(
       Math.max(r.from - padBefore, r.minFrom, prev ? (prev.to + r.from) / 2 : 0),
     );

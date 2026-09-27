@@ -31,6 +31,9 @@ MOBILE_TARGET_BYTES = 27_000_000
 MOBILE_AUDIO_BPS = 96_000
 THUMBNAIL_FRAME = 45
 LOUDNESS = "I=-14:TP=-1:LRA=11"
+# CTA + compliance card at the end of every MortgageReel: OUTRO_FRAMES +
+# COMPLIANCE_FRAMES - COMPLIANCE_TRANSITION (src/mortgage/MortgageReel.tsx) at 30 fps.
+END_CARDS_S = (150 + 150 - 10) / 30
 
 
 def run(cmd: list[str], what: str, capture: bool = False) -> str:
@@ -140,9 +143,20 @@ def main() -> None:
 
     # Facebook feed copy: the middle 4:5 of the frame (every design keeps its
     # text inside that band), so one edit serves Reels and the feed.
+    # The end cards (CTA + compliance card) use the full height, so they are
+    # scaled whole into the 4:5 frame over a blurred fill instead of cropped:
+    # cropping cut the logo in half (QC, khong-tra-noi-khoan-vay, 27/09/2026).
     feed = out_dir / f"{slug}-feed.mp4"
+    cards_from = max(0.0, duration_s(full) - END_CARDS_S)
+    feed_filter = (
+        f"[0:v]split=2[talk][cards];"
+        f"[talk]trim=end={cards_from:.3f},setpts=PTS-STARTPTS,crop=1080:1350:0:285[t];"
+        f"[cards]trim=start={cards_from:.3f},setpts=PTS-STARTPTS,split=2[c1][c2];"
+        f"[c1]scale=1080:1350,boxblur=30[bg];[c2]scale=-2:1350[fg];"
+        f"[bg][fg]overlay=(W-w)/2:0,setsar=1[c];[t][c]concat=n=2:v=1:a=0[v]")
     run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(full),
-         "-vf", "crop=1080:1350:0:285", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+         "-filter_complex", feed_filter, "-map", "[v]", "-map", "0:a",
+         "-c:v", "libx264", "-preset", "medium", "-crf", "20",
          "-c:a", "copy", "-movflags", "+faststart", str(feed)], "feed 4:5 copy")
 
     run(REMOTION + ["still", "src/index.ts", "MortgageReel", str(thumb),
