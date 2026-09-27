@@ -31,6 +31,11 @@ Where it matters:
   `{"find": "<keywords>"}`); then `node scripts/library.mjs resolve <slug>` (add
   `--public-dir <dir>` when media is outside the repo). Unmatched keyword → leave it out and
   list it (time + keyword) in `broll_gaps`; Pipeline A never downloads.
+- **Post (Pipeline A, before render):** write `post` `{title, caption, hashtags}` in `edit.json`
+  (`refs/edit-json.md`): title = the topic (the finished file's name), caption body only (broker
+  block and footer are added automatically), exactly 7 hashtags incl. `#finhub` `#vietnamese`.
+  The render then fills `2 - FINISHED VIDEOS/`; if it prints a post problem, fix and rerun
+  `node scripts/publish-video.mjs <slug>`. Pipeline B's post is the writer's, in `script.json`.
 - **Music (A5.3):** `public/music/` only (see its README); `@remotion/sfx` brand-safe sounds; no memes.
 - **Hand over only when A6.1 passes** and your own stills pass the editor skill's
   Self-Correction Loop. Render (A7.1 / B5.4) only when the orchestrator says QC and compliance passed.

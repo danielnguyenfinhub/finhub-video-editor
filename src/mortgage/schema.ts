@@ -292,6 +292,12 @@ export const editSchema = z.strictObject({
     })
     .optional(),
   exemptions: z.array(exemption).optional(),
+  // Upload copy, not shown in the video. scripts/publish-video.mjs checks it
+  // (7 hashtags incl. #finhub #vietnamese, RG 234) and adds the broker details
+  // and compliance footer to the caption file. Optional here; publish needs it.
+  post: z
+    .strictObject({ title: text, caption: text, hashtags: z.array(text) })
+    .optional(),
 })
   // An advertised rate on a numbers-kit cue needs the comparison-rate card.
   .superRefine((edit, ctx) => {

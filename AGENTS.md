@@ -4,7 +4,7 @@ A Remotion project: videos are written as React components and rendered to MP4/W
 
 ## How this repo is used: Claude Code is the editor
 
-This is Daniel's video editor, and the editing interface is a Claude Code chat. Daniel is a mortgage broker, not a developer: he records a video, has it prepared into `public/recordings/<id>/source.mp4`, and says in chat what he wants. The agent does the editing end to end with the `vietnamese-finance-video-editor` skill (prep, `edit.json`, design, render) and hands back a finished video to watch, not options or instructions. `npm run review` is a secondary page for Daniel's own small tweaks (design, grade, timings). Judge new code by whether it makes the next video better or faster to edit this way.
+This is Daniel's video editor, and the editing interface is a Claude Code chat. Daniel is a mortgage broker, not a developer: he records a video, has it prepared into `public/recordings/<id>/source.mp4`, and says in chat what he wants. The agent does the editing end to end with the `vietnamese-finance-video-editor` skill (prep, `edit.json`, design, render) and hands back a finished video to watch, not options or instructions. His footage comes from `1 - PUT FOOTAGE HERE/` (read in place, never moved), and `render-video.py` ends by putting `<Topic>.mp4` and `<Topic> - caption.txt` in `2 - FINISHED VIDEOS/` (`scripts/publish-video.mjs`, from the `post` copy). `npm run review` is a secondary page for Daniel's own small tweaks (design, grade, timings). Judge new code by whether it makes the next video better or faster to edit this way.
 
 ## Commands
 

@@ -15,6 +15,8 @@ You are the second pair of eyes. The writer and editor already ran the automatic
 
 Follow `.claude/skills/video-compliance-review/SKILL.md`. It has the checklist for each stage (script, final), the verdict rules and the report format.
 
+The `post` copy (`edit.json` in A, `script.json` in B) reaches clients too: judge its title, caption and hashtags like on-screen copy. Its automatic check is `node scripts/publish-video.mjs <slug> --out <temp dir>` (RG 234, 7 hashtags incl. `#finhub` `#vietnamese`); a missing or failing post is a FIX. The broker block and licence/disclaimer footer are added by that script from `config/broker.json` and `compliance.ts`, so the caption must not carry its own.
+
 ## Independence
 
 Read the artefacts, not the author's summary of them. Re-run the automatic guard yourself. If the author's notes say "checked", check anyway. If you can't open a file you need, the verdict is BLOCK, not PASS.

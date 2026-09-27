@@ -8,11 +8,11 @@ It is built on [Remotion](https://www.remotion.dev) (videos written as React cod
 
 ## The short version
 
-1. **Record** your video (phone is fine, vertical, face in the middle).
+1. **Record** your video (phone is fine, vertical, face in the middle) and copy it into the **`1 - PUT FOOTAGE HERE`** folder.
 2. **Tell Claude** in this repo's chat, for example:
-   > Edit my new video `C:\Users\Daniel\Videos\phi-ngan-hang.mp4`, slug `phi-ngan-hang`, use the newsroom template.
+   > Edit my new video `phi-ngan-hang.mp4` in the footage folder, use the newsroom template.
 3. **Watch** what Claude sends back and ask for changes in plain words ("hook too long", "cut the part about stamp duty", "use datalab instead").
-4. **Post** the files from `out/videos/<slug>/`.
+4. **Post** from the **`2 - FINISHED VIDEOS`** folder: `<Topic>.mp4` and `<Topic> - caption.txt` (the caption, your contact details, 7 hashtags, then the licence and disclaimer footer). The other sizes stay in `out/videos/<slug>/`.
 
 Claude runs every step below for you. The rest of this page covers what those steps are and how to run them by hand.
 
@@ -178,7 +178,7 @@ For a gap scene, use `"footage"` (a 2–5 word stock search) or `"ai"` (an image
 - **Veil:** a navy veil hides the footage whenever an element is on screen.
 - **Library:** every clip and AI image is saved once in `public/library/` and reused by keyword before any new download (`node scripts/library.mjs find <words>`, `stats`); `voice/footage/` keeps only the search results.
 
-**Post copy (optional).** The `"post"` field holds a title, a caption and hashtags for the upload.
+**Post copy.** The `"post"` field holds a title, a caption and 7 hashtags (#finhub, #vietnamese + 5) for the upload; the render turns it into `2 - FINISHED VIDEOS/<title> - caption.txt` with your details and the compliance footer added.
 
 The rules Claude follows when writing the script are in `.claude/skills/vietnamese-finance-video-editor/references/faceless-script.md`.
 
