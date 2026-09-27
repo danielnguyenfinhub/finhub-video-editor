@@ -5,11 +5,12 @@
 // done by reading the files itself (an agent's "done" is not trusted), stops at every one of
 // Daniel's gates instead of bypassing permissions, and caps each round's spend.
 //
-//   node scripts/video-loop.mjs <slug>                 what's done, what's next (no tokens)
+//   node scripts/video-loop.mjs                        every video: where it stands
+//   node scripts/video-loop.mjs <slug>                 readiness, what's done, what's next (no tokens)
 //   node scripts/video-loop.mjs <slug> --run [--max 8] [--budget 5]
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const readJson = (p) => {
@@ -109,6 +110,50 @@ const ALLOWED = ["Read", "Write", "Edit", "Grep", "Glob", "Agent", "Skill", "Bas
   "Bash(python:*)", "Bash(npx remotion:*)", "Bash(ffprobe:*)", "Bash(ffmpeg:*)",
   "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)"];
 
+const run = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: "utf8", timeout: 30000, ...opts });
+
+// Readiness before spending tokens (OpenHarness's dry-run idea): static checks only, each
+// with the shortest fix. blocked = a round would fail; warning = it may stop early.
+export const readinessOf = (root, slug) => {
+  const items = [];
+  const add = (level, problem, fix) => items.push({ level, problem, fix });
+  const auth = run("claude", ["auth", "status"]);
+  if (auth.error) add("blocked", "Claude Code is not installed on this PC's PATH", "install Claude Code");
+  else if (!/"loggedIn":\s*true/.test(auth.stdout)) add("blocked", "Claude Code is not logged in", "run: claude auth login");
+  if (run("ffmpeg", ["-version"]).error) add("blocked", "ffmpeg is missing (prep and render need it)", "install ffmpeg and add it to PATH");
+  if (run("python", ["--version"]).error) add("warning", "python is missing (prep, render and voicing scripts)", "install Python 3");
+  if (run("git", ["status", "--porcelain"], { cwd: root }).stdout.trim())
+    add("warning", "uncommitted changes (the team's intake stops on them)", "commit them, or tell Claude to go ahead");
+  const edit = readJson(join(root, "public/videos", slug, "edit.json"));
+  const pipeline = existsSync(join(root, "public/videos", slug, "script.json")) ? "B" : "A";
+  if (pipeline === "A" && edit) {
+    const src = join(root, "public/recordings", edit.source ?? slug, "source.mp4");
+    if (!existsSync(src)) add("blocked", `the prepared recording is missing (${relative(root, src)})`, "prepare the recording again (runbook A1.1)");
+  }
+  if (edit && run(process.execPath, [join(root, "scripts/preflight.mjs"), slug], { cwd: root }).status !== 0)
+    add("blocked", "preflight finds problems in edit.json", `run: node scripts/preflight.mjs ${slug}`);
+  const level = items.some((i) => i.level === "blocked") ? "blocked" : items.length ? "warning" : "ready";
+  return { level, items };
+};
+
+// Every video with a team run, one line each (OpenHarness's autopilot board, as text).
+const board = (root) => {
+  const dir = join(root, "out/videos");
+  const slugs = existsSync(dir) ? readdirSync(dir).filter((s) => existsSync(join(dir, s, "team"))) : [];
+  if (!slugs.length) return console.log("No team runs yet.");
+  for (const s of slugs) {
+    const n = nextOf(root, s);
+    const state = !n.stage ? "complete" : n.halt?.gate ? `WAITING: ${n.halt.gate}` : n.halt?.stop ? `STOPPED: ${n.halt.stop}` : `next: ${n.stage}`;
+    console.log(`${s.padEnd(22)} ${n.pipeline}  ${n.done.length} done  ${state}`);
+  }
+};
+
+// One line per round in team/loop.log (OpenHarness's journal): when, what, how it ended.
+const journal = (root, slug, line) => {
+  const when = new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" });
+  appendFileSync(join(root, "out/videos", slug, "team", "loop.log"), `${when}  ${line}\n`);
+};
+
 const main = () => {
   const args = process.argv.slice(2);
   const slug = args.find((a) => !a.startsWith("--") && !/^\d/.test(a));
@@ -116,15 +161,16 @@ const main = () => {
     const i = args.indexOf(name);
     return i >= 0 ? Number(args[i + 1]) : dflt;
   };
-  if (!slug) {
-    console.log("usage: node scripts/video-loop.mjs <slug> [--run] [--max 8] [--budget 5]");
-    process.exit(2);
-  }
   const root = join(import.meta.dirname, "..");
+  if (!slug) return board(root);
   const max = opt("--max", 8);
   const budget = opt("--budget", 5);
   let tries = 0;
   let last = null;
+
+  const ready = readinessOf(root, slug);
+  console.log(`readiness: ${ready.level}`);
+  for (const i of ready.items) console.log(`  ${i.level}: ${i.problem} -> ${i.fix}`);
 
   for (let round = 1; ; round++) {
     const n = nextOf(root, slug);
@@ -137,6 +183,10 @@ const main = () => {
     }
     console.log(`next: ${n.stage}`);
     if (!args.includes("--run")) return;
+    if (ready.level === "blocked") {
+      console.log("STOPPED: fix the blocked items above first; no tokens were spent");
+      process.exit(1);
+    }
     // Two rounds on one stage is the team's FIX-loop limit; then Daniel looks.
     tries = n.stage === last ? tries + 1 : 1;
     last = n.stage;
@@ -156,6 +206,8 @@ const main = () => {
       process.exit(1);
     }
     if (r.status !== 0) console.log(`round ${round} exited ${r.status}; checking the files anyway`);
+    const after = nextOf(root, slug);
+    journal(root, slug, `round ${round}: ${n.stage} -> exit ${r.status}; now ${after.stage ?? "complete"}${after.halt ? " (halted)" : ""}`);
   }
 };
 

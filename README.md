@@ -226,11 +226,14 @@ Every template follows the same golden rules, enforced in [`src/mortgage/golden.
 ## Let it run on its own (loop mode)
 
 ```bash
+npm run video-loop
 npm run video-loop -- <slug>
 npm run video-loop -- <slug> --run
 ```
 
-The first shows what's done and what's next for a video, free. The second works through the
+The first lists every video and where it stands. The second checks one video is ready to
+run (Claude logged in, ffmpeg, the recording, the edit) and shows what's done and what's
+next, free; anything blocked comes with the one-line fix. The third works through the
 rest one step at a time, each step in a fresh Claude session (so a long video never runs
 out of room), and stops whenever it needs you: a flagged number, the script to approve, the
 background cut-out, or the finished video to approve before posting. It also stops if a step

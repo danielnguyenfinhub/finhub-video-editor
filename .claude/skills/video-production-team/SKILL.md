@@ -145,7 +145,12 @@ The same pipeline, driven from outside (the Ralph pattern): `scripts/video-loop.
 then reads the files again itself. It stops at every gate above (flags, script lock, matte,
 approval before posting), on BLOCK, after 2 rounds on one stage, after `--max` rounds, and
 caps each round at `--budget` US$. Without `--run` it only prints what's done and what's next
-(no tokens): use that to resume any run. When a round starts you with "Run ONLY this stage",
+(no tokens): use that to resume any run. It first prints a readiness verdict (`ready` /
+`warning` / `blocked`, each with its fix: Claude login, ffmpeg, the prepared recording,
+preflight) and `--run` refuses while anything is blocked. With no slug it prints a board of
+every video's state; each round appends one line to `team/loop.log`. (Readiness, board and
+journal are OpenHarness ideas; its runtime itself duplicates Claude Code and isn't used.)
+When a round starts you with "Run ONLY this stage",
 do that stage, write its team file, and stop; the loop decides what comes next.
 
 ## Partial re-runs — start at the phase that owns the fix
