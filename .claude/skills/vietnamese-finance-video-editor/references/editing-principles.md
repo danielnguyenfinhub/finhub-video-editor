@@ -2,6 +2,7 @@
 
 ## Contents
 
+- Craft rules: what professional editors check (and where this repo does it)
 - Who this is for
 - 0. Project setup (once per project)
 - 1. Transcribe (Vietnamese)
@@ -14,6 +15,49 @@
 - Quick reference: key Remotion docs used by this skill
 
 The general editing craft behind the template (moved unchanged from the original SKILL.md, 2026-09-24).
+
+## Craft rules: what professional editors check (and where this repo does it)
+
+The baseline every video meets before Daniel sees it; his own corrections sit on top in
+`corrections.md`. When two rules pull against each other, keep the higher one (Walter
+Murch's order: emotion, then story, then rhythm, then where the eye is, then layout).
+
+1. **Message first.** A cut, card or effect earns its place only if the viewer understands
+   or feels the point better. Here: one point per video, the compliance card, and the Self-
+   Correction Loop's "every effect sits on a signature moment or makes a point clearer".
+2. **Hook in 3 s, promise by 5 s.** Most viewers decide in 2–3 s; see and read the point,
+   not only hear it. Here: `edit.json` `hook`, golden rule 6.
+3. **Muted viewing is the default.** Most short video is watched without sound, so the
+   captions carry the whole message, in chunks of a few words. Here: `PagedCaptions`,
+   keywords lit (golden rule 5). QC watches the stills as if muted.
+4. **Change the picture every 2–3 s, but let text be read.** A punch-in, a card or a word
+   pop keeps attention; a number or card stays up for its reading time. Here: golden rule
+   5b, `READING` in `golden.ts`.
+5. **Cut on meaning, not on the clock.** Remove fillers, false starts and repeats; never cut
+   inside a thought or change what a sentence means. Here: the paper edit
+   (`video-story-editor`) and the auto-cut list read against the words.
+6. **Hide a jump cut with a change of framing.** Two cuts at the same scale look like a
+   glitch; alternate the zoom. Here: punch-in on cuts (golden rule 5b).
+7. **Guide the eye.** One focal point at a time; a new element appears where the eye
+   already is, never on the face, never two things fighting. Here: `FACE`, `SAFE`, golden
+   rule 3b.
+8. **The voice is king in the mix.** If you can follow the music while Daniel talks, the
+   music is too loud. Here: music under speech at `MUSIC_VOLUME` (0.3), master at -14 LUFS
+   (`render-video.py`).
+9. **Sound leads the picture (J/L cuts).** Hearing the next line a beat before its picture
+   smooths a cut. Not built here yet; a candidate if cuts feel choppy.
+10. **Two last passes.** Watch muted (do the captions carry it?) and listen with eyes
+    closed (are the cuts smooth?). Here: `video-qc` stills, and its re-transcription around
+    each cut.
+11. **End on one action.** One clear call to action, then contact. Here: `Outro`, the CTA
+    in `edit.json`.
+
+Sources: Walter Murch, *In the Blink of an Eye* ("rule of six",
+https://www.studiobinder.com/blog/walter-murch-rule-of-six/); short-form retention
+(https://www.capcut.com/create/short-form-video-hooks-first-3-second-patterns,
+https://www.strategia-x.com/blog/2026-07-01-vertical-video-retention-editing-playbook/);
+split edits (https://loopdesk.ai/blog/j-cut-and-l-cut-explained); dialogue vs music
+(https://vidpros.com/fix-background-music-too-loud-video/).
 
 # Vietnamese Finance/Mortgage Talking-Head Video Editor (Remotion)
 

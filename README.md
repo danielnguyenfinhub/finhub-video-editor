@@ -223,6 +223,27 @@ Every template follows the same golden rules, enforced in [`src/mortgage/golden.
 
 ---
 
+## Teaching Claude your taste
+
+Say what's wrong in plain words ("text too small", "that panel covers my head", "too
+busy"). Claude fixes this video and writes your correction down as a rule for every future
+video, in [corrections.md](.claude/skills/vietnamese-finance-video-editor/references/corrections.md).
+Every session reads it before editing, and QC checks each video against it.
+
+A correction gets stronger each time it proves itself:
+
+| Stage | What it means |
+|---|---|
+| `noted` | Said once; written in the log. |
+| `rule` | Said twice, or you said "always"/"never"; it's now in the design rules. |
+| `checked` | A script fails the video if it's broken, so it can't slip back. |
+
+Claude tells you in its report what it logged. If you change your mind, say so: the old
+rule is marked replaced, not deleted, so it can't come back. The rules sit on a
+professional baseline (hook in 3 s, captions carry the message with the sound off, the
+voice louder than the music, one thing on screen at a time); see "Craft rules" in
+[editing-principles.md](.claude/skills/vietnamese-finance-video-editor/references/editing-principles.md).
+
 ## Compliance
 
 Every piece of on-screen text is scanned for ASIC RG 234 banned terms before a render. A video that fails won't render until the wording is fixed. Bank logos are shown only when the bank is mentioned and never suggest the bank endorses the video. Use synthetic numbers in examples, never a real client's.
