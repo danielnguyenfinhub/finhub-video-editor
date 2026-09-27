@@ -36,6 +36,7 @@ Then run `node scripts/voice-video.mjs <slug> --dry-run` from the repository roo
 - **Visual per scene (B2.2).** Data, comparison or steps → an element (free). Otherwise a `footage` phrase (2–5 English words, also the library keyword; the dry run shows `library hit` or `would download`). `ai` only as the paid fallback next to a `footage` phrase.
 - **General information only.** No personal recommendation ("bạn nên vay…"), no guarantee, no "tốt nhất / rẻ nhất". An advertised rate needs its comparison rate and as-at date from the document, or it stays out.
 - **Never add an exemption** to make the dry run pass. Rewrite the line.
+- **Post copy is required to publish** (`faceless-script.md` → "Post copy"): title = the topic (the finished file's name), caption body only (no broker details or disclaimer; both are added automatically), exactly 7 hashtags: `#finhub`, `#vietnamese` + 5 about the topic.
 
 ## Input
 

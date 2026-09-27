@@ -158,6 +158,18 @@ def main() -> None:
     for path in (thumb, srt):
         print(f"{path}  {path.stat().st_size / 1e3:.0f} KB")
 
+    # Daniel's "2 - FINISHED VIDEOS" folder: the video named after its topic and
+    # its caption file (scripts/publish-video.mjs). A missing or invalid post
+    # only skips this step; the render itself has succeeded. --force: a
+    # re-render replaces that topic's files (the originals stay in out_dir).
+    print("\n== finished-videos folder", flush=True)
+    published = subprocess.run(
+        ["node", "--no-warnings", str(ROOT / "scripts" / "publish-video.mjs"), slug, "--force"],
+        cwd=ROOT)
+    if published.returncode:
+        print(f"\nThe render succeeded (files above, in {out_dir}); only the copy to "
+              "the finished-videos folder waits for the fix above.", flush=True)
+
 
 if __name__ == "__main__":
     main()

@@ -50,7 +50,7 @@ graphics are never timed to text that later changes.
 
 | # | Step | Who | Run / do | Makes | Gate |
 |---|---|---|---|---|---|
-| A1.1 | Single recording **[TODAY]** | Claude | `python scripts/prep-video.py "<C:\path\video.mp4>" <slug> --recording <id>`. Run in the background. Add `--no-clean` for a studio-quality recording. For a re-edit of an existing recording: `python scripts/prep-video.py <slug> --recording <id>` (no file; writes only `edit.json`). If the recording already exists and a file is given, the script stops and lists the options | `public/recordings/<id>/source.mp4`, `words.json`; `public/videos/<slug>/edit.json` (starter); pace table in console | Script finishes; aspect ratio reported; a non-9:16 source is cover-cropped, so confirm the face stays in frame |
+| A1.1 | Single recording **[TODAY]** | Claude | Footage comes from `1 - PUT FOOTAGE HERE/` (read in place; never move or copy it): `python scripts/prep-video.py "1 - PUT FOOTAGE HERE\<file>.mp4" <slug> --recording <id>`. Run in the background. Add `--no-clean` for a studio-quality recording. For a re-edit of an existing recording: `python scripts/prep-video.py <slug> --recording <id>` (no file; writes only `edit.json`). If the recording already exists and a file is given, the script stops and lists the options | `public/recordings/<id>/source.mp4`, `words.json`; `public/videos/<slug>/edit.json` (starter); pace table in console | Script finishes; aspect ratio reported; a non-9:16 source is cover-cropped, so confirm the face stays in frame |
 | A1.2 | Multi-clip **[TODAY]** | Claude | Prep each take with A1.1 first. Write `public/videos/<slug>/clips.json` (ordered `recording`, `inMs`, `outMs`, `role`: a-roll or b-roll), then `python scripts/prep-video.py <slug> --clips public/videos/<slug>/clips.json`. Per-take cut-outs are joined with the same spans; a take without one means the assembly needs its own matte (A1.3). Changing `clips.json` later shifts every time already in `edit.json` | Assembled recording `public/recordings/<slug>-assembly/` (proxy, merged `words.json` with clip boundaries); `edit.json` `source` points at it | Duration equals the sum of kept spans (±1 frame) |
 | A1.3 | Background removal **[TODAY]** (start early; it's the slowest step) | Claude + Daniel | `npm run review`, then open `http://localhost:4100/matte.html?slug=<slug>` in the Claude app browser and wait for **Saved**. Takes about 13× the video length. Skip if `public/recordings/<id>/foreground.webm` already exists | `foreground.webm` | File exists; render refuses to start without it |
 
@@ -113,10 +113,10 @@ makes a point clearer. Anything else is cut.
 
 | # | Step | Who | Run / do | Makes | Gate |
 |---|---|---|---|---|---|
-| A7.1 | Render | Claude | `python scripts/render-video.py <slug>` (runs `scripts/preflight.mjs` first) | `out/videos/<slug>/<slug>.mp4` (9:16), `-feed.mp4` (4:5), `-mobile.mp4` (~27 MB), `thumbnail.png`, `.srt` | Durations right, audio present |
+| A7.1 | Render | Claude | Write `post` in `edit.json` first (`refs/edit-json.md`). `python scripts/render-video.py <slug>` (runs `scripts/preflight.mjs` first, `scripts/publish-video.mjs` last) | `out/videos/<slug>/<slug>.mp4` (9:16), `-feed.mp4` (4:5), `-mobile.mp4` (~27 MB), `thumbnail.png`, `.srt`; `2 - FINISHED VIDEOS/<Topic>.mp4` + `<Topic> - caption.txt` | Durations right, audio present; a post problem prints its fix and `node scripts/publish-video.mjs <slug>` to rerun |
 | A7.2 | Post-render check | Claude | Re-transcribe about 15 s around each cut, taken from the talk, not the end cards (Whisper invents "cảm ơn các bạn đã theo dõi" on silence) | — | No clipped word at any cut |
 | A7.3 | Log | Claude | `python .claude/skills/vietnamese-finance-video-editor/scripts/main.py add <entry.json>`. `library.mjs` records `usedIn` for library assets | Design log entry | — |
-| A7.4 | Deliver | Claude | Send Daniel: the mobile file, the thumbnail, and the **verify list**: spoken watch-words with timestamps, flagged numbers, caption words Claude is unsure of, tax or rate points, and the B-roll gaps (until WP3) | — | **Daniel approves before posting** |
+| A7.4 | Deliver | Claude | Send Daniel: where the finished video and caption are (`2 - FINISHED VIDEOS/`), the mobile file, the thumbnail, and the **verify list**: spoken watch-words with timestamps, flagged numbers, caption words Claude is unsure of, tax or rate points, and the B-roll gaps (until WP3) | — | **Daniel approves before posting** |
 
 ---
 
@@ -170,7 +170,7 @@ on voice or images.
 | B5.1 | Schema and RG 234 | Claude | As A6.1 | — | Pass |
 | B5.2 | Stills | Claude | As A6.2 at: cover, hook, each element, two footage scenes, CTA, compliance card | PNGs | Every on-screen number matches the locked script and the ledger |
 | B5.3 | Final compliance | Claude (`video-compliance-reviewer`) | Final stage review on the stills, `script.json` and `facts.json` | PASS / FIX / BLOCK | PASS |
-| B5.4 | Render | Claude | `python scripts/render-video.py <slug>` | Same outputs as A7.1 | — |
+| B5.4 | Render | Claude | `python scripts/render-video.py <slug>` (publishes the `script.json` `post`) | Same outputs as A7.1, finished video + caption in `2 - FINISHED VIDEOS/` | — |
 | B5.5 | Deliver | Claude | Mobile file, thumbnail, the `post` copy if written, and the **verify list**: document date, accreditation or public-use points still unconfirmed, any fact tagged `asAt` older than 90 days, the AI-voice disclosure if OmniVoice was used, and cost incurred | — | **Daniel approves before posting** |
 
 ---

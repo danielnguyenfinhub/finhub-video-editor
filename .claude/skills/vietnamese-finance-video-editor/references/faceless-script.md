@@ -108,13 +108,13 @@ exact keyword or a `synonyms.json` match is reused automatically; a clip that me
 shows as `library candidate (stem)` and is not used until you add the phrase to its keywords. The
 search results stay cached in `voice/footage/`.
 
-## Post copy (`post`, optional)
+## Post copy (`post`)
 
-This is for the upload. It follows MoneyPrinterTurbo's social-copy rules:
+This is for the upload, and publishing needs it: `render-video.py` puts `2 - FINISHED VIDEOS/<title>.mp4` and `<title> - caption.txt` in Daniel's folder only when it is valid (`scripts/publish-video.mjs`). It follows MoneyPrinterTurbo's social-copy rules:
 
-- **title:** a catchy hook of 60 characters or fewer.
-- **caption:** 1–3 sentences that end with the single call to action. No hashtags inside.
-- **hashtags:** 3–5 of them, each starting with "#", no spaces, and relevant (e.g. #vayvon #muanha #FinanceHub).
+- **title:** a catchy hook of 60 characters or fewer. It is also the finished file's name.
+- **caption:** the body only, 1–3 sentences that end with the single call to action. No hashtags, broker details or disclaimer inside: the contact block (`config/broker.json`) and the licence + disclaimer footer (`compliance.ts`) are added automatically.
+- **hashtags:** exactly 7: `#finhub`, `#vietnamese` and 5 relevant ones, each starting with "#", no spaces, no repeats (e.g. #vayvon #muanha #laisuat #taichinh #FinanceHub).
 
 RG 234 scans all of it.
 
@@ -131,7 +131,7 @@ RG 234 scans all of it.
   "post": {
     "title": "Bạn đang trả bao nhiêu phí ngân hàng?",
     "caption": "Ba điều nên kiểm tra với khoản vay của bạn. Nhắn tin cho Finance Hub để được hỗ trợ.",
-    "hashtags": ["#vayvon", "#taichinh", "#FinanceHub"]
+    "hashtags": ["#finhub", "#vietnamese", "#vayvon", "#taichinh", "#nganhang", "#muanha", "#FinanceHub"]
   }
 }
 ```
