@@ -138,6 +138,16 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
 Each agent reads the files before its own; a re-run agent reads its previous file first.
 The video's own files follow the runbook (`public/videos/<slug>/`, `out/videos/<slug>/`).
 
+## Loop mode — one stage per fresh session (`npm run video-loop -- <slug>`)
+
+The same pipeline, driven from outside (the Ralph pattern): `scripts/video-loop.mjs` reads
+`team/` to find the first stage not passed, starts a fresh `claude -p` for that stage only,
+then reads the files again itself. It stops at every gate above (flags, script lock, matte,
+approval before posting), on BLOCK, after 2 rounds on one stage, after `--max` rounds, and
+caps each round at `--budget` US$. Without `--run` it only prints what's done and what's next
+(no tokens): use that to resume any run. When a round starts you with "Run ONLY this stage",
+do that stage, write its team file, and stop; the loop decides what comes next.
+
 ## Partial re-runs — start at the phase that owns the fix
 
 | Daniel says / finding owner | Start at | Then |

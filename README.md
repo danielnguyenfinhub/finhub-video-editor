@@ -223,6 +223,20 @@ Every template follows the same golden rules, enforced in [`src/mortgage/golden.
 
 ---
 
+## Let it run on its own (loop mode)
+
+```bash
+npm run video-loop -- <slug>
+npm run video-loop -- <slug> --run
+```
+
+The first shows what's done and what's next for a video, free. The second works through the
+rest one step at a time, each step in a fresh Claude session (so a long video never runs
+out of room), and stops whenever it needs you: a flagged number, the script to approve, the
+background cut-out, or the finished video to approve before posting. It also stops if a step
+fails twice, and no step spends more than US$5 (`--budget` to change). Run it again after
+you've answered and it carries on from where it stopped.
+
 ## Teaching Claude your taste
 
 Say what's wrong in plain words ("text too small", "that panel covers my head", "too
