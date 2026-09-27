@@ -88,6 +88,10 @@ const MAX_GAP_MS = 380;
 // Breathing room kept around speech so word onsets/tails aren't clipped.
 const PAD_BEFORE_MS = 90;
 const PAD_AFTER_MS = 160;
+// Kept before a word that follows a cut, even if it reaches back into the cut
+// word: Whisper puts word boundaries up to ~0.1 s early, so starting exactly at
+// the cut word's end lost the next word's onset ("Thì tùy" played as "thì").
+const MIN_LEAD_IN_MS = 60;
 // The talk's last word: Whisper often ends a trailing word early ("Vậy thôi."
 // lost its vowel tail with a click, chon-ngan-hang 27/09/2026), and nothing
 // follows it, so keep more (capped at the recording's end).
@@ -127,6 +131,10 @@ const BAD_WORDS = [
 ];
 // A stutter is up to this many words said twice in a row; the first go is cut.
 const MAX_STUTTER_WORDS = 3;
+// Whisper doubles a word it half-hears ("chỉ làm làm sao", the second "làm" at
+// 0.455, pre-approval-tu-dong): below this confidence either copy may be an
+// artefact, and cutting the "first go" then takes real speech with it.
+const MIN_STUTTER_CONFIDENCE = 0.6;
 // Words doubled on purpose ("từ từ", "dần dần"), never cut as a stutter.
 const REDUPLICATIONS = [
   "từ", "dần", "mãi", "ngày", "người", "nhà", "đời", "thường", "đâu", "ai",
@@ -187,6 +195,7 @@ const key = (s: string) =>
 const autoCutReasons = (
   keys: string[],
   sentenceEnds: boolean[],
+  confidences: (number | null)[],
   cut: AutoCut,
 ): (string | null)[] => {
   const reasons: (string | null)[] = keys.map(() => null);
@@ -198,10 +207,16 @@ const autoCutReasons = (
   const phrases = lists.flatMap(([reason, list]) =>
     list.map((p) => ({ reason, words: p.split(/\s+/).map(key).filter(Boolean) })),
   );
+  const sure = (i: number) => (confidences[i] ?? 1) >= MIN_STUTTER_CONFIDENCE;
   const same = (a: number, b: number, n: number) => {
     if (sentenceEnds[a + n - 1]) return false;
     for (let j = 0; j < n; j++)
       if (keys[a + j] === "" || keys[a + j] !== keys[b + j]) return false;
+    return true;
+  };
+  const stutter = (a: number, b: number, n: number) => {
+    if (!same(a, b, n)) return false;
+    for (let j = 0; j < n; j++) if (!sure(a + j) || !sure(b + j)) return false;
     return true;
   };
   for (let i = 0; i < keys.length; i++) {
@@ -211,7 +226,7 @@ const autoCutReasons = (
     }
     if (cut.stutters === false) continue;
     for (let n = MAX_STUTTER_WORDS; n >= 1; n--) {
-      if (i + 2 * n > keys.length || !same(i, i + n, n)) continue;
+      if (i + 2 * n > keys.length || !stutter(i, i + n, n)) continue;
       if (n === 1 && REDUPLICATIONS.includes(keys[i])) break;
       for (let j = 0; j < n; j++) reasons[i + j] ??= "stutter";
       break;
@@ -246,6 +261,7 @@ const prepareWords = (raw: Word[], edit: TimelineEdit): EditWord[] => {
   const reasons = autoCutReasons(
     timed.map((w, i) => (removed[i] ? "" : key(w.text))),
     timed.map((w) => /[.?!…]$/.test(w.text.trim())),
+    timed.map((w) => w.confidence),
     cut,
   );
   // A sentence starts after a full stop or a pause, and keeps starting through
@@ -310,7 +326,7 @@ const buildRuns = (words: EditWord[]): Run[] => {
       runs.push({
         from: w.startMs,
         to: w.endMs,
-        minFrom: afterDrop ? droppedEnd : 0,
+        minFrom: afterDrop ? Math.min(droppedEnd, w.startMs - MIN_LEAD_IN_MS) : 0,
         maxTo: Infinity,
         words: 1,
       });

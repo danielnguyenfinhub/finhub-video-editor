@@ -47,3 +47,27 @@ if (lastSeg.srcTo < Math.floor((1550 + 390) * 30 / 1000)) {
   process.exit(1);
 }
 console.log("last word tail ok");
+
+// Cut joins (27/09/2026). Whisper word timings run ~0.1 s loose.
+// 1. A word right after a cut keeps a lead-in even when the cut word ends
+//    exactly where it starts ("Thì tùy" played as "thì").
+const word = (text, startMs, endMs, confidence = 1) => ({ text, startMs, endMs, timestampMs: null, confidence });
+const joinWords = [word(" quan", 0, 300), word(" trọng.", 300, 600), word(" Thì", 900, 1100), word(" tùy", 1100, 1400), word(" thuộc", 1400, 1700)];
+const joinSegs = t.buildTimeline(joinWords, { remove: [[900, 1100]] }, 30).segments;
+const afterCut = joinSegs.find((s) => s.srcFrom * 1000 / 30 > 700);
+if (!afterCut || afterCut.srcFrom * 1000 / 30 > 1100 - 50) {
+  console.error(`cut join: the run after the cut starts at ${afterCut && Math.round(afterCut.srcFrom * 1000 / 30)} ms, want <= 1050 (lead-in before "tùy" at 1100)`);
+  process.exit(1);
+}
+console.log("cut join lead-in ok");
+
+// 2. A doubled word Whisper half-heard (confidence < 0.6) isn't cut as a stutter;
+//    a confident one still is.
+const stutterCut = (conf) => t.buildTimeline(
+  [word(" là", 0, 150), word(" chỉ", 150, 290), word(" làm", 290, 460, 0.97), word(" làm", 470, 690, conf), word(" sao", 700, 900)],
+  {}, 30).autoCuts.filter((c) => c.reason === "stutter").length;
+if (stutterCut(0.455) !== 0 || stutterCut(0.95) !== 1) {
+  console.error(`stutter confidence: cut ${stutterCut(0.455)} at 0.455 (want 0), ${stutterCut(0.95)} at 0.95 (want 1)`);
+  process.exit(1);
+}
+console.log("stutter confidence ok");
