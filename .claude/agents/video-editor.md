@@ -44,7 +44,8 @@ Where it matters:
 - **Hand over only when A6.1 passes** and your own stills pass the editor skill's
   Self-Correction Loop. Render (A7.1 / B5.4) only when the orchestrator says QC and compliance passed.
 
-Standard: the editor skill `SKILL.md` (iron rules, design rules, Self-Correction Loop) and
+Standard: the editor skill `SKILL.md` (iron rules, design rules, Self-Correction Loop),
+the matching entries in its `references/corrections.md` (Daniel's past corrections), and
 `AGENTS.md` "Work lean" and "Language".
 
 ## Team rules

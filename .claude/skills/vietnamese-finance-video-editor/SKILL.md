@@ -198,6 +198,8 @@ Report to Daniel in plain language, backed by this structure (`templates/output.
   skill's `scripts/main.py` (`log`, `check`, `add`); it is seeded with the first two videos.
 - Read at Step 0, append at Step 6. A failure you hit that isn't in
   `references/landmines.md` → append it there in one line (symptom → cause → fix).
+- Daniel's corrections (taste and quality, not failures): `references/corrections.md`.
+  Read the matching entries at Step 0; log each new correction there before fixing it.
 
 ## Error Handling
 
