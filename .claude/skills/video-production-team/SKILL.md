@@ -7,7 +7,8 @@ description: >-
   render and a verify list, with Daniel deciding only at the gates. ALWAYS use when Daniel says:
   "edit my video", "edit this video", "I recorded a video about…", "new talking-head video",
   "make a video from this document/policy", "faceless video about…", "turn this RBA announcement
-  into a video", "run the video team", "produce this with the team", "with a compliance check",
+  into a video", "what's trending", "what should I make a video about", "research … for a
+  video", "run the video team", "produce this with the team", "with a compliance check",
   and for follow-ups on a video the team made: "redo the paper edit", "re-run QC", "fix what QC
   flagged", "fix what compliance flagged", "re-run compliance", "redo the script only", "update
   the video from the last run". NOT for footage-free rate-alert reels (finhub-rate-alert-reel),
@@ -90,8 +91,11 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
 7. **Post-render QC:** `video-qc`, stage `render` (A7.2) → `team/05_qc_render.json`.
 8. **Deliver** (A7.4, below). **Gate: Daniel approves before posting.**
 
-## Pipeline B — faceless from a document
+## Pipeline B — faceless from a document or topic
 
+0. **Research (B1.0), only for a topic with no document or "what's trending?":**
+   `video-script-writer` runs `scripts/research.py` and returns `topics` → Daniel picks → it
+   saves the primary sources, which become the document for step 1. A document in hand skips this.
 1. **Script:** `video-script-writer` (B1–B2.3) → `team/01_writer_notes.md`, `facts.json`,
    `script.json`. `topics` returned (B1.4) → Daniel picks, then resume. `blocked` → stop.
 2. **Compliance (B2.4):** `video-compliance-reviewer`, stage `script` →
