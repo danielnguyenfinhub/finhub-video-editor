@@ -13,6 +13,7 @@ npm i                 # install dependencies
 npm run dev           # Remotion Studio preview (http://localhost:3000)
 npm run lint          # ESLint + TypeScript check — run before committing
 npm run research -- trending   # what's trending for a faceless video (runbook B1.0; also topic/read/transcript)
+npm run listing -- "<folder>"  # Global RE listing video: prep a folder from "3 - GLOBAL RE LISTINGS" (docs/agents/listing-video.md)
 npx remotion render   # render a composition to a video file
 ```
 
@@ -60,6 +61,7 @@ The rest of the guide is in `docs/agents/`; read a file only when the task needs
 | Elements (`.claude/elements/`, remocn) | [elements](docs/agents/elements.md) |
 | Starter templates | [starters](docs/agents/starters.md) |
 | Language: fonts, stacked marks, speech-to-text, voiceover | [language](docs/agents/language.md) |
+| Global RE listing videos (`src/listing/`, `ListingReel`, listing.txt, voice, render, publish) | [listing-video](docs/agents/listing-video.md), real-estate rules: [real-estate-compliance](docs/agents/real-estate-compliance.md) |
 | Mediabunny, Remotion licence | [mediabunny-and-licence](docs/agents/mediabunny-and-licence.md) |
 | One `@remotion/*` package | grep `docs/findings.md`; never read it whole |
 | Remotion API docs and examples (4.0.529 — check the installed version first) | [docs/remotion/README](docs/remotion/README.md), then grep; never read the files whole |
