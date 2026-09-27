@@ -99,7 +99,10 @@
     "clone-voice": "node scripts/clone-voice.mjs",
     "preflight": "node scripts/preflight.mjs",
     "research": "python scripts/research.py",
-    "video-status": "node scripts/video-status.mjs"
+    "video-status": "node scripts/video-status.mjs",
+    "listing": "node --no-warnings scripts/listing-prep.mjs",
+    "listing-voice": "node --no-warnings scripts/voice-video.mjs --listing",
+    "listing-render": "python scripts/listing-render.py"
   },
   "sideEffects": [
     "*.css"
