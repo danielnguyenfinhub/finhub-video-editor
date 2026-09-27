@@ -235,14 +235,27 @@ def speak(jobs_path: str, voice_path: str, num_step: int) -> None:
         print(f"{n}/{len(jobs)}: {total:.1f}s voiced in {time.perf_counter() - t0:.0f}s, {matched:.0%} words timed{note}", flush=True)
 
 
-def time_audio(whisper, job: dict, total: float) -> tuple[float, bool]:
+# Heard words before the script's first matched word, beyond the script
+# words before it: this many means the take says something that isn't the
+# script. Seen 28/09/2026: Gemini TTS read its inline style prompt aloud
+# ("Excited, warm, clear... Say the brand name in English...") before the line.
+MAX_EXTRA_LEAD_WORDS = 3
+
+
+def extra_lead_words(script_words: list[str], heard: list[tuple[str, float, float]]) -> int:
+    matcher = SequenceMatcher(a=[norm(w) for w in script_words], b=[norm(w) for w, _, _ in heard], autojunk=False)
+    first = next((b for b in matcher.get_matching_blocks() if b.size), None)
+    return 0 if first is None else first.b - first.a
+
+
+def time_audio(whisper, job: dict, total: float) -> tuple[float, bool, int]:
     """Write job["align"] for job["wav"]; returns (share of words matched,
-    whether the script's last word was heard)."""
-    segments, _ = whisper.transcribe(job["wav"], language="vi", word_timestamps=True)
+    whether the script's last word was heard, extra words heard before it)."""
+    segments, _ = whisper.transcribe(job["wav"], language=job.get("language", "vi"), word_timestamps=True)
     heard = [(w.word.strip(), w.start, w.end) for s in segments for w in (s.words or [])]
     times, matched, last_heard = word_times(job["text"].split(), heard, total)
     Path(job["align"]).write_text(json.dumps(char_alignment(job["text"], times)), encoding="utf-8")
-    return matched, last_heard
+    return matched, last_heard, extra_lead_words(job["text"].split(), heard)
 
 
 def align(jobs_path: str) -> None:
@@ -255,9 +268,15 @@ def align(jobs_path: str) -> None:
     jobs = json.loads(Path(jobs_path).read_text(encoding="utf-8"))
     whisper = WhisperModel("large-v3", device="cpu", compute_type="int8")
     cut = []
+    leaked = []
     for n, job in enumerate(jobs, 1):
         total = float(job["seconds"])
-        matched, last_heard = time_audio(whisper, job, total)
+        matched, last_heard, extra = time_audio(whisper, job, total)
+        if extra > MAX_EXTRA_LEAD_WORDS:
+            leaked.append(n)
+            for f in (job["wav"], job["align"]):
+                Path(f).unlink(missing_ok=True)
+            continue
         wps = len(job["text"].split()) / max(total, 0.1)
         print(f"{n}/{len(jobs)}: {total:.1f}s, {matched:.0%} words timed, {wps:.1f} words/s", flush=True)
         # Cut short = the ending isn't heard AND too many script words for the
@@ -267,6 +286,9 @@ def align(jobs_path: str) -> None:
             cut.append(n)
             for f in (job["wav"], job["align"]):
                 Path(f).unlink(missing_ok=True)
+    if leaked:
+        fail(f"take(s) {leaked} say words before the script (the voice read its style prompt aloud); "
+             "they were deleted. Re-run to voice them again.")
     if cut:
         fail(f"take(s) {cut} end before the script does (the voice service cut them short). Re-run to voice them again.")
 
@@ -285,6 +307,9 @@ def selftest() -> None:
     assert times[3][0] >= 1.2 and times[4][1] <= 1.5, times  # "phần trăm," fill the gap
     assert all(a <= b for a, b in times), times
     assert matched == 4 / 6, matched
+    leak = [("Excited,", 0.0, 0.5), ("warm,", 0.5, 0.9), ("clear,", 0.9, 1.2), ("confident", 1.2, 1.6), ("and", 1.6, 1.7), ("inviting.", 1.7, 2.2)]
+    assert extra_lead_words(["The", "second", "bedroom."], leak + [("The", 3.0, 3.1), ("second", 3.1, 3.4), ("bedroom.", 3.4, 3.9)]) == 6
+    assert extra_lead_words(["Lãi", "suất"], [("Lãi", 0.0, 0.3), ("suất", 0.3, 0.6)]) == 0
     al = char_alignment(text, times)
     assert len(al["characters"]) == len(text) == len(al["character_start_times_seconds"])
 

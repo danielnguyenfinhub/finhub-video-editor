@@ -3,6 +3,17 @@
 // charts, bank logos, outro, render-video.py) runs unchanged.
 //
 //   node scripts/voice-video.mjs <slug> [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>]
+//   node scripts/voice-video.mjs <slug> --listing [--lang vi|en] [--dry-run]    (Global RE listing; npm run listing-voice)
+//
+// --listing: a Global RE listing (docs/agents/listing-video.md). Reads
+// public/listings/<slug>/script.json, checks it with the listing-copy guard
+// (scripts/listing-compliance.mjs) instead of RG 234 and the fact ledger, takes
+// its engine, voice name and per-language style from config/businesses/globalre.json
+// "voice", and writes only voice/narration-<lang>.wav, words-<lang>.json and
+// timeline-<lang>.json (per scene: fromMs, toMs, the other language's line) for
+// ListingReel. --lang en voices each scene's "en" line (Vietnamese subtitles).
+// The brand is spoken as "voice.spokenName"[lang] ("Glô-bồ A Ri", "Global R.E.")
+// but shown as "Global RE": replaced just before TTS, mapped back in the caption words.
 //
 // Engines ("engine" in script.json also works; the flag wins):
 //   google (default)     Google Gemini TTS, male voice Charon ("informative"),
@@ -40,7 +51,7 @@
 // The API key is read here only (see AGENTS.md "Third-party API keys").
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -69,9 +80,9 @@ const run = (cmd, args, what) => {
   }
 };
 
-const USAGE = "usage: node scripts/voice-video.mjs <slug> [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>]";
+const USAGE = "usage: node scripts/voice-video.mjs <slug> [--listing [--lang vi|en]] [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>]";
 const argv = process.argv.slice(2);
-const slug = argv.find((a, k) => !a.startsWith("--") && !["--engine", "--voice"].includes(argv[k - 1]));
+const slug = argv.find((a, k) => !a.startsWith("--") && !["--engine", "--voice", "--lang"].includes(argv[k - 1]));
 if (!slug) fail(USAGE);
 const dryRun = argv.includes("--dry-run");
 const value = (flag) => {
@@ -82,9 +93,18 @@ const value = (flag) => {
 };
 const engineFlag = value("--engine");
 const voiceFlag = value("--voice");
-const dir = join(ROOT, "public", "videos", slug);
+const listing = argv.includes("--listing");
+const dir = join(ROOT, "public", listing ? "listings" : "videos", slug);
+// A listing's voice (engine, Gemini voice name, inline style) is the business's choice.
+const business = listing ? JSON.parse(readFileSync(join(ROOT, "config", "businesses", "globalre.json"), "utf8")) : null;
+const listingVoice = business ? business.voice ?? {} : null;
+const lang = value("--lang") ?? "vi";
+if (!["vi", "en"].includes(lang) || (!listing && lang !== "vi")) fail(`--lang is vi or en, for --listing only. ${USAGE}`);
+// Speech-only brand form: "Global RE" is said as spokenName (per language, or one for both).
+const spokenName = ((sn) => (sn && typeof sn === "object" ? sn[lang] : sn))(business?.voice?.spokenName) ?? null;
+const say = (text) => (spokenName ? text.split(business.name).join(spokenName) : text);
 const scriptPath = join(dir, "script.json");
-if (!existsSync(scriptPath)) fail(`public/videos/${slug}/script.json not found.`);
+if (!existsSync(scriptPath)) fail(`public/${listing ? "listings" : "videos"}/${slug}/script.json not found.`);
 
 let script;
 try {
@@ -94,7 +114,7 @@ try {
 }
 if (typeof script.title !== "string" || !script.title.trim()) fail('script.json needs a "title".');
 if (!Array.isArray(script.scenes) || script.scenes.length === 0) fail('script.json needs "scenes".');
-const scenes = script.scenes.map((s, i) => {
+const parsedScenes = script.scenes.map((s, i) => {
   if (typeof s?.vi !== "string" || !s.vi.trim()) fail(`scenes[${i}].vi is empty.`);
   if (typeof s?.en !== "string" || !s.en.trim()) fail(`scenes[${i}].en is empty.`);
   for (const field of ["footage", "ai"])
@@ -112,6 +132,8 @@ const scenes = script.scenes.map((s, i) => {
     ai: s.ai?.trim() ?? "",
   };
 });
+// An English listing voices each "en" line and subtitles it with the "vi" one.
+const scenes = listing && lang === "en" ? parsedScenes.map((s) => ({ ...s, vi: s.en, en: s.vi })) : parsedScenes;
 // Daniel's rule: elements (charts, comparisons, key points) explain; stock or
 // AI visuals only fill the gaps. A scene with neither gets the plain navy
 // frame, and its edit.json element holds the stage.
@@ -119,6 +141,17 @@ const withFootage = scenes.some((s) => s.footage || s.ai);
 // Optional post copy for the upload (title, caption ending in a call to
 // action, hashtags); it reaches clients too, so RG 234 scans it below.
 const post = script.post ?? null;
+
+// Listing: the real-estate listing-copy guard over every string, before any credit.
+if (listing) {
+  const { checkSlug } = await import("./listing-compliance.mjs");
+  const { flags, confirm, unknowns, checked, hasRules } = await checkSlug(slug);
+  if (flags.length)
+    fail(`listing compliance blocked the script, nothing was voiced.\n${flags.map((f) => `  ${f.where}: "${f.phrase}" — ${f.reason}`).join("\n")}`);
+  console.log(`Listing compliance: passed (${checked} strings${hasRules ? "" : ", baseline rules only"}).`);
+  confirm.forEach((c) => console.log(`  to confirm with the agent before posting: "${c.phrase}" (a key feature)`));
+  unknowns.forEach((u) => console.log(`  TEST ONLY until filled in: ${u}`));
+}
 
 // RG 234 before any credits are spent: the narration and the English lines
 // reach clients just like on-screen copy. compliance.ts is bundled because Node
@@ -131,7 +164,7 @@ run(process.execPath, [
 const { assertCompliantCopy } = await import(
   new URL(`file:///${join(bundleDir, "compliance.mjs").replace(/\\/g, "/")}`)
 );
-try {
+if (!listing) try {
   assertCompliantCopy(
     {
       narration: scenes.map((s) => s.vi),
@@ -146,20 +179,26 @@ try {
 }
 
 // Every factual claim traces to facts.json (faceless-script.md "Fact ledger").
-let ledger;
-try {
-  ledger = readLedger(dir);
-} catch (err) {
-  fail(err.message);
+// (A listing's facts are listing.json itself, checked by the listing guard.)
+if (!listing) {
+  let ledger;
+  try {
+    ledger = readLedger(dir);
+  } catch (err) {
+    fail(err.message);
+  }
+  const facts = checkFacts(script, ledger);
+  facts.warnings.forEach((w) => console.log(`facts: ${w}`));
+  if (facts.errors.length) fail(`facts blocked the script, nothing was voiced.\n${facts.errors.join("\n")}`);
 }
-const facts = checkFacts(script, ledger);
-facts.warnings.forEach((w) => console.log(`facts: ${w}`));
-if (facts.errors.length) fail(`facts blocked the script, nothing was voiced.\n${facts.errors.join("\n")}`);
 
 const chars = scenes.reduce((n, s) => n + s.vi.length, 0);
-const engine = engineFlag ?? script.engine ?? "google";
+const engine = engineFlag ?? script.engine ?? listingVoice?.engine ?? "google";
 if (!["google", "omnivoice", "elevenlabs"].includes(engine)) fail(`unknown engine "${engine}". ${USAGE}`);
-console.log(`${scenes.length} scenes, ${chars} characters to voice. RG 234: passed. Engine: ${engine}.`);
+console.log(`${scenes.length} scenes, ${chars} characters to voice. ${listing ? "" : "RG 234: passed. "}Engine: ${engine}${listing && engine === "google" ? ` (${listingVoice.name ?? "Charon"})` : ""}.`);
+if (listing)
+  scenes.forEach((s, i) =>
+    console.log(`  ${i + 1}. [${script.scenes[i].kind} ${script.scenes[i].id}] (${lang}, spoken) ${say(s.vi)}\n      subtitle: ${s.en}`));
 if (withFootage) {
   console.log("Visuals:");
   scenes.forEach((s, i) =>
@@ -209,14 +248,14 @@ if (engine === "elevenlabs") {
   if (!voice) fail('No voice: set ELEVENLABS_VOICE_LIBRARY in .env.local or "voice" in script.json.');
   files = [];
   for (const [i, s] of scenes.entries()) {
-    const hash = sha(`${voice}|${MODEL_ID}|${s.vi}`);
+    const hash = sha(`${voice}|${MODEL_ID}|${say(s.vi)}`);
     const audio = join(voiceDir, `${hash}.mp3`);
     const align = join(voiceDir, `${hash}.json`);
     if (!existsSync(audio) || !existsSync(align)) {
       const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}/with-timestamps`, {
         method: "POST",
         headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ text: s.vi, model_id: MODEL_ID }),
+        body: JSON.stringify({ text: say(s.vi), model_id: MODEL_ID }),
       });
       if (!res.ok) fail(`ElevenLabs scene ${i + 1}: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
       const body = await res.json();
@@ -237,12 +276,13 @@ if (engine === "elevenlabs") {
   // take's last word and deletes a short one so a re-run voices it again.
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) fail("GEMINI_API_KEY is not set in .env.local.");
-  const voice = process.env.GEMINI_VOICE ?? "Charon";
+  const voice = listingVoice?.name ?? process.env.GEMINI_VOICE ?? "Charon";
   const models = process.env.GEMINI_TTS_MODEL
     ? [process.env.GEMINI_TTS_MODEL]
     : ["gemini-2.5-pro-preview-tts", "gemini-2.5-flash-preview-tts"]; // flash when pro's daily cap is spent
   // Style goes inline, in Vietnamese; no speed words (they stretch the take).
-  const STYLE = "Nói với giọng ấm áp, tự tin, tự nhiên: ";
+  const style = listingVoice?.style;
+  const STYLE = (typeof style === "object" ? style?.[lang] : style) ?? "Nói với giọng ấm áp, tự tin, tự nhiên: ";
   const wav = (pcm, rate) => {
     const h = Buffer.alloc(44);
     h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8);
@@ -251,30 +291,51 @@ if (engine === "elevenlabs") {
     h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
     return Buffer.concat([h, pcm]);
   };
+  // The preview TTS now and then answers 200 with no audio part
+  // (finishReason OTHER; 28/09/2026 the listing agent line with a phone
+  // number hit it repeatedly on pro): retry, then the next model.
+  const NO_AUDIO_TRIES = 3;
+  // Some takes open (or end) with seconds of silence (a 9.7 s lead-in on a
+  // listing take, 28/09/2026), which stalls the video: trim both ends to
+  // 0.15 s before the take is timed, so its alignment matches the trimmed audio.
+  const trimSilence = (file) => {
+    const tmp = `${file}.trim.wav`;
+    const edge = "silenceremove=start_periods=1:start_duration=0:start_threshold=-45dB:start_silence=0.15";
+    run("ffmpeg", ["-y", "-hide_banner", "-loglevel", "error", "-i", file, "-af", `${edge},areverse,${edge},areverse`, tmp], "trimming silence");
+    writeFileSync(file, readFileSync(tmp));
+    rmSync(tmp);
+  };
   const speak = async (text, i) => {
+    let why = "";
     for (const model of models) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: "POST",
-        headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: STYLE + text }] }],
-          generationConfig: {
-            responseModalities: ["AUDIO"],
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
-          },
-        }),
-      });
-      if (res.status === 429 && model !== models.at(-1)) continue; // daily cap: try the next model
-      if (!res.ok) fail(`Gemini TTS scene ${i + 1} (${model}): HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
-      const part = (await res.json()).candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
-      if (!part) fail(`Gemini TTS scene ${i + 1}: the response had no audio.`);
-      const rate = Number(/rate=(\d+)/.exec(part.inlineData.mimeType ?? "")?.[1] ?? 24000);
-      return wav(Buffer.from(part.inlineData.data, "base64"), rate);
+      for (let attempt = 1; attempt <= NO_AUDIO_TRIES; attempt++) {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: "POST",
+          headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: STYLE + text }] }],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+            },
+          }),
+        });
+        if (res.status === 429 && model !== models.at(-1)) break; // daily cap: try the next model
+        if (!res.ok) fail(`Gemini TTS scene ${i + 1} (${model}): HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
+        const body = await res.json();
+        const part = body.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
+        if (part) {
+          const rate = Number(/rate=(\d+)/.exec(part.inlineData.mimeType ?? "")?.[1] ?? 24000);
+          return wav(Buffer.from(part.inlineData.data, "base64"), rate);
+        }
+        why = `${model}: finishReason ${body.candidates?.[0]?.finishReason ?? "none"}${body.promptFeedback ? ` ${JSON.stringify(body.promptFeedback)}` : ""}`;
+      }
     }
+    fail(`Gemini TTS scene ${i + 1}: no audio after ${NO_AUDIO_TRIES} tries on each model (${why}).`);
   };
   files = scenes.map((s) => {
-    const hash = sha(`gemini|${voice}|${STYLE}|${s.vi}`);
-    return { audio: join(voiceDir, `${hash}.wav`), align: join(voiceDir, `${hash}.json`), text: s.vi };
+    const hash = sha(`gemini|${voice}|${STYLE}|${say(s.vi)}`);
+    return { audio: join(voiceDir, `${hash}.wav`), align: join(voiceDir, `${hash}.json`), text: say(s.vi) };
   });
   const todo = [];
   for (const [i, f] of files.entries()) {
@@ -282,7 +343,15 @@ if (engine === "elevenlabs") {
       console.log(`scene ${i + 1}/${files.length}: cached`);
       continue;
     }
+    // Voiced by a run that stopped before the timing step: keep the take, time it now.
+    if (existsSync(f.audio)) {
+      console.log(`scene ${i + 1}/${files.length}: voiced earlier, timing it now`);
+      trimSilence(f.audio);
+      todo.push(f);
+      continue;
+    }
     writeFileSync(f.audio, await speak(f.text, i));
+    trimSilence(f.audio);
     console.log(`scene ${i + 1}/${files.length}: voiced (${voice})`);
     todo.push(f);
   }
@@ -290,7 +359,7 @@ if (engine === "elevenlabs") {
     const jobs = join(bundleDir, "align-jobs.json");
     const seconds = (file) =>
       Number(run("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", file], "ffprobe").trim());
-    writeFileSync(jobs, JSON.stringify(todo.map(({ text, audio, align }) => ({ text, wav: audio, align, seconds: seconds(audio) }))));
+    writeFileSync(jobs, JSON.stringify(todo.map(({ text, audio, align }) => ({ text, wav: audio, align, seconds: seconds(audio), language: lang }))));
     const python = process.env.WHISPER_PYTHON ?? (process.platform === "win32" ? "python" : "python3");
     console.log("Timing the captions (faster-whisper) ...");
     const res = spawnSync(python, [join(ROOT, "scripts", "omnivoice-tts.py"), "align", jobs], {
@@ -316,8 +385,8 @@ if (engine === "elevenlabs") {
   // Same text + same profile + same quality = the cached take is reused.
   const voiceKey = sha(readFileSync(profile));
   files = scenes.map((s) => {
-    const hash = sha(`omnivoice|${voiceKey}|${steps}|${s.vi}`);
-    return { audio: join(voiceDir, `${hash}.wav`), align: join(voiceDir, `${hash}.json`), text: s.vi };
+    const hash = sha(`omnivoice|${voiceKey}|${steps}|${say(s.vi)}`);
+    return { audio: join(voiceDir, `${hash}.wav`), align: join(voiceDir, `${hash}.json`), text: say(s.vi) };
   });
   const todo = files.filter((f) => !existsSync(f.audio) || !existsSync(f.align));
   console.log(`${files.length - todo.length} cached, ${todo.length} to voice (about ${Math.ceil(todo.reduce((n, f) => n + f.text.length, 0) / 15 * 20 / 60)} min).`);
@@ -364,13 +433,37 @@ for (const [i, t] of takes.entries()) {
   offsetMs += t.durMs + GAP_MS;
 }
 if (words.length === 0) fail(`${engine} returned no words.`);
+// Captions show the brand as written: the spoken form's words -> "Global RE".
+if (listing && spokenName) {
+  const spoken = spokenName.split(/\s+/);
+  const shown = business.name.split(/\s+/);
+  for (let i = 0; i + spoken.length <= words.length; i++) {
+    const seg = words.slice(i, i + spoken.length).map((w) => w.text.trim());
+    if (!seg.slice(0, -1).every((t, k) => t === spoken[k]) || !seg.at(-1).startsWith(spoken.at(-1))) continue;
+    const tail = seg.at(-1).slice(spoken.at(-1).length); // punctuation after the name
+    const span = words.slice(i, i + spoken.length);
+    const merged = shown.length === spoken.length
+      ? span.map((w, k) => ({ ...w, text: ` ${shown[k]}${k === shown.length - 1 ? tail : ""}` }))
+      : [{ ...span[0], endMs: span.at(-1).endMs, text: ` ${business.name}${tail}` }];
+    words.splice(i, spoken.length, ...merged);
+  }
+}
 
 // Narration: every take padded with GAP_MS of silence, joined in order.
-const narration = join(voiceDir, "narration.wav");
+const narration = join(voiceDir, listing ? `narration-${lang}.wav` : "narration.wav");
 const inputs = takes.flatMap((t) => ["-i", t.audio]);
 const pads = takes.map((_, i) => `[${i}:a]aresample=48000,apad=pad_dur=${GAP_MS / 1000}[a${i}]`).join(";");
 const joined = `${takes.map((_, i) => `[a${i}]`).join("")}concat=n=${takes.length}:v=0:a=1[out]`;
 run("ffmpeg", ["-y", "-hide_banner", "-loglevel", "error", ...inputs, "-filter_complex", `${pads};${joined}`, "-map", "[out]", narration], "joining the narration");
+
+// A listing stops here: ListingReel reads narration.wav, words.json and the
+// per-scene timeline; no footage, source.mp4, cut-out or edit.json.
+if (listing) {
+  writeFileSync(join(dir, `words-${lang}.json`), JSON.stringify(words, null, 1));
+  writeFileSync(join(dir, `timeline-${lang}.json`), JSON.stringify(subtitles, null, 1));
+  console.log(`${words.length} words, ${(offsetMs / 1000).toFixed(1)} s -> public/listings/${slug}/ (voice/narration-${lang}.wav, words-${lang}.json, timeline-${lang}.json)`);
+  process.exit(0);
+}
 
 // Gap-scene visuals (scripts/visuals.mjs): "footage" = a stock search
 // (Pixabay, then Pexels), "ai" = a fal.ai still with a slow zoom. A stock
