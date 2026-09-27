@@ -100,10 +100,14 @@ def main() -> None:
     slug: str = parser.parse_args().slug
 
     # The rest of edit.json is validated by the render itself.
-    source = read_edit(PUBLIC, slug).get("source")
-    # Golden rule: the background is always removed, so the cut-out must exist.
+    edit = read_edit(PUBLIC, slug)
+    source = edit.get("source")
+    # Golden rule: the background is always removed, so the cut-out must exist,
+    # unless edit.json opts into quick mode ("background": "vignette").
     cut_out = recording_dir(PUBLIC, slug, source) / "foreground.webm"
-    if not cut_out.exists():
+    if edit.get("background") == "vignette":
+        print("Quick mode: background not removed (full frame, dark edges); no cut-out needed.")
+    elif not cut_out.exists():
         raise SystemExit(
             f"{cut_out} is missing. Run `npm run review`, open "
             f'http://localhost:4100/matte.html?slug={slug} and wait for "Saved".')

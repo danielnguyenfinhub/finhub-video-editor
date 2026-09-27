@@ -240,8 +240,10 @@ export const editSchema = z.strictObject({
   // The room behind Daniel is always replaced (golden rule, 25/09/2026): every
   // video needs foreground.webm next to source.mp4 (made once with
   // review/matte.html); the render stops with instructions if it is missing.
-  // Kept as a field so old edit.json files still validate.
-  background: z.enum(["brand"]).optional(),
+  // Absent or "brand" (old edit.json files) is that rule. "vignette" is quick
+  // mode, Daniel's opt-in: no cut-out and no matting; the full frame plays with
+  // its edges faded to black (PacedVideo.tsx) and Behind layers draw on top.
+  background: z.enum(["brand", "vignette"]).optional(),
   captionFixes: z.array(z.strictObject({ from: text, to: text })).optional(),
   keywords: z.array(text).optional(),
   // English line under the Vietnamese captions, one per scene, in source ms.

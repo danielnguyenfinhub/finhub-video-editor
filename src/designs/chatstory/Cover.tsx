@@ -3,10 +3,9 @@
 // subtitle as Daniel's blue reply, then typing dots — with his cut-out
 // frozen at coverFrame, bottom right, and the FinHub logo top-right on white.
 import type React from "react";
-import { Freeze, OffthreadVideo } from "remotion";
 import type { CoverProps } from "../../mortgage/design";
 import { SAFE } from "../../mortgage/golden";
-import { foregroundOf, retryVideoFetch } from "../../mortgage/style";
+import { CoverCutOut } from "../../mortgage/PacedVideo";
 import { Backdrop } from "./Backdrop";
 import { Bubble, Label, LogoBadge, TypingDots } from "./Bubbles";
 
@@ -46,16 +45,11 @@ export const Cover: React.FC<CoverProps> = ({
         overflow: "hidden",
       }}
     >
-      <Freeze frame={0}>
-        <OffthreadVideo
-          src={foregroundOf(src)}
-          trimBefore={coverFrame}
-          muted
-          transparent
-          {...retryVideoFetch}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
-      </Freeze>
+      <CoverCutOut
+        src={src}
+        trimBefore={coverFrame}
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
     </div>
     <LogoBadge />
   </>

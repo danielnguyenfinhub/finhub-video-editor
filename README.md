@@ -70,6 +70,8 @@ npm run review
 
 Then open `http://localhost:4100/matte.html?slug=my-slug` in the Claude app's browser and wait for **Saved**. It takes about **13× the video's length** (a 3½-minute video took about 45 minutes). The first run downloads a 26 MB model. The render refuses to start without this file.
 
+**Quick mode** (only when you ask for it): `"background": "vignette"` in `edit.json` skips this step. You stay bright in the centre of the full frame and the room fades to black at the edges. Use it for time-sensitive videos (rate or RBA news) or a recording with no cut-out yet; sit centred when you record, and check the room shows nothing private.
+
 ### 3. Edit: `edit.json`
 
 Claude writes this file from the transcript. Its main fields (the full list is in [`src/mortgage/schema.ts`](src/mortgage/schema.ts)):
@@ -210,7 +212,7 @@ Every template follows the same golden rules, enforced in [`src/mortgage/golden.
 - A number you say gets a chart or card.
 - Keywords are highlighted.
 - A bank you name gets its logo.
-- The background is always removed.
+- The background is always removed, unless you opt into quick mode (dark edges instead).
 - Charts sit *behind* you, never over your face.
 - The Finance Hub logo pops in after the hook and again in the last 10 seconds.
 - Nothing important leaves the 9:16 or 4:5 safe zones.

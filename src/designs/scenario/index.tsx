@@ -6,9 +6,7 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
   Img,
-  OffthreadVideo,
   Sequence,
   interpolate,
   spring,
@@ -35,7 +33,7 @@ import {
   useCueRoom,
 } from "../../mortgage/cueRoom";
 import { LogoMark } from "../../mortgage/LogoMark";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import type { Cue } from "../../mortgage/schema";
 import { outFrameOf } from "../../mortgage/schema";
 import { chapterTransition } from "../../mortgage/transitions";
@@ -43,8 +41,6 @@ import {
   FONT,
   LOGO,
   enter,
-  foregroundOf,
-  retryVideoFetch,
 } from "../../mortgage/style";
 import { MotionTrack } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
@@ -202,16 +198,11 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
           WebkitMaskComposite: "source-in",
         }}
       >
-        <Freeze frame={0}>
-          <OffthreadVideo
-            src={foregroundOf(src)}
-            trimBefore={coverFrame}
-            muted
-            transparent
-            {...retryVideoFetch}
-            style={{ width: "100%", height: "100%", objectFit: "contain" }}
-          />
-        </Freeze>
+        <CoverCutOut
+          src={src}
+          trimBefore={coverFrame}
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+        />
       </div>
       <div style={LOGO_BOX}>
         <Img src={LOGO} style={{ height: LOGO_HEIGHT, display: "block" }} />
