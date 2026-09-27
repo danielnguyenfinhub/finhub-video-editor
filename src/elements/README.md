@@ -3,7 +3,9 @@
 Reusable, checked building blocks for designs and one-off videos, each one file,
 brand-coloured by default, Vietnamese-safe (letters keep their marks, line
 heights leave room for them). Every element renders in the `ElementCatalog`
-composition (Studio → "Elements"), which is how each was verified.
+composition (Studio → "Elements"), which is how each was verified. After adding
+or changing an element, run `node scripts/check-element-copy.mjs`: it puts every
+string in this folder (catalog samples, built-in text) through the RG 234 guard.
 
 | Element | What it does | Remotion APIs |
 |---|---|---|
