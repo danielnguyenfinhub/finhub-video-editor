@@ -21,10 +21,12 @@ import { MirroredSpectrum } from "./MirroredSpectrum";
 import { NeonTitle } from "./NeonTitle";
 import { NewsTicker } from "./NewsTicker";
 import { NoiseField } from "./NoiseField";
+import { NotificationStack } from "./NotificationStack";
 import { Oscilloscope } from "./Oscilloscope";
 import { Particles } from "./Particles";
 import { ProgressBar } from "./ProgressBar";
 import { PulseBadge } from "./PulseBadge";
+import { QuoteCard } from "./QuoteCard";
 import { ReviewStamp } from "./ReviewStamp";
 import { RgbSplitText } from "./RgbSplitText";
 import { SlashIntro } from "./SlashIntro";
@@ -35,6 +37,7 @@ import { TextMatte } from "./TextMatte";
 import { TiltFrame } from "./TiltFrame";
 import { Typewriter } from "./Typewriter";
 import { VideoGrid } from "./VideoGrid";
+import { WordHighlight } from "./WordHighlight";
 
 const W = 1080;
 const H = 1920;
@@ -122,6 +125,9 @@ const SCENES: [string, React.ReactNode][] = [
   ["Oscilloscope", <Centre key="os" bg="#F6F1E4"><Oscilloscope src={staticFile("sample-tone.wav")} playAudio /></Centre>],
   ["MirroredSpectrum", <Centre key="ms"><MirroredSpectrum src={staticFile("sample-tone.wav")} color="#fff" /></Centre>],
   ["NoiseField", <NoiseField key="nf" />],
+  ["WordHighlight", <Centre key="wh"><WordHighlight text="Lãi suất *cố định* của bạn sắp hết hạn?" /></Centre>],
+  ["NotificationStack", <Centre key="ns"><NotificationStack appName="Nhắc nhở · Reminder" items={[{ title: "Sắp hết kỳ cố định", body: "Ví dụ minh hoạ · sample alert" }, { title: "Rate review", body: "Time to check your loan still suits you" }, { title: "Đặt lịch trò chuyện", body: "So sánh lựa chọn trước khi chuyển" }]} /></Centre>],
+  ["QuoteCard (draft)", <Centre key="qc"><QuoteCard quote="Sample review — replace with a genuine client review, word for word." attribution="Client name" context="Source and date of review" consentConfirmed={false} /></Centre>],
 ];
 
 const Label: React.FC<{ name: string }> = ({ name }) => (
