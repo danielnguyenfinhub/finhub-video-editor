@@ -7,8 +7,6 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
-  OffthreadVideo,
   Sequence,
   interpolate,
   spring,
@@ -32,13 +30,11 @@ import {
 } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
 import {
   emphasised,
   FONT,
-  foregroundOf,
-  retryVideoFetch,
 } from "../../mortgage/style";
 import { Typewriter } from "../../elements/Typewriter";
 import { NewsTicker } from "../../elements/NewsTicker";
@@ -170,21 +166,16 @@ const Cover: React.FC<CoverProps> = ({
           overflow: "hidden",
         }}
       >
-        <Freeze frame={0}>
-          <OffthreadVideo
-            src={foregroundOf(src)}
-            trimBefore={coverFrame}
-            muted
-            transparent
-            {...retryVideoFetch}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "50% 100%",
-            }}
-          />
-        </Freeze>
+        <CoverCutOut
+          src={src}
+          trimBefore={coverFrame}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "50% 100%",
+          }}
+        />
       </div>
       <LogoTile />
     </AbsoluteFill>

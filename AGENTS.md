@@ -86,6 +86,7 @@ Read list per task, on top of this file. `refs/` is `.claude/skills/vietnamese-f
 ## Conventions
 
 - Videos are bilingual, Vietnamese + English: see "Language" near the top of this file before writing any on-screen text or captions.
+- Background: removed by default (matted cut-out); quick mode (`"background": "vignette"`, no matting, dark edges) only when Daniel opts in. The rules: `src/designs/README.md`, golden rule 4.
 - Register new compositions in `src/Root.tsx`; one component per file under `src/`.
 - Drive all animation from `useCurrentFrame()`/`interpolate()`/`spring()` — never from wall-clock time.
 - In components, take `delayRender`/`continueRender`/`cancelRender` from `useDelayRender()` (render-scoped, the documented recommendation) rather than importing the global functions; every scene here does.

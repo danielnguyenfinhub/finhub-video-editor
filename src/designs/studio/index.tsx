@@ -7,8 +7,6 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
-  OffthreadVideo,
   Sequence,
   interpolate,
   spring,
@@ -25,8 +23,12 @@ import type {
 import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
-import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
-import { FONT, retryVideoFetch } from "../../mortgage/style";
+import {
+  BrandBackdrop,
+  CoverCutOut,
+  PacedVideo,
+} from "../../mortgage/PacedVideo";
+import { FONT } from "../../mortgage/style";
 import { toOutMs } from "../../mortgage/timeline";
 import { chapterTransition } from "../../mortgage/transitions";
 import { MotionTrack } from "../classic/Cues";
@@ -95,15 +97,12 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
           transform: `scale(${interpolate(pop, [0, 1], [0.92, 1])})`,
         }}
       >
-        <Freeze frame={0}>
-          <OffthreadVideo
-            src={src}
-            trimBefore={coverFrame}
-            muted
-            {...retryVideoFetch}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </Freeze>
+        <CoverCutOut
+          room
+          src={src}
+          trimBefore={coverFrame}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
       </div>
       <div
         style={{

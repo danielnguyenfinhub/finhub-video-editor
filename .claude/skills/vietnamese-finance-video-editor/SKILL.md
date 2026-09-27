@@ -87,6 +87,9 @@ miễn phí, đảm bảo …) in the verify list — never silently cut them.
   (`READING` in `src/mortgage/golden.ts`); a hold beats the 1.5–3 s change rule, and the
   change is carried by motion inside the scene. Caption pages follow speech, so they
   are only reported when faster than 22 chars/s (consider paging or a remove).
+- **Background removed** (the matted cut-out), unless Daniel opts into quick mode
+  (`"background": "vignette"`: no matting, full frame, dark edges). Never pick quick
+  mode yourself; the rules are golden rule 4 in `src/designs/README.md`.
 - **Content decides the direction**, not habit (decision tree below).
 - **Use the toolkit generously, but every effect earns its place**: it makes the point
   clearer, or it holds attention at a retention moment (the hook, a number, a topic

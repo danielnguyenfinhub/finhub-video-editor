@@ -5,7 +5,7 @@
 // every card, cue or caption page shown for less than its reading time. scripts/brief.mjs imports
 // the exports below; the checks run only when this file is the entry point.
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -181,6 +181,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const l = lenderMentionsOf(reel);
     console.log(`${slug}: ${l.length} bank mentions`);
     for (const x of l) console.log(`  ${(x.startMs / 1000).toFixed(1)}s ${x.lender.name}`);
+    // Golden rule 4: background removed (foreground.webm), unless edit.json opts
+    // into quick mode. Reported, not failed: the cut-out is git-ignored, so a
+    // worktree without --public-dir never has it; the render itself refuses.
+    const cutOut = existsSync(`${pub}/${recordingPath(slug, edit.source, "foreground.webm")}`);
+    console.log(edit.background === "vignette"
+      ? `${slug}: background: vignette (quick mode, not removed)`
+      : cutOut
+        ? `${slug}: background: removed (foreground.webm present)`
+        : `FLAG ${slug}: background: removed, but foreground.webm is missing in ${pub}: the render will refuse until review/matte.html makes it`);
     const design = edit.design ?? "classic";
     const { cueRoom = false } = JSON.parse(readFileSync(`src/designs/${design}/template.json`, "utf8"));
     const h = faceHiddenOf(reel, FPS, { cueRoom });

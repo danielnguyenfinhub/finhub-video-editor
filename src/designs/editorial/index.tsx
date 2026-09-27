@@ -6,9 +6,7 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
   Img,
-  OffthreadVideo,
   interpolate,
   useCurrentFrame,
 } from "remotion";
@@ -16,14 +14,12 @@ import { brand } from "../../brand/theme";
 import type { CoverProps, Design, TalkProps } from "../../mortgage/design";
 import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import {
   FONT,
   LOGO,
   clamp,
   emphasised,
-  foregroundOf,
-  retryVideoFetch,
 } from "../../mortgage/style";
 import { chapterTransition } from "../../mortgage/transitions";
 import {
@@ -111,22 +107,17 @@ const Cover: React.FC<CoverProps> = ({
         })}
       </div>
       {/* Daniel's cut-out stands in front of the headline (depth). */}
-      <Freeze frame={0}>
-        <OffthreadVideo
-          src={foregroundOf(src)}
-          trimBefore={coverFrame}
-          muted
-          transparent
-          {...retryVideoFetch}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
-      </Freeze>
+      <CoverCutOut
+        src={src}
+        trimBefore={coverFrame}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
       <div
         style={{
           position: "absolute",

@@ -7,10 +7,8 @@ import { fade } from "@remotion/transitions/fade";
 import type React from "react";
 import {
   AbsoluteFill,
-  Freeze,
   Img,
   interpolate,
-  OffthreadVideo,
   Sequence,
   useCurrentFrame,
   useVideoConfig,
@@ -24,13 +22,11 @@ import type {
 import { figuresOf, lenderMentionsOf, SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
-import { PacedVideo } from "../../mortgage/PacedVideo";
+import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
 import {
   FONT,
-  foregroundOf,
   LOGO,
-  retryVideoFetch,
 } from "../../mortgage/style";
 import { MotionTrack } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
@@ -103,22 +99,17 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => (
         cropped: a box from y 940 with objectFit cover cut the top of his
         head off. */}
     <AbsoluteFill>
-      <Freeze frame={0}>
-        <OffthreadVideo
-          src={foregroundOf(src)}
-          trimBefore={coverFrame}
-          muted
-          transparent
-          {...retryVideoFetch}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            transform: `scale(${COVER_SCALE})`,
-            transformOrigin: "50% 100%",
-          }}
-        />
-      </Freeze>
+      <CoverCutOut
+        src={src}
+        trimBefore={coverFrame}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: `scale(${COVER_SCALE})`,
+          transformOrigin: "50% 100%",
+        }}
+      />
     </AbsoluteFill>
     <LogoTile />
   </AbsoluteFill>
