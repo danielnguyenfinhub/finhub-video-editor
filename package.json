@@ -99,7 +99,7 @@
     "clone-voice": "node scripts/clone-voice.mjs",
     "preflight": "node scripts/preflight.mjs",
     "research": "python scripts/research.py",
-    "video-loop": "node scripts/video-loop.mjs"
+    "video-status": "node scripts/video-status.mjs"
   },
   "sideEffects": [
     "*.css"

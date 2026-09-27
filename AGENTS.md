@@ -93,7 +93,7 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 
 ### Harness: video production team
 
-**Trigger:** when Daniel asks to edit his footage ("edit my video", "I recorded a video about…") or for a video from a document or topic (faceless), including follow-ups on one ("redo the paper edit", "re-run QC", "fix what compliance flagged"), use the `video-production-team` skill. It runs the whole runbook for both pipelines with its agents in `.claude/agents/`; `vietnamese-finance-video-editor` is the standard its editor follows. `npm run video-loop -- <slug>` shows where a run stands; with `--run` it does the remaining stages one fresh session each, stopping at Daniel's gates (skill section "Loop mode").
+**Trigger:** when Daniel asks to edit his footage ("edit my video", "I recorded a video about…") or for a video from a document or topic (faceless), including follow-ups on one ("redo the paper edit", "re-run QC", "fix what compliance flagged"), use the `video-production-team` skill. It runs the whole runbook for both pipelines with its agents in `.claude/agents/`; `vietnamese-finance-video-editor` is the standard its editor follows. `npm run video-status [-- <slug>]` shows where each run stands and whether it's ready (free).
 
 ### Harness: refactor team
 

@@ -1,15 +1,12 @@
-// The video-production-team run as a Ralph loop (github.com/snarktank/ralph): each round is
-// a fresh `claude -p` that does ONE stage, and the state lives on disk in
-// out/videos/<slug>/team/ (the files the team already writes), so a round never inherits a
-// long context and a run survives closed sessions. Unlike Ralph, this script decides what is
-// done by reading the files itself (an agent's "done" is not trusted), stops at every one of
-// Daniel's gates instead of bypassing permissions, and caps each round's spend.
+// Where each video's team run stands, read from the files the video-production-team writes
+// in out/videos/<slug>/team/ (so any session can resume a run without re-reading it), plus
+// a readiness check before spending tokens. Nothing here calls Claude or changes a file.
 //
-//   node scripts/video-loop.mjs <slug>                 what's done, what's next (no tokens)
-//   node scripts/video-loop.mjs <slug> --run [--max 8] [--budget 5]
+//   node scripts/video-status.mjs            every video: where it stands
+//   node scripts/video-status.mjs <slug>     readiness (with fixes), what's done, what's next
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const readJson = (p) => {
@@ -94,69 +91,55 @@ export const nextOf = (root, slug) => {
   return { pipeline, done, stage: null, halt: null };
 };
 
-const promptFor = (slug, stage) => `Use the video-production-team skill for the video "${slug}".
-Run ONLY this stage, then stop: ${stage}.
-Read out/videos/${slug}/team/ first; it is the whole state of the run. If the stage's last
-report says FIX, send the findings to their owner and re-run the reviewer (one round).
-Follow AGENTS.md "Corrections": apply matching entries in references/corrections.md, and log
-any new lesson (technical -> landmines.md, quality -> corrections.md).
-Never write 02_script_lock.md, never make a paid call beyond the cost in 00_intake.md or
-02_script_lock.md, never move Daniel's footage. If the stage needs Daniel, write why in the
-stage's team file and stop.`;
+const run = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: "utf8", timeout: 30000, ...opts });
 
-// Tools a round may use without asking; anything else is denied, which ends the round.
-const ALLOWED = ["Read", "Write", "Edit", "Grep", "Glob", "Agent", "Skill", "Bash(node:*)",
-  "Bash(python:*)", "Bash(npx remotion:*)", "Bash(ffprobe:*)", "Bash(ffmpeg:*)",
-  "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)"];
+// Readiness before spending tokens (idea from HKUDS/OpenHarness): static checks only, each
+// with the shortest fix. blocked = the run would fail; warning = it may stop early.
+export const readinessOf = (root, slug) => {
+  const items = [];
+  const add = (level, problem, fix) => items.push({ level, problem, fix });
+  if (run("ffmpeg", ["-version"]).error) add("blocked", "ffmpeg is missing (prep and render need it)", "install ffmpeg and add it to PATH");
+  if (run("python", ["--version"]).error) add("warning", "python is missing (prep, render and voicing scripts)", "install Python 3");
+  if (run("git", ["status", "--porcelain"], { cwd: root }).stdout.trim())
+    add("warning", "uncommitted changes (the team's intake stops on them)", "commit them, or tell Claude to go ahead");
+  const edit = readJson(join(root, "public/videos", slug, "edit.json"));
+  const pipeline = existsSync(join(root, "public/videos", slug, "script.json")) ? "B" : "A";
+  if (pipeline === "A" && edit) {
+    const src = join(root, "public/recordings", edit.source ?? slug, "source.mp4");
+    if (!existsSync(src)) add("blocked", `the prepared recording is missing (${relative(root, src)})`, "prepare the recording again (runbook A1.1)");
+  }
+  if (edit && run(process.execPath, [join(root, "scripts/preflight.mjs"), slug], { cwd: root }).status !== 0)
+    add("blocked", "preflight finds problems in edit.json", `run: node scripts/preflight.mjs ${slug}`);
+  const level = items.some((i) => i.level === "blocked") ? "blocked" : items.length ? "warning" : "ready";
+  return { level, items };
+};
+
+// Every video with a team run, one line each (idea from HKUDS/OpenHarness).
+const board = (root) => {
+  const dir = join(root, "out/videos");
+  const slugs = existsSync(dir) ? readdirSync(dir).filter((s) => existsSync(join(dir, s, "team"))) : [];
+  if (!slugs.length) return console.log("No team runs yet.");
+  for (const s of slugs) {
+    const n = nextOf(root, s);
+    const state = !n.stage ? "complete" : n.halt?.gate ? `WAITING: ${n.halt.gate}` : n.halt?.stop ? `STOPPED: ${n.halt.stop}` : `next: ${n.stage}`;
+    console.log(`${s.padEnd(22)} ${n.pipeline}  ${n.done.length} done  ${state}`);
+  }
+};
+
 
 const main = () => {
-  const args = process.argv.slice(2);
-  const slug = args.find((a) => !a.startsWith("--") && !/^\d/.test(a));
-  const opt = (name, dflt) => {
-    const i = args.indexOf(name);
-    return i >= 0 ? Number(args[i + 1]) : dflt;
-  };
-  if (!slug) {
-    console.log("usage: node scripts/video-loop.mjs <slug> [--run] [--max 8] [--budget 5]");
-    process.exit(2);
-  }
   const root = join(import.meta.dirname, "..");
-  const max = opt("--max", 8);
-  const budget = opt("--budget", 5);
-  let tries = 0;
-  let last = null;
-
-  for (let round = 1; ; round++) {
-    const n = nextOf(root, slug);
-    console.log(`${slug} (pipeline ${n.pipeline}) done: ${n.done.join(", ") || "nothing yet"}`);
-    if (!n.stage) return console.log("COMPLETE");
-    if (n.halt?.gate) return console.log(`WAITING for Daniel: ${n.halt.gate}`);
-    if (n.halt?.stop) {
-      console.log(`STOPPED: ${n.halt.stop}`);
-      process.exit(1);
-    }
-    console.log(`next: ${n.stage}`);
-    if (!args.includes("--run")) return;
-    // Two rounds on one stage is the team's FIX-loop limit; then Daniel looks.
-    tries = n.stage === last ? tries + 1 : 1;
-    last = n.stage;
-    if (tries > 2) {
-      console.log(`STOPPED: "${n.stage}" did not pass in 2 rounds; open findings are in out/videos/${slug}/team/`);
-      process.exit(1);
-    }
-    if (round > max) {
-      console.log(`STOPPED: ${max} rounds used; run again to continue`);
-      process.exit(1);
-    }
-    console.log(`round ${round}/${max}: fresh claude -p, US$${budget} cap`);
-    const r = spawnSync("claude", ["-p", "--permission-mode", "acceptEdits", "--max-budget-usd", String(budget),
-      "--allowedTools", ...ALLOWED], { cwd: root, input: promptFor(slug, n.stage), stdio: ["pipe", "inherit", "inherit"] });
-    if (r.error) {
-      console.log(`STOPPED: could not start claude (${r.error.message})`);
-      process.exit(1);
-    }
-    if (r.status !== 0) console.log(`round ${round} exited ${r.status}; checking the files anyway`);
-  }
+  const slug = process.argv[2];
+  if (!slug) return board(root);
+  const ready = readinessOf(root, slug);
+  console.log(`readiness: ${ready.level}`);
+  for (const i of ready.items) console.log(`  ${i.level}: ${i.problem} -> ${i.fix}`);
+  const n = nextOf(root, slug);
+  console.log(`${slug} (pipeline ${n.pipeline}) done: ${n.done.join(", ") || "nothing yet"}`);
+  if (!n.stage) console.log("COMPLETE");
+  else if (n.halt?.gate) console.log(`WAITING for Daniel: ${n.halt.gate}`);
+  else if (n.halt?.stop) console.log(`STOPPED: ${n.halt.stop}`);
+  else console.log(`next: ${n.stage}`);
 };
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) main();

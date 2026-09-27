@@ -1,12 +1,12 @@
-// Self-check for scripts/video-loop.mjs on synthetic runs in a temp folder: the next stage,
-// the gates and the stops come out right for both pipelines. Run: node scripts/check-video-loop.mjs
+// Self-check for script./video-status.mjs on synthetic runs in a temp folder: the next stage,
+// the gates and the stops come out right for both pipelines. Run: node scripts/check-video-status.mjs
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { nextOf } from "./video-loop.mjs";
+import { nextOf } from "./video-status.mjs";
 
-const root = mkdtempSync(join(tmpdir(), "video-loop-"));
+const root = mkdtempSync(join(tmpdir(), "video-status-"));
 const put = (p, body) => {
   mkdirSync(dirname(join(root, p)), { recursive: true });
   writeFileSync(join(root, p), typeof body === "string" ? body : JSON.stringify(body));
@@ -58,4 +58,4 @@ assert.equal(next("b").stage, "voice (B3)");
 put("public/videos/b/words.json", []);
 assert.equal(next("b").stage, "build (video-editor)");
 
-console.log("video-loop ok (pipeline A, quick mode, pipeline B)");
+console.log("video-status ok (pipeline A, quick mode, pipeline B)");
