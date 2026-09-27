@@ -12,6 +12,7 @@ This is Daniel's video editor, and the editing interface is a Claude Code chat. 
 npm i                 # install dependencies
 npm run dev           # Remotion Studio preview (http://localhost:3000)
 npm run lint          # ESLint + TypeScript check — run before committing
+npm run research -- trending   # what's trending for a faceless video (runbook B1.0; also topic/read/transcript)
 npx remotion render   # render a composition to a video file
 ```
 

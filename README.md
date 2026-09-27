@@ -24,6 +24,7 @@ Claude runs every step below for you. The rest of this page covers what those st
 |---|---|---|
 | Node.js 18+ | Remotion, Studio, rendering | `node -v` |
 | Python 3.10+ with `faster-whisper` | the Vietnamese transcript | `python -c "import faster_whisper"` |
+| `python -m pip install yt-dlp feedparser` | research and trending topics for faceless scripts (`npm run research -- trending`) | `npm run research -- selftest` |
 | ffmpeg + ffprobe on PATH | proxy, audio clean-up, final mix | `ffmpeg -version` |
 | Claude desktop app (Code tab) | the editor, plus the browser used for background removal (needs WebGPU) | — |
 

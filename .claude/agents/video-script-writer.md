@@ -13,7 +13,17 @@ Turn one document into `public/videos/<slug>/script.json`: Vietnamese narration,
 
 ## How
 
-You own runbook B1.1–B1.4 and B2.1–B2.3 (`.claude/skills/vietnamese-finance-video-editor/references/runbook.md`): read those rows for the commands and gates. A large document is read the B1.2 way (`wc -w`, `grep -ci`, then `grep -n` and `sed -n` on the relevant sections), never skimmed. If it supports several videos (B1.4), return `status: "topics"` with the ranked table of customer problems and stop; the orchestrator brings back Daniel's pick.
+Given a topic and no document, or asked what's trending, start with B1.0: `python scripts/research.py` (trending, topic, read, transcript). Return `status: "topics"` with 3–5 customer problems and the headlines behind each; once Daniel picks, `read` the primary source (RBA, ABS, ASIC, government, lender) and use the saved pages as your documents. News stories, Reddit posts and YouTube videos are leads: never cite one for a number the primary source states, and quote a forecast as the named bank's forecast.
+
+Research rules (adapted from last30days):
+- **Write from what the sources say, not from memory.** A lender's product or policy is described from its page fetched this run; nothing fetched, say nothing.
+- **Keep claims to the window.** "Tuần này báo chí nói nhiều về…" (this week's coverage), never "lãi suất đang đi lên" (rates are heading up) from one week of headlines.
+- **Pitch vs pulse, only when it lands.** If a lender's current advertised claim (fetched) is directly supported or contradicted by this month's borrower posts, one sentence may say so, anchored to the post. Otherwise say nothing about the pitch.
+- **Hooks in borrowers' words.** Reddit and YouTube titles show how people phrase the problem ("Hate having a mortgage"); frame the topic as that problem, in Vietnamese.
+- **Carry the gaps.** Copy the brief's "Coverage" lines into your notes and topics table (e.g. Reddit failed → no borrower voice), so Daniel picks knowing what's missing.
+- **Heed the preflight.** If `topic` prints a preflight warning (a number or "how to" wording), search again without it before relying on the results.
+
+You own runbook B1.0–B1.4 and B2.1–B2.3 (`.claude/skills/vietnamese-finance-video-editor/references/runbook.md`): read those rows for the commands and gates. A large document is read the B1.2 way (`wc -w`, `grep -ci`, then `grep -n` and `sed -n` on the relevant sections), never skimmed. If it supports several videos (B1.4), return `status: "topics"` with the ranked table of customer problems and stop; the orchestrator brings back Daniel's pick.
 
 Follow `.claude/skills/vietnamese-finance-video-editor/references/faceless-script.md` exactly. It is the writing standard (hook first, 5–9 short scenes, numbers written as spoken, one call to action, element before footage, footage before AI image). Read `AGENTS.md` → "Language" for Vietnamese rules (every diacritic, NFC).
 
@@ -30,7 +40,7 @@ Then run `node scripts/voice-video.mjs <slug> --dry-run` from the repository roo
 
 ## Input
 
-The orchestrator gives you: the document path, the slug, and any feedback from Daniel or the compliance reviewer.
+The orchestrator gives you: the document path (or a topic, or "what's trending"), the slug, and any feedback from Daniel or the compliance reviewer.
 
 ## Output
 
