@@ -88,18 +88,41 @@ const FRAMING = framing(0);
 
 // ---------------------------------------------------------------- cover
 
+const COVER_TITLE_WIDTH = 600;
+// Greedy split into at most 3 lines of about equal length (words kept whole).
+const coverLines = (title: string, max = 3): string[] => {
+  const target = title.length / max + 2;
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of title.split(/\s+/).filter(Boolean)) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (cur && next.length > target && lines.length < max - 1) {
+      lines.push(cur);
+      cur = w;
+    } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+};
+
 const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const p = enter(frame, fps, 4);
+  // Up to 3 lines in the left column (x 54-654, clear of Daniel), sized so
+  // the longest line fits: one fitted line of a long title came out ~40 px.
+  const lines = coverLines(title);
   const size = Math.min(
-    100,
-    fitText({
-      text: title,
-      withinWidth: 880,
-      fontFamily: FONT,
-      fontWeight: 900,
-    }).fontSize,
+    110,
+    ...lines.map(
+      (text) =>
+        fitText({
+          text,
+          withinWidth: COVER_TITLE_WIDTH,
+          fontFamily: FONT,
+          fontWeight: 900,
+        }).fontSize,
+    ),
   );
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
@@ -135,16 +158,20 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title }) => {
           position: "absolute",
           left: SAFE.left,
           top: SAFE.top + 170,
-          width: 900,
+          width: COVER_TITLE_WIDTH,
           fontSize: size,
           fontWeight: 900,
-          lineHeight: 1.25,
+          lineHeight: 1.15,
           color: brand.textOnCard,
           opacity: p,
           transform: `translateY(${interpolate(p, [0, 1], [30, 0])}px)`,
         }}
       >
-        {title}
+        {lines.map((l) => (
+          <div key={l} style={{ whiteSpace: "nowrap" }}>
+            {l}
+          </div>
+        ))}
       </div>
       <div style={FRAMING}>
         <Freeze frame={0}>

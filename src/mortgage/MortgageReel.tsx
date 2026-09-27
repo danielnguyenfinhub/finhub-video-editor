@@ -140,7 +140,7 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
 > = async ({ props }) => {
   const { slug, design } = props;
   const editJson = await fetchJson(slug, `videos/${slug}/edit.json`);
-  const { source, visuals } = parseEdit(editJson, slug);
+  const { source, visuals, background } = parseEdit(editJson, slug);
   const cutOutPath = recordingPath(slug, source, "foreground.webm");
   const assets = (visuals ?? []).flatMap((v) =>
     typeof v.asset === "string" ? [v.asset] : [],
@@ -156,8 +156,9 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
       `MortgageReel "${slug}": visuals point at files that aren't in public/: ${missing.join(", ")}. ` +
         `Add them with \`node scripts/library.mjs add\` or change the visual.`,
     );
-  // Golden rule: the background is always removed, so the cut-out must exist.
-  if (!cutOut.ok)
+  // Golden rule: the background is always removed, so the cut-out must exist
+  // (unless this video keeps the room: edit.json "background": "room").
+  if (!cutOut.ok && background !== "room")
     throw new Error(
       `MortgageReel "${slug}": public/${cutOutPath} is missing. ` +
         `Run \`npm run review\`, open http://localhost:4100/matte.html?slug=${slug} and wait for "Saved".`,
@@ -230,9 +231,10 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
   const { edit, timeline } = reel;
   const design = getDesign(edit.design ?? DEFAULT_DESIGN);
   const src = staticFile(recordingPath(slug, edit.source, "source.mp4"));
-  const foreground = staticFile(
-    recordingPath(slug, edit.source, "foreground.webm"),
-  );
+  const foreground =
+    edit.background === "room"
+      ? undefined
+      : staticFile(recordingPath(slug, edit.source, "foreground.webm"));
   const keywords = [...KEYWORDS, ...(edit.keywords ?? [])];
   const talk = timeline.talkFrames;
   return (
@@ -241,6 +243,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
         <TransitionSeries.Sequence durationInFrames={COVER_FRAMES}>
           <design.Cover
             src={src}
+            foreground={foreground}
             coverFrame={Math.round(
               ((edit.coverFrameMs ?? DEFAULT_COVER_FRAME_MS) * FPS) / 1000,
             )}

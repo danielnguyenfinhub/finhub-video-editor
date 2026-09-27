@@ -24,3 +24,16 @@ if (numGot !== numWant || reel.subtitles[0].text !== "4.1 billion") {
   process.exit(1);
 }
 console.log("decimal comma ok");
+
+// A fix with atMs changes only the word spoken then; "" hides a misheard extra
+// word. The same word elsewhere stays ("gọi là" is right, "gọi hồ sơ" is "gửi").
+const at = [" gọi", " là", " không", " trả", " lời", " phí", " gọi", " hồ", " sơ"];
+const as = at.map((text, i) => ({ text, startMs: i * 400, endMs: i * 400 + 350, timestampMs: null, confidence: 1 }));
+const fixes = [{ from: "trả", to: "tính", atMs: 1200 }, { from: "lời", to: "", atMs: 1600 }, { from: "gọi", to: "gửi", atMs: 2450 }];
+const atGot = t.buildTimeline(as, { captionFixes: fixes }, 30).captions.map((c) => c.text).join("");
+const atWant = " gọi là không tính phí gửi hồ sơ";
+if (atGot !== atWant) {
+  console.error(`timed caption fixes: got "${atGot}", want "${atWant}"`);
+  process.exit(1);
+}
+console.log("timed caption fixes ok");

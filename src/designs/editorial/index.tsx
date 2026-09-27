@@ -39,6 +39,11 @@ import { Overlay } from "./Overlay";
 import { Outro } from "../classic/Outro";
 
 const HEADLINE_WIDTH = 900;
+// Cover cut-out size: his hair line (source y ~600) lands near y 1075, under
+// a two-line headline plus standfirst (~y 690-1000).
+const COVER_CUTOUT_SCALE = 0.64;
+// Line cap so two lines + standfirst end above his head (~y 1000).
+const COVER_LINE_MAX = 130;
 
 // Two stacked lines (the cover's giant masthead headline), each filled to the
 // page width with @remotion/layout-utils so a short or long title both read
@@ -77,7 +82,7 @@ const Cover: React.FC<CoverProps> = ({
       >
         {lines.map((line, li) => {
           const size = Math.min(
-            160,
+            COVER_LINE_MAX,
             fitText({
               text: line,
               withinWidth: HEADLINE_WIDTH,
@@ -93,6 +98,8 @@ const Cover: React.FC<CoverProps> = ({
                 fontSize: size,
                 letterSpacing: "-0.03em",
                 lineHeight: 0.86,
+                // fitText sizes the line to one row; never let it rewrap.
+                whiteSpace: "nowrap",
               }}
             >
               {line.split(/\s+/).map((w) => {
@@ -109,8 +116,30 @@ const Cover: React.FC<CoverProps> = ({
             </div>
           );
         })}
+        {/* The subtitle is the headline's standfirst, under it in the same
+            column, so no cover text sits behind Daniel. */}
+        <div
+          style={{
+            marginTop: 26,
+            fontSize: 40,
+            fontWeight: 700,
+            color: INK,
+          }}
+        >
+          <Underline
+            progress={underline}
+            color={`${brand.accent}99`}
+            strokeWidth={6}
+            iterations={1}
+            seed={2}
+          >
+            <span>{subtitle}</span>
+          </Underline>
+        </div>
       </div>
-      {/* Daniel's cut-out stands in front of the headline (depth). */}
+      {/* Daniel's cut-out stands below the headline, scaled from the bottom
+          edge so his head starts under the text (the whole title reads as a
+          thumbnail) and his face ends inside SAFE.bottom. */}
       <Freeze frame={0}>
         <OffthreadVideo
           src={foregroundOf(src)}
@@ -124,31 +153,11 @@ const Cover: React.FC<CoverProps> = ({
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            transform: `scale(${COVER_CUTOUT_SCALE})`,
+            transformOrigin: "50% 100%",
           }}
         />
       </Freeze>
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 1920 - SAFE.bottom + 40,
-          textAlign: "center",
-          fontSize: 46,
-          fontWeight: 700,
-          color: INK,
-        }}
-      >
-        <Underline
-          progress={underline}
-          color={`${brand.accent}99`}
-          strokeWidth={6}
-          iterations={1}
-          seed={2}
-        >
-          <span>{subtitle}</span>
-        </Underline>
-      </div>
       <div
         style={{
           position: "absolute",

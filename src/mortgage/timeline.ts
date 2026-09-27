@@ -48,7 +48,7 @@ export type AutoCut = {
 export type TimelineEdit = {
   remove?: [number, number][];
   cut?: AutoCut;
-  captionFixes?: { from: string; to: string }[];
+  captionFixes?: { from: string; to: string; atMs?: number }[];
   chapters?: { atMs: number; effect: TransitionKind }[];
   pacing?: Pacing;
 };
@@ -127,6 +127,9 @@ const MAX_STUTTER_WORDS = 3;
 const REDUPLICATIONS = [
   "từ", "dần", "mãi", "ngày", "người", "nhà", "đời", "thường", "đâu", "ai",
 ];
+
+// edit.json captionFixes with atMs match a word starting within this of it.
+const FIX_AT_MS = 300;
 
 // Recognition slips fixed in the captions only (audio is untouched), using the
 // neighbouring words to disambiguate.
@@ -258,10 +261,15 @@ const prepareWords = (raw: Word[], edit: TimelineEdit): EditWord[] => {
     const fixed = decimalComma(
       fixWord(w.text.normalize("NFC").trim(), bare(prev?.text), bare(all[i + 1]?.text)),
     );
-    const custom = fixes.find((f) => f.from === fixed);
+    const custom = fixes.find(
+      (f) =>
+        f.from === fixed &&
+        (f.atMs === undefined || Math.abs(w.startMs - f.atMs) <= FIX_AT_MS),
+    );
+    const shown = custom ? custom.to : fixed;
     return {
       ...w,
-      text: ` ${custom ? custom.to : fixed}`,
+      text: shown ? ` ${shown}` : "",
       dropped: removed[i] || autoCut !== null,
       autoCut: removed[i] ? null : autoCut,
     };

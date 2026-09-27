@@ -241,8 +241,22 @@ export const editSchema = z.strictObject({
   // video needs foreground.webm next to source.mp4 (made once with
   // review/matte.html); the render stops with instructions if it is missing.
   // Kept as a field so old edit.json files still validate.
-  background: z.enum(["brand"]).optional(),
-  captionFixes: z.array(z.strictObject({ from: text, to: text })).optional(),
+  // "room": Daniel's per-video exception (27/09/2026): keep his real room, no
+  // cut-out needed. Needs a design whose Cover and Talk handle an undefined
+  // `foreground` (charts drawn in front, not behind).
+  background: z.enum(["brand", "room"]).optional(),
+  // A fix swaps that word everywhere, or, with atMs (the word's startMs in
+  // words.json, ±300 ms), only there; with atMs, "to" may be "" to hide a
+  // misheard extra word ("trả lời" → "tính" + "").
+  captionFixes: z
+    .array(
+      z
+        .strictObject({ from: text, to: z.string(), atMs: z.number().optional() })
+        .refine((f) => f.to !== "" || f.atMs !== undefined, {
+          message: 'an empty "to" needs "atMs"',
+        }),
+    )
+    .optional(),
   keywords: z.array(text).optional(),
   // English line under the Vietnamese captions, one per scene, in source ms.
   // Written by scripts/voice-video.mjs from script.json (faceless videos).

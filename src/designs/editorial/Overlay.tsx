@@ -308,14 +308,26 @@ const ChapterBanner: React.FC<{ index: number; title: string }> = ({
     [0, 1],
     clamp,
   );
+  // One line, fitted to the band: a wrapped title reached down over his head.
+  const titleSize = Math.min(
+    56,
+    fitText({
+      text: title,
+      withinWidth: HOOK_BAND.width,
+      fontFamily: FONT,
+      fontWeight: 900,
+    }).fontSize,
+  );
   return (
     <AbsoluteFill style={{ opacity: 1 - outP }}>
+      {/* The hook's band above his head (y 420-580): chapters never share
+          the screen with the hook or the logo (first/last 10 s of talk). */}
       <div
         style={{
           position: "absolute",
-          left: SAFE.left,
-          top: MASTHEAD_BOTTOM + 20,
-          maxWidth: 700,
+          left: HOOK_BAND.left,
+          top: HOOK_BAND.top,
+          width: HOOK_BAND.width,
           transform: `translateX(${interpolate(inP, [0, 1], [-600, 0])}px)`,
         }}
       >
@@ -334,10 +346,11 @@ const ChapterBanner: React.FC<{ index: number; title: string }> = ({
           style={{
             fontFamily: FONT,
             fontWeight: 900,
-            fontSize: 56,
+            fontSize: titleSize,
             color: INK,
             marginTop: 8,
             lineHeight: 1.1,
+            whiteSpace: "nowrap",
           }}
         >
           {title}

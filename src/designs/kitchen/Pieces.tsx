@@ -161,6 +161,12 @@ export const ChapterCard: React.FC<{ title: string }> = ({ title }) => {
           fontSize: 48,
           fontWeight: 800,
           color: brand.textOnCard,
+          // A white tag, so the title reads over his real room too
+          // ("background": "room"), not only over the cream backdrop.
+          background: "#fff",
+          padding: "8px 24px",
+          borderRadius: 18,
+          boxShadow: "0 10px 26px rgba(60,45,20,0.16)",
         }}
       >
         {title}
