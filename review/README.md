@@ -7,7 +7,7 @@ yourself, without editing `edit.json` by hand:
   composition, built with the same `buildReel()` as the render);
 - pick the **design** and the **colour grade**;
 - pick each **chapter transition**;
-- **drag** a chapter, stat or cue along the timeline at the top (one lane
+- **drag** a chapter, stat, cue or B-roll visual along the timeline at the top (one lane
   each, drawn in finished-video time with the cuts removed); its inner beats
   move with it. Click a block to jump to it, click the track to seek, or use
   the arrow keys / ◀ ▶ buttons to move it in 0.5 s steps;

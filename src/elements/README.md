@@ -20,7 +20,6 @@ string in this folder (catalog samples, built-in text) through the RG 234 guard.
 | `KenBurns` | pan-and-zoom over a still | `Img`, `interpolate` |
 | `TiltFrame` | 2.5D camera swing around any content | `spring`, CSS 3D |
 | `ImageCarousel` | 3D ring of photo cards turning one card at a time; not for lender logos (use `LenderRow`) | `@remotion/three` `ThreeCanvas`, `useDelayRender`, `spring` |
-| `FocusCrop` | reframes wide footage to 9:16 following the subject | `OffthreadVideo`, `interpolate` |
 | `BeforeAfter` | sweeping split between two layers (e.g. graded vs not) | CSS `clip-path` |
 | `TextMatte` | content shows through big letters | blend modes |
 | `VideoGrid` | up to 9 clips in a grid with name tags | `OffthreadVideo` |
@@ -41,7 +40,6 @@ string in this folder (catalog samples, built-in text) through the RG 234 guard.
 | `QuoteCard` | client review quoted word for word; DRAFT watermark (`ReviewStamp`) and a do-not-publish line until `consentConfirmed` | `interpolate` |
 | `starWipe` | custom transition presentation: next scene grows from a star | `@remotion/transitions`, `@remotion/shapes` `makeStar`, `@remotion/paths` `translatePath` |
 | `BehindWord` | a spoken keyword drawn huge behind Daniel (render it from a design's `Behind` layer; his cut-out covers part of it); `pickBehindWords()` shows which words it will use. Needs a cut-out, so it isn't in `ElementCatalog` | `@remotion/layout-utils` `fitText`, `spring` |
-| `beats.ts` | `useAudioMap("music/<name>.mp3")` loads the track's beat map from `scripts/analyze-beats.py`; `snapToBeat(ms, beats)` moves a moment onto the nearest beat (within 150 ms) | `useDelayRender`, `staticFile` |
 
 Script: `node scripts/export-chapters.mjs <slug>` prints a YouTube/Facebook
 chapter list (timed on the rendered video) from `edit.json` chapters.

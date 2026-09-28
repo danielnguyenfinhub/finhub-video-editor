@@ -9,9 +9,9 @@ import { brand } from "../brand/theme";
 import { FONT, LOGO, useReelFont } from "../mortgage/style";
 import { AudioRing } from "./AudioRing";
 import { BeforeAfter } from "./BeforeAfter";
+import { BehindWord } from "./BehindWord";
 import { CaptionBox } from "./CaptionBox";
 import { CountdownRing } from "./CountdownRing";
-import { FocusCrop } from "./FocusCrop";
 import { FrequencyBars } from "./FrequencyBars";
 import { ImageCarousel } from "./ImageCarousel";
 import { KenBurns } from "./KenBurns";
@@ -108,9 +108,22 @@ const SCENES: [string, React.ReactNode][] = [
   ["LineGraph", <Centre key="lg"><LineGraph data={SAMPLE_TREND} title="Lãi suất · ví dụ minh hoạ" unit="%" /></Centre>],
   ["SlashIntro", <SlashIntro key="si" top="PHẦN 2" bottom="Vay mua nhà lần đầu" />],
   ["KenBurns", <KenBurns key="k" src={staticFile("sample-frame.png")} />],
+  [
+    "BehindWord",
+    <BehindWord
+      key="bw"
+      keywords={["lãi suất", "tiết kiệm"]}
+      captions={[
+        { text: " Lãi", startMs: 0, endMs: 300, timestampMs: 0, confidence: 1 },
+        { text: " suất", startMs: 300, endMs: 700, timestampMs: 300, confidence: 1 },
+        { text: " giảm", startMs: 700, endMs: 1100, timestampMs: 700, confidence: 1 },
+        { text: " tiết", startMs: 1400, endMs: 1700, timestampMs: 1400, confidence: 1 },
+        { text: " kiệm", startMs: 1700, endMs: 2100, timestampMs: 1700, confidence: 1 },
+      ]}
+    />,
+  ],
   ["TiltFrame", <TiltFrame key="tf"><Clip /></TiltFrame>],
   ["ImageCarousel", <AbsoluteFill key="ic" style={{ backgroundColor: brand.background }}><ImageCarousel images={CAROUSEL_IMAGES} holdFrames={30} /></AbsoluteFill>],
-  ["FocusCrop", <FocusCrop key="f" src={CLIP} sourceWidth={960} sourceHeight={540} focus={[{ frame: 0, x: 0.25, y: 0.5 }, { frame: 80, x: 0.75, y: 0.5 }]} />],
   ["BeforeAfter", <BeforeAfter key="b" before={<Clip style={{ filter: "grayscale(1)" }} />} after={<Clip />} />],
   ["TextMatte", <TextMatte key="tm" text="VAY NHÀ"><KenBurns src={staticFile("sample-frame.png")} /></TextMatte>],
   ["VideoGrid", <VideoGrid key="vg" clips={[{ src: CLIP, title: "Daniel" }, { src: CLIP }, { src: CLIP }, { src: CLIP, title: "Khách" }]} />],

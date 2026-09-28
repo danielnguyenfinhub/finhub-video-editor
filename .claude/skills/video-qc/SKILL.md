@@ -30,7 +30,7 @@ commands and to `check-golden.mjs`.
    card added). Map with the SRT that `export-srt.mjs` writes (already on the output clock):
    the caption holding the moment's words starts at t s → frame round(t × 30). Cover: frame 30.
    Compliance card: the duration `npx remotion compositions` prints, minus 75 frames.
-3. **Stills** at `--scale=0.5 --gl=angle`, into `out/videos/<slug>/team/qc/`. **Open every
+3. **Stills** at `--scale=0.5 --gl=angle` with `"safeZones":true` in `--props` (the SAFE band and FACE box drawn over the frame, as A6.2 shows), into `out/videos/<slug>/team/qc/`. Anything but backdrop and Daniel outside the SAFE band, or an overlay inside the FACE box, is a finding you can point at. **Open every
    PNG and look.** FIX: clipped or overlapping text, a card over the face for more than 3 s, a
    number on screen that differs from the words (A) or the locked script and `facts.json` (B).
    BLOCK: the compliance card missing, cut off or unreadable.

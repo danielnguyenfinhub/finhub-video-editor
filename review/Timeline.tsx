@@ -1,5 +1,5 @@
-// Drag timeline for the review page: one lane each for chapters, stats and
-// cues, drawn in output time (what the viewer sees, cuts removed). Drag a block
+// Drag timeline for the review page: one lane each for chapters, stats,
+// cues and B-roll visuals, drawn in output time (what the viewer sees, cuts removed). Drag a block
 // to move it, click one to jump to it, click the track to seek; arrow keys on a
 // focused block move it by nudgeMs. A drop is mapped back to source time with
 // toSrcMs, and the whole item (inner beats included) shifts by that delta.
@@ -13,7 +13,7 @@ import {
 export type TimelineItem = {
   key: string;
   label: string;
-  field: "chapters" | "stats" | "cues";
+  field: "chapters" | "stats" | "cues" | "visuals";
   index: number;
   atMs: number;
   endMs: number;
@@ -25,6 +25,7 @@ const LANES = [
   ["chapters", "Chapters"],
   ["stats", "Stats"],
   ["cues", "Cues"],
+  ["visuals", "B-roll"],
 ] as const;
 
 export const Timeline = ({

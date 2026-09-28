@@ -119,7 +119,7 @@ or `toOutMs` (timeline.ts). Reel data: `reel.edit` (edit.json), `reel.timeline.c
   AudioRing (voice-driven: pass `src` and `frame={seg.srcFrom + frame * seg.rate}` inside
   Talk), LineGraph, ProgressBar, CountdownRing, PulseBadge, NeonTitle, StaggerTitle,
   Typewriter, NewsTicker, RgbSplitText, SlashIntro, TextMatte, Particles, NoiseField,
-  KenBurns, FocusCrop, TiltFrame, BeforeAfter, ImageCarousel, VideoGrid, ReviewStamp,
+  KenBurns, TiltFrame, BeforeAfter, ImageCarousel, VideoGrid, ReviewStamp,
   SocialHandle, CaptionBox, LineReveal, starWipe.
 - `.claude/elements/<category>/<slug>/*.tsx` (CATALOG.md): Remotion Elements to adapt:
   swap their Google font for `FONT`, their colours for brand tokens, drop
