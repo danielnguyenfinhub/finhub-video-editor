@@ -119,6 +119,18 @@ Before rendering, `node scripts/export-srt.mjs my-slug` lists every automatic cu
 
 ---
 
+## Global RE listing videos
+
+Property-listing videos for Global RE, a separate business with its own folders:
+
+1. **Copy** `3 - GLOBAL RE LISTINGS/_TEMPLATE` to a folder named after the property, fill in its `listing.txt` (Vietnamese + English labels, one "Label: value" per line) and put the photos next to it.
+2. **Ask** in the chat: "make the Global RE video for <street>". Claude checks the details, looks at every photo, writes the script and sends it to you; nothing is voiced until you approve.
+3. **Post** from `4 - GLOBAL RE FINISHED VIDEOS`: a Vietnamese-voice and an English-voice video (9:16 and a 4:5 feed copy each) and `<Topic> - caption.txt`. A file starting "TEST - " is not ready to post.
+
+How it works: [docs/agents/listing-video.md](docs/agents/listing-video.md).
+
+---
+
 ## Faceless videos (voiceover, no recording)
 
 Give Claude a document (a lender policy update, an RBA announcement, a fact sheet; never a client's file) and ask for a faceless video.
