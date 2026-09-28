@@ -1,0 +1,37 @@
+{
+  "id": "splitscreen",
+  "intents": ["news", "data", "explain"],
+  "dataShapes": ["numbers", "comparison", "steps", "narrative"],
+  "grammar": {
+    "numbers": "a big split chip on the free stage (steel half with the label, handle on the divider, navy half with the number counting up; years and dates as said); a number said while the stage is taken rides as a compact split chip on the stage's top edge",
+    "comparisons": "the slider: the divider waits far right (all BEFORE, steel pane, muted values), then sweeps left at the highlight with a small overshoot and settles in the middle, uncovering the AFTER side (navy and gold, bright value climbing from the BEFORE value); TRƯỚC / SAU tags, each card's title, huge value and rows; the question (the stated difference) as a gold bar across the bottom, or a computed difference only when both first rows are one measure in one unit",
+    "steps": "a stack of mini sliders: each point is a steel row swept open to navy by its own gold handle as it is said, top-down in spoken order",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack, mounted only while the cue is up; the stage dims under it)",
+    "change": "the slider: old value on the steel BEFORE side, the divider sweeps at swapAtMs to uncover the new value on the AFTER side (counting from the old one), the direction arrow from the data beside the SAU tag, and the difference bar only when both values are in one unit",
+    "trend": "classic line graph panel (MotionTrack, mounted only while the cue is up; the stage dims under it)",
+    "lenders": "the logo tile on white slides out from behind the divider onto the AFTER pane, neutral label on the BEFORE pane; a compact split chip with the logo when the stage is taken",
+    "captionPosition": "big on the free stage over the split (spoken words bright, the rest dim), down on the dark strip under the stage while something holds it; English line at the bottom of the strip"
+  },
+  "skinAxes": {
+    "cover": "the title across the slider stage, muted steel on the BEFORE side and bright on the AFTER side; the handle sweeps left and the whole title turns bright; logo tile on white above, subtitle in the strip",
+    "captions": "white words, keywords gold, the word being said gets a gold bar wiping in under it; big on the free stage, smaller on the dark strip while the stage is taken",
+    "framing": "pure motion graphics: no footage, no presenter; the before/after slider stage is the hero and holds the centre",
+    "transitions": "the divider parks far right, sweeps and settles for each comparison; parks left to let the hook slide out; slides the whole stage to AFTER for points; idles as a thin gold line with a gentle wobble; standard chapter transitions",
+    "texture": "cool steel pane with a drifting diagonal hatch against a brand-navy pane with a soft blue light and a gold top edge, deep-navy dot-grid backdrop, gold divider with a glowing round ◀ ▶ handle",
+    "sound": "voice + a whoosh on each sweep, cue clicks, stat ding, chapter whoosh",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": ["9:16", "4:5"],
+  "languages": ["vi", "en"],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/splitscreen/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

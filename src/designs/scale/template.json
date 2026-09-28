@@ -1,0 +1,51 @@
+{
+  "id": "scale",
+  "intents": [
+    "news",
+    "data",
+    "compare"
+  ],
+  "dataShapes": [
+    "numbers",
+    "comparison",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "a brass weight carrying the number drops onto a mini pan that swings down on a chain (the big scale dims behind it), counting up (years and dates as said); a number said while the stage is taken rides as a small chip with a tiny balance icon, top-left",
+    "comparisons": "the balance scale: card 1's value lands on the left pan, card 2's on the right, each a coin stack as tall as its value (only when both parse in the same unit, else equal); the beam tips towards the heavier side by an angle proportional to the difference (spring, capped at 14°), chains swing, dust puffs; the reel's own difference (the question), or one computed from two clean values in one unit, hangs as a gold tag from the heavier pan",
+    "steps": "numbered brass weight discs stacked top-down in spoken order, each dropping in as it is said with its text on a dark plaque (the scale dims behind them)",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack, mounted only while the cue is up; the scale dims under it)",
+    "change": "both pans hold `from` (level, the right one as a see-through ghost stack with SAU ?), at swapAtMs `to` drops onto the right pan and the beam re-tips by the proportional angle; the computed difference hangs from the heavier pan only when both values parse in the same unit",
+    "trend": "classic line graph panel (MotionTrack, mounted only while the cue is up; the scale dims under it)",
+    "lenders": "the bank's logo tile on white drops onto the mini pan, neutral label; a small logo chip top-left when the stage is taken",
+    "captionPosition": "on the dark marble floor strip under the scale, English line at the bottom of the strip"
+  },
+  "skinAxes": {
+    "cover": "the scale on the marble floor, a coin stack landing on each pan and the beam settling level, logo tile on white top-right, title on the floor strip",
+    "captions": "white words on the dark marble, keywords gold, the word being said lifts with a warm glow",
+    "framing": "pure motion graphics: no footage, no presenter; the brass balance scale is the hero and holds the centre",
+    "transitions": "weights fall and land, the beam rings to its new tilt, the empty scale sways gently between beats; standard chapter transitions",
+    "texture": "soft navy room with a pool of blue light, subtle marble veins on the floor, brass gradients on beam, pillar, chains and coins, pointer and tick arc on the pillar",
+    "sound": "voice + a clack on each weight landing, a whip on each change swap, stat ding, chapter whoosh, point clicks",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/scale/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}
