@@ -1,0 +1,51 @@
+{
+  "id": "bigdigit",
+  "intents": [
+    "news",
+    "data"
+  ],
+  "dataShapes": [
+    "numbers",
+    "comparison",
+    "steps",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "one enormous number owns the stage: it assembles character by character, rising in hollow (hairline outline) and filling solid black; a stat or date in the giant size, an automatic figure at half size; a figure said while the stage is taken rides as a small chip bottom-right; never counts up",
+    "comparisons": "two-column table with hairline rules: column titles, small-caps row labels, values assembling in black (tone colour only for good/bad rows), the highlighted column gets an accent underline, the question in the accent under a rule",
+    "steps": "numbered typographic list: hollow numerals that fill as each point is said, items appear top-down in spoken order, hairline rules between rows",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack, mounted only while it is up)",
+    "change": "the old value huge and hollow; at swapAtMs each column rolls odometer-style (staggered, in the data's direction) into the new value and lands solid, a thick arrow draws only when the data gives a direction (tone colour only when the data gives one), the old value shrinks to a small 'trước: …' caption",
+    "trend": "hairline line chart that draws itself, every value printed in Vietnamese format, the last point in the accent",
+    "banks": "logo on white with a hairline frame on the stage, neutral small-caps label; a chip bottom-right when the stage is taken",
+    "captionPosition": "left-aligned semi-bold under the lower rule while the stage is busy, larger on the stage when it is free; keywords and numbers in the logo blue, the word being said underlined; English line in slate on SAFE.bottom"
+  },
+  "skinAxes": {
+    "cover": "white paper, logo tile top-left, thick rule, the title set big in black with keywords in blue, subtitle in small caps",
+    "captions": "calm semi-bold navy on white, unsaid words in slate, keywords blue, current word underlined",
+    "framing": "pure motion graphics, no footage: white Swiss grid page with a header (brand or chapter + title) and a progress rule",
+    "transitions": "rules drawing, digits rising and rolling, a slow push-in on every held number; standard chapter transitions",
+    "texture": "flat white paper, faint 6-column grid, a slow baseline sweep; no glow, no shake",
+    "sound": "voice + clicks on list rows, compare columns and the value swap; ding on a stat",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/bigdigit/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

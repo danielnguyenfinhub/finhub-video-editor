@@ -1,0 +1,37 @@
+{
+  "id": "pulse",
+  "intents": ["news", "data"],
+  "dataShapes": ["numbers", "narrative"],
+  "grammar": {
+    "numbers": "the gold line spikes up into the number (hook and every figure); a date or year drops a vertical marker at the right edge with the date on it",
+    "comparisons": "classic compare panel (MotionTrack)",
+    "steps": "classic points panel (MotionTrack)",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "line runs flat at the old level, then steps to the new level at swapAtMs in the data's direction; dashed guide and value label at each level, the gap shaded",
+    "trend": "the real points drawn as the line with every value printed, y-axis labelled at the data's low and high, x labels underneath",
+    "lenders": "logo tile over a small blip on the line, neutral label; a chip at the right of the header when the stage is taken",
+    "captionPosition": "fixed band under the chart, English line with a thin gold rule on SAFE.bottom"
+  },
+  "skinAxes": {
+    "cover": "the gold line draws a heartbeat and a big spike across the monitor, logo tile on white above, title under the chart",
+    "captions": "white words, the current word glows and lifts, keywords gold",
+    "framing": "pure motion graphics: no footage, no presenter; a line-chart monitor is the stage",
+    "transitions": "the line redraws left to right for every beat; standard chapter transitions",
+    "texture": "navy monitor, faint grid scrolling slowly, y-axis ticks, scanlines, gold glow",
+    "sound": "voice + dings on stats and the change step, cue clicks",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": ["9:16", "4:5"],
+  "languages": ["vi", "en"],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/pulse/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}
