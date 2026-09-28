@@ -1,0 +1,52 @@
+{
+  "id": "kinetic",
+  "intents": [
+    "hook",
+    "explain",
+    "myth",
+    "data"
+  ],
+  "dataShapes": [
+    "narrative",
+    "steps",
+    "comparison",
+    "numbers"
+  ],
+  "grammar": {
+    "numbers": "GIANT counter filling the width over a thick fill bar, in the block's accent colour",
+    "comparisons": "frame splits into a navy and a gold block on a slanted seam, VS crashes into the seam, values slam in",
+    "steps": "numbered lines (01, 02…): the line being said is huge, earlier ones shrink into a stacked list",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "classic change panel (MotionTrack): old value slides out, new value slides in",
+    "trend": "classic navy line graph panel (MotionTrack)",
+    "captionPosition": "huge in the middle of the block when the stage is free, shrinks into the bottom slab when busy; English line small on the slab"
+  },
+  "skinAxes": {
+    "cover": "navy block + gold slab, title as a stack of upper-case slammed lines, numbers boxed",
+    "captions": "kinetic type up to 132 px: words ghosted then slammed in as said, keywords in accent with a drawn bar, numbers boxed",
+    "framing": "no footage: flat brand colour blocks (navy / gold / white) with a slanted contrasting slab",
+    "transitions": "block wipes on every sentence/pause and stage beat (four directions, logo-blue leading stripe)",
+    "texture": "flat colour, no grain",
+    "sound": "voice + cue clicks",
+    "cta": "white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/kinetic/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

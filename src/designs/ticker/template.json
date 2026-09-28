@@ -1,0 +1,52 @@
+{
+  "id": "ticker",
+  "intents": [
+    "data",
+    "explain",
+    "news"
+  ],
+  "dataShapes": [
+    "numbers",
+    "comparison",
+    "steps",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "split-flap digit tiles that flip into the figure, a meter bar (percent on a 10 % scale, else full) and a neutral tick line (no up/down unless the data says so)",
+    "comparisons": "bid/ask board: two columns, values flip in on tiles, VS disc, tone colour only for good/bad rows, question on an LED strip",
+    "steps": "departure board: every slot shown from the start, rows flip in and light amber as each is said, done rows turn sky",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "classic change card, value-swap (MotionTrack)",
+    "trend": "classic line graph (MotionTrack), shrunk to the stage",
+    "banks": "quote card row: logo on white + neutral label, no prices",
+    "captionPosition": "big on the board when the stage is free, LED strip above the ticker tape while it is busy; current word lit amber; English line in sky under the tape"
+  },
+  "skinAxes": {
+    "cover": "exchange-board card: status label, split-flap title, logo tile above, ticker tape",
+    "captions": "bold white on a dark strip, current word as an amber LED block, keywords amber",
+    "framing": "pure motion graphics, no footage: near-black navy board",
+    "transitions": "split-flap flips, row lights, tape scroll",
+    "texture": "LED dot matrix, scanlines, sweeping scan beam, vignette",
+    "sound": "voice + flap clicks on board rows and compare cards",
+    "cta": "white contact card + compliance card (classic outro)"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/ticker/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

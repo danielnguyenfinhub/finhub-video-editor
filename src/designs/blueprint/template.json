@@ -1,0 +1,52 @@
+{
+  "id": "blueprint",
+  "intents": [
+    "explain",
+    "process",
+    "data"
+  ],
+  "dataShapes": [
+    "narrative",
+    "steps",
+    "comparison",
+    "numbers"
+  ],
+  "grammar": {
+    "numbers": "CAD dimension line drawn between two extension lines, the value counting up above it; a percentage is an arc traced round a protractor",
+    "comparisons": "two stroke-drawn columns, dashed centre line, VS in a drawn circle, the takeaway in a drawn amber box",
+    "steps": "numbered callouts: circle numerals drawn one by one on a dashed spine, a leader line out to each item",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "classic navy change card (MotionTrack), dropped to the top of the stage",
+    "trend": "classic line graph (MotionTrack), dropped to the top of the stage",
+    "lenders": "logo in a drawn detail-callout circle with a leader line to a neutral label",
+    "captionPosition": "fixed annotation label box under the stage (bottom y 1300); English note at the foot of the safe band"
+  },
+  "skinAxes": {
+    "cover": "blueprint sheet, logo tile, title inside a drawn frame with dimension ticks",
+    "captions": "white words in a thin outlined label box with amber corner ticks; keywords amber; English as an italic note under a dashed rule",
+    "framing": "no footage and no person: pure line-art motion graphics on a navy blueprint sheet",
+    "transitions": "every element traced on with stroke animation, fades out; chapters redraw the title block",
+    "texture": "fine and major cyan grid panning slowly, sheet border and registration marks, a house elevation traced part by part while the stage is free",
+    "sound": "voice + click sfx on callouts and columns",
+    "cta": "white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/blueprint/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}
