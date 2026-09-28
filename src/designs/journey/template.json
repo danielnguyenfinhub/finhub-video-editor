@@ -1,0 +1,52 @@
+{
+  "id": "journey",
+  "intents": [
+    "explain",
+    "process",
+    "data"
+  ],
+  "dataShapes": [
+    "steps",
+    "numbers",
+    "comparison",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "a signpost pops up beside the map pin: big number (counts up, years and dates as said) over a tiny route chart filled to the value; a number said while the stage is taken rides as a small flag chip left of the pin",
+    "comparisons": "a fork in the road: two branches from the pin, a signboard at each end, a VS stone at the junction, the question on a ribbon banner",
+    "steps": "a route plan: numbered milestones on a winding trail climbing from the pin, each lighting up as it is said while the pin hops onto it",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack, mounted only while the cue is up)",
+    "change": "classic change cue (MotionTrack, mounted only while the cue is up)",
+    "trend": "classic line graph panel (MotionTrack, mounted only while the cue is up)",
+    "lenders": "roadside sign right of the pin: logo on white, neutral label",
+    "captionPosition": "fixed white map ribbon under the pin, English line in a dashed plate at the bottom"
+  },
+  "skinAxes": {
+    "cover": "the map with the pin at the road's start, logo tile on white, title in an old map's title cartouche, compass rose",
+    "captions": "navy words on a white ribbon with notched ends and a gold top edge; keywords blue with a gold underline",
+    "framing": "pure motion graphics: no footage, no presenter; a gold pin travels an S-curved road at the talk's pace and the camera follows it",
+    "transitions": "the map keeps sliding under the pin (tilt towards the road's heading, slow zoom); flags planted at every beat; standard chapter transitions",
+    "texture": "illustrated top-down map: pale sand land, brand-blue river, mint trees, contour rings, tiny houses, faint graticule, warm printed-map edges",
+    "sound": "voice + cue clicks, stat ding, chapter whoosh",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/journey/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

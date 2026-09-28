@@ -1,0 +1,52 @@
+{
+  "id": "whiteboard",
+  "intents": [
+    "explain",
+    "process",
+    "data"
+  ],
+  "dataShapes": [
+    "steps",
+    "narrative",
+    "numbers",
+    "comparison"
+  ],
+  "grammar": {
+    "numbers": "the number written large in navy marker, then circled in gold (stat) or boxed in blue (spoken number), a doodle beside it (calendar, percent, coins, bank, trend arrow), a curved arrow to its label; a percentage gets a hatched sketch bar; a number said during the hook is a small circled note in the corner",
+    "comparisons": "the board split by a hand-drawn vertical line into two columns, VS circled in red at the top, values written large, the highlighted value underlined twice, the takeaway under a gold highlighter swipe",
+    "steps": "a hand-numbered list under an underlined title; each item written, its box ticked in green marker as it is said, the current item under a gold highlighter",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack navy panel on the board)",
+    "change": "classic change card (MotionTrack navy panel on the board)",
+    "trend": "classic trend graph (MotionTrack navy panel on the board)",
+    "lenders": "the logo on a white card taped to the board, a neutral note written above with a hand-drawn arrow down to it",
+    "captionPosition": "navy marker words mid-board under a doodle when the board is free, a lower band when something is drawn; English line at the foot of the board"
+  },
+  "skinAxes": {
+    "cover": "whiteboard, house doodle drawn, title written in navy marker and underlined twice, keywords under gold highlighter, logo card top-right",
+    "captions": "bold navy words written on the board, unspoken words faint, keywords and numbers under a gold highlighter swipe",
+    "framing": "pure motion graphics on a white whiteboard in an aluminium frame; no footage, no one on screen",
+    "transitions": "everything is drawn in (writing wipes, stroke-by-stroke doodles, rough circles and boxes) and wiped off with an eraser pass; standard chapter transitions",
+    "texture": "glossy white board with faint ghosts of erased marker, a slow sheen, aluminium frame, marker tray with three markers",
+    "sound": "voice + cue clicks, stat ding",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/whiteboard/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

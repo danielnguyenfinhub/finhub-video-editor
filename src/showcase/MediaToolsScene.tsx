@@ -307,7 +307,7 @@ export const MediaToolsScene: React.FC = () => {
         // The samples carry no rate of their own, so take the one parseMedia()
         // read from the file rather than assuming it.
         if (wavSampleRate === null) throw new Error("parseMedia(wav) reported no sample rate");
-        const original = new AudioData({format: "f32", sampleRate: wavSampleRate, numberOfFrames: samples.length, numberOfChannels: 1, timestamp: 0, data: samples});
+        const original = new AudioData({format: "f32", sampleRate: wavSampleRate, numberOfFrames: samples.length, numberOfChannels: 1, timestamp: 0, data: new Float32Array(samples)});
         // 16kHz 16-bit PCM is the input whisper.cpp expects.
         const resampled = convertAudioData({audioData: original, newSampleRate: 16000, format: "s16"});
         const text = `${samples.length} samples @ ${wavSampleRate}Hz, peak ${peak.toFixed(2)} → ${resampled.numberOfFrames} ${resampled.format} at ${resampled.sampleRate}Hz`;

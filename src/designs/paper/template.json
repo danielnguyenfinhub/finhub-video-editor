@@ -1,0 +1,51 @@
+{
+  "id": "paper",
+  "intents": [
+    "explain",
+    "process",
+    "data"
+  ],
+  "dataShapes": [
+    "narrative",
+    "steps",
+    "comparison",
+    "numbers"
+  ],
+  "grammar": {
+    "numbers": "navy paper card: stat with a paper-cut ring (gold and white arcs), spoken number counts up over a stacked-paper bar",
+    "comparisons": "two paper cards side by side (white, navy) with a round gold VS sticker; the takeaway on a torn gold strip",
+    "steps": "numbered white note cards dealt one by one under a taped navy title strip",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack, navy panel on the stage)",
+    "change": "classic change card (MotionTrack, navy panel on the stage)",
+    "trend": "classic trend graph (MotionTrack, navy panel on the stage)",
+    "captionPosition": "torn white paper strip mid-stage, drops to a lower band when the stage is busy; English slip at the bottom"
+  },
+  "skinAxes": {
+    "cover": "cream desk, taped navy title card + torn white subtitle strip, logo tile top-right",
+    "captions": "navy words on a torn white paper strip, keywords under a gold highlighter stroke",
+    "framing": "pure motion graphics on a light cream paper desk; no footage, no one on screen",
+    "transitions": "paper sheets drop in with a bounce and tilt, lift off at the end",
+    "texture": "paper grain, soft layered paper shadows, gold washi tape, drifting cut-paper houses, coins and clouds",
+    "sound": "voice + paper click on each card",
+    "cta": "white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/paper/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

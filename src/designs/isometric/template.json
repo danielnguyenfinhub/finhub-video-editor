@@ -1,0 +1,52 @@
+{
+  "id": "isometric",
+  "intents": [
+    "explain",
+    "data",
+    "process"
+  ],
+  "dataShapes": [
+    "numbers",
+    "comparison",
+    "steps",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "built on the island's plaza: a % is a glass cube filling with gold, money a coin column, anything else a tower rising floor by floor; the value on a floating white slab above it (a number said while the plaza is taken rides as a small chip, top-left)",
+    "comparisons": "two gold coin towers on the island growing to their values, titles and values on white slabs, a gold VS block between them, the takeaway on a navy slab at the front",
+    "steps": "numbered isometric steps rising one by one down the left of the island (the current one gold), each line on a floating white slab; the city fades back",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "classic change cue, old value slides out, new value slides in (MotionTrack)",
+    "trend": "classic line graph panel (MotionTrack)",
+    "lenders": "logo on a white sign-board rising on two posts from the plaza, neutral label; a small sign in the chip lane when the plaza is taken",
+    "captionPosition": "white words on a navy slab at the island's front edge, English line on a pale slab at the bottom"
+  },
+  "skinAxes": {
+    "cover": "the floating island city building itself, logo tile on white top-centre, title on a floating white billboard slab",
+    "captions": "white words on a navy isometric slab with a blue edge, keywords amber, the word being said lifts like a block",
+    "framing": "pure motion graphics: no footage, no presenter; a floating isometric island city with a drifting camera",
+    "transitions": "blocks spring up and sink back on the plaza; standard chapter transitions",
+    "texture": "flat isometric blocks with lit windows, a gold-roofed home on the plaza between beats, pale-sky-to-navy gradient, drifting clouds, coins dropping on roofs, slab edges",
+    "sound": "voice + cue clicks",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/isometric/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

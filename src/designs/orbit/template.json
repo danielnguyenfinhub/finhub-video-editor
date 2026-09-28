@@ -1,0 +1,52 @@
+{
+  "id": "orbit",
+  "intents": [
+    "explain",
+    "data",
+    "process"
+  ],
+  "dataShapes": [
+    "numbers",
+    "steps",
+    "comparison",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "number inside the glowing core, an orbit arc sweeping round it as a radial gauge (a second number at once rides as a moon on the outer orbit)",
+    "comparisons": "two planets with orbit arcs and the shrunken core as the VS node between them",
+    "steps": "vertical glowing timeline starting at the docked core; each point a node that lights up, text on a glass card",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "classic change cue, old value slides out, new value slides in (MotionTrack value-swap)",
+    "trend": "classic line graph panel (MotionTrack)",
+    "lenders": "logo tile spirals in on an orbit and docks on the core, neutral label",
+    "captionPosition": "fixed band under the core, English line in a glass box at the bottom"
+  },
+  "skinAxes": {
+    "cover": "the core and orbit rings on deep navy, logo tile on white, title under the core",
+    "captions": "clean white words, the current word glows, keywords amber",
+    "framing": "pure motion graphics: no footage, no presenter; the voice-reactive core is the presenter",
+    "transitions": "core moves and resizes between hook, figures, points and compare; standard chapter transitions",
+    "texture": "starfield drift, thin orbit rings with travelling dots, soft blue glow, glass panels",
+    "sound": "voice + cue clicks",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/orbit/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}
