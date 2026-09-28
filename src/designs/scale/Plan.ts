@@ -24,6 +24,8 @@ import {
 
 export const BEFORE = "TRƯỚC";
 export const AFTER = "SAU";
+// A change between two rates is in percentage points, not percent.
+export const POINTS = "điểm %";
 
 const WAIT = 15;
 export const FALL = 9; // frames a weight falls before it lands
@@ -78,7 +80,7 @@ const fmt = (v: number, decimals: number, grouped: boolean) =>
     useGrouping: grouped,
   });
 
-// "+0,75%", "−287": b − a when both are clean and in the same unit, else null.
+// "+0,75" + POINTS, "−287": b − a when both are clean and in the same unit, else null.
 export const differenceOf = (a: string, b: string): string | null => {
   const pa = parseValue(a);
   const pb = parseValue(b);
@@ -89,7 +91,7 @@ export const differenceOf = (a: string, b: string): string | null => {
   const body = fmt(Math.abs(d), decimals, pa.grouped || pb.grouped);
   const unit = pa.unit.replace("$", "");
   const money = pa.unit.startsWith("$") ? "$" : "";
-  const tail = unit === "%" ? "%" : unit ? ` ${unit}` : "";
+  const tail = unit === "%" ? ` ${POINTS}` : unit ? ` ${unit}` : "";
   return `${d > 0 ? "+" : "−"}${money}${body}${tail}`;
 };
 
@@ -383,8 +385,8 @@ export const selfCheck = () => {
   eq(parseValue("4,35%")?.value, 4.35);
   eq(parseValue("29/9"), null);
   eq(differenceOf("3.388", "3.675"), "+287");
-  eq(differenceOf("3,6%", "4,35%"), "+0,75%");
-  eq(differenceOf("5,89%", "5,64%"), "−0,25%");
+  eq(differenceOf("3,6%", "4,35%"), `+0,75 ${POINTS}`);
+  eq(differenceOf("5,89%", "5,64%"), `−0,25 ${POINTS}`);
   eq(differenceOf("3,6%", "600"), null);
   eq(weigh("a", "b").tilt, 0);
   eq(weigh("5,89%", "5,64%").tilt < 0, true);

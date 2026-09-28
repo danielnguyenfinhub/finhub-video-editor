@@ -39,7 +39,7 @@ import { Outro } from "../classic/Outro";
 import { CHAPTER_WORD, Captions, Chapters, EnglishLine } from "./Captions";
 import { CueTrack } from "./Cues";
 import { HeroLayer, LENDER_LABEL } from "./MiniPan";
-import { AFTER, BEFORE, FALL, planOf, type Span } from "./Plan";
+import { AFTER, BEFORE, FALL, POINTS, planOf, type Span } from "./Plan";
 import { FLOOR, GOLD, ScaleRig, ScaleRoom, useFontReady } from "./Scale";
 import { ScaleStage, angleAt } from "./Stage";
 
@@ -214,6 +214,7 @@ export const scale: Design = {
   copy: [
     BEFORE,
     AFTER,
+    POINTS,
     LENDER_LABEL,
     CHAPTER_WORD,
     "?",
