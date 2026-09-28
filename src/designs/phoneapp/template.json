@@ -1,0 +1,52 @@
+{
+  "id": "phoneapp",
+  "intents": [
+    "explain",
+    "data",
+    "process",
+    "compare"
+  ],
+  "dataShapes": [
+    "numbers",
+    "steps",
+    "comparison"
+  ],
+  "grammar": {
+    "numbers": "app widget card on the phone screen: the big number counting up beside a gold progress ring filling (a rate on a 10 % scale); a number that lands while the screen is taken floats as a small white chip above the phone",
+    "comparisons": "a page pushed onto the app: two white cards side by side with a navy VS badge, each value with a bar sized against the other, the question as a gold banner",
+    "steps": "a checklist page pushed onto the app: each item slides up when said, its round box is tapped (ripple) and ticked gold, a progress bar and n/N count fill",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack), the phone dims under it",
+    "change": "classic change cue (MotionTrack), the phone dims under it",
+    "trend": "classic line graph panel (MotionTrack), the phone dims under it",
+    "lenders": "app list row sliding in with the logo on its white tile under a neutral ĐANG NHẮC TỚI label",
+    "captionPosition": "frosted navy bar under the phone (over its faded lower edge), English line in a smaller bar on SAFE.bottom"
+  },
+  "skinAxes": {
+    "cover": "title large over the gradient, logo tile top-left, the phone rising from below with the subtitle as a push notification",
+    "captions": "white words on a frosted navy bar, keywords and numbers gold, the spoken word underlined gold",
+    "framing": "pure motion graphics: a generic unbranded phone on a navy to logo-blue gradient; no footage, no presenter",
+    "transitions": "hook as a push notification that opens into a card; cues push pages from the right; standard chapter transitions",
+    "texture": "soft blurred brand shapes drifting, the phone floating, tap ripples, a shimmering loading feed between beats",
+    "sound": "voice + a notification ding on the hook + cue clicks",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 50,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/phoneapp/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

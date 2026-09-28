@@ -1,0 +1,37 @@
+{
+  "id": "retro",
+  "intents": ["explain", "promote", "engage"],
+  "dataShapes": ["numbers", "steps", "comparison", "narrative"],
+  "grammar": {
+    "numbers": "number inside a big spinning gold starburst sticker with a CON SỐ kicker, screen-printed type with a hard shadow; a percentage adds a halftone bar; a number said during the hook is a small cream sticker in the corner",
+    "comparisons": "two poster panels (cream and navy, halftone texture, hard shadow) with a spinning starburst VS between them and the question on a gold ribbon",
+    "steps": "ribbon title, then one row per point numbered by a round rubber stamp that thumps in with a bounce and a gold ink smudge",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "classic change cue (MotionTrack)",
+    "trend": "classic line graph panel (MotionTrack)",
+    "lenders": "logo on a white notched coupon with a dashed border and hard shadow, neutral label",
+    "captionPosition": "cream ribbon mid-stage when the stage is free, stepping down to a lower band while something holds it; English line on a small cream strip at the bottom"
+  },
+  "skinAxes": {
+    "cover": "sunburst poster, logo tile on white, title in heavy screen-printed type, subtitle on a navy ribbon, three starburst stickers",
+    "captions": "heavy navy words with a hard gold offset shadow on a cream ribbon with notched tails, keywords and numbers in blue ink blocks",
+    "framing": "pure motion graphics: no footage, no presenter; a 60s-80s pop-art print poster",
+    "transitions": "stamp and slap-on entrances (overshoot and bounce); standard chapter transitions",
+    "texture": "slowly turning sunburst rays in cream and gold, halftone dots with a mis-registered gold plate, paper grain, navy poster border",
+    "sound": "voice + cue clicks",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": ["9:16", "4:5"],
+  "languages": ["vi", "en"],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/retro/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}
