@@ -1,0 +1,52 @@
+{
+  "id": "flipcard",
+  "intents": [
+    "data",
+    "news",
+    "explain"
+  ],
+  "dataShapes": [
+    "numbers",
+    "comparison",
+    "steps",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "a mini gold card dealt face-down into the lane under the logo and turned over to the number (counts up; a year or date shown as said), a stat's own label beside it",
+    "comparisons": "one hero card in 3D: the first card's title and rows on the navy-foil front, the second's on the gold-foil back; it turns over on its Y axis (sheen, stretching shadow) once the first value is read, the second card's title waiting on a ribbon; after it a ribbon unfurls with the reel's own question, or a difference only when the first rows share a label and both parse in the same unit",
+    "steps": "a deck: each point dealt off a face-down stack and turned face-up as it is said, earlier ones fanned behind top-down in spoken order, the current one gold",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "the hero card: TRƯỚC front (label, old value) turns over at the swap to the SAU back (new value, an arrow only when the cue gives a direction, the old value small on a pill); a difference ribbon only when both values parse with the same unit",
+    "trend": "classic line graph panel (MotionTrack, kept above the caption strip)",
+    "lenders": "the hero card turns over to a white face with the logo and a neutral label; named while the stage is busy, a small white chip on the lane's right",
+    "captionPosition": "fixed dark strip under the stage, keywords gold, the word being said lifted on a small gold card; English line in italics under it"
+  },
+  "skinAxes": {
+    "cover": "logo tile on white, the card dealt face-down and turned over to the title on its gold face, subtitle under it",
+    "captions": "bold white on a dark rounded strip with a faint gold edge, keywords gold, current word on a tilted gold card",
+    "framing": "pure motion graphics: no footage, no presenter; the hero card floats and tilts on a dark navy stage with soft bokeh (parallax)",
+    "transitions": "cards dealt in from below with a small spin, Y-axis turn-overs with a sheen and a stretching shadow; standard chapter transitions",
+    "texture": "navy and gold foil guilloche faces, soft blue and gold bokeh, light sweeps across the card",
+    "sound": "voice + a whoosh on the change turn-over, clicks on dealt points and compare cards",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "med",
+  "preview": "src/designs/flipcard/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-29"
+}
