@@ -30,7 +30,10 @@ script: `references/listing-script.md`. Read both before the first step.
 2. **Look at every photo** (Read each `public/listings/<slug>/photos/NN.jpg`; a 640 px copy is
    enough). Note what is visibly there, the tour order, a focus point per photo, and anything
    that looks virtually staged, a duplicate room, or a street number visible early.
-3. **Write `script.json`** to `references/listing-script.md`, then
+3. **Write `script.json`** to `references/listing-script.md`: each photo scene goes
+   feature → benefit → feeling (what it is, what it gives the family, a relatable moment);
+   the intro opens on an emotion; the tour is the strongest 10–11 photos; the whole video
+   is 90–100 s or less. Then
    `node scripts/voice-video.mjs <slug> --listing --dry-run`. Rewrite every flagged line.
 4. **Gate: Daniel approves the script** (send it as a readable VI / EN list with the
    "to confirm with the agent" and "TEST only" lines). Nothing is voiced before this.
@@ -66,6 +69,8 @@ different layout), or the home is tenanted without photo consent, stop and tell 
 
 | Anti-pattern | Why it fails | Correct behaviour |
 |---|---|---|
+| A spec list with no benefit or feeling ("bếp mặt đá, ba phòng tắm") | Daniel: viewers must relate; specs alone don't sell | Feature → what it gives them → a moment ("…nấu mâm cơm ngày Tết, các con làm bài bên cạnh") |
+| A feeling written as a promise ("chắc chắn hạnh phúc", "sure to grow") | Guarantee or future claim (ACL s 4) | "Hãy hình dung…", "có thể…" |
 | Writing lines from the listing text without opening the photos | The picture and the words disagree on screen | Read every photo; each scene's words describe that photo |
 | Street or number in the intro | Daniel's brief: suburb only until the address reveal | Intro names the suburb; the full address comes at the end |
 | "Walk to", "close to", "minutes from" | NSW Fair Trading wants measured distances; the guard blocks them | Use only the agent's "Nearby" items, in km or metres |
