@@ -55,6 +55,12 @@ int8, `language="vi"`). Compare with `words.json`. A clipped or missing word at 
 (owner editor). Also check the durations and that audio is present (`ffprobe`). Whisper
 inventing "cảm ơn các bạn đã theo dõi" on silence is not a finding.
 
+Then the **sweep**: `render-video.py` leaves one small frame per visual change in
+`out/videos/<slug>/team/qc/sweep/` (`sweep.json` lists them with their times; re-make with
+`node scripts/sweep-render.mjs <slug>`). **Open every frame and look.** These are the moments
+nobody named in `edit.json`: a cutaway that lands late, an element up over a spoken number, a
+card that never finished animating. Anything wrong → FIX with the frame's time as evidence.
+
 ## Verdict
 
 - **BLOCK** — schema fails, compliance card missing or unreadable, a file needed can't be

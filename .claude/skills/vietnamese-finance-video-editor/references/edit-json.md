@@ -27,7 +27,7 @@ the render with a readable error). Full worked example: `public/videos/ty-do/edi
 |---|---|---|
 | `design` | no | The look: a folder in `src/designs/` registered in `src/designs/index.ts` (default `"classic"`). An unknown name fails the render and lists the designs there are |
 | `cut` | no | Automatic cuts, each on unless false: `{fillers?, stutters?, badWords?, words?: []}`. Restarts in different words still need `remove` |
-| `music` | no | `{file: "music/<name>.mp3", volume?}` looped bed, auto-ducked under speech |
+| `music` | no | `{file: "music/<name>.mp3", volume?, startMs?}` looped bed from `startMs` (`node scripts/music-start.mjs <file>` suggests it), auto-ducked under speech |
 | `title` | yes | Cover headline and thumbnail text, Vietnamese, ≤ 8 words. Numbers and keyword-list words are auto-highlighted |
 | `subtitle` | no | Cover chip. Default "Daniel Nguyen · Finance Hub" |
 | `coverFrameMs` | no | Source ms of the frozen frame behind the cover. Pick a frame with Daniel's eyes open, facing camera |

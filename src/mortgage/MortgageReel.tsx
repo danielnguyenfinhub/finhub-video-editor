@@ -225,6 +225,7 @@ const Music: React.FC<{
   return (
     <Audio
       src={staticFile(music.file)}
+      trimBefore={Math.round(((music.startMs ?? 0) * fps) / 1000)}
       loop
       // The volume curve follows the video, not each pass through the track.
       loopVolumeCurveBehavior="extend"

@@ -230,9 +230,14 @@ export const editSchema = z.strictObject({
     .optional(),
   // Background music from public/, e.g. "music/calm-piano.mp3", looped under
   // the whole video. volume (default 0.3) is its level on the cover, in pauses
-  // and on the end cards; it dips automatically while Daniel talks.
+  // and on the end cards; it dips automatically while Daniel talks. startMs
+  // skips the track's quiet intro (node scripts/music-start.mjs <file> finds it).
   music: z
-    .strictObject({ file: text, volume: z.number().min(0).max(1).optional() })
+    .strictObject({
+      file: text,
+      volume: z.number().min(0).max(1).optional(),
+      startMs: z.number().int().min(0).optional(),
+    })
     .optional(),
   // Colour grade on the talking-head footage (not the cover or end cards).
   // Left out, the footage plays as recorded.

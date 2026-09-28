@@ -20,7 +20,8 @@ foreground.webm joined the same way when every take has one). The slug's
 edit.json then names that recording. b-roll entries are only listed.
 
 1. public/recordings/<id>/source.mp4: a short-GOP proxy (a keyframe every 15
-   frames) so every OffthreadVideo seek is cheap; phone originals often have one
+   frames) so every OffthreadVideo seek is cheap; a landscape or square
+   recording is cropped to 9:16 around the face first (scripts/reframe.py); phone originals often have one
    keyframe every 8 s, which times out parallel renders. Checked frame-for-frame
    against the original, so transcript timestamps apply to both. Its audio gets
    the VOICE_CLEANUP chain below unless --no-clean (for an already clean
@@ -95,11 +96,27 @@ def frame_count(path: Path) -> int:
     return int(out)
 
 
+def reframe_args(src: Path) -> list[str]:
+    """A landscape or square recording is cropped to 9:16 around Daniel's face
+    (scripts/reframe.py) so the templates' centre crop doesn't lose him; a
+    portrait one passes through. Prints what it found."""
+    _, width, height = video_format(src)
+    print(f"Source is {width}x{height} ({'portrait' if height > width else 'landscape/square'}).")
+    if height * 9 >= width * 16 - 2:  # already 9:16 or taller
+        return []
+    from reframe import face_crop
+    c = face_crop(src, width, height)
+    print(f"Cropping to {c['w']}x{c['h']} at ({c['x']}, {c['y']}): {c['reason']}.")
+    if c.get("warning"):
+        print(f"WARNING: {c['warning']}")
+    return ["-vf", f"crop={c['w']}:{c['h']}:{c['x']}:{c['y']}"]
+
+
 def make_proxy(src: Path, proxy: Path, clean: bool) -> None:
     print(f"Encoding proxy -> {proxy} "
           f"({'voice clean-up' if clean else 'audio as recorded'}) ...", flush=True)
     run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(src),
-         *PROXY_VIDEO, *(["-af", VOICE_CLEANUP] if clean else []),
+         *reframe_args(src), *PROXY_VIDEO, *(["-af", VOICE_CLEANUP] if clean else []),
          *PROXY_AUDIO, str(proxy)], "proxy encode")
     original, copy = frame_count(src), frame_count(proxy)
     if original != copy:
