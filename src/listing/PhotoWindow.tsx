@@ -34,7 +34,8 @@ export const PhotoWindow: React.FC<{
   frames: number;
   push?: number; // how far it zooms over the beat
   dim?: number; // 0..1 darkening, for cards over the photo
-}> = ({ slug, photo, focus, frames, push = 0.14, dim = 0 }) => {
+  blur?: { x: number; y: number; w: number; h: number }[];
+}> = ({ slug, photo, focus, frames, push = 0.14, dim = 0, blur }) => {
   const frame = useCurrentFrame();
   const src = staticFile(`listings/${slug}/photos/${photo.file}`);
   const b = photoBox(photo, focus);
@@ -69,11 +70,9 @@ export const PhotoWindow: React.FC<{
             "linear-gradient(to bottom, transparent 0, #000 70px, #000 calc(100% - 70px), transparent 100%)",
         }}
       >
-        <Img
-          src={src}
+        <div
           style={{
             position: "absolute",
-            maxWidth: "none",
             left: b.ox,
             top: b.oy,
             width: b.dw,
@@ -81,7 +80,23 @@ export const PhotoWindow: React.FC<{
             transformOrigin: `${b.fx - b.ox}px ${b.fy - b.oy}px`,
             transform: `scale(${zoom})`,
           }}
-        />
+        >
+          <Img src={src} style={{ width: "100%", height: "100%", maxWidth: "none" }} />
+          {(blur ?? []).map((r) => (
+            <div
+              key={`${r.x}-${r.y}`}
+              style={{
+                position: "absolute",
+                left: `${r.x * 100}%`,
+                top: `${r.y * 100}%`,
+                width: `${r.w * 100}%`,
+                height: `${r.h * 100}%`,
+                backdropFilter: "blur(14px)",
+                borderRadius: 8,
+              }}
+            />
+          ))}
+        </div>
       </div>
       {dim > 0 ? (
         <AbsoluteFill style={{ backgroundColor: `rgba(8,12,22,${dim})` }} />

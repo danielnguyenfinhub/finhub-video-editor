@@ -54,6 +54,7 @@ export const IntroCard: React.FC<{
         frames={frames}
         push={0.08}
         dim={0.55}
+        blur={scene.blur}
       />
       <AbsoluteFill
         style={{

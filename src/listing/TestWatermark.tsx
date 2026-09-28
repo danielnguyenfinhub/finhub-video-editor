@@ -47,7 +47,7 @@ export const TestWatermark: React.FC<{ unknowns: string[] }> = ({
         fontWeight: 700,
       }}
     >
-      {unknowns.length ? `TEST — thiếu / missing: ${unknowns.join(", ")}` : "TEST — thử quy trình, không đăng / pipeline test, not for posting"}
+      {unknowns.length ? `TEST — thiếu / missing: ${unknowns.join(", ")}` : "TEST — giá trị giả định, không đăng / assumed values, not for posting"}
     </div>
   </AbsoluteFill>
 );

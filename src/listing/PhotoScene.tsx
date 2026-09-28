@@ -81,6 +81,7 @@ export const PhotoScene: React.FC<{
         photo={photo}
         focus={scene.focus}
         frames={frames}
+        blur={scene.blur}
       />
       {/* Readability for the captions over the lower photo. */}
       <AbsoluteFill

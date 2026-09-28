@@ -72,6 +72,9 @@ export const sceneSchema = z.object({
     .object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) })
     .optional(),
   highlight: z.string().optional(), // "Bếp đảo đá / Stone island kitchen"
+  // Areas of the photo to blur (0-1 of the photo), e.g. a letterbox number
+  // readable before the address reveal.
+  blur: z.array(z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() })).optional(),
 });
 export type Scene = z.infer<typeof sceneSchema>;
 
