@@ -4,6 +4,7 @@
 //
 //   node scripts/video-status.mjs            every video: where it stands
 //   node scripts/video-status.mjs <slug>     readiness (with fixes), what's done, what's next
+//   node scripts/video-status.mjs --check    environment only; silent when ready (the SessionStart hook)
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -127,9 +128,21 @@ const board = (root) => {
 };
 
 
+// SessionStart hook (.claude/settings.json): the environment checks only, silent
+// when everything is there, one line per problem otherwise (claude-video's
+// setup-status hook). Exit 0 either way: a warning must not block the session.
+const check = (root) => {
+  const items = readinessOf(root, "").items.filter((i) => !i.problem.startsWith("uncommitted"));
+  if (!existsSync(join(root, "node_modules", "remotion"))) items.push({ level: "blocked", problem: "node_modules is missing", fix: "npm i" });
+  if (run("python", ["-c", "import faster_whisper"]).status !== 0)
+    items.push({ level: "warning", problem: "faster-whisper is not installed (prep-video.py and research.py transcript need it)", fix: "pip install faster-whisper" });
+  for (const i of items) console.log(`finhub-video ${i.level}: ${i.problem} -> ${i.fix}`);
+};
+
 const main = () => {
   const root = join(import.meta.dirname, "..");
   const slug = process.argv[2];
+  if (slug === "--check") return check(root);
   if (!slug) return board(root);
   const ready = readinessOf(root, slug);
   console.log(`readiness: ${ready.level}`);

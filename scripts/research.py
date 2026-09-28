@@ -9,7 +9,8 @@
 Sources are free and need no login: Google News RSS in English (Australia) and
 Vietnamese, Reddit's RSS for the Australian money subreddits (one request per
 run: a second one within seconds gets a 429), YouTube search and subtitles
-(yt-dlp), and any web page as Markdown (Jina Reader). The tools come from
+(yt-dlp; a video with no subtitles is transcribed with faster-whisper from its
+audio, as claude-video's watch skill does), and any web page as Markdown (Jina Reader). The tools come from
 Agent-Reach (MIT, github.com/Panniantong/Agent-Reach); the ranking ideas
 (entity grounding, syndicated-story clustering, views per day, week-over-week
 memory, saying what's missing) from last30days (MIT, github.com/mvanhorn/last30days-skill).
@@ -403,13 +404,62 @@ def cmd_transcript(url: str, slug: str, lang: str) -> None:
         raise SystemExit(f"Couldn't get subtitles for {url}: {err}") from err
     subs = sorted(out.glob(f"yt-{info['id']}*.vtt"))
     if not subs:
-        raise SystemExit(f"{url} has no '{lang}' subtitles (try --lang en).")
+        # No captions (most small Vietnamese channels): audio only, then the same
+        # faster-whisper prep-video.py uses. Captions first because they are free
+        # and instant; Whisper on a 10-minute clip takes minutes on CPU.
+        print(f"No '{lang}' subtitles; downloading the audio to transcribe it ...", flush=True)
+        text = whisper_text(download_audio(url, out, info["id"]), lang)
+        txt = out / f"yt-{info['id']}.{lang}.txt"
+        txt.write_text(f"Source: {url}\nTitle: {info.get('title', '')}\nFetched: {stamp()}\n"
+                       f"Transcript: faster-whisper large-v3 (no captions on YouTube; check names and numbers)\n\n"
+                       + text, encoding="utf-8")
+        print(txt.relative_to(ROOT))
+        return
     for vtt in subs:
         txt = vtt.with_suffix(".txt")
         txt.write_text(f"Source: {url}\nTitle: {info.get('title', '')}\nFetched: {stamp()}\n\n"
                        + vtt_text(vtt.read_text(encoding="utf-8")), encoding="utf-8")
         vtt.unlink()
         print(txt.relative_to(ROOT))
+
+
+def download_audio(url: str, out: Path, video_id: str) -> Path:
+    """The smallest audio stream, as yt-dlp saves it (m4a/webm; faster-whisper decodes both)."""
+    import yt_dlp
+
+    opts = {"quiet": True, "no_warnings": True, "noprogress": True, "format": "ba/bestaudio/best",
+            "outtmpl": str(out / f"yt-{video_id}.%(ext)s")}
+    try:
+        with yt_dlp.YoutubeDL(opts) as y:
+            y.download([url])
+    except yt_dlp.utils.DownloadError as err:
+        raise SystemExit(f"Couldn't download the audio of {url}: {err}") from err
+    files = [f for f in out.glob(f"yt-{video_id}.*") if f.suffix not in (".txt", ".vtt")]
+    if not files:
+        raise SystemExit(f"yt-dlp saved no audio for {url}.")
+    return files[0]
+
+
+def whisper_text(audio: Path, lang: str) -> str:
+    """One line per segment, '[mm:ss] text', so a quote can be found again in the video."""
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError as err:
+        raise SystemExit("faster-whisper is not installed: pip install faster-whisper") from err
+    print("Loading faster-whisper large-v3 (CPU, int8) ...", flush=True)
+    model = WhisperModel("large-v3", device="cpu", compute_type="int8", cpu_threads=8)
+    segments, info = model.transcribe(str(audio), language=lang, beam_size=5, vad_filter=True)
+    lines: list[str] = []
+    for seg in segments:
+        line = seg.text.strip()
+        if not line or (lines and lines[-1].endswith(line)):  # Whisper repeats on silence
+            continue
+        lines.append(f"[{int(seg.start // 60):02d}:{int(seg.start % 60):02d}] {line}")
+        print(f"  {100 * seg.end / max(info.duration, 1):5.1f}%  {line}", flush=True)
+    audio.unlink()  # the audio is someone else's work; keep only the text
+    if not lines:
+        raise SystemExit("Transcription produced no text.")
+    return "\n".join(lines)
 
 
 def selftest() -> None:

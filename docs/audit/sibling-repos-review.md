@@ -4,6 +4,16 @@ Verdict: eight features are worth bringing over; three are cheap and pay back on
 video. The rest of the three repos is either already here (often in a stronger form) or
 built for a different product (AI-generated film, GPU video models, HyperFrames).
 
+**Status (29 September 2026): all eight implemented on this branch.** Where each landed:
+1 `scripts/sweep-render.mjs` (run by `render-video.py`; check `check-sweep.mjs`) · 2
+`scripts/research.py transcript` · 3 `scripts/reframe.py` (called by `prep-video.py`; check
+`check-reframe.py`) · 4 `scripts/music-start.mjs` + `edit.json` `music.startMs` · 5
+`scripts/check-contrast.mjs` (a `promote-design.mjs` gate) · 6 `visuals.mjs` `generateStill`
+(`AI_CANDIDATES`, Gemini judge; check `check-visuals.mjs`) · 7 `scripts/clip-score.mjs` (in
+`visuals.mjs` `downloadStock`; `CLIP_MIN`) · 8 `video-status.mjs --check` as the SessionStart
+hook in `.claude/settings.json`. Untested here for lack of keys, network or a landscape
+recording: the Gemini judge and fal call, the CLIP model download, OpenCV on real footage.
+
 Repos read: `danielnguyenfinhub/claude-video` (the `watch` skill, stdlib Python over
 yt-dlp + ffmpeg + Whisper API), `danielnguyenfinhub/ViMax` (LangChain multi-agent
 idea → film pipeline over Veo/Seedance), `danielnguyenfinhub/OpenMontage` (about 150

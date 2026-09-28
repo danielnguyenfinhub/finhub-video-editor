@@ -24,7 +24,7 @@ Claude runs every step below for you. The rest of this page covers what those st
 |---|---|---|
 | Node.js 18+ | Remotion, Studio, rendering | `node -v` |
 | Python 3.10+ with `faster-whisper` | the Vietnamese transcript | `python -c "import faster_whisper"` |
-| `python -m pip install yt-dlp feedparser` | research and trending topics for faceless scripts (`npm run research -- trending`) | `npm run research -- selftest` |
+| `python -m pip install yt-dlp feedparser` | research and trending topics for faceless scripts (`npm run research -- trending`; a YouTube video with no captions is transcribed with faster-whisper) | `npm run research -- selftest` |
 | ffmpeg + ffprobe on PATH | proxy, audio clean-up, final mix | `ffmpeg -version` |
 | Claude desktop app (Code tab) | the editor, plus the browser used for background removal (needs WebGPU) | — |
 
@@ -58,7 +58,7 @@ Videos made before this layout keep everything in `public/videos/<slug>/` until 
 python scripts/prep-video.py "C:\path\to\recording.mp4" my-slug
 ```
 
-This makes `public/recordings/my-slug/source.mp4` (voice cleaned up; add `--no-clean` for a studio recording), transcribes it into `words.json` next to it, prints a table of each sentence's pace, and writes a starter `edit.json`. Transcription is slow on CPU and prints its progress as it goes.
+This makes `public/recordings/my-slug/source.mp4` (voice cleaned up; add `--no-clean` for a studio recording; a landscape recording is cropped to 9:16 around your face, so `pip install opencv-python-headless` once if you ever record sideways), transcribes it into `words.json` next to it, prints a table of each sentence's pace, and writes a starter `edit.json`. Transcription is slow on CPU and prints its progress as it goes.
 
 ### 2. Remove the background (always on)
 
@@ -87,7 +87,7 @@ Claude writes this file from the transcript. Its main fields (the full list is i
 | `chapters` | section titles and where they start |
 | `stats` | numbers to show as charts or cards (numbers you *say* are also picked up automatically) |
 | `cues` | on-screen panels: checklists, comparisons, callouts |
-| `music` | a track under `public/music/` and its volume (licensed tracks only) |
+| `music` | a track under `public/music/`, its volume and where to start it (`node scripts/music-start.mjs public/music/<file>` finds where the track gets going; licensed tracks only) |
 | `cta` | the one call to action at the end |
 
 Bank logos appear by themselves when you name a bank (CommBank, Westpac, ANZ, NAB, St.George, Bankwest, Firstmac have real logos; other banks get a name badge). To add a logo, put the file in `public/lenders/` and ask Claude to wire it in.
@@ -115,7 +115,7 @@ This writes to `out/videos/my-slug/`:
 
 The sound is set to −14 LUFS, the level Facebook, YouTube and TikTok play at.
 
-Before rendering, `node scripts/export-srt.mjs my-slug` lists every automatic cut so you can check nothing important was removed.
+Before rendering, `node scripts/export-srt.mjs my-slug` lists every automatic cut so you can check nothing important was removed. After it, `out/videos/my-slug/team/qc/sweep/` holds one small picture per visual change in the finished video; Claude looks at every one before handing the video back.
 
 ---
 
@@ -183,9 +183,11 @@ ELEVENLABS_VOICE_LIBRARY=sbaSITtJLv4yb3vIi67Z
 PIXABAY_API_KEY=your-pixabay-key # stock footage, tried first (pixabay.com/api/docs)
 PEXELS_API_KEY=your-pexels-key   # stock footage, second choice (pexels.com/api)
 FAL_KEY=your-fal-key             # AI images for gaps stock can't fill (fal.ai)
+AI_CANDIDATES=3                  # optional: AI stills per scene for Gemini to choose from (1 = no judging)
+CLIP_MIN=0.22                    # optional: how much a stock clip must look like its phrase (0 = off)
 ```
 
-For a gap scene, use `"footage"` (a 2–5 word stock search) or `"ai"` (an image description; about US$0.03 per image with fal.ai FLUX), never both.
+For a gap scene, use `"footage"` (a 2–5 word stock search; the hits are re-ranked by how much their thumbnail looks like the phrase, with a one-off 350 MB model download the first time) or `"ai"` (an image description; three fal.ai FLUX images at about US$0.03 each, and Gemini picks the best; `AI_CANDIDATES=1` in `.env.local` for one), never both.
 
 **Elements first, footage fills the gaps.**
 - **Elements** carry data, comparisons and key points. They are charts, `compare` / `bars` / `points` panels and bank logos.
