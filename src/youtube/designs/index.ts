@@ -3,9 +3,19 @@
 // YT_SAFE (src/youtube/frame.ts).
 import type { Design } from "../../mortgage/design";
 import { base } from "./base";
+import { ytstudio } from "./ytstudio";
+import { ytslides } from "./ytslides";
+import { ytdashboard } from "./ytdashboard";
+import { ytcinema } from "./ytcinema";
+import { ytsidebar } from "./ytsidebar";
 
 const YT_DESIGNS: Record<string, Design> = {
   base,
+  ytstudio,
+  ytslides,
+  ytdashboard,
+  ytcinema,
+  ytsidebar,
 };
 
 export const DEFAULT_YT_DESIGN = "base";
