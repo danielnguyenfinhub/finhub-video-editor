@@ -1,0 +1,52 @@
+{
+  "id": "receipt",
+  "intents": [
+    "data",
+    "explain",
+    "news"
+  ],
+  "dataShapes": [
+    "numbers",
+    "comparison",
+    "steps",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "tear-off stub: gold counterfoil, the number counting up (years and dates as said), a stat's label; a second number while the stage is taken becomes a small stub in the top band",
+    "comparisons": "two thermal receipts rise from the printer: BEFORE prints first, AFTER beside it, each row as said, totals bold under a double rule, the reel's question as the footer; a gold difference stamp thumps on only when both totals are numbers in the same unit",
+    "steps": "itemised receipt: each item prints in spoken order with a gold tick",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "one receipt: old total struck through by a pen (red/green only from tone or direction, else gold), new total printed below with a direction chevron when the data gives one",
+    "trend": "classic line graph (MotionTrack), printer steps aside",
+    "banks": "printed slip with the logo on white and a neutral label",
+    "captionPosition": "dark strip under the printer while something prints; while the stage is free the words print on a paper slip out of the printer; English line on SAFE.bottom"
+  },
+  "skinAxes": {
+    "cover": "logo tile on white, the title printed on a receipt (keywords on a gold highlighter) rising out of the printer",
+    "captions": "bold white on a dark strip, keywords gold, current word underlined gold; or dark type on a paper slip",
+    "framing": "pure motion graphics, no footage: dark navy counter-top with a warm lamp pool",
+    "transitions": "paper feeds out line by line with printer jitter, tear-off, stamp thump, pen strike",
+    "texture": "brushed stone grain, thermal paper with zig-zag torn edges, dotted leaders, tabular numbers",
+    "sound": "voice + print clicks per row, whip on the strike, a thump on the stamp",
+    "cta": "white contact card + compliance card (classic outro)"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/receipt/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-29"
+}

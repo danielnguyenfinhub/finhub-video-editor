@@ -1,0 +1,52 @@
+{
+  "id": "timelapse",
+  "intents": [
+    "compare",
+    "data",
+    "news"
+  ],
+  "dataShapes": [
+    "comparison",
+    "numbers",
+    "steps",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "a figure is a timestamp chip on the clock's dark disc (a small clock icon beside the number as said, never counted up), a stat's label under it; while the dial is taken it becomes a small chip in the top-left slot",
+    "comparisons": "compare as a fast-forward: the before card's title and value sit on the dial and on the left timeline pin; when the after value is said the hands spin motion-blurred, the playhead races right with speed lines, the number scrubs through the values in between (only when both are clean numbers in one unit, else a blur swap) and lands on the after value with a flash ring; the right pin keeps it; a difference chip only when both values parse with the same unit; the question in a gold box top-left",
+    "steps": "the clock shrinks to a stopwatch top-left beside the title; numbered milestone cards stack top-down as each is said, the current one lit gold; matching numbered pins light up on the timeline and the playhead jumps to each",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack; the machine dims under it)",
+    "change": "the same fast-forward: TRƯỚC with the old value on the dial and left pin, at swapAt the scrub to SAU and the new value (tone colour only from the cue's own tone), kicker and label in the top-left slot; a difference chip (điểm % for rates) only when both values parse with the same unit and agree with the cue's direction",
+    "trend": "classic line graph panel (MotionTrack; the machine dims under it)",
+    "banks": "logo tile on white on the clock disc under a neutral label; a small chip top-left while the dial is taken",
+    "captionPosition": "fixed dark timeline strip under the track (a ruler of ticks along its gold top edge), keywords gold; English line under it"
+  },
+  "skinAxes": {
+    "cover": "the clock fast-forwarding (motion-blurred hands, speed streaks, ⏩ badge), logo tile on white above it, title under it",
+    "captions": "bold white on a dark strip with a gold ruler edge, spoken words bright, keywords gold",
+    "framing": "pure motion graphics, no footage: deep navy with a glow behind the dial and a faint timeline grid scrolling left",
+    "transitions": "hands spin and the playhead races on every reveal, figure and milestone; the dial shrinks to a stopwatch for points; standard chapter transitions",
+    "texture": "clock ticks, horizontal speed lines, gold playhead glow, flash ring on landing",
+    "sound": "voice + whoosh on every before -> after reveal, clicks on milestones",
+    "cta": "white contact card + compliance card (classic outro)"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/timelapse/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-29"
+}
