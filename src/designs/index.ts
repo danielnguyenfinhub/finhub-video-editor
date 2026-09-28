@@ -19,6 +19,11 @@ import { ticker } from "./ticker";
 import { paper } from "./paper";
 import { kinetic } from "./kinetic";
 import { orbit } from "./orbit";
+import { isometric } from "./isometric";
+import { whiteboard } from "./whiteboard";
+import { retro } from "./retro";
+import { phoneapp } from "./phoneapp";
+import { journey } from "./journey";
 
 // Add a design here once its folder builds; keep the ids lowercase.
 // The ten of 25/09/2026 follow src/designs/README.md (golden rules).
@@ -44,6 +49,12 @@ const DESIGNS: Record<string, Design> = {
   paper,
   kinetic,
   orbit,
+  // Second motion-graphics set (28/09/2026).
+  isometric,
+  whiteboard,
+  retro,
+  phoneapp,
+  journey,
 };
 
 export const DEFAULT_DESIGN = "classic";
