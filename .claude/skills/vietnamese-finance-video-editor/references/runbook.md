@@ -69,7 +69,7 @@ Run A1.3 in parallel with A2–A4. It doesn't depend on the edit.
 
 | # | Step | Who | Run / do | Makes | Gate |
 |---|---|---|---|---|---|
-| A3.1 | Daniel named a template? | — | If yes, use it; the choice is logged as an override (`select-template.mjs <slug> --pick <id>` once WP6 merges). Skip to A3.4 | — | — |
+| A3.1 | Daniel named a template? | — | If yes, use it; the choice is logged as an override (`select-template.mjs <slug> --pick <id> --reason "<why>"`). Skip to A3.4 | — | — |
 | A3.2 | Selector **[TODAY]** | Claude | `node scripts/select-template.mjs <slug>` (`--public-dir <dir>` when the media lives elsewhere) | `out/videos/<slug>/selection.json` (top 3 and scores; promoted designs rank above `unproven` ones) | Take the top pick unless a hard reason is written down; when `confident` is false, show Daniel the `closeCall` pair and let him choose |
 | A3.3 | Variety check | Claude | `python .claude/skills/vietnamese-finance-video-editor/scripts/main.py check <axes.json>`. Novelty applies to **skin** only (≥ 4 of 7: cover, captions style, framing, transitions, texture, sound, cta). Keep **grammar** (the graphics axis: how numbers, comparisons and steps are shown; caption position) consistent per data shape | Check output | Pass, or change skin axes; never edit the log to pass |
 | A3.4 | Set design | Claude | `"design": "<id>"` in `edit.json` | — | — |
@@ -105,7 +105,7 @@ makes a point clearer. Anything else is cut.
 | # | Step | Who | Run / do | Makes | Gate |
 |---|---|---|---|---|---|
 | A6.1 | Schema and RG 234 | Claude | `npx remotion compositions src/index.ts --props='{"slug":"<slug>"}' \| tail -n 5` | — | No schema or RG 234 error; fix the text, never loosen the schema or add a fake exemption |
-| A6.2 | Stills | Claude | `npx remotion still MortgageReel out/check-<n>.png --props='{"slug":"<slug>"}' --frame=<n> --scale=0.5 --gl=angle` at: cover, hook, each signature moment, each B-roll visual, CTA, and the **compliance card (last 5 s)** | PNGs | Look at them. Fix clipped text, overlaps, face covered for more than 3 s, and anything that looks like the previous video's skin |
+| A6.2 | Stills | Claude | `npx remotion still MortgageReel out/check-<n>.png --props='{"slug":"<slug>","safeZones":true}' --frame=<n> --scale=0.5 --gl=angle` (`safeZones` draws the SAFE band and the FACE box from `golden.ts` over the frame, for checking only; never on a render) at: cover, hook, each signature moment, each B-roll visual, CTA, and the **compliance card (last 5 s)** | PNGs | Look at them. Fix clipped text, overlaps, face covered for more than 3 s, and anything that looks like the previous video's skin |
 | A6.3 | Golden report | Claude | `node scripts/check-golden.mjs <slug>` | Report | Every number charted, every bank badged, safe zones respected, face-hidden time within limits |
 | A6.4 | Independent compliance (if the team harness or "with compliance check" was asked) | Claude | `video-compliance-reviewer` agent on the stills and `words.json` | PASS / FIX / BLOCK | BLOCK stops the run; FIX is applied, then re-checked |
 
@@ -116,7 +116,7 @@ makes a point clearer. Anything else is cut.
 | A7.1 | Render | Claude | Write `post` in `edit.json` first (`refs/edit-json.md`). `python scripts/render-video.py <slug>` (runs `scripts/preflight.mjs` first, `scripts/publish-video.mjs` last) | `out/videos/<slug>/<slug>.mp4` (9:16), `-feed.mp4` (4:5), `-mobile.mp4` (~27 MB), `thumbnail.png`, `.srt`; `2 - FINISHED VIDEOS/<Topic>.mp4` + `<Topic> - caption.txt` | Durations right, audio present; a post problem prints its fix and `node scripts/publish-video.mjs <slug>` to rerun |
 | A7.2 | Post-render check | Claude | Re-transcribe about 15 s around each cut, taken from the talk, not the end cards (Whisper invents "cảm ơn các bạn đã theo dõi" on silence). Then open every frame the render's sweep wrote to `out/videos/<slug>/team/qc/sweep/` (`node scripts/sweep-render.mjs <slug>` re-makes them: one small frame per visual change) | Sweep frames looked at | No clipped word at any cut; nothing in the sweep that edit.json didn't ask for (a late cutaway, an element over a spoken number, a broken card) |
 | A7.3 | Log | Claude | `python .claude/skills/vietnamese-finance-video-editor/scripts/main.py add <entry.json>`. `library.mjs` records `usedIn` for library assets | Design log entry | — |
-| A7.4 | Deliver | Claude | Send Daniel: where the finished video and caption are (`2 - FINISHED VIDEOS/`), the mobile file, the thumbnail, and the **verify list**: spoken watch-words with timestamps, flagged numbers, caption words Claude is unsure of, tax or rate points, and the B-roll gaps (until WP3) | — | **Daniel approves before posting** |
+| A7.4 | Deliver | Claude | Send Daniel: where the finished video and caption are (`2 - FINISHED VIDEOS/`), the mobile file, the thumbnail, and the **verify list**: spoken watch-words with timestamps, flagged numbers, caption words Claude is unsure of, tax or rate points, and any B-roll keyword the library could not resolve | — | **Daniel approves before posting** |
 
 ---
 

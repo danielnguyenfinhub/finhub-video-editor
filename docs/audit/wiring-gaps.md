@@ -73,7 +73,7 @@ Used and load-bearing: `@remotion/captions` (30 files), `@remotion/layout-utils`
     `scripts/reframe.py` now does at prep, better (one crop, matte runs on it).
   - `beats.ts` reads `public/music/<name>.audiomap.json`; no design reads a beat grid, and
     `public/music/` holds only a README, so nothing has ever exercised it.
-  - `BeforeAfter` is missing from `ElementCatalog.tsx`, the one place elements are verified.
+  - `BehindWord` is missing from `ElementCatalog.tsx`, the one place elements are verified.
 
 ## Documentation and review-page holes
 
@@ -97,7 +97,7 @@ Used and load-bearing: `@remotion/captions` (30 files), `@remotion/layout-utils`
 
 1. Docs first, one commit: `edit-json.md` rows for `source`, `subtitles`, `points`;
    `toolkit.md` leak/starburst lines; the two runbook parentheses.
-2. `BeforeAfter` into `ElementCatalog`; delete `FocusCrop` (superseded) and, unless a
+2. `BehindWord` into `ElementCatalog`; delete `FocusCrop` (superseded) and, unless a
    music-driven design is planned, `beats.ts` with its `analyze-beats.py`.
 3. Remove `@remotion/light-leaks`, `@remotion/starburst`, `@remotion/rive`, `gsap`,
    `@remotion/gsap` and the four whisper packages from `package.json` (lockstep rule

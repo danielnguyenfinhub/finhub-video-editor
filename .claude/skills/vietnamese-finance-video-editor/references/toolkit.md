@@ -35,11 +35,11 @@ cinematic / mono) for the footage grade.
 - `@remotion/noise` — simplex noise (2D/3D/4D): organic drift, paper grain, wobbling
   hand-drawn lines, living backgrounds.
 - `@remotion/motion-blur` — trails / camera motion blur on fast moves (whip-ins).
-- `@remotion/light-leaks` (LightLeak) and `@remotion/starburst` (Starburst) — warm leaks
-  and ray bursts for CINEMATIC or a hook hit; tint with amber/blue tokens.
-- `@remotion/effects` — generative effects (checkerboard, pattern, tile, rings,
-  starburst, …) applied through `<Solid effects>`: branded pattern backdrops,
-  radar rings on a key number. Needs `--gl=angle`.
+- `@remotion/effects` — 74 effects, one import each (`@remotion/effects/<name>`), called as
+  functions: `lightLeak({...})` is classic's `LeakFlash` (`src/designs/classic/Frame.tsx`),
+  `starburst`, `rings`, `dotGrid`, `pattern` for backdrops; `duotone`, `halftone`, `paper`,
+  `scanlines`, `vignette`, `glow`, `lut` for texture. Needs `--gl=angle`. The separate
+  `@remotion/light-leaks` and `@remotion/starburst` packages are gone: these cover them.
 
 ## Maps and extra 3D
 - `@remotion/maptiler` — MapViewport, MapPolyline, MapRoute, MapPoint, MapOverlay,
@@ -90,7 +90,6 @@ cinematic / mono) for the footage grade.
 
 ## Borrowed from HyperFrames (Apache-2.0)
 - `BehindWord` (`src/elements/BehindWord.tsx`): a hero keyword behind Daniel, from a design's `Behind` layer. A signature moment, at most a few per video.
-- Music on the beat: `scripts/analyze-beats.py` → `public/music/<name>.audiomap.json`; `src/elements/beats.ts` `snapToBeat` / `useAudioMap` land stats, cuts and charts on beats.
 - New caption looks: `.claude/elements/hyperframes/CAPTION-IDEAS.md` (35 named styles, ideas only).
 - `render-video.py` runs `scripts/preflight.mjs` first: fix what it reports rather than working around it.
 
