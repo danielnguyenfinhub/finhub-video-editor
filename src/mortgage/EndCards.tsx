@@ -25,13 +25,15 @@ import { FONT, LOGO, clamp } from "./style";
 // Mandatory disclosures under Finance Hub's own ACL, from compliance.ts. Fixed,
 // static and as bold as the rest of the ad (disclosures must be as prominent as
 // the advert's main content). Not editable per video beyond which notes apply.
-export const ComplianceCard: React.FC<{
-  compliance: EditJson["compliance"];
-}> = ({ compliance }) => {
-  const frame = useCurrentFrame();
+// The card's lines, shared with the 16:9 YouTube card (src/youtube/) so both
+// always carry the same wording.
+export type ComplianceLine = { text: string; base: number; color?: string };
+export const complianceLines = (
+  compliance: EditJson["compliance"],
+): ComplianceLine[] => {
   const [company, ...licence] = LICENSING_STATEMENT.split(" | ");
   const rate = compliance?.advertisedRate;
-  const lines: { text: string; base: number; color?: string }[] = [
+  return [
     { text: company, base: 50, color: brand.primary },
     { text: licence.join(" | "), base: 44 },
     ...(rate
@@ -65,6 +67,13 @@ export const ComplianceCard: React.FC<{
       ? [{ text: comparisonWarningVi(rate.ratesAsAt), base: 34, color: "#33445A" }]
       : []),
   ];
+};
+
+export const ComplianceCard: React.FC<{
+  compliance: EditJson["compliance"];
+}> = ({ compliance }) => {
+  const frame = useCurrentFrame();
+  const lines = complianceLines(compliance);
   // ponytail: text-fit by an area estimate (glyph ≈0.55em wide, 1.35 line
   // height, 920px column, ~1300px of height); swap for @remotion/layout-utils
   // fitText if a card ever overflows.

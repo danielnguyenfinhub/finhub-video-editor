@@ -1,0 +1,169 @@
+{
+  "notes": [
+    "TEST FIXTURE for the 16:9 YouTube designs: rba-sept-2026 (source) with three chapters added. Not a real video."
+  ],
+  "design": "faceless",
+  "title": "Lãi suất 4,35%: cần biết trước 29/9",
+  "cut": {
+    "fillers": false,
+    "stutters": false,
+    "badWords": false
+  },
+  "pacing": {
+    "mode": "off"
+  },
+  "subtitles": [
+    {
+      "fromMs": 0,
+      "toMs": 7731,
+      "text": "Since the start of 2026, Australia's cash rate has risen three times, from 3.6 to 4.35 percent."
+    },
+    {
+      "fromMs": 8131,
+      "toMs": 16422,
+      "text": "Up 0.25 percent in February, March and May, then held in June and August."
+    },
+    {
+      "fromMs": 16822,
+      "toMs": 26193,
+      "text": "Inflation is the main reason: the RBA says it's still too high, not back mid-target until late 2027."
+    },
+    {
+      "fromMs": 26593,
+      "toMs": 37084,
+      "text": "Example: a $600,000, 30-year loan pays almost $290 more a month, if passed on in full."
+    },
+    {
+      "fromMs": 37484,
+      "toMs": 42575,
+      "text": "The RBA also said it could raise rates further if inflation risks grow."
+    },
+    {
+      "fromMs": 42975,
+      "toMs": 47106,
+      "text": "The next decision is announced on Tuesday, 29 September."
+    },
+    {
+      "fromMs": 47506,
+      "toMs": 53397,
+      "text": "Want to know how this affects your loan? Message Finance Hub for help."
+    }
+  ],
+  "hook": {
+    "big": "4,35%",
+    "countTo": 4.35,
+    "decimals": 2,
+    "suffix": "%",
+    "sub": "Lãi suất cơ bản sau 3 lần tăng"
+  },
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 8131,
+      "toMs": 16422,
+      "title": "Lãi suất cơ bản 2026",
+      "items": [
+        {
+          "text": "Tháng 2: tăng 0,25%",
+          "atMs": 8531
+        },
+        {
+          "text": "Tháng 3: tăng 0,25%",
+          "atMs": 9331
+        },
+        {
+          "text": "Tháng 5: tăng 0,25%",
+          "atMs": 10251
+        },
+        {
+          "text": "Tháng 6 và 8: giữ nguyên",
+          "atMs": 13931
+        }
+      ]
+    },
+    {
+      "kind": "compare",
+      "fromMs": 26593,
+      "toMs": 37084,
+      "vsAtMs": 30233,
+      "cards": [
+        {
+          "title": "Trước (30 năm)",
+          "atMs": 28313,
+          "rows": [
+            {
+              "label": "Trả/tháng (đô)",
+              "value": "3.388",
+              "tone": "neutral",
+              "atMs": 32633
+            }
+          ]
+        },
+        {
+          "title": "Sau 3 lần tăng",
+          "atMs": 30913,
+          "highlightAtMs": 33973,
+          "rows": [
+            {
+              "label": "Trả/tháng (đô)",
+              "value": "3.675",
+              "tone": "bad",
+              "atMs": 33973
+            }
+          ]
+        }
+      ],
+      "question": {
+        "text": "Thêm gần 290 đô mỗi tháng",
+        "atMs": 34713
+      }
+    },
+    {
+      "kind": "points",
+      "fromMs": 37484,
+      "toMs": 42575,
+      "title": "RBA nói (11/8/2026)",
+      "items": [
+        {
+          "text": "Có thể tăng lãi suất thêm",
+          "atMs": 38924
+        },
+        {
+          "text": "Nếu rủi ro lạm phát tăng lên",
+          "atMs": 40344
+        }
+      ]
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 42975,
+      "durMs": 4131,
+      "big": "29/9",
+      "label": "Thứ Ba: quyết định lãi suất tiếp theo"
+    }
+  ],
+  "source": "rba-sept-2026",
+  "chapters": [
+    {
+      "atMs": 0,
+      "title": "Lãi suất đã tăng thế nào",
+      "effect": "fade"
+    },
+    {
+      "atMs": 16822,
+      "title": "Vì sao tăng",
+      "effect": "fade"
+    },
+    {
+      "atMs": 26593,
+      "title": "Ảnh hưởng tới khoản vay",
+      "effect": "fade"
+    },
+    {
+      "atMs": 42975,
+      "title": "Tiếp theo là gì",
+      "effect": "fade"
+    }
+  ]
+}
