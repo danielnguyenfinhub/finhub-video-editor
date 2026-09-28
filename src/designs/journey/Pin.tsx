@@ -7,7 +7,7 @@ import { interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
 import { clamp } from "../../mortgage/style";
-import { RAMP, isOwnCue, pointsLayout } from "./Kit";
+import { RAMP, isOwnCue, pointsLayout, spokenOrder } from "./Kit";
 import { GOLD, INK, MARKER_Y, SAND, alpha, cameraAt } from "./Map";
 
 type Pose = { x: number; y: number; s: number; o: number };
@@ -30,7 +30,7 @@ const poseAt = (reel: Reel, fps: number, t: number): Pose => {
         y: d.y + 22,
       }));
       let p = home;
-      c.items.forEach((it, i) => {
+      spokenOrder(c.items).forEach((it, i) => {
         const s = at(it.atMs);
         const k = interpolate(t, [s, s + 12], [0, 1], {
           ...clamp,

@@ -23,16 +23,18 @@ export const PANEL_OFFSET = 600 - 110;
 // ------------------------------------------------------------- layouts
 
 export const TOP = 604; // title / question banner
-export const LOW = 990; // the first milestone (nearest the marker)
-const HIGH = 736; // the highest milestone
+export const LOW = 1070; // the lowest milestone (nearest the road)
+const HIGH = 742; // the first milestone, at the top: the list reads down
 export const DISC = 30;
+// Card text shrinks for long lists so cards never touch (step >= card).
+export const cardFont = (n: number) => (n >= 6 ? 30 : n >= 5 ? 34 : 36);
 export const CARD_LEFT = 272;
 
 export const pointsLayout = (n: number) => {
   const step = Math.min(118, (LOW - HIGH) / Math.max(1, n - 1));
   return Array.from({ length: n }, (_, i) => ({
     x: i % 2 ? 214 : 150,
-    y: LOW - i * step,
+    y: HIGH + i * step,
   }));
 };
 
@@ -72,3 +74,7 @@ export const Banner: React.FC<{ text: string; p: number; color?: string }> = ({
     </div>
   </div>
 );
+
+// A points cue's items in the order they are said (milestone 1 = first said).
+export const spokenOrder = <T extends { atMs: number }>(items: T[]): T[] =>
+  [...items].sort((a, b) => a.atMs - b.atMs);

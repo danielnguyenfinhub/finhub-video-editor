@@ -25,6 +25,8 @@ import {
   CARD_LEFT,
   DISC,
   PANEL_OFFSET,
+  cardFont,
+  spokenOrder,
   SHADOW,
   fadeOut,
   isOwnCue,
@@ -43,13 +45,15 @@ const RoutePlan: React.FC<{
 }> = ({ cue, rel, dur, from }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const discs = pointsLayout(cue.items.length);
-  const starts = cue.items.map((it) => rel(it.atMs));
+  const items = spokenOrder(cue.items);
+  const discs = pointsLayout(items.length);
+  const starts = items.map((it) => rel(it.atMs));
   const said = starts.filter((s) => frame >= s).length;
   const title = pop(frame, fps, 2);
   const home = { x: cameraAt(from, fps).mx, y: MARKER_Y - 20 };
-  // The trail: from the road up through every milestone, as soft S-bends.
-  const pts = [home, ...discs];
+  // The trail: from milestone 1 at the top down through every milestone, in
+  // the order said, to the road, as soft S-bends.
+  const pts = [...discs, home];
   const d = pts
     .map((q, i) => {
       if (i === 0) return `M ${q.x} ${q.y}`;
@@ -58,14 +62,14 @@ const RoutePlan: React.FC<{
       return `C ${a.x} ${my} ${q.x} ${my} ${q.x} ${q.y}`;
     })
     .join(" ");
-  // Share of the trail walked: up to the latest milestone said.
+  // Share of the trail walked: from milestone 1 to the latest one said.
   const walked =
-    said === 0
+    said < 2
       ? 0
       : interpolate(
           frame,
           [starts[said - 1], starts[said - 1] + 12],
-          [said - 1, said],
+          [said - 2, said - 1],
           clamp,
         ) / discs.length;
   const gold = evolvePath(walked, d);
@@ -108,7 +112,7 @@ const RoutePlan: React.FC<{
         />
       </svg>
       <Banner text={cue.title} p={title} />
-      {cue.items.map((it, i) => {
+      {items.map((it, i) => {
         const on = frame >= starts[i];
         const p = on ? pop(frame, fps, starts[i] + 4) : 0;
         const current = i === said - 1;
@@ -150,12 +154,12 @@ const RoutePlan: React.FC<{
                   left: CARD_LEFT,
                   maxWidth: SAFE.right - CARD_LEFT,
                   top: discs[i].y,
-                  padding: "12px 26px",
+                  padding: "10px 24px",
                   borderRadius: 16,
                   background: "#ffffff",
                   border: `${current ? 5 : 3}px solid ${current ? GOLD : INK}`,
                   boxShadow: SHADOW,
-                  fontSize: 36,
+                  fontSize: cardFont(items.length),
                   fontWeight: current ? 900 : 700,
                   lineHeight: 1.22,
                   color: INK,
