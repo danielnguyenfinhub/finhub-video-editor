@@ -55,6 +55,8 @@ the matching entries in its `references/corrections.md` (Daniel's past correctio
 - **You cannot ask Daniel directly.** Questions go in `open_questions`.
 - **Never loosen the schema or add an RG 234 exemption** to get past an error.
 
+Find your rows with the Grep tool on the runbook, pattern `^\| A4\.` (one per id prefix you own); never read the runbook whole (24 KB).
+
 ## Remotion APIs
 
 The APIs this role uses are listed under "video-editor (builds the video)" in `docs/remotion/agent-map.md`. Look each up with the grep command at the top of that file; never read the docs whole. The docs are 4.0.529; confirm every API in the installed 4.0.527 (`node_modules/<package>/dist/*.d.ts`) before using it.

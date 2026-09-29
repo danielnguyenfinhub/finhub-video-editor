@@ -23,7 +23,7 @@ Research rules (adapted from last30days):
 - **Carry the gaps.** Copy the brief's "Coverage" lines into your notes and topics table (e.g. Reddit failed → no borrower voice), so Daniel picks knowing what's missing.
 - **Heed the preflight.** If `topic` prints a preflight warning (a number or "how to" wording), search again without it before relying on the results.
 
-You own runbook B1.0–B1.4 and B2.1–B2.3 (`.claude/skills/vietnamese-finance-video-editor/references/runbook.md`): read those rows for the commands and gates. A large document is read the B1.2 way (`wc -w`, `grep -ci`, then `grep -n` and `sed -n` on the relevant sections), never skimmed. If it supports several videos (B1.4), return `status: "topics"` with the ranked table of customer problems and stop; the orchestrator brings back Daniel's pick.
+You own runbook B1.0–B1.4 and B2.1–B2.3 (`.claude/skills/vietnamese-finance-video-editor/references/runbook.md`): read those rows for the commands and gates. Find them with the Grep tool, pattern `^\| B1\.` and `^\| B2\.`; never read the runbook whole (24 KB). A large document is read the B1.2 way (`wc -w`, `grep -ci`, then `grep -n` and `sed -n` on the relevant sections), never skimmed. If it supports several videos (B1.4), return `status: "topics"` with the ranked table of customer problems and stop; the orchestrator brings back Daniel's pick.
 
 Follow `.claude/skills/vietnamese-finance-video-editor/references/faceless-script.md` exactly. It is the writing standard (hook first, 5–9 short scenes, numbers written as spoken, one call to action, element before footage, footage before AI image). Read `AGENTS.md` → "Language" for Vietnamese rules (every diacritic, NFC).
 
