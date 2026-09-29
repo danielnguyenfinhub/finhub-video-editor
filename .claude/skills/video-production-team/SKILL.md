@@ -39,9 +39,10 @@ says who runs each step, in what order, and where the run stops. It never copies
 You (the orchestrator) run Phase 0, prep (A1.1), the matte request (A1.3), voicing (B3, because
 it is the paid call and you hold the cost gate), every gate, and delivery. You do no editing.
 
-**Execution mode: subagents in a pipeline** (Agent tool, `subagent_type` = agent name,
-`model: "opus"`), with one parallel fan-out: in A the paper edit runs while Daniel's matte
-renders. Not an agent team, because the flow stops for Daniel mid-run and both reviewers
+**Execution mode: subagents in a pipeline** (Agent tool, `subagent_type` = agent name; pass
+no `model`, so each agent's own `model:` applies), with two parallel fan-outs: in A the paper
+edit runs while Daniel's matte renders, and in both pipelines QC and final compliance review
+the same build at the same time (one message, two Agent calls). Not an agent team, because the flow stops for Daniel mid-run and both reviewers
 (`video-qc`, `video-compliance-reviewer`) must judge the artefacts from a clean context, not
 the builder's reasoning. Agents report to you; you relay questions to Daniel.
 
@@ -51,7 +52,13 @@ use `subagent_type: "general-purpose"` and begin the prompt "Read and adopt
 
 A subagent sees neither this chat nor `AGENTS.md`. Its prompt carries: slug, pipeline, recording
 id, the runbook step ids it owns, file paths, `--public-dir` if media lives outside the repo, and
-Daniel's words verbatim.
+Daniel's words verbatim. Agents grep their runbook rows
+(Grep tool, pattern `^\| A2\.`) and never read the runbook whole (24 KB).
+
+**Models, by the work, not the rank:** opus for the four roles that judge meaning, money or
+design (story-editor: number maths and cuts that change a sentence; script-writer; editor;
+compliance, the hard ceiling); sonnet for `video-qc`, whose checks are scripts plus looking at
+stills. Haiku can't load this repo's tool list; never use it here.
 
 **Tooling check.** A runbook row tagged **[BUILD WPn]** runs as written when its script exists
 (`ls scripts/<name>`; `library.mjs resolve` needs the `resolve` command in its header); only if
@@ -84,9 +91,10 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
      Daniel** with each flag's timestamp and quote; pass his answer back. Unsure words alone
      don't stop the run; they go to the verify list.
 4. **Build:** `video-editor` (A3, A4, A5.3, A6.1) → `team/03_editor_report.json`.
-5. **QC:** `video-qc`, stage `stills` → `team/04_qc_stills.json`. **Compliance (A6.4)** only if
-   Daniel asked for it, or the video states a rate or a number claim taken from a document:
-   `video-compliance-reviewer`, stage `final` → `team/04_compliance_final.json`. FIX/BLOCK loop below.
+5. **Review, in parallel:** `video-qc`, stage `stills` → `team/04_qc_stills.json`, and, only if
+   Daniel asked for it or the video states a rate or a number claim taken from a document,
+   **compliance (A6.4)**: `video-compliance-reviewer`, stage `final` →
+   `team/04_compliance_final.json`. Both in one message. FIX/BLOCK loop below.
 6. **Render:** matte present → `video-editor` (A7.1, A7.3).
 7. **Post-render QC:** `video-qc`, stage `render` (A7.2) → `team/05_qc_render.json`.
 8. **Deliver** (A7.4, below). **Gate: Daniel approves before posting.**
@@ -107,16 +115,17 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
 4. **Voice (B3.1–B3.3):** state the cost line again, then `node scripts/voice-video.mjs <slug>`
    (plus the engine Daniel chose). A take cut short stops the run: re-run it.
 5. **Build:** `video-editor` (B4, B5.1) → `team/03_editor_report.json`.
-6. **QC:** `video-qc`, stage `stills` (B5.2) → `team/04_qc_stills.json`.
-7. **Final compliance (B5.3):** `video-compliance-reviewer`, stage `final` →
-   `team/04_compliance_final.json`.
-8. **Render:** `video-editor` (B5.4), then **deliver** (B5.5). **Gate: Daniel approves before posting.**
+6. **Review, in parallel (B5.2 ‖ B5.3):** `video-qc`, stage `stills` → `team/04_qc_stills.json`,
+   and `video-compliance-reviewer`, stage `final` → `team/04_compliance_final.json`, in one
+   message. FIX/BLOCK loop below.
+7. **Render:** `video-editor` (B5.4), then **deliver** (B5.5). **Gate: Daniel approves before posting.**
 
 ## FIX / BLOCK loop (QC and compliance alike)
 
-- **FIX** → the finding's `owner` (story-editor, writer or editor) with the findings verbatim;
-  then the same reviewer again, told to mark earlier findings resolved or open. At most **2
-  rounds**; then stop and show Daniel the open findings.
+- **FIX** → each finding's `owner` (story-editor, writer or editor) gets **all** its findings
+  from both reviewers in one call, verbatim; then both reviewers again in parallel, told to mark
+  earlier findings resolved or open. At most **2 rounds** in total; then stop and show Daniel
+  the open findings.
 - **BLOCK** → stop. Tell Daniel in plain words what blocks it and what would clear it.
 - **PASS** → next step. Verify notes carry into the delivery list.
 
@@ -213,7 +222,9 @@ anything should change in the video or the team.
   (no flags) ‖ matte → editor → qc PASS (compliance skipped: no document claim) → render → qc
   render PASS → mobile copy with the verify list.
 - **Normal B:** a lender policy PDF → intake doc checks → writer, dry run clean → compliance
-  PASS → Daniel locks → cost stated → voice → editor → qc PASS → compliance PASS → render → deliver.
+  PASS → Daniel locks → cost stated → voice → editor → qc PASS ‖ compliance PASS → render → deliver.
+- **Both reviewers FIX:** qc "stat covers the face", compliance "comparison rate missing" → editor
+  gets both in one call → qc ‖ compliance re-run → both PASS (one round, not two).
 - **Error A:** Daniel says "1.600" where the maths gives 1.6 million → story-editor `flags` →
   run stops with the timestamp; Daniel chooses cut or re-record.
 - **Error B:** a scene says "chắc chắn được duyệt" or "từ 5,79%" with no comparison rate →

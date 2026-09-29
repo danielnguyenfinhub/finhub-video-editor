@@ -20,6 +20,7 @@ Whatever skill is driving (Remotion's, the editor skill, or a scene written by h
 | Date | Change | Files | Why |
 |---|---|---|---|
 | 2026-09-26 | Initial team | the three agents, `video-production-team`, `video-compliance-review` | Independent compliance check; scripts written from documents |
+| 2026-09-30 | Leaner run: QC ‖ final compliance in parallel; one combined FIX round for both reviewers; `video-qc` on sonnet (scripted checks), the other four stay opus; agents grep their runbook rows instead of reading 24 KB | `video-production-team`, the five `video-*` agents | Daniel: "the team need to be productive and efficient" |
 | 2026-09-26 | Team v2: both pipelines end to end; story-editor and video-qc added; editor narrowed; tooling wired | `video-production-team` (rewritten), `video-story-editor`, `video-qc` (agent and skill), `video-editor`, `video-script-writer`, `video-compliance-reviewer`, `video-compliance-review`, editor `SKILL.md` (one line), `AGENTS.md` trigger | Daniel asked for a team to run the whole process |
 
 ### Harness: refactor team
