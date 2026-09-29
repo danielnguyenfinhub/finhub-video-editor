@@ -250,7 +250,10 @@ const placeFigures = (reel: Reel, fps: number, slates: Slate[]): Placed[] => {
       const prev = out[prevIndex];
       if (from < prev.from + prev.frames) {
         from = Math.max(from, prev.from + MIN_FIGURE);
-        out[prevIndex] = { ...prev, frames: Math.min(prev.frames, from - prev.from) };
+        out[prevIndex] = {
+          ...prev,
+          frames: Math.min(prev.frames, from - prev.from),
+        };
         lane = laneOf(from);
       }
     }
