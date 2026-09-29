@@ -4,7 +4,8 @@
 //   select-template.mjs reads) · a preview still · a Mode A and a Mode B still
 //   where facePolicy allows · every hard-coded string in `copy` and RG 234-clean ·
 //   brand colours only (a literal must be white/black at any alpha or a colour
-//   src/brand/theme.ts defines, unless the line says `// theme-exempt: <why>`).
+//   src/brand/theme.ts defines, unless the line says `// theme-exempt: <why>`) ·
+//   text colour on its own background at WCAG 3.0 or better (check-contrast.mjs).
 // Only when all pass: template.json gets "promoted": "<YYYY-MM-DD>", uses 0,
 // lastUsed null (and the preview path), and the selector's pool is re-read to
 // confirm the design is in it. The selector ranks promoted designs first.
@@ -17,6 +18,7 @@ import { execFileSync, execSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
+import { COLOUR, checkDesign, describe as describeContrast, hexOf } from "./check-contrast.mjs";
 import { MANIFEST_FIELDS, OPTIONAL_FIELDS, loadManifests } from "./select-template.mjs";
 
 const root = join(import.meta.dirname, "..");
@@ -73,14 +75,7 @@ export const hardCodedStrings = (code) => {
   return [...found];
 };
 
-const COLOUR = /#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{1,5})?\b|\b(?:rgba?|hsla?)\([^)]*\)/g;
-// A colour literal as lower-case 6-digit hex of its rgb part (alpha ignored), or null (hsl).
-export const hexOf = (lit) => {
-  const h = lit.match(/^#([0-9a-f]+)$/i)?.[1];
-  if (h) return `#${(h.length <= 4 ? [...h.slice(0, 3)].map((c) => c + c).join("") : h.slice(0, 6)).toLowerCase()}`;
-  const rgb = lit.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
-  return rgb ? `#${rgb.slice(1, 4).map((n) => Number(n).toString(16).padStart(2, "0")).join("")}` : null;
-};
+export { hexOf };
 // Brand colours only: pure white/black at any alpha, or a colour src/brand/theme.ts defines.
 const ALLOWED = new Set([
   "#ffffff",
@@ -239,6 +234,12 @@ export async function promote(id, opts = {}) {
         if (!ALLOWED.has(hexOf(m)))
           fail("colours", `${f.name}:${i + 1} off-brand colour \`${m}\`: use a src/brand/theme.ts colour, white or black, or add // theme-exempt: <why>`);
     });
+  }
+
+  // Contrast: text on its own background reaches 3.0 (scripts/check-contrast.mjs).
+  for (const p of checkDesign(dir)) {
+    if (p.level === "fail") fail("contrast", describeContrast(p));
+    else notes.push(`contrast: ${describeContrast(p)}`);
   }
 
   if (failures.length) return { failures, notes, promoted: false };

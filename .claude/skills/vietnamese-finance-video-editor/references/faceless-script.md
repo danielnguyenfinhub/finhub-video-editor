@@ -69,7 +69,7 @@ Remotion elements explain; Pexels footage only fills the gaps. Decide the visual
 | outlines key points or steps (2–5) | a `points` cue: a numbered list revealed as each point is said | `edit.json` `cues` |
 | names a bank | its logo. This is automatic | no work |
 | sets the scene, tells a story, or is the call to action | stock footage (Pixabay, then Pexels) | `scenes[].footage` |
-| is a gap that stock can't show well (an idea, a mood, a situation with no realistic footage) | an AI image (fal.ai FLUX, about US$0.03) with a slow zoom | `scenes[].ai` |
+| is a gap that stock can't show well (an idea, a mood, a situation with no realistic footage) | an AI image (fal.ai FLUX, three at about US$0.03 each, Gemini picks one) with a slow zoom | `scenes[].ai` |
 
 A scene with an element gets **no** `footage` or `ai`. A scene never has both: stock and AI are never mixed in one scene (OpenMontage).
 

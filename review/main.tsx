@@ -140,6 +140,14 @@ const App = () => {
           atMs: c.fromMs,
           endMs: c.toMs,
         })),
+        ...(draft.visuals ?? []).map((v, i) => ({
+          key: `vi${i}`,
+          label: `B-roll (${v.mode}): ${typeof v.asset === "string" ? v.asset.split("/").pop() : v.asset.find}`,
+          field: "visuals" as const,
+          index: i,
+          atMs: v.atMs,
+          endMs: v.atMs + v.durMs,
+        })),
       ].sort((a, b) => a.atMs - b.atMs)
     : [];
 

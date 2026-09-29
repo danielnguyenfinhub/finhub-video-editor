@@ -26,8 +26,9 @@ the render with a readable error). Full worked example: `public/videos/ty-do/edi
 | Field | Required | What it does |
 |---|---|---|
 | `design` | no | The look: a folder in `src/designs/` registered in `src/designs/index.ts` (default `"classic"`). An unknown name fails the render and lists the designs there are |
+| `source` | no | The recording this video edits: `public/recordings/<source>/` holds `source.mp4`, `foreground.webm` and `words.json` (kebab-case id, set by `prep-video.py`). Left out: the files sit in `public/videos/<slug>/` (unmigrated and faceless videos) |
 | `cut` | no | Automatic cuts, each on unless false: `{fillers?, stutters?, badWords?, words?: []}`. Restarts in different words still need `remove` |
-| `music` | no | `{file: "music/<name>.mp3", volume?}` looped bed, auto-ducked under speech |
+| `music` | no | `{file: "music/<name>.mp3", volume?, startMs?}` looped bed from `startMs` (`node scripts/music-start.mjs <file>` suggests it), auto-ducked under speech |
 | `title` | yes | Cover headline and thumbnail text, Vietnamese, ≤ 8 words. Numbers and keyword-list words are auto-highlighted |
 | `subtitle` | no | Cover chip. Default "Daniel Nguyen · Finance Hub" |
 | `coverFrameMs` | no | Source ms of the frozen frame behind the cover. Pick a frame with Daniel's eyes open, facing camera |
@@ -37,6 +38,7 @@ the render with a readable error). Full worked example: `public/videos/ty-do/edi
 | `captionFixes` | no | `[{from,to}]` exact caption-token replacements for misheard words. Audio untouched. Built-in: lợi phí→lệ phí, tiền lợi→tiền lời, than chốt→then chốt, đắm→đóng |
 | `keywords` | no | Extra words/phrases to highlight in captions (added to the finance default list) |
 | `captionStyle` | no | Classic design only: `"outline"` (default, bold white words with an outline) or `"box"` (white rounded box hugging each line, spoken word in blue, keywords underlined). Pick `"box"` when the footage behind the captions is busy or bright |
+| `subtitles` | no | `[{fromMs,toMs,text}]` the English line under the captions for a span of the talk (typed, not transcribed; RG 234 scans it). Keep each under ~20 words; preflight warns over 140 characters |
 | `pacing` | no | `{mode:"auto"|"off", target?, min?, max?, overrides?:[{fromMs,toMs,rate}]}`. Default auto: target 4.4 words/s, rate 0.9–1.2, pitch preserved |
 | `chapters` | no | `[{atMs,title,effect}]`; `effect` ∈ fade, slide, wipe, flip, clockWipe, iris, pushCut, blurSlide, bookFlip, crossZoom, crosswarp, dissolve, dreamyZoom, filmBurn, linearBlur, ripple, swap, zoomBlur, zoomInOut (`TRANSITIONS` in `src/mortgage/timeline.ts`). From blurSlide on they need HTML-in-canvas (Chrome 149+, which Remotion's renderer downloads); an older Studio browser previews them as a fade. Lands on the nearest cut; shows a "PHẦN n" banner |
 | `look` | no | Colour grade on the talking-head footage: `"warm"`, `"cinematic"` or `"mono"` (recipes in `LOOK_EFFECTS`, `src/mortgage/PacedVideo.tsx`). Left out, footage plays as recorded. Graded footage plays through `@remotion/media` `<Video>`; if that can't decode the file the render fails rather than ship it ungraded |
@@ -58,6 +60,7 @@ Every cue has `kind`, `fromMs`, `toMs` (on screen between them) and inner beats 
 | `kinetic` | `kicker?`, `struck:[{text,atMs,strikeMs}]`, `slam:{kicker?,text,atMs}`, `sub?:{text,atMs}` | says "not X, but Y" (X struck out, Y slams in) |
 | `compare` | `cards:[card,card]` each `{title,atMs,highlightAtMs?,rows:[{label,value,tone,atMs}]}`, `vsAtMs?`, `question?:{text,atMs}` | contrasts two products/options |
 | `bars` | `kicker?`, `title`, `bars:[{label,value,height 0..1,tone,atMs,overflow?}]` (1–3), `stamp?:{text,tone,atMs}` | compares amounts; `overflow` = bar breaks the chart top |
+| `points` | `title`, `items:[{text,atMs}]` (2–5) | lists steps or key points, each numbered and revealed as it is said |
 | `verdict` | `ok` (✓/✗), `text` | gives a clear yes/no conclusion |
 | `venn` | `left`, `right`, `label` | talks about shared interest (e.g. Broker / Bạn → LỢI ÍCH CHUNG) |
 | `emoji` | `name` (file in `public/emoji/`, no ".json"), `position?` right/left | reacts emotionally ("rất là lớn") — sparingly |

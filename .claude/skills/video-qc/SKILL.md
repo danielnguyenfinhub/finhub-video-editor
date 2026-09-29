@@ -30,7 +30,7 @@ commands and to `check-golden.mjs`.
    card added). Map with the SRT that `export-srt.mjs` writes (already on the output clock):
    the caption holding the moment's words starts at t s → frame round(t × 30). Cover: frame 30.
    Compliance card: the duration `npx remotion compositions` prints, minus 75 frames.
-3. **Stills** at `--scale=0.5 --gl=angle`, into `out/videos/<slug>/team/qc/`. **Open every
+3. **Stills** at `--scale=0.5 --gl=angle` with `"safeZones":true` in `--props` (the SAFE band and FACE box drawn over the frame, as A6.2 shows), into `out/videos/<slug>/team/qc/`. Anything but backdrop and Daniel outside the SAFE band, or an overlay inside the FACE box, is a finding you can point at. **Open every
    PNG and look.** FIX: clipped or overlapping text, a card over the face for more than 3 s, a
    number on screen that differs from the words (A) or the locked script and `facts.json` (B).
    BLOCK: the compliance card missing, cut off or unreadable.
@@ -54,6 +54,12 @@ then transcribe it with faster-whisper as `scripts/prep-video.py` does (`large-v
 int8, `language="vi"`). Compare with `words.json`. A clipped or missing word at the cut → FIX
 (owner editor). Also check the durations and that audio is present (`ffprobe`). Whisper
 inventing "cảm ơn các bạn đã theo dõi" on silence is not a finding.
+
+Then the **sweep**: `render-video.py` leaves one small frame per visual change in
+`out/videos/<slug>/team/qc/sweep/` (`sweep.json` lists them with their times; re-make with
+`node scripts/sweep-render.mjs <slug>`). **Open every frame and look.** These are the moments
+nobody named in `edit.json`: a cutaway that lands late, an element up over a spoken number, a
+card that never finished animating. Anything wrong → FIX with the frame's time as evidence.
 
 ## Verdict
 

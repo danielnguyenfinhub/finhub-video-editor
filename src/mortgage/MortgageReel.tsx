@@ -36,6 +36,7 @@ import {
   type Reel,
 } from "./schema";
 import { readingFloor } from "./golden";
+import { SafeZones } from "./SafeZones";
 import { KEYWORDS, clamp, useReelFont } from "./style";
 import {
   CHAPTER_TRANSITION_FRAMES,
@@ -71,6 +72,8 @@ const MUSIC_FADE_OUT_FRAMES = 45;
 export const mortgageReelSchema = z.object({
   slug: z.string(),
   design: z.string().optional(),
+  // QC stills only: draw the SAFE band and FACE box (golden.ts) over the frame.
+  safeZones: z.boolean().optional(),
 });
 export type MortgageReelProps = z.infer<typeof mortgageReelSchema> & {
   reel: Reel | null;
@@ -157,7 +160,7 @@ export const buildReel = (
 export const calculateMortgageReelMetadata: CalculateMetadataFunction<
   MortgageReelProps
 > = async ({ props }) => {
-  const { slug, design } = props;
+  const { slug, design, safeZones } = props;
   const editJson = await fetchJson(slug, `videos/${slug}/edit.json`);
   const { source, visuals, background } = parseEdit(editJson, slug);
   const cutOutPath = recordingPath(slug, source, "foreground.webm");
@@ -189,7 +192,7 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
   return {
     durationInFrames,
     defaultOutName: slug,
-    props: { slug, design, reel },
+    props: { slug, design, reel, safeZones },
   };
 };
 
@@ -225,6 +228,7 @@ export const Music: React.FC<{
   return (
     <Audio
       src={staticFile(music.file)}
+      trimBefore={Math.round(((music.startMs ?? 0) * fps) / 1000)}
       loop
       // The volume curve follows the video, not each pass through the track.
       loopVolumeCurveBehavior="extend"
@@ -247,7 +251,11 @@ export const Music: React.FC<{
   );
 };
 
-export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
+export const MortgageReel: React.FC<MortgageReelProps> = ({
+  slug,
+  reel,
+  safeZones,
+}) => {
   useReelFont();
   if (!reel) throw new Error("MortgageReel: calculateMetadata did not run.");
   const { edit, timeline } = reel;
@@ -378,6 +386,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({ slug, reel }) => {
           src={src}
         />
       </Sequence>
+      {safeZones ? <SafeZones /> : null}
     </AbsoluteFill>
   );
 };

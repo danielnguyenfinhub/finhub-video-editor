@@ -21,6 +21,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { rerank } from "./clip-score.mjs";
 import { add, find, markUsed } from "./library.mjs";
 
 const MIN_CLIP_S = 3; // skip stock clips shorter than this
@@ -31,6 +32,11 @@ const FPS = 30;
 const AI_STYLE =
   "photorealistic editorial photo, soft natural light, cool navy and warm amber tones, shallow depth of field, vertical 9:16 composition, no text, no logos, no watermark, people seen from behind or out of focus";
 export const AI_MODEL = "fal-ai/flux/dev"; // ~US$0.03 per image (OpenMontage's estimate)
+// Stills generated per AI scene; Gemini picks the best (ViMax's BestImageSelector,
+// wired in). 1 = no judging. Each one costs the price above. Read when called,
+// after voice-video.mjs has loaded .env.local.
+export const aiCandidates = () => Math.max(1, Number(process.env.AI_CANDIDATES ?? 3));
+export const judgeModel = () => process.env.GEMINI_JUDGE_MODEL ?? "gemini-2.5-flash";
 
 export const hash = (s) => createHash("sha1").update(s).digest("hex").slice(0, 12);
 
@@ -38,8 +44,8 @@ export const hash = (s) => createHash("sha1").update(s).digest("hex").slice(0, 1
 // something" says nothing. A clip counts only if its own words (Pixabay tags,
 // the title in a Pexels link) share a word with the search; the first 5
 // letters are compared, so "bills"/"bill" and "documents"/"document" match.
-// ponytail: word overlap, not meaning; add a CLIP score (as OpenMontage does)
-// if relevant-looking but wrong clips keep getting through.
+// Meaning comes after: the candidates that pass are re-ranked by how much
+// their thumbnail looks like the phrase (scripts/clip-score.mjs).
 const STOP = new Set(["and", "the", "with", "for", "from", "of", "in", "on", "at", "a", "an"]);
 export const stems = (text) =>
   new Set(
@@ -111,7 +117,7 @@ const pixabay = async (term, key, dir) => {
       const sizes = ["small", "medium", "large"].map((k) => h.videos?.[k]).filter((v) => v?.url);
       const f = sizes.find((v) => v.width >= 1080) ?? [...sizes].reverse().find((v) => v.width >= MIN_WIDTH);
       return f
-        ? { id: `pixabay-${h.id}`, url: f.url, portrait: f.height > f.width, score: overlap(term, h.tags ?? ""), meta: pixabayMeta(h, f) }
+        ? { id: `pixabay-${h.id}`, url: f.url, thumb: f.thumbnail ?? null, portrait: f.height > f.width, score: overlap(term, h.tags ?? ""), meta: pixabayMeta(h, f) }
         : null;
     })
     .filter(Boolean)
@@ -133,7 +139,7 @@ const pexels = async (term, key, dir) => {
       const file = (v.video_files ?? [])
         .filter((f) => f.height > f.width && f.width >= 1080)
         .sort((a, b) => a.width - b.width)[0];
-      return file ? { id: `pexels-${v.id}-${file.id}`, url: file.link, meta: pexelsMeta(v, file) } : null;
+      return file ? { id: `pexels-${v.id}-${file.id}`, url: file.link, thumb: v.image ?? null, meta: pexelsMeta(v, file) } : null;
     })
     .filter(Boolean);
 };
@@ -149,16 +155,24 @@ const downloadStock = async (term, need, dir) => {
     throw new Error(
       "A scene asks for stock footage but neither PIXABAY_API_KEY nor PEXELS_API_KEY is set in .env.local.",
     );
+  let why = "";
   for (const [provider, key] of providers) {
     const picks = [];
-    for (const c of await provider(term, key, dir)) {
+    let ranked;
+    try {
+      ranked = await rerank(term, await provider(term, key, dir));
+    } catch (err) {
+      why = ` ${err.message}`; // every candidate looked wrong; the next provider may do better
+      continue;
+    }
+    for (const c of ranked) {
       if (picks.length >= need) break;
       const file = join(dir, `${c.id}.part.mp4`);
-      if (await download(c.url, file)) picks.push({ file, meta: c.meta });
+      if (await download(c.url, file)) picks.push({ file, meta: { ...c.meta, ...(c.clipScore === undefined ? {} : { clipScore: Math.round(c.clipScore * 1000) / 1000 }) } });
     }
     if (picks.length > 0) return picks;
   }
-  throw new Error(`No stock clip found for "${term}"; try a broader 2-5 word phrase, or an "ai" prompt.`);
+  throw new Error(`No stock clip found for "${term}"; try a broader 2-5 word phrase, or an "ai" prompt.${why}`);
 };
 
 // Automatic reuse is for exact and synonym hits only: a stem match is a
@@ -182,27 +196,88 @@ export const stockClips = async (term, need, dir, { slug, lib, fetchStock = down
   });
 };
 
-// The network half of aiClip: one fal.ai still (synchronous POST to fal.run,
-// images return in seconds) as a temp file in `dir`. Returns { file, meta }.
-const generateStill = async (prompt, seed, dir) => {
+// The judge's answer: {"best": <1-based>, "why": "..."} somewhere in the text,
+// or null when it can't be read or points outside 1..n. Pure, for the check.
+export const parseJudge = (text, n) => {
+  const m = String(text ?? "").match(/\{[^{}]*"best"\s*:\s*(\d+)[^{}]*\}/);
+  if (!m) return null;
+  const best = Number(m[1]);
+  if (!(best >= 1 && best <= n)) return null;
+  const why = /"why"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(m[0])?.[1] ?? "";
+  return { best: best - 1, why };
+};
+
+// Which of the stills fits the scene: Gemini looks at all of them once and
+// answers with an index. Judges what ViMax's BestImageSelector judges: the
+// subject as described, the house style, nothing that looks like a real client,
+// no text or borders. Returns { best, why } or null (the caller keeps the first).
+const judgeStills = async (files, prompt) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+  const parts = files.map((f) => ({ inlineData: { mimeType: "image/jpeg", data: readFileSync(f).toString("base64") } }));
+  parts.push({
+    text:
+      `These ${files.length} images were generated for a finance video scene described as: "${prompt}". ` +
+      "Pick the one to use. Judge, in this order: the subject matches the description; a clean photorealistic editorial look; " +
+      "nobody's face is recognisable; no text, logos, watermarks or borders; nothing deformed. " +
+      `Answer with JSON only: {"best": <1-${files.length}>, "why": "<one short sentence>"}.`,
+  });
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${judgeModel()}:generateContent`, {
+    method: "POST",
+    headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0 } }),
+  });
+  if (!res.ok) throw new Error(`Gemini judge: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
+  const body = await res.json();
+  return parseJudge(body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join(""), files.length);
+};
+
+// The network half of aiClip: `candidates` fal.ai stills in one call
+// (synchronous POST to fal.run, images return in seconds) as temp files in
+// `dir`; with more than one, the judge picks and the rest are deleted.
+// Returns { file, meta }.
+const generateStill = async (prompt, seed, dir, { candidates = aiCandidates(), judge = judgeStills } = {}) => {
   const key = process.env.FAL_KEY ?? process.env.FAL_AI_API_KEY;
   if (!key) throw new Error("A scene asks for an AI image but FAL_KEY is not set in .env.local.");
+  const n = process.env.GEMINI_API_KEY ? candidates : 1; // no judge, no point paying for spares
   const res = await fetch(`https://fal.run/${AI_MODEL}`, {
     method: "POST",
     headers: { Authorization: `Key ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       prompt: `${prompt}. ${AI_STYLE}`,
       image_size: { width: 864, height: 1536 }, // exact 9:16, multiples of 16
-      num_images: 1,
+      num_images: n,
       seed,
       enable_safety_checker: true,
     }),
   });
   if (!res.ok) throw new Error(`fal.ai image: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
-  const url = (await res.json()).images?.[0]?.url;
-  const file = join(dir, `fal-${hash(`${AI_MODEL}|${prompt}|${seed}`)}.part.jpg`);
-  if (!url || !(await download(url, file))) throw new Error("fal.ai returned no image.");
-  return { file, meta: { provider: "fal", model: AI_MODEL, prompt, seed, sourceUrl: url, licence: aiLicence(AI_MODEL), width: 864, height: 1536 } };
+  const urls = ((await res.json()).images ?? []).map((i) => i?.url).filter(Boolean);
+  const files = [];
+  for (const [k, url] of urls.entries()) {
+    const file = join(dir, `fal-${hash(`${AI_MODEL}|${prompt}|${seed}`)}-${k}.part.jpg`);
+    if (await download(url, file)) files.push({ file, url });
+  }
+  if (files.length === 0) throw new Error("fal.ai returned no image.");
+  let pick = 0;
+  let judged = null;
+  if (files.length > 1) {
+    try {
+      judged = await judge(files.map((f) => f.file), prompt);
+    } catch (err) {
+      console.log(`AI still: judge failed (${err.message.split("\n")[0]}); keeping the first of ${files.length}`);
+    }
+    if (judged) pick = judged.best;
+    for (const [k, f] of files.entries()) if (k !== pick) rmSync(f.file, { force: true });
+  }
+  const { file, url } = files[pick];
+  return {
+    file,
+    meta: {
+      provider: "fal", model: AI_MODEL, prompt, seed, sourceUrl: url, licence: aiLicence(AI_MODEL), width: 864, height: 1536,
+      ...(files.length > 1 ? { candidates: files.length, pick: pick + 1, judge: judged ? `${judgeModel()}: ${judged.why}` : "first (no verdict)" } : {}),
+    },
+  };
 };
 
 // Library first, exact or synonym hits only (the exact prompt, then `keyword`, the scene's footage
