@@ -223,19 +223,50 @@ const placeFigures = (reel: Reel, fps: number, slates: Slate[]): Placed[] => {
     (c) => [at(c.fromMs), at(c.toMs)] as const,
   );
   const hook = reel.edit.hook ? HOOK_FRAMES : 0;
-  return figuresOf(reel, fps).map((g) => {
-    const end = g.fromFrame + g.frames;
-    let from = Math.max(g.fromFrame, hook);
-    const s = slates.find((x) => from >= x.from && from < x.from + x.frames);
-    if (s) from = Math.max(from, s.from + s.frames);
-    const chip = cues.some(([a, b]) => from >= a && from < b);
-    const nextCue = Math.min(
-      ...cues.map(([a]) => a).filter((a) => a > from),
-      Infinity,
-    );
-    const frames = Math.max(MIN_FIGURE, Math.min(end, nextCue) - from);
-    return { from, frames, big: g.big, label: g.label, chip };
-  });
+  const inCue = (f: number) => cues.some(([a, b]) => f >= a && f < b);
+  const nextCueAfter = (f: number) =>
+    Math.min(...cues.map(([a]) => a).filter((a) => a > f), Infinity);
+  const wanted = figuresOf(reel, fps)
+    .map((g) => {
+      let from = Math.max(g.fromFrame, hook);
+      const s = slates.find((x) => from >= x.from && from < x.from + x.frames);
+      if (s) from = Math.max(from, s.from + s.frames);
+      return { g, from, end: g.fromFrame + g.frames };
+    })
+    .sort((a, b) => a.from - b.from);
+  // Two lanes, the big centre figure and the top-right chip. Figures that
+  // waited for the same card (or the hook) would start together and draw over
+  // each other, so each lane is a queue: the next waits until the one before
+  // has held MIN_FIGURE, which then gives way. A figure pushed into a cue's
+  // span becomes a chip; a big figure never runs into the next cue.
+  const out: Placed[] = [];
+  const last: { big?: number; chip?: number } = {};
+  for (const { g, from: start, end } of wanted) {
+    const laneOf = (f: number): "big" | "chip" => (inCue(f) ? "chip" : "big");
+    let lane = laneOf(start);
+    let from = start;
+    const prevIndex = last[lane];
+    if (prevIndex !== undefined) {
+      const prev = out[prevIndex];
+      if (from < prev.from + prev.frames) {
+        from = Math.max(from, prev.from + MIN_FIGURE);
+        out[prevIndex] = { ...prev, frames: Math.min(prev.frames, from - prev.from) };
+        lane = laneOf(from);
+      }
+    }
+    const limit = lane === "big" ? nextCueAfter(from) : Infinity;
+    const frames = Math.min(Math.max(MIN_FIGURE, end - from), limit - from);
+    if (frames <= 0) continue;
+    last[lane] = out.length;
+    out.push({
+      from,
+      frames,
+      big: g.big,
+      label: g.label,
+      chip: lane === "chip",
+    });
+  }
+  return out;
 };
 
 const idleWindows = (busy: [number, number][], total: number) => {

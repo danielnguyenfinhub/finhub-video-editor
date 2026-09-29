@@ -131,8 +131,10 @@ const Points: React.FC<CueProps<"points">> = ({ c, t }) => {
           bottom: 1080 - IMG_BOTTOM + 60,
         }}
       >
-        {cur >= 0 && p < 1 ? big(cur - 1, 1 - p) : null}
-        {big(cur, p)}
+        {/* One after the other, never both: the old line clears in the first
+            half of the change, the new one arrives in the second. */}
+        {cur >= 0 && p < 0.5 ? big(cur - 1, 1 - p * 2) : null}
+        {big(cur, cur >= 0 ? Math.max(0, p * 2 - 1) : p)}
       </div>
     </>
   );
