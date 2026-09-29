@@ -24,6 +24,7 @@ Where it matters:
   `"background": "vignette"` and skip the matte. Never choose it yourself. Rules: golden rule 4
   in `src/designs/README.md`.
 
+- **Footage (Pipeline A) defaults to `cards`** (Daniel, 29/09/2026): `select-template.mjs <slug> --pick cards --reason "Daniel's default for footage"`, unless Daniel names another template.
 - **Template (A3.2 / B4.1):** `node scripts/select-template.mjs <slug> [--public-dir <dir>]` (it runs `brief.mjs`).
   Take the top pick unless you write a hard reason in `notes`; if `selection.json` has `"confident": false`, put its `closeCall` in `open_questions` for Daniel instead of picking; Daniel's named template →
   `--pick <id> --reason "<his words>"`. Then the variety check (A3.3) and `"design"` (A3.4).
