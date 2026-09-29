@@ -94,7 +94,7 @@ Bank logos appear by themselves when you name a bank (CommBank, Westpac, ANZ, NA
 
 ### 4. Preview and tweak
 
-- **Review page** (`npm run review`, then open http://localhost:4100/): watch the video exactly as it will render, switch template and colour grade, drag chapters/stats/cues along the timeline, then **Save** and **Render video**. Wording isn't editable here on purpose. Change text through Claude so it gets the compliance check.
+- **Review page** (`npm run review`, then open http://localhost:4100/): watch the video exactly as it will render, switch template and colour grade, drag chapters/stats/cues/B-roll along the timeline (they snap to each other and the playhead; zoom with Ctrl + wheel; Ctrl+Z undoes; Space plays, arrow keys nudge the selected item), then **Save** and **Render video**. Wording isn't editable here on purpose. Change text through Claude so it gets the compliance check.
 - **Remotion Studio** (`npm run dev`, http://localhost:3000): the developer view. Open `MortgageReel` and set `slug` (and `design` to try another template without changing `edit.json`).
 
 ### 5. Render

@@ -44,21 +44,35 @@
       .status.bad { background: #fbe6e5; color: var(--bad); }
       .status.info { background: #e6eef8; color: var(--blue); }
       /* Drag timeline (review/Timeline.tsx): lane names left, scrolling track right. */
-      .timeline { display: grid; grid-template-columns: 84px 1fr; margin-top: 12px; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(11, 31, 61, 0.12); padding: 8px 0; }
+      .timeline { display: grid; grid-template-columns: 84px 1fr; margin-top: 4px; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(11, 31, 61, 0.12); padding: 8px 0; }
       .lane-names { display: grid; grid-template-rows: 22px repeat(4, 40px); font-weight: 600; font-size: 13px; color: var(--dim); padding-left: 12px; align-items: center; }
       .track-scroll { overflow-x: auto; }
-      .track { position: relative; display: grid; grid-template-rows: 22px repeat(3, 40px); cursor: pointer; }
+      .track { position: relative; display: grid; grid-template-rows: 22px repeat(4, 40px); cursor: pointer; user-select: none; }
       .ruler { position: relative; border-bottom: 1px solid #e3e7ee; }
-      .ruler span { position: absolute; top: 2px; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; transform: translateX(-50%); }
-      .ruler span:first-child { transform: none; }
+      .ruler { cursor: col-resize; }
+      .ruler span { position: absolute; top: 0; bottom: 0; padding: 3px 0 0 4px; border-left: 1px solid #cfd6e2; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
       .lane { position: relative; border-bottom: 1px dashed #eef1f5; }
       .block { position: absolute; top: 6px; height: 28px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; cursor: grab; touch-action: none; border: 0; color: #fff; }
       .lane.chapters .block { background: var(--navy); }
       .lane.stats .block { background: var(--blue); }
       .lane.cues .block { background: var(--amber); color: var(--navy); }
       .lane.visuals .block { background: var(--slate, #5b6b80); }
+      .block.selected { outline: 3px solid var(--bad); outline-offset: 1px; z-index: 1; }
       .block.dragging { cursor: grabbing; opacity: 0.85; box-shadow: 0 4px 12px rgba(11, 31, 61, 0.3); z-index: 2; }
       .playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--bad); pointer-events: none; }
+      .playhead::before { content: ""; position: absolute; top: 0; left: -5px; border: 6px solid transparent; border-top-color: var(--bad); border-bottom: 0; }
+      .snap-guide { position: absolute; top: 22px; bottom: 0; width: 0; border-left: 2px dashed var(--blue); pointer-events: none; z-index: 3; }
+      .tl-tools { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+      .tl-tools .zoom { min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+      .tl-tools .snap { margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 600; }
+      .tl-tools .snap .dim { margin: 0; font-weight: 400; }
+      li.selected { outline: 2px solid var(--bad); }
+      .keys { margin-top: 12px; }
+      .keys summary { cursor: pointer; font-weight: 600; }
+      .keys table { border-collapse: collapse; margin-top: 6px; width: 100%; }
+      .keys td { padding: 3px 8px 3px 0; vertical-align: top; font-size: 13px; }
+      .keys td:first-child { white-space: nowrap; }
+      kbd { background: #fff; border: 1px solid #c9cfd9; border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; font: 600 12px ui-monospace, monospace; }
       .log { background: var(--navy); color: #e6eef8; padding: 10px; border-radius: 8px; font: 12px/1.5 ui-monospace, monospace; max-height: 240px; overflow: auto; }
     </style>
   </head>
