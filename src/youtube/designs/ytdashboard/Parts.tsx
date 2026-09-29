@@ -160,6 +160,10 @@ export const Mini: React.FC<{ type: string; children: React.ReactNode }> = ({
 );
 
 export const line1 = oneLine;
+// Put AFTER line1/clampLines on a text item inside a flex ROW: it takes the
+// room that is left and wraps or ellipsises there, instead of keeping its
+// one-line width and running past the tile edge.
+export const rowFit: React.CSSProperties = { flex: "1 1 0", minWidth: 0 };
 
 // 4.35 -> "4,35" (Vietnamese decimal comma), as the numbers are said.
 export const viNum = (v: number, decimals: number) =>

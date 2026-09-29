@@ -8,7 +8,7 @@ import { FONT, clamp, enter } from "../../../mortgage/style";
 import type { Beat } from "./beats";
 import { chapterAt, two, type ChromeProps } from "./Chrome";
 import { COPY, HEADER, P, alpha, clock } from "./layout";
-import { line1 } from "./Parts";
+import { line1, rowFit } from "./Parts";
 
 // LogoMark16's own window (first and last 10 s): the running time gives it
 // the header's right end while it shows.
@@ -58,7 +58,13 @@ const Chip: React.FC<{ chip: Beat; f: number; fps: number }> = ({
           </span>
           {chip.label ? (
             <span
-              style={{ fontSize: 19, fontWeight: 600, color: P.dim, ...line1 }}
+              style={{
+                fontSize: 19,
+                fontWeight: 600,
+                color: P.dim,
+                ...line1,
+                ...rowFit,
+              }}
             >
               {chip.label}
             </span>

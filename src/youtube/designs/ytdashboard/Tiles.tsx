@@ -2,7 +2,7 @@
 // kinetic), split (compare, venn), delta (change), chart (trend, bars),
 // verdict and "mentioned" (lender logos). Laid out at the stage size; every
 // reveal keys off the beat's own spoken ms, so the tile tracks the voice.
-import { fitText } from "@remotion/layout-utils";
+import { fitText, measureText } from "@remotion/layout-utils";
 import type React from "react";
 import { Easing, interpolate } from "remotion";
 import { brand } from "../../../brand/theme";
@@ -13,7 +13,7 @@ import type { Tile } from "./beats";
 import { BarsChart, TrendChart } from "./Charts";
 import { Mentioned, Split, Venn, Verdict } from "./Widgets";
 import { COPY, FOCUS, P, alpha } from "./layout";
-import { Arrow, Check, Shell, Tri, clampLines, line1 } from "./Parts";
+import { Arrow, Check, Shell, Tri, clampLines, line1, rowFit } from "./Parts";
 
 export type TileView = {
   tile: Tile;
@@ -25,6 +25,7 @@ export type TileView = {
 };
 type CueOf<K extends Cue["kind"]> = Extract<Cue, { kind: K }>;
 const INNER_W = FOCUS.w - 88;
+const KPI_GAP = 64;
 const CHART_H = 250;
 
 const Kpi: React.FC<{
@@ -59,9 +60,36 @@ const Kpi: React.FC<{
       fontWeight: "900",
     }).fontSize,
   );
+  // Beside the number when the label has room for ~2 lines at 52 px; else
+  // stacked under it (never cut: it wraps within its box).
+  const numW = measureText({
+    text: big,
+    fontFamily: FONT,
+    fontSize: size,
+    fontWeight: "900",
+  }).width;
+  const side = INNER_W - numW - KPI_GAP;
+  const labelW = label
+    ? measureText({
+        text: label,
+        fontFamily: FONT,
+        fontSize: 52,
+        fontWeight: "800",
+      }).width
+    : 0;
+  const stacked = label !== undefined && labelW > side * 2.6;
   return (
     <Shell type={COPY.figure} tag={v.tag}>
-      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 64 }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: stacked ? "column" : "row",
+          alignItems: stacked ? "flex-start" : "center",
+          justifyContent: "center",
+          gap: stacked ? 18 : KPI_GAP,
+        }}
+      >
         <div style={{ flexShrink: 0 }}>
           <div
             style={{
@@ -96,11 +124,12 @@ const Kpi: React.FC<{
         {label ? (
           <div
             style={{
-              fontSize: 52,
+              fontSize: stacked ? 40 : 52,
               fontWeight: 800,
               lineHeight: 1.22,
               opacity: enter(f, fps, tile.s + 10),
-              ...clampLines(3),
+              ...clampLines(stacked ? 2 : 3),
+              ...(stacked ? { maxWidth: INNER_W } : rowFit),
             }}
           >
             {label}

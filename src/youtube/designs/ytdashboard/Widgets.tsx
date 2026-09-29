@@ -7,7 +7,7 @@ import type { LenderMention } from "../../../mortgage/lenders";
 import type { Cue } from "../../../mortgage/schema";
 import { enter, toneColor } from "../../../mortgage/style";
 import { COPY, FOCUS, P, alpha } from "./layout";
-import { Check, Cross, Shell, clampLines, line1 } from "./Parts";
+import { Check, Cross, Shell, clampLines, line1, rowFit } from "./Parts";
 import type { TileView } from "./Tiles";
 
 type CueOf<K extends Cue["kind"]> = Extract<Cue, { kind: K }>;
@@ -63,7 +63,13 @@ const SplitCard: React.FC<{ v: TileView; card: Card }> = ({ v, card }) => {
             }}
           >
             <span
-              style={{ fontSize: 28, fontWeight: 600, color: P.dim, ...line1 }}
+              style={{
+                fontSize: 28,
+                fontWeight: 600,
+                color: P.dim,
+                ...line1,
+                ...rowFit,
+              }}
             >
               {r.label}
             </span>
@@ -170,6 +176,7 @@ export const Verdict: React.FC<{ v: TileView; cue: CueOf<"verdict"> }> = ({
             fontWeight: 900,
             lineHeight: 1.2,
             ...clampLines(3),
+            ...rowFit,
           }}
         >
           {cue.text}

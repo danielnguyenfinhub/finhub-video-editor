@@ -7,7 +7,16 @@ import { toneColor } from "../../../mortgage/style";
 import type { Tile } from "./beats";
 import { MiniBars, Spark } from "./Charts";
 import { COPY, P } from "./layout";
-import { Arrow, Check, Cross, Mini, Tri, clampLines, line1 } from "./Parts";
+import {
+  Arrow,
+  Check,
+  Cross,
+  Mini,
+  Tri,
+  clampLines,
+  line1,
+  rowFit,
+} from "./Parts";
 
 const Big: React.FC<{ big: string; label?: string }> = ({ big, label }) => (
   <>
@@ -155,7 +164,9 @@ export const Compact: React.FC<{ tile: Tile }> = ({ tile: t }) => {
             ) : (
               <Cross size={40} color={brand.bad} />
             )}
-            <Text>{c.text}</Text>
+            <div style={rowFit}>
+              <Text>{c.text}</Text>
+            </div>
           </div>
         </Mini>
       );
