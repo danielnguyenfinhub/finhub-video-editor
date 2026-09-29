@@ -1,0 +1,350 @@
+{
+  "source": "chon-ngan-hang",
+  "title": "Chọn Ngân Hàng Đừng Chỉ Nhìn Lãi Suất",
+  "coverFrameMs": 80000,
+  "hook": {
+    "big": "3 TIÊU CHÍ",
+    "countTo": 3,
+    "suffix": "TIÊU CHÍ",
+    "sub": "Chọn ngân hàng trước khi nhìn lãi suất"
+  },
+  "pacing": {
+    "mode": "auto"
+  },
+  "keywords": [
+    "tiêu chí",
+    "mục đích",
+    "rủi ro",
+    "refinance"
+  ],
+  "chapters": [
+    {
+      "atMs": 51260,
+      "title": "Khả năng duyệt hồ sơ",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 79420,
+      "title": "Số tiền ngân hàng cho vay",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 96080,
+      "title": "Tốc độ duyệt hồ sơ",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 123440,
+      "title": "Rồi mới đến lãi suất",
+      "effect": "pushCut"
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 134200,
+      "durMs": 3000,
+      "big": "3–4 ngân hàng",
+      "label": "vẫn đủ cả 3 tiêu chí trên"
+    }
+  ],
+  "cues": [
+    {
+      "kind": "change",
+      "fromMs": 3800,
+      "toMs": 8200,
+      "kicker": "VÍ DỤ",
+      "label": "Lãi suất minh hoạ",
+      "from": "6,19%",
+      "to": "5,94%",
+      "swapAtMs": 5600,
+      "direction": "down",
+      "rateType": "other"
+    },
+    {
+      "kind": "compare",
+      "fromMs": 22520,
+      "toMs": 36400,
+      "cards": [
+        {
+          "title": "Mua nhà",
+          "atMs": 23000,
+          "rows": [
+            {
+              "label": "Ưu tiên đầu",
+              "value": "Khả năng duyệt",
+              "tone": "neutral",
+              "atMs": 24000
+            },
+            {
+              "label": "Sau đó",
+              "value": "Tốc độ duyệt",
+              "tone": "neutral",
+              "atMs": 26000
+            }
+          ]
+        },
+        {
+          "title": "Chuyển ngân hàng",
+          "atMs": 27000,
+          "highlightAtMs": 33600,
+          "rows": [
+            {
+              "label": "Ưu tiên đầu",
+              "value": "Khả năng duyệt",
+              "tone": "neutral",
+              "atMs": 28000
+            },
+            {
+              "label": "Sau đó",
+              "value": "Lãi suất",
+              "tone": "neutral",
+              "atMs": 30000
+            }
+          ]
+        }
+      ],
+      "vsAtMs": 26800,
+      "question": {
+        "text": "Mục đích vay quyết định thứ tự",
+        "atMs": 33800
+      }
+    },
+    {
+      "kind": "trend",
+      "fromMs": 86060,
+      "toMs": 96400,
+      "kicker": "VÍ DỤ",
+      "title": "Lãi suất (số liệu minh hoạ)",
+      "unit": "%",
+      "decimals": 2,
+      "points": [
+        {
+          "label": "Q1",
+          "value": 6.19
+        },
+        {
+          "label": "Q2",
+          "value": 6.09
+        },
+        {
+          "label": "Q3",
+          "value": 5.94
+        },
+        {
+          "label": "Q4",
+          "value": 5.99
+        }
+      ],
+      "rateType": "other"
+    },
+    {
+      "kind": "points",
+      "fromMs": 147660,
+      "toMs": 188040,
+      "title": "Khi refinance: thứ tự đổi",
+      "items": [
+        {
+          "text": "Có khả năng duyệt hồ sơ",
+          "atMs": 153520
+        },
+        {
+          "text": "Vay đủ số tiền cần",
+          "atMs": 160440
+        },
+        {
+          "text": "Rồi ưu tiên lãi suất thấp",
+          "atMs": 170480
+        },
+        {
+          "text": "Đợi 2–3 tuần cũng không sao",
+          "atMs": 186080
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 266220,
+      "toMs": 279940,
+      "title": "Vì sao hỏi nhiều giấy tờ?",
+      "items": [
+        {
+          "text": "Bắt đầu từ lãi suất thấp",
+          "atMs": 269320
+        },
+        {
+          "text": "Không bắt đầu từ chỗ dễ",
+          "atMs": 277740
+        }
+      ]
+    },
+    {
+      "kind": "bars",
+      "fromMs": 285600,
+      "toMs": 299160,
+      "kicker": "Mượn dễ thì lãi suất cao",
+      "title": "Lãi suất",
+      "bars": [
+        {
+          "label": "Ít rủi ro",
+          "value": "Thấp",
+          "height": 0.45,
+          "tone": "good",
+          "atMs": 293200
+        },
+        {
+          "label": "Nhiều rủi ro",
+          "value": "Cao",
+          "height": 0.85,
+          "tone": "bad",
+          "atMs": 296900
+        }
+      ]
+    }
+  ],
+  "cta": {
+    "question": "Bạn đang cân nhắc chọn ngân hàng nào?"
+  },
+  "compliance": {
+    "illustrativeNumbers": true,
+    "conditionsNote": true
+  },
+  "notes": [
+    "TEST FIXTURE for the cards design (talking head): not a real video. Talk and footage are the chon-ngan-hang recording; the change, compare and trend cues and the bank name (a caption fix on \"confident\") are synthetic placeholders, not real rates or advice. _test-cards-room is the same with \"background\": \"room\"."
+  ],
+  "remove": [
+    [
+      8320,
+      21600
+    ],
+    [
+      22120,
+      22520
+    ],
+    [
+      36560,
+      36960
+    ],
+    [
+      43980,
+      44380
+    ],
+    [
+      51260,
+      51660
+    ],
+    [
+      59020,
+      79240
+    ],
+    [
+      83020,
+      86060
+    ],
+    [
+      109320,
+      113740
+    ],
+    [
+      117960,
+      123040
+    ],
+    [
+      128440,
+      133180
+    ],
+    [
+      137180,
+      137640
+    ],
+    [
+      173300,
+      184040
+    ],
+    [
+      188040,
+      193580
+    ],
+    [
+      196000,
+      218760
+    ],
+    [
+      231580,
+      264860
+    ],
+    [
+      289100,
+      289880
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "dây",
+      "to": "vay"
+    },
+    {
+      "from": "vai",
+      "to": "vay"
+    },
+    {
+      "from": "dự",
+      "to": "duyệt"
+    },
+    {
+      "from": "khẩu",
+      "to": "hồ"
+    },
+    {
+      "from": "xuất",
+      "to": "suất"
+    },
+    {
+      "from": "xuất,",
+      "to": "suất,"
+    },
+    {
+      "from": "đổ",
+      "to": "để"
+    },
+    {
+      "from": "tương",
+      "to": "tiền"
+    },
+    {
+      "from": "lai",
+      "to": "lời"
+    },
+    {
+      "from": "đỉnh",
+      "to": "định"
+    },
+    {
+      "from": "tân",
+      "to": "tờ"
+    },
+    {
+      "from": "lợi",
+      "to": "lời",
+      "atMs": 273240
+    },
+    {
+      "from": "Vậy",
+      "to": "",
+      "atMs": 299160
+    },
+    {
+      "from": "thôi.",
+      "to": "",
+      "atMs": 299420
+    },
+    {
+      "from": "confident",
+      "to": "ANZ",
+      "atMs": 157080
+    }
+  ],
+  "cut": {
+    "fillers": false
+  },
+  "background": "room"
+}
