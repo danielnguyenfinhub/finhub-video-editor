@@ -115,7 +115,7 @@ This writes to `out/videos/my-slug/`:
 
 The sound is set to −14 LUFS, the level Facebook, YouTube and TikTok play at.
 
-Before rendering, `node scripts/export-srt.mjs my-slug` lists every automatic cut so you can check nothing important was removed. After it, `out/videos/my-slug/team/qc/sweep/` holds one small picture per visual change in the finished video; Claude looks at every one before handing the video back.
+Before rendering, `node scripts/export-srt.mjs my-slug` lists every automatic cut so you can check nothing important was removed. After it, `out/videos/my-slug/team/qc/sweep/` holds one small picture per visual change in the finished video, and contact sheets (`sheet-01.jpg`, …) that tile them 12 to an image with their times; Claude looks at every one before handing the video back.
 
 ---
 

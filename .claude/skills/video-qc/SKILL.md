@@ -57,9 +57,29 @@ inventing "cảm ơn các bạn đã theo dõi" on silence is not a finding.
 
 Then the **sweep**: `render-video.py` leaves one small frame per visual change in
 `out/videos/<slug>/team/qc/sweep/` (`sweep.json` lists them with their times; re-make with
-`node scripts/sweep-render.mjs <slug>`). **Open every frame and look.** These are the moments
-nobody named in `edit.json`: a cutaway that lands late, an element up over a spoken number, a
-card that never finished animating. Anything wrong → FIX with the frame's time as evidence.
+`node scripts/sweep-render.mjs <slug> --sheet`). **Open every frame and look.** These are the
+moments nobody named in `edit.json`: a cutaway that lands late, an element up over a spoken
+number, a card that never finished animating. Anything wrong → FIX with the frame's time as
+evidence.
+
+The same folder holds `sheet-01.jpg`, `sheet-02.jpg`, … : the kept frames tiled 12 to a sheet
+(4×3), each stamped with its time. Read the sheets first to see the flow of the whole video in a
+few images (pacing, a repeated picture, a colour or style jump between scenes), then open single
+frames only where a tile looks wrong or a number and its element need checking at full size.
+A sheet never replaces the frames for text: a tile is 320 px wide, too small to read a figure.
+
+For a faceless video (stock and AI pictures) also read the sheets against this rubric, adapted
+from crisng95/flowkit's `fk-review-video`. Score nothing; list findings with a severity and the
+tile times:
+- **CRITICAL** (BLOCK/FIX, never ship): a picture that could pass for a real client, document or
+  brand; readable text or a logo inside an AI still; a picture that contradicts the spoken fact
+  (a house for a car loan, a rising arrow on a rate cut).
+- **HIGH** (FIX): AI artefacts (extra fingers, melted hands, warped objects); a scene whose
+  style breaks from its neighbours (the fixed style is navy and amber, no text, people from
+  behind); the same clip or still shown twice within 10 s.
+- **MINOR** (note): a soft or cropped subject, a dull frame, a cut that lands a beat late.
+- Also check: does each picture match its line (prompt adherence), does it move or hold sensibly
+  (motion), is the subject clear inside the safe band (composition).
 
 ## Verdict
 
