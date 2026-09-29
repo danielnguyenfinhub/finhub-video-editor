@@ -1,12 +1,10 @@
 // The fixed compliance card that closes every MortgageReel, whatever the
 // design (the CTA/contact card belongs to each design).
+import { measureText } from "@remotion/layout-utils";
 import type React from "react";
-import {
-  AbsoluteFill,
-  Img,
-  interpolate,
-  useCurrentFrame,
-} from "remotion";
+import { useMemo } from "react";
+import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
+import { useTyDoFont } from "../brand/font";
 import { brand } from "../brand/theme";
 import {
   CONDITIONS_NOTE_VI,
@@ -17,8 +15,13 @@ import {
   TAX_NOTE,
   comparisonWarningVi,
 } from "./compliance";
+import { SAFE } from "./golden";
 import type { EditJson } from "./schema";
 import { FONT, LOGO, clamp } from "./style";
+
+// Logo width on the card (the file is 2000×1215).
+const CARD_LOGO_W = 300;
+const CARD_LOGO_H = (CARD_LOGO_W * 1215) / 2000;
 
 // ---------------------------------------------------------------- compliance
 
@@ -64,7 +67,13 @@ export const complianceLines = (
       ? [{ text: TAX_NOTE, base: 38, color: "#33445A" }]
       : []),
     ...(rate
-      ? [{ text: comparisonWarningVi(rate.ratesAsAt), base: 34, color: "#33445A" }]
+      ? [
+          {
+            text: comparisonWarningVi(rate.ratesAsAt),
+            base: 34,
+            color: "#33445A",
+          },
+        ]
       : []),
   ];
 };
@@ -73,40 +82,80 @@ export const ComplianceCard: React.FC<{
   compliance: EditJson["compliance"];
 }> = ({ compliance }) => {
   const frame = useCurrentFrame();
-  const lines = complianceLines(compliance);
-  // ponytail: text-fit by an area estimate (glyph ≈0.55em wide, 1.35 line
-  // height, 920px column, ~1300px of height); swap for @remotion/layout-utils
-  // fitText if a card ever overflows.
-  const chars = lines.reduce((n, l) => n + l.text.length, 0);
-  const fit = Math.sqrt(((1300 - 34 * lines.length) * 920) / (chars * 0.7425));
-  const k = Math.min(1, fit / 44);
+  const lines = useMemo(() => complianceLines(compliance), [compliance]);
+  // The largest scale (at most the base sizes) whose word-wrapped lines fit
+  // the SAFE band under the logo, measured with the real font.
+  const width = SAFE.right - SAFE.left;
+  const height = SAFE.bottom - SAFE.top - CARD_LOGO_H;
+  // measureText caches, so measure only once the real font is in.
+  const fontReady = useTyDoFont();
+  const k = useMemo(() => {
+    if (!fontReady) return 1;
+    const wrapped = (text: string, fontSize: number) => {
+      let rows = 1;
+      let row = "";
+      for (const word of text.split(" ")) {
+        const next = row ? `${row} ${word}` : word;
+        const w = measureText({
+          text: next,
+          fontFamily: FONT,
+          fontSize,
+          fontWeight: 800,
+        }).width;
+        if (row && w > width * 0.98) {
+          rows++;
+          row = word;
+        } else row = next;
+      }
+      return rows;
+    };
+    for (let s = 1; s > 0.3; s -= 0.01) {
+      const used = lines.reduce((h, l) => {
+        const size = Math.round(l.base * s);
+        return h + wrapped(l.text, size) * size * 1.35 + 34 * s;
+      }, 0);
+      if (used <= height) return s;
+    }
+    return 0.3;
+  }, [fontReady, lines, width, height]);
   return (
     <AbsoluteFill
       style={{
         background: "#FFFFFF",
         fontFamily: FONT,
-        padding: "140px 80px 0",
-        alignItems: "center",
-        textAlign: "center",
         opacity: interpolate(frame, [0, 8], [0, 1], clamp),
       }}
     >
-      <Img src={LOGO} style={{ width: 420 }} />
-      {lines.map((l) => (
-        <div
-          key={l.text}
-          style={{
-            fontSize: Math.round(l.base * k),
-            fontWeight: 800,
-            color: l.color ?? brand.textOnCard,
-            lineHeight: 1.35,
-            marginTop: 34 * k,
-          }}
-        >
-          {l.text}
-        </div>
-      ))}
+      <div
+        style={{
+          position: "absolute",
+          top: SAFE.top,
+          left: SAFE.left,
+          width,
+          height: SAFE.bottom - SAFE.top,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+        }}
+      >
+        <Img src={LOGO} style={{ width: CARD_LOGO_W, height: CARD_LOGO_H }} />
+        {lines.map((l) => (
+          <div
+            key={l.text}
+            style={{
+              fontSize: Math.round(l.base * k),
+              fontWeight: 800,
+              color: l.color ?? brand.textOnCard,
+              lineHeight: 1.35,
+              marginTop: 34 * k,
+            }}
+          >
+            {l.text}
+          </div>
+        ))}
+      </div>
     </AbsoluteFill>
   );
 };
-

@@ -9,6 +9,7 @@ import {
 } from "remotion";
 import { BadgeRow } from "../../brand/BadgeRow";
 import { brand } from "../../brand/theme";
+import { SAFE } from "../../mortgage/golden";
 import { CTA_BUTTON } from "../../mortgage/schema";
 import { FONT, LOGO, enter } from "../../mortgage/style";
 
@@ -39,79 +40,87 @@ export const Outro: React.FC<{ question: string }> = ({ question }) => {
     <AbsoluteFill
       style={{
         background: "linear-gradient(180deg, #FFFFFF 0%, #EEF5FB 100%)",
-        alignItems: "center",
         fontFamily: FONT,
         textAlign: "center",
-        padding: "150px 80px 0",
       }}
     >
-      <Img
-        src={LOGO}
-        style={{ width: 720, transform: `scale(${a})`, opacity: a }}
-      />
-      <div
-        style={{
-          marginTop: 60,
-          fontSize: 62,
-          fontWeight: 900,
-          color: brand.textOnCard,
-          lineHeight: 1.25,
-          opacity: b,
-          transform: `translateY(${interpolate(b, [0, 1], [40, 0])}px)`,
-        }}
-      >
-        {question}
-      </div>
-      <div
-        style={{
-          marginTop: 46,
-          padding: "26px 60px",
-          borderRadius: 999,
-          background: brand.primary,
-          color: "#fff",
-          fontSize: 54,
-          fontWeight: 900,
-          opacity: c,
-          transform: `scale(${c * pulse})`,
-          boxShadow: "0 16px 40px rgba(0,100,168,0.35)",
-        }}
-      >
-        {CTA_BUTTON}
-      </div>
-      <div
-        style={{
-          marginTop: 50,
-          width: 860,
-          fontSize: 44,
-          opacity: d,
-          transform: `translateY(${interpolate(d, [0, 1], [40, 0])}px)`,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 58,
-            fontWeight: 900,
-            color: brand.primary,
-            marginBottom: 10,
-          }}
-        >
-          Daniel Nguyen
-        </div>
-        {contact("Điện thoại", "0430 11 11 88")}
-        {contact("Email", "daniel@finhub.net.au")}
-        {contact("Website", "finhub.net.au")}
-      </div>
+      {/* Everything inside SAFE (golden rule 3), spread top to bottom. */}
       <div
         style={{
           position: "absolute",
-          bottom: 90,
-          opacity: e,
-          transform: `translateY(${interpolate(e, [0, 1], [60, 0])}px)`,
-          boxShadow: "0 10px 30px rgba(11,31,61,0.15)",
-          borderRadius: 20,
+          top: SAFE.top,
+          left: SAFE.left,
+          width: SAFE.right - SAFE.left,
+          height: SAFE.bottom - SAFE.top,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <BadgeRow height={90} />
+        <Img
+          src={LOGO}
+          style={{ width: 300, transform: `scale(${a})`, opacity: a }}
+        />
+        <div
+          style={{
+            fontSize: 62,
+            fontWeight: 900,
+            color: brand.textOnCard,
+            lineHeight: 1.25,
+            opacity: b,
+            transform: `translateY(${interpolate(b, [0, 1], [40, 0])}px)`,
+          }}
+        >
+          {question}
+        </div>
+        <div
+          style={{
+            padding: "26px 60px",
+            borderRadius: 999,
+            background: brand.primary,
+            color: "#fff",
+            fontSize: 54,
+            fontWeight: 900,
+            opacity: c,
+            transform: `scale(${c * pulse})`,
+            boxShadow: "0 16px 40px rgba(0,100,168,0.35)",
+          }}
+        >
+          {CTA_BUTTON}
+        </div>
+        <div
+          style={{
+            width: 860,
+            fontSize: 44,
+            opacity: d,
+            transform: `translateY(${interpolate(d, [0, 1], [40, 0])}px)`,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 58,
+              fontWeight: 900,
+              color: brand.primary,
+              marginBottom: 10,
+            }}
+          >
+            Daniel Nguyen
+          </div>
+          {contact("Điện thoại", "0430 11 11 88")}
+          {contact("Email", "daniel@finhub.net.au")}
+          {contact("Website", "finhub.net.au")}
+        </div>
+        <div
+          style={{
+            opacity: e,
+            transform: `translateY(${interpolate(e, [0, 1], [60, 0])}px)`,
+            boxShadow: "0 10px 30px rgba(11,31,61,0.15)",
+            borderRadius: 20,
+          }}
+        >
+          <BadgeRow height={80} />
+        </div>
       </div>
     </AbsoluteFill>
   );
