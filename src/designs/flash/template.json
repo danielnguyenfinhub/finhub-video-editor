@@ -1,0 +1,51 @@
+{
+  "id": "flash",
+  "intents": [
+    "news",
+    "data"
+  ],
+  "dataShapes": [
+    "numbers",
+    "comparison",
+    "steps",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "flash card: the number slams in with a small camera shake and a striped one-bar meter (percent on a 10 % scale, else full); a date said as a stat is a tear-off calendar page under the reel's own label",
+    "comparisons": "two flash columns cut by a diagonal hazard slash with a VS disc; values slam in; tone colour only for good/bad rows; the question as a gold strip",
+    "steps": "numbered bulletins slam in from the right top-down as each is said; unsaid slots are dim striped placeholders; the current one lit",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "old value big, a gold strike line draws across it, it shrinks up; the new value SLAMS in huge with a shockwave ring, a camera shake and an arrow only when the cue gives a direction; a difference chip only when both values parse with the same unit",
+    "trend": "alert line that draws itself in gold, each point pops with its value printed, the last one pulses; no up/down colour",
+    "banks": "flash card with the logo on white, neutral label; a bank named while the stage is busy rides as a small chip",
+    "captionPosition": "fixed navy news strip under the stage, left-aligned, keywords gold, the word being said underlined in gold; English line under it"
+  },
+  "skinAxes": {
+    "cover": "logo tile on white, the gold alert bar slammed in, title punched in with a shake, a hazard tape across the bottom",
+    "captions": "bold white on a navy strip with a gold top rule and a running hazard edge",
+    "framing": "pure motion graphics, no footage: deep navy with a pulsing gold siren glow and a drifting diagonal texture",
+    "transitions": "punch-ins with camera shake, slams, a diagonal hazard band sweeping through on every beat",
+    "texture": "gold/navy hazard stripes, light-sweep glints over headlines, shockwave rings",
+    "sound": "voice + whip on the change slam, clicks on bulletins and compare cards",
+    "cta": "white contact card + compliance card (classic outro)"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/flash/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

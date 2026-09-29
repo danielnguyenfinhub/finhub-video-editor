@@ -1,0 +1,68 @@
+{
+  "notes": [
+    "TEST FIXTURE for the rate-alert templates: not a real video. Voice is rba-sept-2026 (source), cut to ~18 s: the rise from 3,6% to 4,35% (RBA cash rate, sources in rba-sept-2026 notes), the next decision date, the CTA."
+  ],
+  "source": "rba-sept-2026",
+  "design": "faceless",
+  "title": "RBA: lãi suất cơ bản 4,35%",
+  "cut": {
+    "fillers": false,
+    "stutters": false,
+    "badWords": false
+  },
+  "pacing": {
+    "mode": "off"
+  },
+  "remove": [
+    [
+      7931,
+      42875
+    ]
+  ],
+  "subtitles": [
+    {
+      "fromMs": 0,
+      "toMs": 7731,
+      "text": "Since the start of 2026, Australia's cash rate has risen three times, from 3.6 to 4.35 percent."
+    },
+    {
+      "fromMs": 42975,
+      "toMs": 47106,
+      "text": "The next decision is announced on Tuesday, 29 September."
+    },
+    {
+      "fromMs": 47506,
+      "toMs": 53397,
+      "text": "Want to know how this affects your loan? Message Finance Hub for help."
+    }
+  ],
+  "hook": {
+    "big": "4,35%",
+    "countTo": 4.35,
+    "decimals": 2,
+    "suffix": "%",
+    "sub": "Lãi suất cơ bản sau 3 lần tăng"
+  },
+  "cues": [
+    {
+      "kind": "change",
+      "fromMs": 700,
+      "toMs": 7700,
+      "kicker": "RBA",
+      "label": "Lãi suất cơ bản",
+      "from": "3,6%",
+      "to": "4,35%",
+      "swapAtMs": 5960,
+      "direction": "up",
+      "rateType": "cash"
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 42975,
+      "durMs": 4131,
+      "big": "29/9",
+      "label": "Thứ Ba: quyết định lãi suất tiếp theo"
+    }
+  ]
+}

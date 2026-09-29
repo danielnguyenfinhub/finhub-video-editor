@@ -1,0 +1,37 @@
+{
+  "id": "gauge",
+  "intents": ["news", "data"],
+  "dataShapes": ["numbers", "narrative"],
+  "grammar": {
+    "numbers": "a big analogue dial: the needle sweeps to the number on a scale derived from it, the digital readout under the hub counts up (years and dates as said); a number said while the dial is taken rides as a small readout chip beside it",
+    "comparisons": "classic compare panel (MotionTrack, mounted only while the cue is up; the dial dims under it)",
+    "steps": "classic points panel (MotionTrack, mounted only while the cue is up; the dial dims under it)",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack, mounted only while the cue is up)",
+    "change": "the dial's scale spans both values; the needle sits on the old value, then swings with a spring overshoot to the new one at swapAtMs, a ghost needle stays on the old value, the arc between them lights up and the readout counts to the new value with the direction arrow",
+    "trend": "classic line graph panel (MotionTrack, mounted only while the cue is up)",
+    "lenders": "logo tile on white in the readout under the hub, neutral label; a small logo chip beside the dial when the dial is taken",
+    "captionPosition": "fixed dark strip under the dial, English line at the bottom of the strip"
+  },
+  "skinAxes": {
+    "cover": "the dial waking up (needle sweep) on the instrument panel, logo tile on white above it, title in the dark strip",
+    "captions": "white words in the dark strip, the word being said underlined, keywords gold",
+    "framing": "pure motion graphics: no footage, no presenter; the dial is the hero and holds the centre",
+    "transitions": "the needle drops to rest and sweeps again for each number; a date turns the face into a month dial; standard chapter transitions",
+    "texture": "dark navy brushed-metal instrument panel, metal bezel with a travelling glint, sky-to-gold scale band, pulsing gold alert lamp, screw heads",
+    "sound": "voice + a whip on each needle swing, stat ding, chapter whoosh, cue clicks",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": ["9:16", "4:5"],
+  "languages": ["vi", "en"],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/gauge/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}

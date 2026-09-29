@@ -36,6 +36,12 @@ import {
   listingReelComposition,
   listingReelSchema,
 } from "./listing/ListingReel";
+import {
+  YouTubeReel,
+  calculateYouTubeReelMetadata,
+  youTubeReelComposition,
+  youTubeReelSchema,
+} from "./youtube/YouTubeReel";
 import { gradientBg, palette } from "./showcase/palette";
 import { poppins } from "./showcase/font";
 import { BrandKitDemo } from "./brand/BrandKitDemo";
@@ -98,6 +104,16 @@ export const RemotionRoot: React.FC = () => {
           schema={mortgageReelSchema}
           defaultProps={{ slug: "ty-do", reel: null }}
           calculateMetadata={calculateMortgageReelMetadata}
+        />
+      </Folder>
+      <Folder name="YouTube">
+        {/* 16:9 long-form explainers from a faceless video's edit.json + voice (src/youtube/). */}
+        <Composition
+          {...youTubeReelComposition}
+          component={YouTubeReel}
+          schema={youTubeReelSchema}
+          defaultProps={{ slug: "rba-sept-2026", reel: null }}
+          calculateMetadata={calculateYouTubeReelMetadata}
         />
       </Folder>
       <Folder name="GlobalRE">

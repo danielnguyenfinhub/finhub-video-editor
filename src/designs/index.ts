@@ -24,6 +24,16 @@ import { whiteboard } from "./whiteboard";
 import { retro } from "./retro";
 import { phoneapp } from "./phoneapp";
 import { journey } from "./journey";
+import { flash } from "./flash";
+import { gauge } from "./gauge";
+import { calendar } from "./calendar";
+import { bigdigit } from "./bigdigit";
+import { pulse } from "./pulse";
+import { splitscreen } from "./splitscreen";
+import { scale } from "./scale";
+import { receipt } from "./receipt";
+import { timelapse } from "./timelapse";
+import { flipcard } from "./flipcard";
 
 // Add a design here once its folder builds; keep the ids lowercase.
 // The ten of 25/09/2026 follow src/designs/README.md (golden rules).
@@ -55,6 +65,18 @@ const DESIGNS: Record<string, Design> = {
   retro,
   phoneapp,
   journey,
+  // Rate-alert flash templates (28/09/2026).
+  flash,
+  gauge,
+  calendar,
+  bigdigit,
+  pulse,
+  // Before/after finance templates (28/09/2026).
+  splitscreen,
+  scale,
+  receipt,
+  timelapse,
+  flipcard,
 };
 
 export const DEFAULT_DESIGN = "classic";

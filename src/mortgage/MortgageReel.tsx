@@ -51,11 +51,11 @@ import {
 const WIDTH = 1080;
 const HEIGHT = 1920;
 const FPS = 30;
-const OUTRO_FRAMES = 150;
-const OUTRO_TRANSITION = 18;
+export const OUTRO_FRAMES = 150;
+export const OUTRO_TRANSITION = 18;
 // Compliance disclosures close the video, held for 5 s.
-const COMPLIANCE_FRAMES = 150;
-const COMPLIANCE_TRANSITION = 10;
+export const COMPLIANCE_FRAMES = 150;
+export const COMPLIANCE_TRANSITION = 10;
 const DEFAULT_COVER_FRAME_MS = 1500;
 const MUSIC_VOLUME = 0.3;
 // While Daniel talks the music plays at this fraction of its volume.
@@ -200,7 +200,7 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
 // captions (talk-timeline ms, kept words only) say when Daniel talks; the level
 // is precomputed per frame and ramps at most one MUSIC_RAMP_FRAMES step a
 // frame, starting to dip before each phrase.
-const Music: React.FC<{
+export const Music: React.FC<{
   music: NonNullable<EditJson["music"]>;
   captions: OutCaption[];
 }> = ({ music, captions }) => {

@@ -1,0 +1,52 @@
+{
+  "id": "calendar",
+  "intents": [
+    "news",
+    "data",
+    "explain"
+  ],
+  "dataShapes": [
+    "numbers",
+    "comparison",
+    "steps",
+    "narrative"
+  ],
+  "grammar": {
+    "numbers": "the hook number fills the calendar's top page (percent/amount counts up; dates and years never do); a date stat flips through blank pages and lands on the date, circled in gold marker; every other figure is a gold sticky note stuck on the calendar's edge (the calendar shrinks aside for it)",
+    "comparisons": "two tear-off calendar pages side by side, titles only from the cue's cards, values on the pages, gold marker ring on the highlight, gold arrow between, question underlined in highlighter",
+    "steps": "to-do notepad slides up in front of the calendar: rows ticked in gold in spoken order, current row highlighted, unsaid rows empty checkboxes",
+    "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
+    "change": "old value on the calendar page (cue label in the navy header band); at swapAtMs the page tears off up over the binding and reveals the new value with an arrow chip from the data's direction and the old value struck; red/green only from the cue's tone",
+    "trend": "week-planner spread: one column per point, gold marker line drawn through the values",
+    "banks": "logo on white in a paper tab card top-left, neutral label",
+    "captionPosition": "navy words on a white strip under the calendar, keywords under a gold highlighter; English line in slate on SAFE.bottom"
+  },
+  "skinAxes": {
+    "cover": "the wall calendar with the title on its first page, logo tile above",
+    "captions": "bold navy on a clean white strip with a navy edge, gold highlighter keywords, unsaid words faint",
+    "framing": "pure motion graphics, no footage: off-white desk with a planner dot grid",
+    "transitions": "pages flip down, tear off, flip through; sticky notes slap on",
+    "texture": "ruled paper, binder rings, page-stack edges, drifting lamp glow",
+    "sound": "voice + page whoosh on tears and flip-throughs, ding on a landed date, clicks on ticks and compare pages",
+    "cta": "white contact card + compliance card (classic outro)"
+  },
+  "aspects": [
+    "9:16",
+    "4:5"
+  ],
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "maxChars": {
+    "vi": 60,
+    "en": 140
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "faceless",
+  "renderCost": "low",
+  "preview": "src/designs/calendar/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-28"
+}
