@@ -34,6 +34,7 @@ import { scale } from "./scale";
 import { receipt } from "./receipt";
 import { timelapse } from "./timelapse";
 import { flipcard } from "./flipcard";
+import { cards } from "./cards";
 
 // Add a design here once its folder builds; keep the ids lowercase.
 // The ten of 25/09/2026 follow src/designs/README.md (golden rules).
@@ -77,6 +78,8 @@ const DESIGNS: Record<string, Design> = {
   receipt,
   timelapse,
   flipcard,
+  // Talking-head info cards (29/09/2026).
+  cards,
 };
 
 export const DEFAULT_DESIGN = "classic";

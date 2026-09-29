@@ -1,0 +1,38 @@
+{
+  "id": "cards",
+  "intents": ["explain", "data", "compare"],
+  "dataShapes": ["numbers", "comparison", "steps", "banks"],
+  "grammar": {
+    "numbers": "a white card on the stage above Daniel: CON SỐ label, the number counting up (years and dates as said) with a gold underline, its label, a dot grid lighting up; one said while the stage is taken is a small white chip in the header row",
+    "comparisons": "full screen (his card slides away): two white cards side by side, rows rising in, the highlighted card gets a gold ring, a navy VS badge, the question as a navy bar at the bottom",
+    "steps": "up to 3 points: numbered rows on a white card above him, the latest with a gold edge; 4 or more: full screen navy terminal panel whose lines type in top-down",
+    "eligibility": "classic verdict cue (MotionTrack, mounted only while it is up)",
+    "change": "white card above him: TRƯỚC tile (old value, struck in gold at the swap), arrow, navy SAU tile counting to the new value, direction arrow from the data, difference in điểm % when both are rates",
+    "trend": "full screen white card: navy line drawn left to right, every value printed, last point gold",
+    "lenders": "white card: NGÂN HÀNG ĐANG NHẮC TỚI label, the logo tile on a soft gold pad; a chip when the stage is taken",
+    "captionPosition": "small dark box between the stage and his card (bottom y 1000); at SAFE.bottom while his card is away"
+  },
+  "skinAxes": {
+    "cover": "title on a white info card, logo tile top-right, Daniel's rounded card below (frozen cover frame)",
+    "captions": "44 px bold lowercase as spoken, white on a dark translucent rounded box, keywords gold, 2-4 words a page",
+    "framing": "split: info stage on top, Daniel in a large rounded video card (cut-out on navy, or his room) in the lower part; full-screen moments slide his card away",
+    "transitions": "cards rise in and lift out; his card slides down and back for big cues; spring punch on cuts; standard chapter transitions",
+    "texture": "airy cream gradient with a faint dot texture, white cards with thin borders and soft shadows, FinHub navy and gold",
+    "sound": "voice + a whoosh as his card slides away, a click per point, a soft ding per figure",
+    "cta": "classic white contact card + compliance card"
+  },
+  "aspects": ["9:16", "4:5"],
+  "languages": ["vi"],
+  "maxChars": {
+    "vi": 60,
+    "en": 0
+  },
+  "minHoldMs": 1500,
+  "facePolicy": "face-required",
+  "cueRoom": true,
+  "renderCost": "med",
+  "preview": "src/designs/cards/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-09-29"
+}
