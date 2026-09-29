@@ -6,12 +6,17 @@
 // first and last frame always kept. Frames are 512 px wide, so each costs
 // about a quarter of a full still to look at.
 //
-//   node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>]
+//   node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet]
 //
 // Writes out/videos/<slug>/team/qc/sweep/sweep-<n>-<time>.jpg and sweep.json,
 // and prints one line per frame: open every one and look (video-qc skill).
+// --sheet also tiles the kept frames 12 to a contact sheet (4x3, each tile
+// stamped with its time), so a long video is read in a handful of images
+// instead of dozens; the single frames stay for a closer look.
 // The frame budget, engines and dedup are claude-video's watch skill
-// (bradautomates/claude-video, frames.py), rewritten for Node.
+// (bradautomates/claude-video, frames.py), rewritten for Node. The contact
+// sheet idea is crisng95/flowkit's fk-review-video (frames tiled with burned-in
+// timestamps), rewritten without its Google Flow generation path.
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -22,6 +27,9 @@ export const SCENE_MIN_FRAMES = 8; // fewer scene cuts than this: the video is o
 export const MAX_FPS = 2; // never denser than this, whatever the budget
 export const DEDUP_DELTA = 2.0; // mean |a-b| over a 16x16 grey thumb (0-255)
 export const WIDTH = 512;
+export const SHEET_COLS = 4;
+export const SHEET_ROWS = 3;
+export const SHEET_TILE = 320; // px wide per tile, so a 4x3 sheet is 1280 px across
 
 // How many frames a video of `seconds` deserves, before the cap.
 export const frameBudget = (seconds, cap = 80) => {
@@ -89,7 +97,51 @@ const thumbsOf = (dir, pattern, n) => {
   return Array.from({ length: n }, (_, i) => r.stdout.subarray(i * 256, (i + 1) * 256));
 };
 
-export const sweep = (file, outDir, { max = 80 } = {}) => {
+// Frames split into sheets of `per`; the last one may be short.
+export const chunk = (items, per) => {
+  const out = [];
+  for (let i = 0; i < items.length; i += per) out.push(items.slice(i, i + per));
+  return out;
+};
+
+// xstack layout for n equal tiles filled row by row. xstack has no multiply,
+// so a tile's x is the widths of the tiles to its left in the row and its y the
+// heights of the first tile of each row above: "0_0|w0_0|w0+w1_0|...|0_h0|...".
+export const sheetLayout = (n, cols = SHEET_COLS) =>
+  Array.from({ length: n }, (_, i) => {
+    const c = i % cols;
+    const r = Math.floor(i / cols);
+    const x = c === 0 ? "0" : Array.from({ length: c }, (_, k) => `w${r * cols + k}`).join("+");
+    const y = r === 0 ? "0" : Array.from({ length: r }, (_, k) => `h${k * cols}`).join("+");
+    return `${x}_${y}`;
+  }).join("|");
+
+const FONTS = [
+  "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf",
+  "/usr/share/fonts/dejavu/DejaVuSansMono-Bold.ttf",
+  "/System/Library/Fonts/Menlo.ttc",
+  "C:/Windows/Fonts/consola.ttf",
+];
+
+// Contact sheets of the kept frames, each tile stamped with its time. With no
+// usable font the tiles go unstamped (sweep.json still holds the times).
+export const contactSheets = (frames, outDir, { cols = SHEET_COLS, rows = SHEET_ROWS } = {}) => {
+  const font = FONTS.find((f) => existsSync(f));
+  return chunk(frames, cols * rows).map((group, k) => {
+    const tiles = group.map((f, i) => {
+      const stamp = font
+        ? `,drawtext=fontfile='${font.replace(/^([A-Za-z]):/, "$1\\:")}':text='${f.s.toFixed(2)}s':x=8:y=8:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.7:boxborderw=5`
+        : "";
+      return `[${i}:v]scale=${SHEET_TILE}:-2${stamp}[t${i}]`;
+    });
+    const graph = `${tiles.join(";")};${group.map((_, i) => `[t${i}]`).join("")}xstack=inputs=${group.length}:layout=${sheetLayout(group.length, cols)}[o]`;
+    const path = join(outDir, `sheet-${String(k + 1).padStart(2, "0")}.jpg`);
+    ff([...group.flatMap((f) => ["-i", f.path]), "-filter_complex", graph, "-map", "[o]", "-frames:v", "1", "-q:v", "3", path], `contact sheet ${k + 1}`);
+    return { path, from: group[0].s, to: group[group.length - 1].s, frames: group.length };
+  });
+};
+
+export const sweep = (file, outDir, { max = 80, sheet = false } = {}) => {
   const seconds = durationOf(file);
   const budget = Math.min(max, frameBudget(seconds, max));
   rmSync(outDir, { recursive: true, force: true });
@@ -120,7 +172,8 @@ export const sweep = (file, outDir, { max = 80 } = {}) => {
     return { path: join(outDir, name), s: Math.round(times[i] * 100) / 100 };
   });
   for (const f of readdirSync(outDir)) if (f.startsWith("raw_")) rmSync(join(outDir, f));
-  const report = { file, seconds, engine, budget, candidates: raw.length, duplicatesDropped: raw.length - unique.length, frames };
+  const sheets = sheet ? contactSheets(frames, outDir) : [];
+  const report = { file, seconds, engine, budget, candidates: raw.length, duplicatesDropped: raw.length - unique.length, frames, ...(sheet ? { sheets } : {}) };
   writeFileSync(join(outDir, "sweep.json"), JSON.stringify(report, null, 2) + "\n");
   return report;
 };
@@ -128,9 +181,9 @@ export const sweep = (file, outDir, { max = 80 } = {}) => {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const opt = (k) => (args.includes(k) ? args[args.indexOf(k) + 1] : undefined);
-  const slug = args.filter((a, i) => !a.startsWith("--") && !args[i - 1]?.startsWith("--"))[0];
+  const slug = args.filter((a, i) => !a.startsWith("--") && (args[i - 1] === "--sheet" || !args[i - 1]?.startsWith("--")))[0];
   if (!slug) {
-    console.error("usage: node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>]");
+    console.error("usage: node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet]");
     process.exit(2);
   }
   const root = resolve(import.meta.dirname, "..");
@@ -140,8 +193,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     process.exit(1);
   }
   const outDir = resolve(opt("--out") ?? join(root, "out", "videos", slug, "team", "qc", "sweep"));
-  const r = sweep(file, outDir, { max: Number(opt("--max") ?? 80) });
+  const r = sweep(file, outDir, { max: Number(opt("--max") ?? 80), sheet: args.includes("--sheet") });
   console.log(`sweep: ${r.frames.length} frames (${r.engine}, ${r.candidates} candidates, ${r.duplicatesDropped} duplicates dropped) from ${r.seconds.toFixed(1)} s`);
   for (const f of r.frames) console.log(`- ${f.path} (t=${f.s}s)`);
+  for (const h of r.sheets ?? []) console.log(`- sheet ${h.path} (${h.frames} frames, ${h.from}s-${h.to}s)`);
   console.log(`Open every frame and look; the list is ${join(outDir, "sweep.json")}.`);
 }

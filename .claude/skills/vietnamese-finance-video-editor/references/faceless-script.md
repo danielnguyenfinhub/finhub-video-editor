@@ -77,6 +77,8 @@ A scene with an element gets **no** `footage` or `ai`. A scene never has both: s
 - Describe it like a location scout, not a stock librarian. "A young couple's hands holding a single brass house key over a moving box, morning window light" beats "home buying".
 - Write concrete nouns plus light and setting. Leave out emotions and intentions.
 - A fixed style (navy and amber tones, no text or logos, people from behind or out of focus) and one seed per video are added automatically, so the stills match.
+- Say the shot first, in plain photographic terms, then the subject, then the light. Shot: close-up, macro, over-the-shoulder, low angle, high angle, top-down, wide establishing, shallow depth of field, rack focus. Light: soft window light, golden hour, overcast, warm desk lamp, cool morning, backlit. One shot per still. "Top-down, a brass house key on a signed folder, warm desk lamp, shallow depth of field."
+- Put an object's or person's look in the prompt once and reuse the same words in the next scene when it is the same thing (the same brass key, the same kitchen), so the stills read as one place. Do not describe a face; show hands, backs and silhouettes.
 - Never describe a real person, a real brand, or anything that could pass for a client's document. It plays on the brand navy, and a veil hides footage whenever an element is on screen. Cue times come from `words.json` after voicing, so add the cues to `edit.json` in the Build step.
 
 ## Footage (`scenes[].footage`, optional, gap scenes only)

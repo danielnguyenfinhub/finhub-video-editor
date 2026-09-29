@@ -169,9 +169,10 @@ def main() -> None:
     run(["node", "--no-warnings", "scripts/export-srt.mjs", slug], "captions (.srt)")
     srt = out_dir / f"{slug}.srt"
     # Every visual change in the render as small frames for QC to look at
-    # (scripts/sweep-render.mjs); a failure here never fails the render.
+    # (scripts/sweep-render.mjs) plus contact sheets of them; a failure here never
+    # fails the render.
     print("\n== sweep (frames for QC)", flush=True)
-    subprocess.run(["node", "--no-warnings", str(ROOT / "scripts" / "sweep-render.mjs"), slug], cwd=ROOT)
+    subprocess.run(["node", "--no-warnings", str(ROOT / "scripts" / "sweep-render.mjs"), slug, "--sheet"], cwd=ROOT)
 
     print("\n== done")
     for path in (full, mobile, feed):

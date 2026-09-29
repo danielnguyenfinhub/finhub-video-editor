@@ -4,10 +4,10 @@
 // cut, as claude-video's tests build it) and on a static clip that must fall
 // back to uniform sampling. Run: node scripts/check-sweep.mjs (exit 1 on failure).
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { dedupeByDeltas, evenIndices, frameBudget, parseShowinfo, sweep } from "./sweep-render.mjs";
+import { chunk, dedupeByDeltas, evenIndices, frameBudget, parseShowinfo, sheetLayout, sweep } from "./sweep-render.mjs";
 
 let failed = 0;
 const check = (ok, what) => {
@@ -34,6 +34,9 @@ check(JSON.stringify(evenIndices(5, 10)) === "[0,1,2,3,4]", "thin: nothing to th
 check(JSON.stringify(evenIndices(100, 5)) === "[0,25,50,74,99]", "thin: first and last kept");
 check(JSON.stringify(evenIndices(9, 1)) === "[0]", "thin: one frame is the first");
 
+check(JSON.stringify(chunk([1, 2, 3, 4, 5], 2)) === "[[1,2],[3,4],[5]]", "sheets: frames split into groups, the last one short");
+check(sheetLayout(5, 4) === "0_0|w0_0|w0+w1_0|w0+w1+w2_0|0_h0", "sheets: xstack layout fills rows left to right");
+
 const ffmpeg = spawnSync("ffmpeg", ["-version"], { encoding: "utf8" });
 if (ffmpeg.error) {
   console.log("skip ffmpeg is not on PATH: end-to-end sweep not run here");
@@ -49,6 +52,13 @@ if (ffmpeg.error) {
   check(s1.engine === "scene", `cuts: scene engine (${s1.candidates} candidates)`);
   check(s1.frames.length >= 12 && s1.frames.length <= 14, `cuts: one frame per colour, ${s1.frames.length} kept`);
   check(s1.frames[0].s === 0, "cuts: first frame is t=0");
+  const s3 = sweep(cuts, join(dir, "sweep-sheet"), { sheet: true });
+  const expected = Math.ceil(s3.frames.length / 12);
+  check(s3.sheets.length === expected && s3.sheets.every((h) => existsSync(h.path)), `sheet: ${s3.frames.length} frames -> ${expected} contact sheet(s) written`);
+  const dims = spawnSync("ffprobe", ["-v", "error", "-show_entries", "stream=width,height", "-of", "csv=p=0", s3.sheets[0].path], { encoding: "utf8" }).stdout.trim();
+  const [w, h] = dims.split(",").map(Number);
+  check(w === 1280 && h > 0, `sheet: first sheet is 4 tiles of 320 px across (${dims})`);
+  check(s1.sheets === undefined, "sheet: off by default");
   const still = join(dir, "still.mp4");
   r = spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "lavfi", "-t", "6", "-i", "color=c=blue:s=320x568:r=25", "-g", "600", "-c:v", "libx264", "-pix_fmt", "yuv420p", still], { encoding: "utf8" });
   check(r.status === 0, "synth: static clip built");
