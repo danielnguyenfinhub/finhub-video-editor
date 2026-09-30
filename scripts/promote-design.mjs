@@ -23,14 +23,14 @@ import { MANIFEST_FIELDS, OPTIONAL_FIELDS, loadManifests } from "./select-templa
 
 const root = join(import.meta.dirname, "..");
 const REPO_DESIGNS = join(root, "src", "designs");
-const FIXTURES = { A: "ty-do", B: "faceless-test" }; // a talking-head and a faceless slug
+const FIXTURES = { A: "_test-cards", B: "faceless-test" }; // a talking-head and a faceless slug (ty-do has no media in the repo)
 const MODES = {
   "face-required": ["A"],
   "face-optional": ["A", "B"],
   faceless: ["B"],
 };
 const PREVIEW_FRAME = 120; // hook + captions
-const MODE_FRAME = 400; // a figure is up in ty-do
+const MODE_FRAME = 400; // the hook has handed over to the talk in both fixtures
 const tail = (s, n = 4) => String(s ?? "").trim().split("\n").slice(-n).join(" | ");
 
 const { assertCompliantCopy } = await import(pathToFileURL(join(root, "src", "mortgage", "compliance.ts")).href);

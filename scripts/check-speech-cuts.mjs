@@ -37,7 +37,13 @@ const EDGE_WINDOW_MS = 40; // ...within this of the edge
 const LOUD_EDGE_DB = -25; // an edge at or above this is inside a word
 const CLIP_ERROR_MS = 80; // voiced sound cut off past a loud edge
 
-const { buildTimeline, toOutMs, TALK_START_FRAME } = await import(
+// Chapter transitions: Remotion's TransitionSeries plays BOTH segments' audio for
+// the transition's frames, so the outgoing tail and the incoming head overlap.
+// bao-dam-vay-duoc-nha-refinance garbled "nhiều. / Thì thường" that way.
+const OVERLAP_ERROR_MS = 100; // both sides voiced at the same moments this long: two voices at once
+const OVERLAP_WARN_MS = 40;
+
+const { buildTimeline, toOutMs, TALK_START_FRAME, CHAPTER_TRANSITION_FRAMES } = await import(
   pathToFileURL(join(ROOT, "src", "mortgage", "timeline.ts")).href
 );
 const { recordingPath } = await import(pathToFileURL(join(ROOT, "src", "mortgage", "recording.ts")).href);
@@ -186,6 +192,43 @@ export const findSpeechCuts = (words, edit, audio) => {
         });
       }
     }
+  // Chapter transition joins: the last T output ms of segment i and the first T
+  // of segment i+1 play at once, each side at its own playback rate.
+  const T = (CHAPTER_TRANSITION_FRAMES * 1000) / FPS;
+  const srcMs = (frame) => (frame * 1000) / FPS;
+  let chapter = 0;
+  tl.segments.forEach((s, i) => {
+    const next = tl.segments[i + 1];
+    if (!s.transitionAfter || !next) return;
+    chapter++;
+    const aFrom = srcMs(s.srcTo) - T * s.rate, aTo = srcMs(s.srcTo);
+    const bFrom = srcMs(next.srcFrom), bTo = bFrom + T * next.rate;
+    const side = (a, b) => {
+      const fs = frames(a, b, db.length);
+      return { voiced: fs.filter(audio.voiced).length * FRAME_MS, loud: fs.filter((f) => db[f] >= SOUND_DB).length * FRAME_MS };
+    };
+    const A = side(aFrom, aTo), B = side(bFrom, bTo);
+    // Output ms where both sides are voiced at the same moment.
+    let together = 0;
+    for (let t = 0; t < T; t += FRAME_MS)
+      together += audio.voiced(Math.floor((aFrom + t * s.rate) / FRAME_MS)) && audio.voiced(Math.floor((bFrom + t * next.rate) / FRAME_MS)) ? FRAME_MS : 0;
+    const both = Math.min(A.voiced, B.voiced);
+    const oneVoicedOtherLoud = (X, Y) => X.voiced >= OVERLAP_ERROR_MS && Y.loud - Y.voiced >= OVERLAP_ERROR_MS;
+    // ERROR on voices truly at the same moment: each side alone being voiced
+    // 100+ ms flagged doi-nha 05:42 (210/170 ms per side, 80 ms together),
+    // which QC heard as a ~120 ms overlap with no word lost.
+    const severity = together >= OVERLAP_ERROR_MS ? "ERROR"
+      : both >= OVERLAP_WARN_MS || oneVoicedOtherLoud(A, B) || oneVoicedOtherLoud(B, A) ? "WARN" : null;
+    if (!severity) return;
+    const said = (a, b) => timed.filter((w) => w.startMs < b && w.endMs > a).map((w) => w.text.trim()).join(" ") || "…";
+    const out = (s.outFrom + s.outDuration - CHAPTER_TRANSITION_FRAMES + TALK_START_FRAME) / FPS;
+    findings.push({
+      severity, kind: `chapter ${chapter} transition overlap`, outS: Math.round(out * 10) / 10,
+      srcFromMs: Math.round(aFrom), srcToMs: Math.round(bTo), voicedMs: together, peakDb: Math.round(Math.max(...frames(aFrom, bTo, db.length).map((f) => db[f]))),
+      before: `${Math.round(aFrom)}-${Math.round(aTo)} voiced ${A.voiced} ms`, after: `${Math.round(bFrom)}-${Math.round(bTo)} voiced ${B.voiced} ms`,
+      fix: `chapter ${chapter} transition at out ${mmss(out)}: two pieces of speech play together for ${together} ms ('${said(aFrom, aTo)}' over '${said(bFrom, bTo)}'): widen the pause between them (retime the later word's startMs / move chapters[i].atMs to a pause >= 0.5 s); a pause-only remove shorter than the transition cannot fix it`,
+    });
+  });
   // Kept edges with no quiet dip nearby and voiced sound just past them.
   const edges = segs.flatMap(([a, b], i) => [...(i > 0 ? [[a, "start"]] : []), ...(i < segs.length - 1 ? [[b, "end"]] : [])]);
   for (const [e, side] of edges) {

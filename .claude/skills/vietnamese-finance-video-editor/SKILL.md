@@ -107,6 +107,7 @@ miễn phí, đảm bảo …) in the verify list — never silently cut them.
 
 ## Decision Tree — content → direction
 
+**Footage edits (Pipeline A) default to `cards`** (Daniel, 29/09/2026): record it with `select-template.mjs <slug> --pick cards --reason "Daniel's default for footage"` unless he names another template. Faceless videos keep using the selector.
 Run `node scripts/select-template.mjs <slug>` (unless Daniel asks for a previous video's look: reuse it, log `reused: true`); its `pick` and top 3 with scores are in `out/videos/<slug>/selection.json`, and `--pick <id> --reason "…"` records an override. Designs that have passed `promote-design.mjs` rank first; the rest are marked `unproven` (still pickable).
 If the script errors: number-heavy → DATA-LED, a mechanism → EXPLAINER, steps → ROADMAP, a warning → ALERT, news → BROADCAST, a story → CINEMATIC;
 change direction (or ≥ 5 axes) if the previous video used it. Directions and axes: `references/design-space.md`.
