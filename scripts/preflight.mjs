@@ -7,6 +7,7 @@
 // Vietnamese subset, or the marks fall back to another font mid-word. Idea
 // from HyperFrames' deterministicFonts (fail closed instead of substituting).
 // The video (with a slug): the edit.json mistakes the RBA video hit once.
+import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -103,6 +104,22 @@ if (slug) {
         warnings.push(`English line "${s.text.slice(0, 40)}…" is ${s.text.length} characters (over 3 lines); shorten it.`);
     if (edit.title && edit.title.split(/\s+/).length > 8) warnings.push(`title has more than 8 words: "${edit.title}".`);
   }
+}
+
+// --- Cuts and pacing (footage videos) -----------------------------------------
+// A render is the slow step, so anything the data can already show stops it first:
+// real speech the timeline drops or clips (blocks) and gaps with no visual change
+// (warns). Faceless videos (script.json) have no cuts in Daniel's speech.
+if (slug && !errors.length && !existsSync(join(ROOT, "public", "videos", slug, "script.json"))) {
+  const run = (script) => spawnSync(process.execPath, [join(ROOT, "scripts", script), slug], { encoding: "utf8", cwd: ROOT });
+  const cuts = run("check-speech-cuts.mjs");
+  if (cuts.status === 1) {
+    const hits = cuts.stdout.split("\n").filter((l) => l.startsWith("ERROR"));
+    for (const h of hits) errors.push(`speech cut: ${h.trim()}`);
+    errors.push(`fix the ${hits.length} speech cut(s) above (node scripts/check-speech-cuts.mjs ${slug} shows the fix for each).`);
+  } else if (cuts.status !== 0) warnings.push(`check-speech-cuts could not run: ${(cuts.stderr || cuts.stdout).trim().split("\n").pop()}`);
+  const pace = run("check-pacing.mjs");
+  if (pace.status === 2) warnings.push(`pacing: gaps with no visual change; see node scripts/check-pacing.mjs ${slug}.`);
 }
 
 for (const w of warnings) console.log(`preflight warning: ${w}`);

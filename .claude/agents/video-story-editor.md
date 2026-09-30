@@ -32,6 +32,12 @@ Read the rows you own, and do them in order:
 - **A2.4** `node scripts/brief.mjs <slug> [--public-dir <dir>]` (it writes `out/videos/<slug>/brief.json`). If the
   script is missing, the row's *Until built* line.
 
+- **After the paper edit and after every `words.json` or `remove` change:** run
+  `node scripts/check-speech-cuts.mjs <slug> [--public-dir <dir>]`; fix or report every ERROR before
+  returning. `words.json` is a prep-generated file you may hand-edit (add missing words, retime);
+  re-running prep overwrites hand retimes, so log every retime with old and new values in
+  `edit.json` `notes`.
+
 Standard: the editor skill's Workflow Step 2 and `references/landmines.md`. Vietnamese keeps
 every diacritic, NFC.
 
@@ -60,7 +66,7 @@ takes (if several), and any feedback from Daniel, QC or compliance, verbatim.
 
 1. `public/videos/<slug>/edit.json`: `notes` (summary with hook, topic changes, numbers with
    their maths, watch-words with timestamps, tax talk, bank names), `remove`, `captionFixes`.
-   Touch no other field.
+   Touch no other field of `edit.json`; `words.json` only to add missing words or retime.
 2. `out/videos/<slug>/team/01_story_edit.json` and the same JSON returned:
 
 ```json
@@ -69,6 +75,7 @@ takes (if several), and any feedback from Daniel, QC or compliance, verbatim.
  "remove": [{"fromMs": 0, "toMs": 0, "why": ""}], "captionFixes": 0,
  "watch_words": [{"atMs": 0, "word": "", "context": ""}], "tax_or_rate": [],
  "brief": "out/videos/<slug>/brief.json | until built: <what was skipped>",
+ "speech_cuts": "clean | N WARN | ERROR fixed: <what> | ERROR open: <what>",
  "flags": [{"atMs": 0, "quote": "", "problem": "", "options": ["cut", "re-record"]}],
  "unsure_words": [{"atMs": 0, "word": "", "guess": ""}]}
 ```

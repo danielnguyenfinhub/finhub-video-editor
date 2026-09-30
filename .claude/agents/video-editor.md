@@ -41,8 +41,11 @@ Where it matters:
   The render then fills `2 - FINISHED VIDEOS/`; if it prints a post problem, fix and rerun
   `node scripts/publish-video.mjs <slug>`. Pipeline B's post is the writer's, in `script.json`.
 - **Music (A5.3):** `public/music/` only (see its README); `@remotion/sfx` brand-safe sounds; no memes.
-- **Hand over only when A6.1 passes** and your own stills pass the editor skill's
-  Self-Correction Loop. Render (A7.1 / B5.4) only when the orchestrator says QC and compliance passed.
+- **Hand over only when A6.1 passes** (`node scripts/check-schema.mjs <slug>`), `node scripts/check-pacing.mjs <slug>`
+  is clean (or only the cards long-talk INFO), and your own stills pass the editor skill's
+  Self-Correction Loop. Fix pacing gaps by adding light cues built from Daniel's own words only
+  (no new claims), and check that no points card sits empty for more than 2 s. **Never render**
+  (A7.1 / B5.4) until the orchestrator says both reviewers passed.
 
 Standard: the editor skill `SKILL.md` (iron rules, design rules, Self-Correction Loop),
 the matching entries in its `references/corrections.md` (Daniel's past corrections), and

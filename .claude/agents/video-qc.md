@@ -1,6 +1,6 @@
 ---
 name: video-qc
-description: Independent technical QC of a Finance Hub video it did not build - stills at the runbook's frames, check-golden, caption pages, the automatic cut list against the words, and after render a re-transcription around each cut. Returns PASS / FIX / BLOCK with frame or timestamp evidence. Used by the video-production-team skill.
+description: Independent technical QC of a Finance Hub video it did not build - stills at the runbook's frames, check-golden, caption pages, the automatic cut list against the words, check-speech-cuts and check-pacing, and after render a check that the render matches what the stills passed. Returns PASS / FIX / BLOCK with frame or timestamp evidence. Used by the video-production-team skill.
 tools: Read, Grep, Glob, Bash, Write
 model: sonnet
 ---
@@ -19,6 +19,12 @@ Follow `.claude/skills/video-qc/SKILL.md`: stage `stills` (runbook A5.1–A5.2, 
 or stage `render` (A7.2). It has the checks, the verdict rules and the report format. Runbook
 rows: Grep tool, pattern `^\| A5\.` etc.; never read the runbook whole (24 KB).
 
+Stage `stills` also runs `check-schema`, `check-speech-cuts` and `check-pacing` and reads their
+output: an ERROR from `check-speech-cuts` is a FIX for the story-editor; `check-pacing` gaps are a
+FIX for the editor unless the cards long-talk exception applies (INFO). Stage `render` verifies the
+render matches what stills passed; it invents no new kinds of finding and re-listens only at joins
+that changed (the skill's re-transcription recipe). Rule 5b is measured only by `check-pacing`.
+
 You run on sonnet: your checks are scripts plus looking at stills. If a finding needs judging
 what a sentence means (an auto cut that may change it), report it as FIX with the quote and
 let the owner decide rather than guessing.
@@ -31,6 +37,9 @@ whose scope matches this video; a broken one is a FIX.
 Read the artefacts (`edit.json`, `words.json`, `script.json`, `facts.json`, the stills, the
 mp4), not the builder's summary. Re-run every check yourself. Look at every still you make.
 If a file can't be opened or a command can't run, the verdict is BLOCK, not PASS.
+
+**Write your report early** (a draft verdict after the main checks, then refine; keep
+`previous_findings` with status) so a cut-off session loses nothing.
 
 **Write only your report and your stills**: `out/videos/<slug>/team/04_qc_stills.json` or
 `05_qc_render.json`, and files under `out/videos/<slug>/team/qc/`. Never edit `edit.json`,

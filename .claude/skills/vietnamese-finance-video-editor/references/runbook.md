@@ -104,7 +104,7 @@ makes a point clearer. Anything else is cut.
 
 | # | Step | Who | Run / do | Makes | Gate |
 |---|---|---|---|---|---|
-| A6.1 | Schema and RG 234 | Claude | `npx remotion compositions src/index.ts --props='{"slug":"<slug>"}' \| tail -n 5` | — | No schema or RG 234 error; fix the text, never loosen the schema or add a fake exemption |
+| A6.1 | Schema and RG 234 | Claude | `node scripts/check-schema.mjs <slug>` | — | Prints `MortgageReel <slug>: <frames> frames (<s> s)`, exit 0; no schema, RG 234 or rate-gate error; fix the text, never loosen the schema or add a fake exemption. Preflight also runs `check-speech-cuts` (dropped speech, blocks the render) and `check-pacing` (rule 5b, warning) before every render |
 | A6.2 | Stills | Claude | `npx remotion still src/index.ts MortgageReel out/check-<n>.png --props='{"slug":"<slug>","safeZones":true}' --frame=<n> --scale=0.5 --gl=angle` (`safeZones` draws the SAFE band and the FACE box from `golden.ts` over the frame, for checking only; never on a render) at: cover, hook, each signature moment, each B-roll visual, CTA, and the **compliance card (last 5 s)** | PNGs | Look at them. Fix clipped text, overlaps, face covered for more than 3 s, and anything that looks like the previous video's skin |
 | A6.3 | Golden report | Claude | `node scripts/check-golden.mjs <slug>` | Report | Every number charted, every bank badged, safe zones respected, face-hidden time within limits |
 | A6.4 | Independent compliance (if the team harness or "with compliance check" was asked) | Claude | `video-compliance-reviewer` agent on the stills and `words.json` | PASS / FIX / BLOCK | BLOCK stops the run; FIX is applied, then re-checked |
