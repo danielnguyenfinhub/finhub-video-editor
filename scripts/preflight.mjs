@@ -103,6 +103,10 @@ if (slug) {
       if (s.text.length > 140)
         warnings.push(`English line "${s.text.slice(0, 40)}…" is ${s.text.length} characters (over 3 lines); shorten it.`);
     if (edit.title && edit.title.split(/\s+/).length > 8) warnings.push(`title has more than 8 words: "${edit.title}".`);
+    // Auto pacing plays segments at 0.9-1.2x and the render shifts Daniel's pitch and tone with
+    // the speed (measured: +31% at 1.2x, -9% at 0.9x). Faceless voice-overs (script.json) are synthetic.
+    if (edit.pacing?.mode !== "off" && !existsSync(join(dir, "script.json")))
+      errors.push(`edit.json pacing is ${JSON.stringify(edit.pacing ?? "unset (auto)")}: it changes Daniel's pitch and tone. Set "pacing": {"mode": "off"}.`);
   }
 }
 

@@ -69,3 +69,8 @@ screen ("the rate card"), never whose.
 - 30/09/2026 · scope A · "don't monitor me in edit footage; use compliance to correct yourself when
   generating scripts" → spoken words in his footage are advisory verify notes, never a gate;
   team-written text and Pipeline B scripts stay gated → `video-compliance-review` "Scope" · `rule`
+- 30/09/2026 · all footage · "what happened to my voice, it's not normal" / "my tone of voice is
+  different too" → auto pacing played each segment at 0.9–1.2×, so pitch moved +31% / −9% and
+  timbre changed; the docs wrongly said "pitch preserved" and no check listened. Rule: his footage
+  always has `"pacing": {"mode": "off"}`; a segment at exactly 1× matched his spectrum within
+  0.4 dB → `edit-json.md`, `scripts/preflight.mjs` blocks the render otherwise · `checked`
