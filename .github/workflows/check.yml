@@ -21,9 +21,16 @@ jobs:
   checks:
     # Windows, like the pipeline: scripts run `node node_modules/esbuild/bin/esbuild`, which is a native binary on Linux.
     runs-on: windows-latest
+    # Checks bundle into os.tmpdir() and import `remotion` from there. On Daniel's machine a
+    # C:\Users\Daniel\node_modules above the temp dir makes that resolve; here the temp dir
+    # sits inside the workspace so it resolves to the repo's node_modules.
+    env:
+      TEMP: ${{ github.workspace }}\.ci-tmp
+      TMP: ${{ github.workspace }}\.ci-tmp
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - run: npm ci --no-audit --no-fund
+      - run: mkdir .ci-tmp
       - run: npm test
