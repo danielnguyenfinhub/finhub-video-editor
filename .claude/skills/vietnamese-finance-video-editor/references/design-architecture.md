@@ -95,7 +95,7 @@ Proven on the interest-in-advance edit, lost when that branch was dropped; re-ap
 ## Regression proof
 
 - `npx tsc --noEmit` and `npx eslint src/mortgage src/designs` clean.
-- `npx remotion compositions` gives the same frame count as before for a previous slug.
+- `node scripts/check-schema.mjs <slug>` prints the same frame count as before for a previous slug.
 - Stills at 5 frames (cover, 3 talk moments, compliance) vs the previous render of the
   same slug: `ffmpeg -i old.png -i new.png -lavfi psnr -f null -` average ≥ 38 dB
   (encode noise only). The 24/09/2026 split measured 38–41 dB.

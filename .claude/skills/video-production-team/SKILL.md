@@ -50,14 +50,12 @@ Agent files register at session start. If an agent type isn't found (files added
 use `subagent_type: "general-purpose"` and begin the prompt "Read and adopt
 `.claude/agents/<name>.md` as your role"; give reviewers only the tools their file lists.
 
-A subagent sees neither this chat nor `AGENTS.md`. Its prompt carries: slug, pipeline, recording
-id, the runbook step ids it owns, file paths, `--public-dir` if media lives outside the repo, and
-Daniel's words verbatim. Agents grep their runbook rows
-(Grep tool, pattern `^\| A2\.`) and never read the runbook whole (24 KB).
+A subagent sees neither this chat nor `AGENTS.md`. Its prompt carries: slug, pipeline, recording id, the runbook step
+ids it owns, file paths, `--public-dir` if media lives outside the repo, and Daniel's words verbatim. Agents grep
+their runbook rows (Grep tool, pattern `^\| A2\.`) and never read the runbook whole (24 KB).
 
-**Models, by the work, not the rank:** opus for the four roles that judge meaning, money or
-design (story-editor: number maths and cuts that change a sentence; script-writer; editor;
-compliance, the hard ceiling); sonnet for `video-qc`, whose checks are scripts plus looking at
+**Models, by the work, not the rank:** opus for the four roles that judge meaning, money or design (story-editor,
+script-writer, editor, compliance: the hard ceiling); sonnet for `video-qc`, whose checks are scripts plus looking at
 stills. Haiku can't load this repo's tool list; never use it here.
 
 **Tooling check.** A runbook row tagged **[BUILD WPn]** runs as written when its script exists
@@ -73,9 +71,8 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
    below); exists and new footage or document for the same slug → move it to `team_prev/`, new run.
 4. **B only, B1.1 up front:** document name and date; older than ~3 months → warn; "broker use
    only" → ask about public use; a person, address, account or client figure → **stop the run**.
-5. **0.4** You read only this skill and the runbook rows in play; each agent reads its own list.
-6. **0.5** Cost plan: pipeline, slug, sources, topic, paid calls expected with US$ (see Cost).
-7. Write `team/00_intake.md` with all of the above. **A:** ask Daniel now to start the matte
+5. **0.4–0.5** You read only this skill and the runbook rows in play. Cost plan: sources, topic, paid calls with US$.
+6. Write `team/00_intake.md` with all of the above. **A:** ask Daniel now to start the matte
    (below), unless `foreground.webm` exists.
 
 ## Pipeline A — edit footage
@@ -85,17 +82,16 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
    `npm run review`, open `http://localhost:4100/matte.html?slug=<slug>` in the Claude app
    browser and leave it until it says Saved (about 13× the video's length)." Don't wait; carry
    on. Check for `foreground.webm` before render (step 6); still missing → ask once more, then wait.
-3. **Paper edit ‖ matte:** `video-story-editor` → `team/01_story_edit.json`. Several takes: it
-   writes `clips.json`, you run the A1.2 assembly, it finishes A2 on the assembled words.
-   - `flags` not empty (a wrongly spoken number, a meaning-changing cut) → **gate: stop for
-     Daniel** with each flag's timestamp and quote; pass his answer back. Unsure words alone
-     don't stop the run; they go to the verify list.
+3. **Paper edit ‖ matte:** `video-story-editor` → `team/01_story_edit.json`. Several takes: it writes `clips.json`,
+   you run the A1.2 assembly, it finishes A2 on the assembled words.
+   - `flags` not empty (a wrongly spoken number, a meaning-changing cut) → **gate: stop for Daniel** with each
+     flag's timestamp and quote; pass his answer back. Unsure words alone don't stop the run; they go to the verify list.
 4. **Build:** `video-editor` (A3, A4, A5.3, A6.1) → `team/03_editor_report.json`.
 5. **Review, in parallel:** `video-qc`, stage `stills` → `team/04_qc_stills.json`, and, only if
    Daniel asked for it or the video states a rate or a number claim taken from a document,
    **compliance (A6.4)**: `video-compliance-reviewer`, stage `final` →
    `team/04_compliance_final.json`. Both in one message. FIX/BLOCK loop below.
-6. **Render:** matte present → `video-editor` (A7.1, A7.3).
+6. **Render once** (below): matte present → `video-editor` (A7.1, A7.3).
 7. **Post-render QC:** `video-qc`, stage `render` (A7.2) → `team/05_qc_render.json`.
 8. **Deliver** (A7.4, below). **Gate: Daniel approves before posting.**
 
@@ -115,17 +111,29 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
 4. **Voice (B3.1–B3.3):** state the cost line again, then `node scripts/voice-video.mjs <slug>`
    (plus the engine Daniel chose). A take cut short stops the run: re-run it.
 5. **Build:** `video-editor` (B4, B5.1) → `team/03_editor_report.json`.
-6. **Review, in parallel (B5.2 ‖ B5.3):** `video-qc`, stage `stills` → `team/04_qc_stills.json`,
-   and `video-compliance-reviewer`, stage `final` → `team/04_compliance_final.json`, in one
-   message. FIX/BLOCK loop below.
+6. **Review, in parallel (B5.2 ‖ B5.3):** `video-qc`, stage `stills` → `team/04_qc_stills.json`, and
+   `video-compliance-reviewer`, stage `final` → `team/04_compliance_final.json`, in one message. FIX/BLOCK loop below.
 7. **Render:** `video-editor` (B5.4), then **deliver** (B5.5). **Gate: Daniel approves before posting.**
+
+## Render once
+
+The first render happens only after `node scripts/check-schema.mjs <slug>`, `check-speech-cuts` (no ERROR) and
+`check-pacing` (clean, or the cards long-talk exception) pass **and** QC stills and compliance (when run) passed;
+preflight runs the last two before every render. Post-render QC verifies the render only. A render that may take over
+10 min runs in the background, after `npm run video-status -- <slug>` says `ready`.
 
 ## FIX / BLOCK loop (QC and compliance alike)
 
-- **FIX** → each finding's `owner` (story-editor, writer or editor) gets **all** its findings
-  from both reviewers in one call, verbatim; then both reviewers again in parallel, told to mark
-  earlier findings resolved or open. At most **2 rounds** in total; then stop and show Daniel
-  the open findings.
+- **FIX** → each finding's `owner` gets **all** its findings from both reviewers in one call, verbatim; then both
+  reviewers again in parallel, marking earlier findings resolved or open. **CONTENT** findings (compliance, dropped or
+  changed speech or meaning, wrong numbers) get up to **2 rounds**; **COSMETIC** ones (pacing, small text, caption
+  spelling) get **1**, then what is still open goes on Daniel's verify list, not into another loop.
+- A fix that touches timing, cues or cuts is re-checked with the three scripts before the reviewers re-run, and they
+  re-check only the changed spots. After ANY `words.json` or cut change, re-run `check-speech-cuts`.
+- An agent list that says a stage is cut off or missing its report file: re-run that stage.
+- **Daniel's spoken words (A) are advisory** (his ruling, 30/09/2026): the reviewer lists concerns as verify notes,
+  one line at delivery; no gate stops the run on them and nobody re-asks him. Compliance FIX/BLOCK applies to what the
+  team writes or adds (on-screen text, post copy, the card, every B script); client data, in speech too, stays BLOCK.
 - **BLOCK** → stop. Tell Daniel in plain words what blocks it and what would clear it.
 - **PASS** → next step. Verify notes carry into the delivery list.
 
@@ -149,11 +157,10 @@ The video's own files follow the runbook (`public/videos/<slug>/`, `out/videos/<
 
 ## Where a run stands — `npm run video-status -- <slug>`
 
-Reads `team/` and prints the stages passed, the next one, or the gate it waits on (flags,
-script lock, matte, approval before posting), with a readiness verdict (`ready` / `warning`
-/ `blocked`: ffmpeg, python, uncommitted work, the prepared recording, preflight) and each
-fix. No slug: one line per video. Free (no model call); run it at Phase 0 on an existing
-slug instead of re-reading the team files, and fix anything `blocked` before starting.
+Reads `team/` and prints the stages passed, the next one, or the gate it waits on (flags, script lock, matte, approval
+before posting), with a readiness verdict (`ready` / `warning` / `blocked`: ffmpeg, python, uncommitted work, the
+prepared recording, preflight) and each fix. No slug: one line per video. Free (no model call); run it at Phase 0 on
+an existing slug instead of re-reading the team files, and fix anything `blocked` before starting.
 
 ## Partial re-runs — start at the phase that owns the fix
 
@@ -175,7 +182,8 @@ Pass the previous team files and the feedback verbatim. Downstream phases re-run
 | Situation | Action |
 |---|---|
 | Agent returns malformed or no JSON, or `failed` | Re-run once with the error; again → stop, report its last 5 lines |
-| Two FIX rounds didn't clear a finding | Stop the loop; show Daniel the open finding |
+| Rounds used up (2 content, 1 cosmetic) and a finding is open | Stop the loop; show Daniel the open finding |
+| `check-schema` or `check-speech-cuts` fails | Fix the cause (text, cut, `words.json`); never loosen the schema or add an exemption; no render |
 | QC and compliance, or reviewer and author, disagree | Don't pick a side; show Daniel both, rule cited |
 | Any agent or document reveals client data | **Stop everything.** Tell Daniel what and where; never anonymise |
 | Script or flag missing on this branch | That runbook row's *Until built* line; name what was skipped |
@@ -184,12 +192,10 @@ Pass the previous team files and the feedback verbatim. Downstream phases re-run
 
 ## Cost
 
-Before voicing (B3.1) or any AI image, state count and US$: Gemini Charon (default) is within
-the free daily take limits (50 pro + 100 flash); ElevenLabs is billed per character (say the
-count); OmniVoice is local and free (~20× real time); fal FLUX is about US$0.03 an image, only
-where free stock (Pixabay → Pexels) and the library miss. Pipeline A normally costs US$0: it
-never downloads, and a library miss is listed for Daniel rather than bought. Log every paid
-call in `06_delivery.md`.
+Before voicing (B3.1) or any AI image, state count and US$: Gemini Charon (default) is within the free daily take
+limits (50 pro + 100 flash); ElevenLabs is billed per character (say the count); OmniVoice is local and free (~20×
+real time); fal FLUX is about US$0.03 an image, only where free stock (Pixabay → Pexels) and the library miss.
+Pipeline A normally costs US$0 (no downloads; a library miss is listed, not bought). Log every paid call in `06_delivery.md`.
 
 ## Deliver — one verify list for both pipelines
 
@@ -212,15 +218,13 @@ Skipped: <runbook rows run on their Until built line, B-roll gaps>
 NEXT: <one step>
 ```
 
-Items 1–4 come from the story-editor, QC and compliance reports; 5 from `facts.json` or the dry
-run; 8 from each `visuals` asset's `.meta.json` (`licence`, `author`). Then ask once whether
-anything should change in the video or the team.
+Items 1–4 come from the story-editor, QC and compliance reports; 5 from `facts.json` or the dry run; 8 from each
+`visuals` asset's `.meta.json` (`licence`, `author`). Then ask once whether anything should change.
 
 ## Test scenarios
 
-- **Normal A:** "edit my video about LMI" + file → intake, matte asked → prep → story-editor
-  (no flags) ‖ matte → editor → qc PASS (compliance skipped: no document claim) → render → qc
-  render PASS → mobile copy with the verify list.
+- **Normal A:** "edit my video about LMI" + file → intake, matte asked → prep → story-editor (no flags) ‖ matte →
+  editor → qc PASS (compliance skipped: no document claim) → render → qc render PASS → mobile copy + verify list.
 - **Normal B:** a lender policy PDF → intake doc checks → writer, dry run clean → compliance
   PASS → Daniel locks → cost stated → voice → editor → qc PASS ‖ compliance PASS → render → deliver.
 - **Both reviewers FIX:** qc "stat covers the face", compliance "comparison rate missing" → editor
@@ -229,5 +233,7 @@ anything should change in the video or the team.
   run stops with the timestamp; Daniel chooses cut or re-record.
 - **Error B:** a scene says "chắc chắn được duyệt" or "từ 5,79%" with no comparison rate →
   compliance BLOCK → run stops before voicing.
+- **Dropped speech caught before render:** a Whisper gap leaves voiced words untranscribed → `check-speech-cuts`
+  ERROR at stills → story-editor adds the words to `words.json` (logged in `notes`) → one render, not two.
 - **Partial re-run:** "QC said the stat covers my face, fix it" → team folder found → editor gets
   `04_qc_stills.json` → video-qc re-checks, marking the finding resolved → render.

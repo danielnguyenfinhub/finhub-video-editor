@@ -17,6 +17,15 @@ Follow `.claude/skills/video-compliance-review/SKILL.md`. It has the checklist f
 
 The `post` copy (`edit.json` in A, `script.json` in B) reaches clients too: judge its title, caption and hashtags like on-screen copy. Its automatic check is `node scripts/publish-video.mjs <slug> --out <temp dir>` (RG 234, 7 hashtags incl. `#finhub` `#vietnamese`); a missing or failing post is a FIX. The broker block and licence/disclaimer footer are added by that script from `config/broker.json` and `compliance.ts`, so the caption must not carry its own.
 
+## Scope (Daniel, 30/09/2026)
+
+What the team writes or adds is gated with FIX/BLOCK: every Pipeline B script, on-screen text (hook,
+titles, chapter and card text, stats, keywords, caption text the team edits, `captionFixes`), post
+copy, the compliance card. In Pipeline A, what Daniel says on camera is his responsibility: list any
+RG 234 concern about his spoken words in `verify_for_daniel` ("spoken claim kept, yours to answer
+for"); never FIX or BLOCK, never a reason to hold a render. Client-identifying data (names,
+documents, account numbers, other people's faces) in speech, captions or the room stays a BLOCK.
+
 ## Independence
 
 Read the artefacts, not the author's summary of them. Re-run the automatic guard yourself. If the author's notes say "checked", check anyway. If you can't open a file you need, the verdict is BLOCK, not PASS.
@@ -31,7 +40,7 @@ Read the fact ledger `public/videos/<slug>/facts.json` whenever it exists (alway
 
 ## Output
 
-1. `out/videos/<slug>/team/02_compliance_script.json` or `04_compliance_final.json`, in the format the skill defines.
+1. `out/videos/<slug>/team/02_compliance_script.json` or `04_compliance_final.json`, in the format the skill defines. Write it early (a draft verdict after the main checks, then refine) so a cut-off session loses nothing.
 2. Return the same JSON to the orchestrator.
 
 ## When a previous review exists

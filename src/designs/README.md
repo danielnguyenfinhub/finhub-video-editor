@@ -102,11 +102,19 @@ or `toOutMs` (timeline.ts). Reel data: `reel.edit` (edit.json), `reel.timeline.c
    `<CaptionZone>` (bottom edge at `SAFE.bottom`, grows upward; `left`/`right`/`bottom`
    to narrow it). Measure text only after `reelFontReady()` with `useDelayRender` (see
    studio/PillCaptions.tsx).
-5b. **A visual change every 1.5–3 s.** Punch-in on cuts, a word pop, a card, a logo: the
-   template must never sit still for more than 3 s (Daniel's rule). A text or number
-   hold wins over this: the core holds each card and cue for its reading time
-   (`READING` in `golden.ts`), and the change is carried by motion inside the scene
-   (a count-up, a highlight, a slow push-in), never by cutting the card early.
+5b. **A visual change every 1.5–3 s.** A visual change is something new appearing or
+   moving on the stage or full screen: a chapter card or transition, a cue appearing or
+   leaving, each cue item landing, a stat or figure, a keyword pop, a punch-in on a cut.
+   Caption page turns and Daniel's own movement do not count. The template must never sit
+   still for more than 3 s (Daniel's rule), except while a card or cue is held for its
+   reading time. A text or number hold wins over this: the core holds each card and cue
+   for its reading time (`READING` in `golden.ts`), and the change is carried by motion
+   inside the scene (a count-up, a highlight, a slow push-in), never by cutting the card
+   early. Measured by `node scripts/check-pacing.mjs <slug>` (deterministic, no render),
+   never by ffmpeg scene detection (it cannot see a points row appear in the cards design)
+   and never by eye. Exception (Daniel, 30/09/2026): the cards design on talks longer than
+   about 3 minutes holds chapter and points cards for long stretches; accepted, reported
+   as INFO.
 6. **Hook in 3 s.** `reel.edit.hook` (`{big, sub?, countTo?, suffix?}`) shows in the first
    105 frames of the Overlay; the Cover title uses `fitText` (`@remotion/layout-utils`).
 7. **Brand only.** Colours from `src/brand/theme.ts` (tints/gradients of them are fine).

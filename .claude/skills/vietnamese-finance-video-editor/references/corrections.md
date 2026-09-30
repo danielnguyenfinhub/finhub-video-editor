@@ -59,3 +59,13 @@ screen ("the rate card"), never whose.
 - 27/09/2026 · design:explainer · the small bar in the bars card ("Phí năm") is pale pink
   and hard to read (QC still, not yet fixed) → every bar and its label reach readable
   contrast on the backdrop · open, no home yet · `noted`
+- 30/09/2026 · design:cards · "accept the cards pace" (the 6.5-minute doi-nha video) → on talks
+  over about 3 minutes the cards design holds chapter and points cards for long stretches;
+  accepted, reported as INFO by `check-pacing` → golden rule 5b exception · `rule`
+- 30/09/2026 · all · Daniel asked why a 3-video batch took a whole day → process rules: render
+  once after `check-schema`, `check-speech-cuts` and `check-pacing` pass; one round for cosmetic
+  findings; QC measures rule 5b only with `check-pacing` → `video-production-team` "Render once"
+  and FIX policy · `rule`
+- 30/09/2026 · scope A · "don't monitor me in edit footage; use compliance to correct yourself when
+  generating scripts" → spoken words in his footage are advisory verify notes, never a gate;
+  team-written text and Pipeline B scripts stay gated → `video-compliance-review` "Scope" · `rule`

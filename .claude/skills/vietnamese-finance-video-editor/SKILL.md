@@ -149,8 +149,10 @@ exact effect at each.
 contract; register it (one line in `src/designs/index.ts`); set `"design"` in edit.json;
 time every beat from `words.json` `startMs`. Keep each design file under ~400 lines.
 
-**Step 5 — Preview.** `npx remotion compositions src/index.ts --props='{"slug":"<slug>"}'`
-(schema + RG 234), then stills (`--gl=angle --scale=0.4`) at the cover, every signature
+**Step 5 — Preview.** `node scripts/check-schema.mjs <slug>`
+(schema + RG 234), `node scripts/check-speech-cuts.mjs <slug>` (dropped speech) and
+`node scripts/check-pacing.mjs <slug>` (rule 5b); preflight runs both before every render.
+Then stills (`--gl=angle --scale=0.4`) at the cover, every signature
 moment, the CTA and the compliance card; tile them and LOOK, next to the previous
 video's thumbnail. Fix clipped text, overlaps (banner vs card), face covered > 3 s, and
 anything that reads like the last video.

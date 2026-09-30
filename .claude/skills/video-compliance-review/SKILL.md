@@ -18,6 +18,15 @@ The automatic guard (`src/mortgage/compliance.ts`) blocks fixed phrases and a ra
 
 Read the artefacts yourself. Work in the repository root.
 
+**Scope: what is gated and what is advisory (Daniel, 30/09/2026).** Everything the team writes or
+adds is gated with FIX/BLOCK: every Pipeline B script, on-screen text (hook, titles, chapter and card
+text, stats, keywords, caption text the team edits, `captionFixes`), post copy and the compliance
+card. In Pipeline A, what Daniel says on camera is his responsibility: list any RG 234 concern about
+his spoken words in `verify_for_daniel` ("spoken claim kept, yours to answer for"), never as FIX or
+BLOCK; it never holds or gates a render and nobody asks him about it again. Client-identifying data
+(names, documents, account numbers, other people's faces) in speech, captions or the room stays a
+BLOCK. The automatic guard is unchanged.
+
 ## Stage `script` (before any credits are spent)
 
 Inputs: `public/videos/<slug>/script.json`, the source document, `out/videos/<slug>/team/01_writer_notes.md`.
@@ -39,9 +48,9 @@ Inputs: `public/videos/<slug>/script.json`, the source document, `out/videos/<sl
 
 Inputs: `public/videos/<slug>/edit.json` (including its `visuals`), the design in `src/designs/<id>/`, `out/videos/<slug>/team/03_editor_report.json` and the stills it lists, `words.json`, and `facts.json` when it exists.
 
-1. **Automatic guard and schema.** Run `npx remotion compositions src/index.ts --props='{"slug":"<slug>"}' 2>&1 | tail -n 5`. A failure → BLOCK.
+1. **Automatic guard and schema.** Run `node scripts/check-schema.mjs <slug> 2>&1 | tail -n 5`. A failure → BLOCK.
 2. **Script checks on everything on screen.** Apply script checks 3–10 to edit.json copy (titles, stats, cues, CTA) and to the design's hard-coded strings. Every hard-coded string must be listed in the design's exported `copy` (grep the design folder for quoted text) → missing one is FIX.
-3. **Spoken words (talking-head).** Search `words.json` for the watch-words in `compliance.ts` (`PROMOTIONAL_VI`, `CONTEXT_VI`, and the English lists) and for check 4's promises. Each hit goes in the report with its timestamp: FIX if it makes a claim, a verify note if it's neutral ("không miễn phí"). Speech is never cut or reworded by you: Daniel decides.
+3. **Spoken words (talking-head).** Search `words.json` for the watch-words in `compliance.ts` (`PROMOTIONAL_VI`, `CONTEXT_VI`, and the English lists) and for check 4's promises. Each hit goes in `verify_for_daniel` with its timestamp, as a claim ("spoken claim kept, yours to answer for") or as neutral ("không miễn phí"). Never FIX or BLOCK (see Scope), unless it is client data. Speech is never cut or reworded by you.
 4. **Compliance card.** Open the still of the last 5 seconds. It must show, unchanged: `Finance Hub & Networks Pty Ltd | ACN 644 141 613 | Australian Credit Licence 573164`, the credit representative line (369168), and the full-situation disclaimer in English and Vietnamese. If `taxNote` or `conditionsNote` is set, that note shows too. Missing, cut off or unreadable → BLOCK. No still of the card → BLOCK (ask the editor for one).
 5. **Advertised rate on screen.** Rate, comparison rate at equal prominence, and the as-at date, all visible in the same still → otherwise BLOCK.
 6. **Numbers on screen.** Each matches what's said (or the approved script) and the source → otherwise BLOCK.
@@ -57,6 +66,9 @@ Inputs: `public/videos/<slug>/edit.json` (including its `visuals`), the design i
 - **PASS** — no findings, or only verify notes for Daniel.
 
 ## Report (`02_compliance_script.json` / `04_compliance_final.json`)
+
+Write the report file early: a draft verdict as soon as the main checks are done, then refine and
+overwrite it, so a cut-off session loses nothing. A re-run keeps `previous_findings` with status.
 
 ```json
 {
