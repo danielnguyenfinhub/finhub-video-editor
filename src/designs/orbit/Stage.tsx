@@ -31,6 +31,14 @@ import { BIG_R, GAUGE_R, GLASS, HOME, SKY, useFontReady } from "./Space";
 // SAFE.bottom. Both grow upward.
 export const CAPTION_BOTTOM = 1352;
 const CAPTION_SIZE = 54;
+// The said word's scale grows it past its layout box and into the space to
+// its neighbours ("ThángHai"). Every word keeps a fixed side margin of half
+// that overflow (width about 0.6 em a character); with the neighbour's half
+// the space stays about as wide as said, and the line never reflows.
+// ponytail: width estimated from the character count; measure it with
+// measureText if a caption font ever differs much from 0.6 em a character.
+const saidRoom = (scale: number, text: string) =>
+  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
 const INNER = BIG_R * 2 - 40; // widest text inside the core
 
 const ease = (x: number) => 1 - (1 - x) ** 3;
@@ -548,6 +556,7 @@ const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
                   textShadow: now
                     ? `0 0 18px ${hit.has(i) ? brand.highlight : SKY}, 0 0 40px rgba(0,100,168,0.9)`
                     : "0 4px 18px rgba(6,19,42,0.8)",
+                  margin: `0 ${saidRoom(1.06, t.text)}em`,
                   transform: `scale(${now ? 1.06 : 1})`,
                 }}
               >

@@ -58,6 +58,15 @@ import { ENGLISH_ROOM, STAGE, STAGE_W, StageLayer } from "./Stage";
 
 const RAMP_FRAMES = 8;
 const BIG = 70;
+const POP = 1.16; // a said word's pop, at its peak
+// The said word's scale grows it past its layout box and into the space to
+// its neighbours ("ThángHai"). Every word keeps a fixed side margin of half
+// that overflow (width about 0.6 em a character); with the neighbour's half
+// the space stays about as wide as said, and the line never reflows.
+// ponytail: width estimated from the character count; measure it with
+// measureText if a caption font ever differs much from 0.6 em a character.
+const saidRoom = (scale: number, text: string) =>
+  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
 const SMALL = 50;
 // The caption ribbon's bottom edge: mid-stage when the stage is free, just
 // above the English strip while something holds the stage.
@@ -217,7 +226,7 @@ const Word: React.FC<{
       display: "inline-block",
       // A keyword or number is printed in a blue ink block.
       padding: hit ? "0 0.14em" : undefined,
-      margin: hit ? "0.04em 0.02em" : undefined,
+      margin: `${hit ? 0.04 : 0}em ${(hit ? 0.02 : 0) + saidRoom(POP, text)}em`,
       borderRadius: 6,
       background: hit ? BLUE : undefined,
       boxShadow: hit ? `4px 4px 0 ${GOLD}` : undefined,
@@ -273,7 +282,7 @@ const Page: React.FC<{
             const pop = interpolate(
               frame - start,
               [0, 4, 10],
-              [1, 1.16, 1],
+              [1, POP, 1],
               clamp,
             );
             return (

@@ -95,11 +95,14 @@ const PaperPoints: React.FC<{ cue: CueOf<"points">; rel: Rel }> = ({
   const size = cue.items.length > 4 ? 34 : 38;
   return (
     <Area justify="flex-start">
-      <PaperCard background={NAVY_PAPER} rotate={-1.2}>
+      {/* Slides in at its own height, taped on the left: a drop from above,
+          or tape on the right end, would sit under the LogoMark tile
+          (top-right of SAFE) in the logo's first 10 s. */}
+      <PaperCard background={NAVY_PAPER} rotate={-1.2} from="left">
         <Tape
           width={110}
-          rotate={12}
-          style={{ top: -22, right: -44 }}
+          rotate={-12}
+          style={{ top: -22, left: -44 }}
           delay={6}
         />
         <div

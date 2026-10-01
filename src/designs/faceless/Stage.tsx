@@ -15,6 +15,7 @@ import {
 import { brand } from "../../brand/theme";
 import {
   HOOK_FRAMES,
+  READING,
   SAFE,
   figuresOf,
   lenderMentionsOf,
@@ -70,10 +71,40 @@ export const FacelessBackdrop: React.FC = () => {
   );
 };
 
+// Faceless only. The hook owns the stage for its first HOOK_FRAMES: a figure
+// said under it waits until the hook ends. A stat keeps its whole reading
+// time (`frames`, already stretched by the core's reading floor); an
+// automatic figure keeps what is left of its span, never less than
+// READING.minNumberHoldMs. Staged figures never overlap in time: when a hold
+// is not over yet, the next figure waits for it (it starts late, its own
+// hold intact). `saidFrame` is the core's original start (a stable key).
+export const stagedFigures = (
+  reel: Reel,
+  fps: number,
+): (Figure & { saidFrame: number })[] => {
+  const hold = Math.round((READING.minNumberHoldMs / 1000) * fps);
+  let free = reel.edit.hook ? HOOK_FRAMES : 0;
+  return figuresOf(reel, fps).map((f) => {
+    const from = Math.max(f.fromFrame, free);
+    const frames =
+      f.source === "stat"
+        ? Math.max(f.frames, hold)
+        : Math.max(f.fromFrame + f.frames - from, hold);
+    free = from + frames;
+    return { ...f, saidFrame: f.fromFrame, fromFrame: from, frames };
+  });
+};
+
 // Talk-timeline frames when the stage shows something other than captions.
-export const busyFrames = (reel: Reel, fps: number): [number, number][] => [
+// `figures`: faceless passes its stagedFigures; ticker, retro, kinetic and
+// blueprint use the core's timing (the default).
+export const busyFrames = (
+  reel: Reel,
+  fps: number,
+  figures: Figure[] = figuresOf(reel, fps),
+): [number, number][] => [
   ...(reel.edit.hook ? [[0, HOOK_FRAMES] as [number, number]] : []),
-  ...figuresOf(reel, fps).map(
+  ...figures.map(
     (f) => [f.fromFrame, f.fromFrame + f.frames] as [number, number],
   ),
   ...lenderMentionsOf(reel).map(
@@ -123,9 +154,11 @@ const StageBox: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 // "4,1 tỷ" -> counts 0 → 4,1 with the same decimals; text around it kept.
-const counted = (big: string, t: number): string => {
+// A year or a date ("2026", "29/9") is shown as said, never counted.
+export const counted = (big: string, t: number): string => {
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;
+  if (/^(19|20)\d\d$/.test(m[0]) || /\d\s*\/\s*\d/.test(big)) return big;
   const target = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
   if (!Number.isFinite(target)) return big;
   const decimals = m[0].includes(",") ? m[0].split(",")[1].length : 0;
@@ -312,9 +345,9 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
           <HookHero hook={reel.edit.hook} />
         </Sequence>
       ) : null}
-      {figuresOf(reel, fps).map((f) => (
+      {stagedFigures(reel, fps).map((f) => (
         <Sequence
-          key={`${f.source}${f.fromFrame}`}
+          key={`${f.source}${f.saidFrame}`}
           from={f.fromFrame}
           durationInFrames={f.frames}
         >

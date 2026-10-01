@@ -34,7 +34,17 @@ import {
 const FREE_MAX = 132;
 const BUSY_MAX = 60;
 const LINE = 1.18;
-const GHOST = 0.16;
+const GHOST = 0.35;
+const SLAM = 1.12; // a said word's scale as it lands
+// The slam grows a word past its layout box and into the space to its
+// neighbours ("ThángHai"). Every word keeps a fixed side margin of half that
+// overflow (width about 0.6 em a character); with the neighbour's half the
+// space stays about as wide as said, and the line never reflows. The fit
+// below measures the text that much narrower. ponytail: width estimated
+// from the character count; measure with measureText if that proves off.
+const saidRoom = (scale: number, text: string) =>
+  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
+const FIT_W = SAFE_W / (1 + (SLAM - 1) / 2);
 
 // The surface text sits on at talk frame g: the block, or the slab under it
 // (white while a compare split is up).
@@ -69,13 +79,13 @@ const Word: React.FC<{
       style={{
         display: "inline-block",
         position: "relative",
-        // Ghosted on the line until said, then slammed in.
+        margin: `0 ${saidRoom(SLAM, text)}em`,
+        // Ghosted on the line until said, then slammed in, scaled about its
+        // baseline so it never sits higher or lower than its neighbours.
         opacity: interpolate(t, [0, 2], [GHOST, 1], clamp),
         transform:
-          t < 0
-            ? undefined
-            : `translateY(${interpolate(slam, [0, 1], [0.22, 0])}em) scale(${interpolate(slam, [0, 1], [1.28, 1])})`,
-        transformOrigin: "50% 70%",
+          t < 0 ? undefined : `scale(${interpolate(slam, [0, 1], [SLAM, 1])})`,
+        transformOrigin: "50% 80%",
         color:
           kind === "num" && t >= 0
             ? s.boxInk
@@ -125,7 +135,7 @@ const Page: React.FC<{
       fitTextOnNLines({
         text,
         maxLines: 3,
-        maxBoxWidth: SAFE_W,
+        maxBoxWidth: FIT_W,
         fontFamily: FONT,
         fontWeight: 900,
         maxFontSize: FREE_MAX,
@@ -137,7 +147,7 @@ const Page: React.FC<{
       fitTextOnNLines({
         text,
         maxLines: 2,
-        maxBoxWidth: SAFE_W,
+        maxBoxWidth: FIT_W,
         fontFamily: FONT,
         fontWeight: 900,
         maxFontSize: BUSY_MAX,
