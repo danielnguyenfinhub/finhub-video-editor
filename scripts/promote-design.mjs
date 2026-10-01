@@ -223,7 +223,9 @@ export async function promote(id, opts = {}) {
   try {
     assertCompliantCopy({ [`design:${id}`]: copy });
   } catch (e) {
-    for (const line of e.message.split("\n").filter((l) => l.includes(`design:${id}:`))) fail("RG 234", line.trim());
+    const lines = e.message.split("\n").filter((l) => l.includes(`design:${id}:`));
+    if (!lines.length) fail("RG 234", `the guard could not check the copy: ${e.message.split("\n")[0]}`);
+    for (const line of lines) fail("RG 234", line.trim());
   }
 
   // Colours: brand only (theme.ts values, white, black).
@@ -253,22 +255,27 @@ export async function promote(id, opts = {}) {
     return { failures, notes, promoted: false };
   }
 
-  // Promote.
-  if (renderedPreview) {
-    const dest = join(dir, "preview.png");
-    copyFileSync(renderedPreview, dest);
-    t.preview = relative(root, dest).replace(/\\/g, "/");
-  }
+  // Promote: the pool check runs on the promoted manifest first; nothing is written unless it passes.
+  const dest = join(dir, "preview.png");
+  if (renderedPreview) t.preview = relative(root, dest).replace(/\\/g, "/");
   t.uses = 0;
   t.lastUsed = null;
   t.promoted = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local (Sydney) date
   delete t.promotedNote; // a grandfather note no longer applies once it has passed
+  let pool = [];
+  try {
+    pool = loadManifests(designsDir).map((m) => (m.id === id ? t : m));
+  } catch (e) {
+    fail("pool", `select-template.mjs loadManifests() cannot read the designs: ${e.message}`);
+  }
+  const pooled = pool.find((m) => m.id === id);
+  if (!pooled && pool.length) fail("pool", `select-template.mjs loadManifests() does not list "${id}"`);
+  else if (pooled) for (const p of manifestProblems(pooled, id)) fail("pool", p);
+  if (failures.length) return { failures, notes, promoted: false };
+  if (renderedPreview) copyFileSync(renderedPreview, dest);
   writeFileSync(manifestPath, `${JSON.stringify(t, null, 2)}\n`);
-  const pooled = loadManifests(designsDir).find((m) => m.id === id);
-  if (!pooled) fail("pool", `select-template.mjs loadManifests() does not list "${id}"`);
-  else for (const p of manifestProblems(pooled, id)) fail("pool", p);
-  if (!failures.length) notes.push(`in the selector pool (${loadManifests(designsDir).length} templates)`);
-  return { failures, notes, promoted: !failures.length };
+  notes.push(`in the selector pool (${pool.length} templates)`);
+  return { failures, notes, promoted: true };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

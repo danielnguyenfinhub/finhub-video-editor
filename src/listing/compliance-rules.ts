@@ -348,9 +348,9 @@ export interface Hit {
   cite: string;
 }
 
-// $850k, $1.2m, $850,000, 850.000 đô, 1,2 triệu đô, 850 nghìn/ngàn đô
+// $850k, $1.2m, $1.2 million, $850 thousand, $850,000, 850.000 đô, 1,2 triệu đô, 850 nghìn/ngàn đô
 const MONEY =
-  /\$\s?(\d{1,3}(?:[,.]\d{3})+|\d+(?:\.\d+)?)\s?([km](?![a-z²]))?|(\d+(?:[.,]\d+)?)\s?(triệu|nghìn|ngàn)\s?(?:đô|dollar|\$)/gi;
+  /\$\s?(\d{1,3}(?:[,.]\d{3})+|\d+(?:\.\d+)?)\s?((?:million|mil|mn|thousand|[km])(?![a-z²]))?|(\d+(?:[.,]\d+)?)\s?(triệu|nghìn|ngàn)\s?(?:đô|dollar|\$)/gi;
 
 const toDollars = (m: RegExpExecArray): number => {
   if (m[1] !== undefined) {
@@ -358,7 +358,7 @@ const toDollars = (m: RegExpExecArray): number => {
     const n = suffix
       ? parseFloat(m[1].replace(",", "."))
       : parseFloat(m[1].replace(/[,.](?=\d{3}\b)/g, ""));
-    return n * (suffix === "m" ? 1e6 : suffix === "k" ? 1e3 : 1);
+    return n * (suffix.startsWith("m") ? 1e6 : suffix === "k" || suffix === "thousand" ? 1e3 : 1);
   }
   const n = parseFloat(m[3].replace(",", "."));
   return n * (m[4].toLowerCase() === "triệu" ? 1e6 : 1e3);

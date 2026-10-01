@@ -1,9 +1,13 @@
-// Self-test for scripts/publish-video.mjs on synthetic posts (no media, no
-// files written): node scripts/check-publish.mjs -> "publish ok", exit 1 on failure.
+// Self-test for scripts/publish-video.mjs on synthetic posts and publish-listing's
+// stale-language check (no media; a temp folder only): node scripts/check-publish.mjs -> "publish ok", exit 1 on failure.
 import assert from "node:assert/strict";
 import {
   buildCaption, loadBroker, loadCompliance, postProblems, rg234Problems, topicFileName,
 } from "./publish-video.mjs";
+import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { staleLangs } from "./publish-listing.mjs";
 
 // File names: Windows-forbidden characters go, dates stay readable, diacritics stay.
 assert.equal(topicFileName("Lãi suất 4,35%: điều cần biết trước ngày 29/9"),
@@ -63,5 +67,22 @@ const old = buildCaption({ ...good, caption: `${good.caption}\n\nThông tin chun
 check(old);
 assert.equal(old.removed.length, 2);
 assert.match(old.text, /Thông tin chung\. Ví dụ minh hoạ\./);
+
+// publish-listing: after a --lang vi re-render, the older en video is stale and is not published.
+{
+  const tmp = mkdtempSync(join(tmpdir(), "publish-listing-")), base = join(tmp, "in"), out = join(tmp, "out");
+  mkdirSync(base); mkdirSync(out);
+  const at = (f, sec) => (writeFileSync(f, "x"), utimesSync(f, sec, sec));
+  at(join(out, "s-en.mp4"), 1000);
+  at(join(base, "script.json"), 2000); at(join(base, "listing.json"), 1500);
+  at(join(base, "words-vi.json"), 2100); at(join(base, "words-en.json"), 900);
+  at(join(out, "s-vi.mp4"), 3000);
+  assert.deepEqual(staleLangs(out, base, "s"), ["en"]);
+  at(join(out, "s-en.mp4"), 3000);
+  assert.deepEqual(staleLangs(out, base, "s"), []);
+  at(join(base, "words-vi.json"), 4000); // vi re-voiced, not re-rendered
+  assert.deepEqual(staleLangs(out, base, "s"), ["vi"]);
+  rmSync(tmp, { recursive: true });
+}
 
 console.log("publish ok");

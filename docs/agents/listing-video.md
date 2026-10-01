@@ -15,7 +15,7 @@ Global RE is a separate business from Finance Hub: its own composition (`Listing
 | 3. Check | `node scripts/voice-video.mjs <slug> --listing --dry-run` | nothing: scenes, character count, compliance, what to confirm |
 | 4. Voice | `node scripts/voice-video.mjs <slug> --listing --lang vi` and `--lang en` | `voice/narration-<lang>.wav`, `words-<lang>.json`, `timeline-<lang>.json` |
 | 5. Stills | `node scripts/listing-stills.mjs <slug> --lang vi` (one per scene, bundled once; `--at 0.3` for earlier in each scene) | `out/listings/<slug>/stills-<lang>/` |
-| 6. Render | `npm run listing-render -- <slug>` | `out/listings/<slug>/` (full, `-mobile`, `-feed` 4:5, thumbnail, `.srt` per language), then `4 - GLOBAL RE FINISHED VIDEOS/` |
+| 6. Render | `npm run listing-render -- <slug>` | `out/listings/<slug>/` (full, `-mobile`, `-feed` 4:5, thumbnail, `.srt` per language), then `4 - GLOBAL RE FINISHED VIDEOS/`. Exit 3 = rendered, not published (compliance flag, or a language older than the last script/listing change; `--stale-ok` overrides): fix it and run the printed publish command, don't re-render |
 
 `<slug>` = street + suburb, e.g. `100-derria-street-canley-heights`. Everything under `public/listings/` and the two Global RE folders is git-ignored except the folder READMEs and `_TEMPLATE/`: listings are real client material and the repo is public.
 

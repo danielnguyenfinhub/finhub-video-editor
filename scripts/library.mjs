@@ -19,6 +19,7 @@ import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertSlug } from "./listing-prep.mjs";
 import { stems } from "./visuals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -268,6 +269,7 @@ const cli = () => {
     const publicDir = dirAt >= 0 ? resolve(args[dirAt + 1]) : undefined;
     const slug = args.filter((_, i) => i !== dirAt && i !== dirAt + 1)[0];
     if (!slug) throw new Error("usage: library.mjs resolve <slug> [--public-dir dir]");
+    assertSlug(slug);
     const r = resolveVisuals(slug, { publicDir });
     console.log(r.length ? r.join("\n") : "nothing to resolve: every visual already names a file");
   } else if (cmd === "index") {

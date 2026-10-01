@@ -3,7 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { intentsOf } from "./brief.mjs";
-import { confidenceOf, loadManifests, overrideOf, rank } from "./select-template.mjs";
+import { confidenceOf, loadManifests, nothingFits, overrideOf, rank } from "./select-template.mjs";
 
 const cfg = JSON.parse(readFileSync(join(import.meta.dirname, "..", "config", "selector.json"), "utf8"));
 const manifests = loadManifests();
@@ -59,6 +59,10 @@ check("foreground present: AssetReady > 0", fg.length > 0 && fg.every((r) => r.a
 // Hard filters: a card too long for a template drops it.
 const long = rank(brief({ longestCard: { vi: 200, en: 0 } }), manifests, [], cfg);
 check("200-char card drops everything", long.ranked.length === 0, long.ranked.map((r) => r.id).join(","));
+// ...and then the CLI stops with each reason instead of writing pick: null with exit 0.
+const why = nothingFits(long) ?? "";
+check("nothing fits: every design named with its reason", manifests.every((t) => why.includes(`  ${t.id}: `)), why.slice(0, 200));
+check("something fits: no stop", nothingFits(rank(brief(), manifests, [], cfg)) === null);
 
 // Promotion gate: every promoted design ranks above every unproven one, even a
 // higher-scoring one; unproven ones say how to prove them.

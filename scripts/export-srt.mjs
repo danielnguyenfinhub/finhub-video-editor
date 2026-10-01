@@ -8,6 +8,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { assertSlug } from "./listing-prep.mjs";
 
 const FPS = 30;
 const MAX_WORDS = 7;
@@ -18,6 +19,7 @@ if (!slug) {
   console.error("Usage: node scripts/export-srt.mjs <slug>");
   process.exit(1);
 }
+assertSlug(slug);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 // `path` is under public/; words.json is in the video's recording
 // (src/mortgage/recording.ts), edit.json in public/videos/<slug>/.

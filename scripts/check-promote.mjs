@@ -24,9 +24,11 @@ put("index.ts", [
   'import type { Design } from "../mortgage/design";',
   'import { good } from "./good";',
   'import { partial } from "./partial";',
+  'import { oddcopy } from "./oddcopy";',
   "const DESIGNS: Record<string, Design> = {",
   "  good,",
   "  partial,",
+  "  oddcopy,",
   "};",
   "",
 ].join("\n"));
@@ -58,6 +60,9 @@ put("good/index.tsx", [
   "",
 ].join("\n"));
 put("good/template.json", JSON.stringify(manifest("good", { cueRoom: true }), null, 2));
+// Registered, valid manifest, but copy the RG 234 guard cannot read (a number): it once passed.
+put("oddcopy/index.tsx", 'export const oddcopy = { id: "oddcopy", copy: ["x", 42] };\n');
+put("oddcopy/template.json", JSON.stringify(manifest("oddcopy"), null, 2));
 
 let failed = false;
 const check = (name, ok, detail = "") => {
@@ -90,6 +95,19 @@ check("good: uses 0, lastUsed null", saved.uses === 0 && saved.lastUsed === null
 check("good: promoted date written", /^\d{4}-\d{2}-\d{2}$/.test(saved.promoted ?? ""), JSON.stringify(saved));
 check("partial: no promoted date", !readFileSync(join(dir, "partial", "template.json"), "utf8").includes('"promoted"'));
 check("good: in the selector pool", loadManifests(dir).some((t) => t.id === "good"));
+
+const odd = await promote("oddcopy", opts);
+check("oddcopy: unreadable copy fails RG 234", odd.failures.some((f) => f.startsWith("RG 234: the guard could not check")), odd.failures.join(" | "));
+check("oddcopy: not promoted", !odd.promoted && !readFileSync(join(dir, "oddcopy", "template.json"), "utf8").includes('"promoted"'));
+
+// A pool check that fails (a sibling's broken template.json) writes nothing: the manifest
+// once said promoted (uses 0) while the CLI printed NOT promoted.
+writeFileSync(join(dir, "good", "template.json"), JSON.stringify({ ...saved, uses: 7, promoted: "2026-01-02" }, null, 2));
+put("broken/template.json", "{ not json");
+const again = await promote("good", opts);
+check("pool failure named", again.failures.some((f) => f.startsWith("pool: ")), again.failures.join(" | "));
+const kept = JSON.parse(readFileSync(join(dir, "good", "template.json"), "utf8"));
+check("pool failure: manifest unchanged", !again.promoted && kept.uses === 7 && kept.promoted === "2026-01-02", JSON.stringify(kept));
 
 if (failed) process.exit(1);
 console.log("promote ok");

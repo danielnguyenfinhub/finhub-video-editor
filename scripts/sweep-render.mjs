@@ -21,6 +21,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { assertSlug } from "./listing-prep.mjs";
 
 export const SCENE_THRESHOLD = 0.2; // ffmpeg scene score; 0.2 catches cutaways, not caption pages
 export const SCENE_MIN_FRAMES = 8; // fewer scene cuts than this: the video is one shot, sample evenly
@@ -186,6 +187,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     console.error("usage: node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet]");
     process.exit(2);
   }
+  assertSlug(slug);
   const root = resolve(import.meta.dirname, "..");
   const file = resolve(opt("--file") ?? join(root, "out", "videos", slug, `${slug}.mp4`));
   if (!existsSync(file)) {

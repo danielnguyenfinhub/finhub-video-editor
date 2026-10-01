@@ -123,10 +123,13 @@ const number = (s) => {
   return m ? Number(m[1].replace(/,/g, "")) : NaN;
 };
 
-// "$1,250,000" / "$1.2m" / "$850k" -> dollars, every amount in the text.
+// "$1,250,000" / "$1.2m" / "$1.2 million" / "$850k" -> dollars, every amount in the text
+// (the units of dollars() in src/listing/compliance.ts).
 export const amounts = (text) =>
-  [...String(text).matchAll(/\$\s?(\d[\d,]*(?:\.\d+)?)\s?([km])?(?![a-z])/gi)].map((m) =>
-    parseFloat(m[1].replace(/,/g, "")) * ({ k: 1e3, m: 1e6 }[m[2]?.toLowerCase()] ?? 1));
+  [...String(text).matchAll(/\$\s?(\d[\d,]*(?:\.\d+)?)(?!\d)(?:\s?(million|mil|mn|thousand|k|m)(?![a-z]))?/gi)].map((m) => {
+    const unit = (m[2] ?? "").toLowerCase();
+    return parseFloat(m[1].replace(/,/g, "")) * (unit.startsWith("m") ? 1e6 : unit === "k" || unit === "thousand" ? 1e3 : 1);
+  });
 
 // What NSW allows in the price line (docs/agents/real-estate-compliance.md):
 // sale = a fixed price, a range no wider than 10% (PSAA s 72A), "Contact agent"
@@ -281,6 +284,16 @@ export const validateListing = (parsed, agents) => {
 export const slugify = (s) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase()
     .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+/** A slug from the command line becomes a folder under public/ and out/: lowercase,
+ * no "/", "\" or "..", so it cannot point outside them. `_` may lead (the _test-* fixtures).
+ * The Python copy is check_slug in scripts/recordings.py. Exits 1 with the reason. */
+export const slugOk = (slug) => typeof slug === "string" && /^[a-z0-9_][a-z0-9._-]*$/.test(slug) && !slug.includes("..");
+export const assertSlug = (slug) => {
+  if (slugOk(slug)) return slug;
+  console.error(`slug "${slug}" must be lowercase letters, digits, ".", "_" or "-", with no "/", "\\" or "..".`);
+  process.exit(1);
+};
 
 const PHOTO = /\.(jpe?g|png)$/i;
 const HEIC = /\.(heic|heif)$/i;

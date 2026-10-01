@@ -10,6 +10,7 @@ import { renderStill, selectComposition } from "@remotion/renderer";
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { bundlerOverride } from "../bundler-override.mjs";
+import { assertSlug } from "./listing-prep.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 const argv = process.argv.slice(2);
@@ -19,6 +20,7 @@ if (!slug) {
   console.error("usage: node scripts/listing-stills.mjs <slug> [--lang vi|en] [--at 0.5] [--scale 0.5]");
   process.exit(1);
 }
+assertSlug(slug);
 const lang = flag("--lang", "vi");
 const at = Number(flag("--at", "0.5"));
 const scale = Number(flag("--scale", "0.5"));

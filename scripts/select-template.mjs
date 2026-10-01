@@ -13,6 +13,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { assertSlug } from "./listing-prep.mjs";
 
 const root = join(import.meta.dirname, "..");
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
@@ -113,6 +114,12 @@ export function rank(brief, manifests, history, cfg) {
   return { ranked: out, dropped };
 }
 
+/** Why there is no pick (every design excluded), naming each one's reason; null when one fits. */
+export const nothingFits = ({ ranked, dropped }) =>
+  ranked.length ? null
+  : `no design fits this video, so nothing was picked or written. Every design is excluded:\n${Object.entries(dropped).map(([id, why]) => `  ${id}: ${why}`).join("\n")}\n` +
+    'Shorten the card the reasons name, or choose one: --pick <id> --reason "<why>".';
+
 // Scores this close are a judgement call, not a pick: Daniel chooses between the two.
 export const CLOSE_CALL = 2;
 export const confidenceOf = (ranked) => {
@@ -134,6 +141,7 @@ export const overrideOf = (pick, reason, { ranked, dropped }, manifests) => ({
 function main() {
   const [slug, ...rest] = process.argv.slice(2);
   if (!slug) throw new Error('Usage: node scripts/select-template.mjs <slug> [--public-dir <dir>] [--pick <id> --reason "<why>"]');
+  assertSlug(slug);
   const flag = (name) => {
     const i = rest.indexOf(name);
     return i < 0 ? undefined : rest[i + 1];
@@ -155,6 +163,7 @@ function main() {
   const history = (at < 0 ? log : log.slice(0, at)).slice().reverse();
 
   const { ranked, dropped } = rank(brief, manifests, history, cfg);
+  if (!pick && nothingFits({ ranked, dropped })) throw new Error(`select ${slug}: ${nothingFits({ ranked, dropped })}`);
   const top = ranked.slice(0, 3);
   const override = pick && overrideOf(pick, reason, { ranked, dropped }, manifests);
   const confidence = confidenceOf(ranked);

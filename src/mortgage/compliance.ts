@@ -1,7 +1,7 @@
 // COPY of C:\Users\Daniel\video-edits\remotion\src\compliance.ts (verbatim, 2026-09-24).
 // Keep in sync with that file. No edits were needed: `npm run lint` (tsc, lib
 // es2015) accepts it unchanged.
-// 2026-10-01: `fold` (NFC + whitespace) added here only; port it to the original.
+// 2026-10-01: `fold` (NFC + whitespace + zero-width) added here only; port it to the original.
 
 /**
  * ASIC RG 234 / NCCP advertising guards for Finance Hub & Networks.
@@ -143,7 +143,8 @@ const hit = (haystack: string, term: string): boolean =>
  * text arrive NFD), every whitespace run (newline, U+00A0, U+202F...) as one
  * space. Without it "miễn phí" in NFD or "no  obligation" passed unseen.
  */
-const fold = (s: string) => s.toLowerCase().normalize("NFC").replace(/\s+/g, " ");
+// Zero-width characters and the soft hyphen draw nothing, so they are dropped, not spaced.
+const fold = (s: string) => s.toLowerCase().normalize("NFC").replace(/[\u00AD\u200B-\u200D\u2060\uFEFF]/g, "").replace(/\s+/g, " ");
 const PROMOTIONAL = [...PROMOTIONAL_EN, ...PROMOTIONAL_VI].map(fold);
 const CONTEXT = [...CONTEXT_EN, ...CONTEXT_VI].map(fold);
 

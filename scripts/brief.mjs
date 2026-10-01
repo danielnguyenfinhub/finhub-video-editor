@@ -10,6 +10,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { FPS, buildTimeline, figuresOf, lenderMentionsOf, reelOf, words } from "./check-golden.mjs";
 import { POLICY_RE, readLedger } from "./facts.mjs";
+import { assertSlug } from "./listing-prep.mjs";
 
 const COMPARE_CUES = ["compare", "bars", "kinetic"];
 const NEWS_RE = /\b(RBA|ASIC|APRA)\b|thông báo|tin mới|vừa công bố/giu;
@@ -52,6 +53,7 @@ export const intentsOf = (c, stats, text, durationS) => {
 async function main() {
   const [slug, dirFlag, dirArg] = process.argv.slice(2);
   if (!slug) throw new Error("Usage: node scripts/brief.mjs <slug> [--public-dir <dir>]");
+  assertSlug(slug);
   const root = join(import.meta.dirname, "..");
   const pub = resolve(dirFlag === "--public-dir" ? dirArg : join(root, "public"));
   const dir = join(root, "public", "videos", slug);

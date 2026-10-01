@@ -2,7 +2,7 @@
 // the post title and one caption file, in "4 - GLOBAL RE FINISHED VIDEOS"
 // (Global RE's own folder; "2 - FINISHED VIDEOS" is Finance Hub's).
 //
-//   node scripts/publish-listing.mjs <slug> [--force]
+//   node scripts/publish-listing.mjs <slug> [--force] [--stale-ok]
 //
 // Reads public/listings/<slug>/script.json "post" {title, caption (VI),
 // captionEn, hashtags} and copies out/listings/<slug>/<slug>-<lang>.mp4 and
@@ -13,11 +13,14 @@
 // Checks: exactly 7 hashtags incl. #globalre and the suburb's, and the listing
 // compliance guard over everything (scripts/listing-compliance.mjs). A listing
 // with "unknown" agency-agreement facts is a TEST: files start "TEST - " and the
-// caption says not to post. Never replaces a file unless --force.
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+// caption says not to post. Never replaces a file unless --force. Refuses a
+// language rendered before the last change to script.json, listing.json or its
+// words (left over from a --lang re-render of the other one) unless --stale-ok.
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { checkSlug, loadChecker } from "./listing-compliance.mjs";
+import { assertSlug } from "./listing-prep.mjs";
 import { topicFileName } from "./publish-video.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
@@ -40,6 +43,15 @@ export const listingPostProblems = (post, suburb) => {
   for (const t of tags) if (!/^#\S+$/.test(t)) problems.push(`Hashtag "${t}" must start with # and have no spaces.`);
   for (const req of ["#globalre", suburbTag(suburb)]) if (!seen.has(req)) problems.push(`${req} is missing.`);
   return problems;
+};
+
+/** Languages whose render in outDir is older than script.json, listing.json or its own words. */
+export const staleLangs = (outDir, base, slug) => {
+  const t = (f) => (existsSync(f) ? statSync(f).mtimeMs : 0);
+  return Object.keys(LANGS).filter((lang) => {
+    const mp4 = join(outDir, `${slug}-${lang}.mp4`);
+    return existsSync(mp4) && t(mp4) < Math.max(...["script.json", "listing.json", `words-${lang}.json`].map((f) => t(join(base, f))));
+  });
 };
 
 /** The caption file's text. */
@@ -73,6 +85,7 @@ const main = async () => {
   };
   const slug = process.argv.slice(2).find((a) => !a.startsWith("--"));
   if (!slug) fail("usage: node scripts/publish-listing.mjs <slug> [--force]");
+  assertSlug(slug);
   const cmd = `node scripts/publish-listing.mjs ${slug}`;
   const dir = join(ROOT, "public", "listings", slug);
   const read = (f) => JSON.parse(readFileSync(join(dir, f), "utf8"));
@@ -97,6 +110,9 @@ const main = async () => {
     [join(outDir, `${slug}-${lang}-feed.mp4`), `${topic} (${tag}) - feed 4x5.mp4`],
   ]).filter(([src]) => existsSync(src));
   if (!copies.length) fail(`Nothing rendered yet in out/listings/${slug}/. Render first: npm run listing-render -- ${slug}`);
+  const stale = staleLangs(outDir, dir, slug);
+  if (stale.length && !process.argv.includes("--stale-ok"))
+    fail(`the ${stale.join(" and ")} video in out/listings/${slug}/ was rendered before the last change to script.json, listing.json or its words, so it has old copy. Nothing copied. Re-render it: npm run listing-render -- ${slug} --lang ${stale[0]}. To publish it as it is: ${cmd} --force --stale-ok`);
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const txt = join(OUTPUT_DIR, `${topic} - caption.txt`);
   if (!process.argv.includes("--force"))

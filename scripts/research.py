@@ -28,9 +28,11 @@ Needs: python -m pip install yt-dlp feedparser
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import os
 import re
+import socket
 import ssl
 import sys
 import time
@@ -346,7 +348,30 @@ def page_name(url: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", f"{u.netloc}{u.path}".lower()).strip("-")[:80] + ".md"
 
 
+def url_problem(url: str) -> str | None:
+    """Why a URL must not be fetched (by r.jina.ai or yt-dlp), or None: only http(s) to a
+    public address. The host is resolved, so "localhost", 10.x, 169.254.169.254 (cloud
+    metadata) and spellings like http://2130706433/ (= 127.0.0.1) are all refused.
+    ponytail: checks the name once; a redirect or DNS rebinding to a private host is not
+    caught. Pin the resolved address if a real attack shows up."""
+    u = urllib.parse.urlparse(url)
+    if u.scheme not in ("http", "https") or not u.hostname:
+        return f"{url}: only http(s) links to a public site can be read."
+    try:
+        addrs = {info[4][0] for info in socket.getaddrinfo(u.hostname, None)}
+    except (OSError, UnicodeError) as err:
+        return f"{url}: can't resolve {u.hostname} ({err})."
+    for addr in addrs:
+        ip = ipaddress.ip_address(addr.split("%")[0])
+        ip = getattr(ip, "ipv4_mapped", None) or ip
+        if not ip.is_global:
+            return f"{url}: {u.hostname} is a local or private address ({ip}); only public sites can be read."
+    return None
+
+
 def cmd_read(url: str, slug: str) -> None:
+    if problem := url_problem(url):
+        raise SystemExit(problem)
     if "news.google.com" in url:
         raise SystemExit("Google News links can't be read: open the story at the publisher (or the RBA/ABS/lender page).")
     try:
@@ -388,6 +413,8 @@ def trust_windows_store_for_curl(out: Path) -> None:
 
 
 def cmd_transcript(url: str, slug: str, lang: str) -> None:
+    if problem := url_problem(url):
+        raise SystemExit(problem)
     import yt_dlp
 
     out = ROOT / "out" / "videos" / slug / "research"
@@ -504,6 +531,13 @@ def selftest() -> None:
     blocks = [["### YouTube: x"], ["### a: 3 stories (9 articles, 0 not about Australia dropped)"],
               ["### b: FAILED (x)"], ["### c: 40 stories (100+ articles, 2 not about Australia dropped)"]]
     assert [b[0][:6] for b in sorted(blocks, key=story_count, reverse=True)][:2] == ["### c:", "### a:"]
+    # URLs sent to r.jina.ai / yt-dlp: only http(s) to a public address (literals: no DNS needed).
+    for bad in ["file:///etc/passwd", "ftp://1.1.1.1/x", "http://169.254.169.254/latest/meta-data/",
+                "http://127.0.0.1:4100/", "http://localhost/", "http://10.0.0.5/", "http://192.168.1.1/",
+                "http://172.16.0.1/", "http://100.64.0.1/", "http://0.0.0.0/", "http://2130706433/",
+                "http://[::1]/", "http://[fe80::1]/", "http://[::ffff:127.0.0.1]/", "http://[fd00::1]/", "https:///x"]:
+        assert url_problem(bad), bad
+    assert url_problem("https://1.1.1.1/x") is None and url_problem("http://[2606:4700:4700::1111]/") is None
     print("research.py selftest: OK")
 
 

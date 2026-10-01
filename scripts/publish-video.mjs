@@ -20,6 +20,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFi
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { assertSlug } from "./listing-prep.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 export const OUTPUT_DIR = join(ROOT, "2 - FINISHED VIDEOS");
@@ -154,6 +155,7 @@ const main = async () => {
   };
   const slug = argv.find((a, k) => !a.startsWith("--") && !valued.includes(argv[k - 1]));
   if (!slug) fail(USAGE);
+  assertSlug(slug);
   const cmd = `node scripts/publish-video.mjs ${slug}`;
 
   const dir = join(resolve(value("--public-dir") ?? join(ROOT, "public")), "videos", slug);

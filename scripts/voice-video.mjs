@@ -56,6 +56,7 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkFacts, readLedger } from "./facts.mjs";
+import { assertSlug } from "./listing-prep.mjs";
 import { find } from "./library.mjs";
 import { omnivoicePython, resolveProfile } from "./omnivoice.mjs";
 import { spendProblem } from "./spend.mjs";
@@ -85,6 +86,7 @@ const USAGE = "usage: node scripts/voice-video.mjs <slug> [--listing [--lang vi|
 const argv = process.argv.slice(2);
 const slug = argv.find((a, k) => !a.startsWith("--") && !["--engine", "--voice", "--lang"].includes(argv[k - 1]));
 if (!slug) fail(USAGE);
+assertSlug(slug);
 const dryRun = argv.includes("--dry-run");
 const value = (flag) => {
   if (!argv.includes(flag)) return undefined;

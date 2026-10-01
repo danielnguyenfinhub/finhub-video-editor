@@ -19,6 +19,15 @@ from pathlib import Path
 PUBLIC = Path(os.environ.get("FINHUB_PUBLIC")
               or Path(__file__).resolve().parent.parent / "public")
 ID_PATTERN = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
+SLUG_PATTERN = re.compile(r"[a-z0-9_][a-z0-9._-]*")  # same rule as assertSlug in listing-prep.mjs
+
+
+def check_slug(slug: str) -> str:
+    """argparse type for a command-line slug: it must stay a folder under public/ and out/."""
+    if not SLUG_PATTERN.fullmatch(slug) or ".." in slug:
+        raise SystemExit(f'slug "{slug}" must be lowercase letters, digits, ".", "_" or "-", '
+                         'with no "/", "\\" or "..".')
+    return slug
 
 
 def recording_dir(public: Path, slug: str, source: str | None) -> Path:

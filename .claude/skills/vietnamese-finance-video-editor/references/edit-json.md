@@ -49,7 +49,7 @@ the render with a readable error). Full worked example: `public/videos/ty-do/edi
 | `cta` | no | `{question?}` on the contact card. Default "Bạn cần tư vấn về khoản vay?"; button text is fixed |
 | `compliance` | no | See below |
 | `exemptions` | no | See below |
-| `post` | to publish | Upload copy, not on screen: `{title, caption, hashtags}`. `title` = the topic, also the finished file's name; `caption` = the body only (a few sentences, one call to action; the broker block and licence/disclaimer footer are added automatically, never write them); `hashtags` = exactly 7: `#finhub`, `#vietnamese` + 5 about the topic, one word each. RG 234 scans it (an exemption with `field: "post"` covers it). `render-video.py` then writes `2 - FINISHED VIDEOS/<Topic>.mp4` and `<Topic> - caption.txt`; without a valid post the render still succeeds and prints the fix |
+| `post` | to publish | Upload copy, not on screen: `{title, caption, hashtags}`. `title` = the topic, also the finished file's name; `caption` = the body only (a few sentences, one call to action; the broker block and licence/disclaimer footer are added automatically, never write them); `hashtags` = exactly 7: `#finhub`, `#vietnamese` + 5 about the topic, one word each. RG 234 scans it (an exemption with `field: "post"` covers it). `render-video.py` then writes `2 - FINISHED VIDEOS/<Topic>.mp4` and `<Topic> - caption.txt`; without a valid post the render files stay in `out/videos/<slug>/` and it prints the fix and exits 3 (not published) |
 
 ## Cue types
 
