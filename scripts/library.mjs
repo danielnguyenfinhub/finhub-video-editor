@@ -226,6 +226,7 @@ export const resolveVisuals = (slug, { publicDir = join(ROOT, "public") } = {}) 
   const edit = JSON.parse(readFileSync(editFile, "utf8"));
   const missing = [];
   const resolved = [];
+  const used = []; // marked only once every visual resolved: a miss leaves the library untouched too
   const visuals = (edit.visuals ?? []).map((v) => {
     if (typeof v.asset === "string" || !v.asset?.find) return v;
     const hit = find(v.asset.find, { lib }).find((h) => h.match !== "stem" && h.meta.kind !== "music");
@@ -233,7 +234,7 @@ export const resolveVisuals = (slug, { publicDir = join(ROOT, "public") } = {}) 
       missing.push(v.asset.find);
       return v;
     }
-    markUsed(hit.path, slug, { lib });
+    used.push(hit.path);
     const path = `library/${relative(lib, hit.path).replace(/\\/g, "/")}`;
     resolved.push(`${v.asset.find} -> ${path} (${hit.match})`);
     return { ...v, asset: path };
@@ -244,6 +245,7 @@ export const resolveVisuals = (slug, { publicDir = join(ROOT, "public") } = {}) 
         "Add a file with `node scripts/library.mjs add`, add the words to public/library/synonyms.json, " +
         "or name a library/... path in edit.json. (Downloading new footage is only in the faceless tooling for now.)",
     );
+  for (const p of used) markUsed(p, slug, { lib });
   // ponytail: rewrites edit.json in plain 2-space JSON (one-line arrays unfold); patch the text in place if that churn bothers anyone.
   if (resolved.length) writeFileSync(editFile, `${JSON.stringify({ ...edit, visuals }, null, 2)}\n`);
   return resolved;

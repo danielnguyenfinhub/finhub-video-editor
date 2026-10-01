@@ -62,7 +62,7 @@ Invoke the `video-production-team` skill's flow from the step after design selec
 
 ## Phase 3 — Learn
 
-Daniel's corrections go to `corrections.md` under the design id as scope (the editor's rule), and the recipe for that team gets the failure mode once it repeats. Report what was logged. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify).
+Daniel's corrections go to `corrections.md` under the design id as scope (the editor's rule), and the recipe for that team gets the failure mode once it repeats. Report what was logged. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify). Fill in the row's outcome at the end of the run, not left `in progress` (`check-teams.mjs` fails on an open row that is not the last).
 
 ## Files
 

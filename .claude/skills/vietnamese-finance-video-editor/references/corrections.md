@@ -74,8 +74,10 @@ screen ("the rate card"), never whose.
 - 30/09/2026 · all · Daniel asked why a 3-video batch took a whole day → process rules: render
   once after `check-schema`, `check-speech-cuts` and `check-pacing` pass; one round for cosmetic
   findings; QC measures rule 5b only with `check-pacing` → `video-production-team` "Render once"
-  and FIX policy · `checked` for "check before render": `preflight.mjs` runs `check-schema`,
-  `check-speech-cuts` and `check-pacing` and blocks on a failure or a crash (`check-preflight.mjs`);
+  and FIX policy · `checked` for "check before render": `preflight.mjs` blocks, in Node, on a speech cut
+  and on a crash of `check-speech-cuts` or `check-pacing` (which also parses `edit.json`'s schema)
+  (`check-preflight.mjs`); the composition schema (`check-schema`) blocks only when a browser
+  runs: if its browser fails, preflight warns and the render checks it again (01/10/2026);
   the one-round FIX policy stays a `rule`
 - 30/09/2026 · scope A · "don't monitor me in edit footage; use compliance to correct yourself when
   generating scripts" → spoken words in his footage are advisory verify notes, never a gate;

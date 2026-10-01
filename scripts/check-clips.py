@@ -96,7 +96,7 @@ def main() -> None:
         assert not list(rec.glob("*.part*")), "the checked proxy is renamed, no .part left"
         kept = {p: digest(p) for p in (src, rec / "source.mp4")}
         hint = sh([sys.executable, str(PREP), "take-c", "--recording", "take-c"], env, ok=False)
-        assert hint.returncode != 0 and "the same file again finishes it" in hint.stderr, hint.stderr
+        assert hint.returncode != 0 and "Give the same video file again to finish it" in hint.stderr, hint.stderr
         other = sh([sys.executable, str(PREP), str(root / "take-a.mp4"), "take-c"], env, ok=False)
         assert other.returncode != 0 and "Nothing was changed" in other.stderr, other.stderr
         # Same frame count, another video; the same video with another --no-clean; a proxy
@@ -111,6 +111,10 @@ def main() -> None:
                           ([str(src), "take-c"], True)):
             if hide:
                 record.replace(aside)
+                # S1 (run 4): with no record the same file is refused, so the hint must not offer it.
+                hint = sh([sys.executable, str(PREP), "take-c", "--recording", "take-c"], env, ok=False)
+                assert hint.returncode != 0 and "cannot be finished" in hint.stderr \
+                    and "same video file again" not in hint.stderr, hint.stderr
             r = sh([sys.executable, str(PREP), *cmd], env, ok=False)
             assert r.returncode != 0 and "Nothing was changed" in r.stderr, (cmd, hide, r.stdout, r.stderr)
             assert not (rec / "words.json").exists() and kept == {p: digest(p) for p in kept}

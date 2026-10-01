@@ -34,7 +34,19 @@ jobs:
       - run: New-Item -ItemType Directory -Force .ci-tmp
       # check-speech-cuts.selftest synthesizes a tone with ffmpeg (no footage needed).
       - run: choco install ffmpeg --no-progress -y
+      # check-schema's browser on a GPU-less runner: swangle = --use-gl=angle --use-angle=swiftshader
+      # (@remotion/renderer 4.0.527 dist/options/gl.js:7, dist/open-browser.js:40-41).
       - run: npm test
+        env: { FINHUB_GL: swangle }
+      # A diagnostic, never a failure: check-schema on a media-free fixture with the browser's own
+      # stderr (verbose), so a "Target closed" shows why the browser went.
+      - name: check-schema probe (verbose)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10 # a hung browser must not hold the job to GitHub's 360-minute limit
+        shell: bash
+        env: { FINHUB_GL: swangle, FINHUB_SCHEMA_LOG: verbose }
+        run: node scripts/check-schema.mjs _test-schema-probe --public-dir scripts/fixtures/schema-probe
       # Stdlib-only Python checks (no packages, no media). Kept out of `npm test` so that stays Node-only.
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
@@ -44,5 +56,6 @@ jobs:
           python scripts/check-clips.py
           python scripts/check-migrate-assets.py
           python scripts/check-reframe.py
+          python scripts/check-render-video.py
           python scripts/research.py selftest
           python scripts/omnivoice-tts.py selftest

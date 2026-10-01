@@ -418,9 +418,14 @@ def main() -> None:
             parser.error("give the video file, or --recording <id> for a new edit of an "
                          "existing recording")
         if not (proxy.exists() and words_path.exists()):
+            # Only a proxy with its source.from.json can be resumed (resumable()).
+            how = ("Give the same video file again to finish it."
+                   if proxy.with_name("source.from.json").exists() else
+                   f"Its source.mp4 has no source.from.json, so it cannot be finished: ask "
+                   f"Daniel to move {folder} aside, then give the video file to prepare it again."
+                   if proxy.exists() else "Give the video file to prepare it.")
             raise SystemExit(f"No prepared recording in {folder} (it needs source.mp4 and "
-                             f"words.json). Give the video file to prepare it"
-                             f"{' (the same file again finishes it)' if proxy.exists() else ''}.")
+                             f"words.json). {how}")
         title = slug
     else:
         src: Path = args.video.resolve()

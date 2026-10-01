@@ -45,6 +45,13 @@ const faceless = brief({ mode: "B", languages: ["vi", "en"], assets: { foregroun
 const fr = rank(faceless, manifests, [], cfg);
 check("faceless: no face-required", fr.ranked.every((r) => byId[r.id].facePolicy !== "face-required"), fr.ranked.map((r) => r.id).join(","));
 check("faceless: something ranks", fr.ranked.length > 0);
+// The same on vi-only briefs (S2, run 4): with "en" asked, the face-required designs drop for lacking en,
+// so the face-policy filter alone was never tested. Both policies must be in the vi-only candidates.
+const viFaceless = rank(brief({ mode: "B", assets: { foreground: false, voice: true, script: true } }), manifests, [], cfg).ranked;
+const viCamera = rank(brief(), manifests, [], cfg).ranked;
+const policies = (list) => new Set(list.map((r) => byId[r.id].facePolicy));
+check("vi-only faceless: no face-required", !policies(viFaceless).has("face-required") && policies(viFaceless).has("faceless"), [...policies(viFaceless)].join(","));
+check("vi-only on camera: no faceless", !policies(viCamera).has("faceless") && policies(viCamera).has("face-required"), [...policies(viCamera)].join(","));
 
 // The skin used by the last video scores lower than when it was not used.
 const fresh = score("datalab");

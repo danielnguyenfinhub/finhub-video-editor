@@ -127,11 +127,14 @@ def main() -> None:
     thumb = out_dir / "thumbnail.png"
     props = json.dumps({"slug": slug})
     # Hash the on-screen inputs now (what this render reads); write it only once
-    # the render is done, so publish-video.mjs can tell a stale render.
+    # the render is done, so publish-video.mjs can tell a stale render. Until then
+    # the stamp says "rendering": a render that stops part way (loudness, mobile,
+    # feed...) leaves an mp4 publish-video refuses, not one it takes for fresh.
+    # Marked after the hash: a failed hash leaves the last good render publishable.
     stamp = out_dir / f"{slug}.inputs"
-    stamp.unlink(missing_ok=True)
     inputs = run(["node", "--no-warnings", str(ROOT / "scripts" / "publish-video.mjs"), slug,
                   "--inputs-hash", "--public-dir", str(PUBLIC)], "on-screen inputs hash", capture=True).strip()
+    stamp.write_text("rendering\n", encoding="utf-8")
 
     # ponytail: concurrency 4 measured fastest on the i9-13900H / Iris Xe
     # (full reel 195 s vs 230 s at 8); re-time if the render machine changes.
@@ -182,11 +185,14 @@ def main() -> None:
     subprocess.run(["node", "--no-warnings", str(ROOT / "scripts" / "sweep-render.mjs"), slug, "--sheet"], cwd=ROOT)
 
     print("\n== done")
-    for path in (full, mobile, feed):
-        print(f"{path}  {path.stat().st_size / 1e6:.1f} MB  {duration_s(path):.2f} s  "
-              f"audio mean {mean_volume_db(path)}")
-    for path in (thumb, srt):
-        print(f"{path}  {path.stat().st_size / 1e3:.0f} KB")
+    try:  # a report only: the files are complete, so the stamp is written even if it fails
+        for path in (full, mobile, feed):
+            print(f"{path}  {path.stat().st_size / 1e6:.1f} MB  {duration_s(path):.2f} s  "
+                  f"audio mean {mean_volume_db(path)}")
+        for path in (thumb, srt):
+            print(f"{path}  {path.stat().st_size / 1e3:.0f} KB")
+    except (Exception, SystemExit) as err:  # noqa: BLE001
+        print(f"(could not list the output files: {err})", flush=True)
     stamp.write_text(inputs + "\n", encoding="utf-8")
 
     # Daniel's "2 - FINISHED VIDEOS" folder: the video named after its topic and
@@ -199,9 +205,13 @@ def main() -> None:
         ["node", "--no-warnings", str(ROOT / "scripts" / "publish-video.mjs"), slug, "--force"],
         cwd=ROOT)
     if published.returncode:
+        # Exit 4: same-title files with no recorded owner; only Daniel can say they are this video's.
+        fix = ("If the files are really this video's, run: " if published.returncode == 4
+               else "Fix the problem above, then run: ")
+        claim = " --claim" if published.returncode == 4 else ""
         print(f"\nNOT PUBLISHED: the render succeeded (files above, in {out_dir}), but nothing went "
-              f"in the finished-videos folder. Fix the problem above, then run: "
-              f"node scripts/publish-video.mjs {slug} --force", flush=True)
+              f"in the finished-videos folder. {fix}"
+              f"node scripts/publish-video.mjs {slug} --force{claim}", flush=True)
         sys.exit(3)
 
 

@@ -118,6 +118,9 @@ export const ratchetProblems = (counts, baseline) =>
     .filter(([id, n]) => n > (baseline[id] ?? 0))
     .map(([id, n]) => `${id}: ${n} fontSize literal(s) under ${MIN_TEXT_PX}px, baseline ${baseline[id] ?? 0}`);
 
+/** Designs now under their baseline: the gain is not locked in until --update-baseline (B10). */
+export const belowBaseline = (counts, baseline) => Object.keys(counts).filter((id) => counts[id] < (baseline[id] ?? 0));
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const ids = args.filter((a) => !a.startsWith("--"));
@@ -126,6 +129,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const broken = scannerProblems();
   const t = ratchetProblems({ a: 2, b: 0, c: 1 }, { a: 2, b: 5 });
   if (t.length !== 1 || !t[0].startsWith("c: 1")) broken.push(`ratchet self-check failed: ${JSON.stringify(t)}`);
+  if (belowBaseline({ a: 1, b: 5, c: 0 }, { a: 2, b: 5 }).join() !== "a") broken.push("below-baseline self-check failed");
   if (broken.length) {
     console.error(`text size: ${broken.join("; ")}`);
     process.exit(1);
@@ -149,11 +153,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.error("text size: 0 small literals in every design is not believable; the scanner is not reading the designs.");
       process.exit(1);
     }
-    const problems = ratchetProblems(counts, JSON.parse(readFileSync(baselinePath, "utf8")));
+    const baseline = JSON.parse(readFileSync(baselinePath, "utf8"));
+    const problems = ratchetProblems(counts, baseline);
     if (problems.length) {
       console.error(`text size: more small text than the baseline allows (raise the text, or if intended run --update-baseline):\n${problems.map((p) => `  ${p}`).join("\n")}`);
       process.exit(1);
     }
     console.log(`text size ok: ${total} literal(s) under ${MIN_TEXT_PX}px, none beyond the baseline (${all.length} design(s))`);
+    const lower = belowBaseline(counts, baseline);
+    if (lower.length) console.log(`text size: ${lower.join(", ")} now under the baseline; lock the gain in: node scripts/check-text-size.mjs ${lower.join(" ")} --update-baseline`);
   } else console.log(`text size: ${total} literal(s) under ${MIN_TEXT_PX}px in ${all.length} design(s)`);
 }

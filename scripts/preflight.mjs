@@ -79,37 +79,43 @@ if (slug) {
       if (typeof ms === "number" && (ms < 0 || ms > endMs + 500))
         errors.push(`${what} at ${ms} ms is outside the talk (0-${endMs} ms).`);
     };
-    const spans = [];
-    (edit.cues ?? []).forEach((c, i) => {
-      const what = `cues[${i}] (${c.kind})`;
-      if (!(c.fromMs < c.toMs)) errors.push(`${what}: fromMs ${c.fromMs} is not before toMs ${c.toMs}.`);
-      inTalk(c.fromMs, what);
-      inTalk(c.toMs, what);
-      // Beats inside the cue (items, cards, rows, question...) must fall in its span.
-      for (const [, key, ms] of JSON.stringify(c).matchAll(/"(atMs|highlightAtMs|vsAtMs|strikeMs)":(\d+)/g))
-        if (+ms < c.fromMs - 50 || +ms > c.toMs)
-          warnings.push(`${what}: a ${key} (${ms}) falls outside the cue (${c.fromMs}-${c.toMs}); it won't show.`);
-      if (c.kind === "compare")
-        for (const card of c.cards ?? [])
-          for (const r of card.rows ?? [])
-            if (r.value.length > 8)
-              warnings.push(`${what}: value "${r.value}" (> 8 characters) may run under the VS badge; move units into the label.`);
-      spans.push([c.fromMs, c.toMs, what]);
-    });
-    (edit.stats ?? []).forEach((s, i) => {
-      inTalk(s.atMs, `stats[${i}]`);
-      if (s.big.length > 6)
-        warnings.push(`stats[${i}]: "${s.big}" is long for a stat ring; keep the big text to a number or ≤ 6 characters.`);
-      spans.push([s.atMs, s.atMs + s.durMs, `stats[${i}]`]);
-    });
-    spans.sort((a, b) => a[0] - b[0]);
-    for (let i = 1; i < spans.length; i++)
-      if (spans[i][0] < spans[i - 1][1])
-        errors.push(`${spans[i][2]} overlaps ${spans[i - 1][2]} on screen; keep top panels apart in time.`);
-    for (const s of edit.subtitles ?? [])
-      if (s.text.length > 140)
-        warnings.push(`English line "${s.text.slice(0, 40)}…" is ${s.text.length} characters (over 3 lines); shorten it.`);
-    if (edit.title && edit.title.split(/\s+/).length > 8) warnings.push(`title has more than 8 words: "${edit.title}".`);
+    // These read fields before check-schema runs: a schema-invalid edit.json is a listed problem, not a raw TypeError.
+    try {
+      const spans = [];
+      (edit.cues ?? []).forEach((c, i) => {
+        const what = `cues[${i}] (${c.kind})`;
+        if (!(c.fromMs < c.toMs)) errors.push(`${what}: fromMs ${c.fromMs} is not before toMs ${c.toMs}.`);
+        inTalk(c.fromMs, what);
+        inTalk(c.toMs, what);
+        // Beats inside the cue (items, cards, rows, question...) must fall in its span.
+        for (const [, key, ms] of JSON.stringify(c).matchAll(/"(atMs|highlightAtMs|vsAtMs|strikeMs)":(\d+)/g))
+          if (+ms < c.fromMs - 50 || +ms > c.toMs)
+            warnings.push(`${what}: a ${key} (${ms}) falls outside the cue (${c.fromMs}-${c.toMs}); it won't show.`);
+        if (c.kind === "compare")
+          for (const card of c.cards ?? [])
+            for (const r of card.rows ?? [])
+              if (r.value.length > 8)
+                warnings.push(`${what}: value "${r.value}" (> 8 characters) may run under the VS badge; move units into the label.`);
+        spans.push([c.fromMs, c.toMs, what]);
+      });
+      (edit.stats ?? []).forEach((s, i) => {
+        inTalk(s.atMs, `stats[${i}]`);
+        if (s.big.length > 6)
+          warnings.push(`stats[${i}]: "${s.big}" is long for a stat ring; keep the big text to a number or ≤ 6 characters.`);
+        spans.push([s.atMs, s.atMs + s.durMs, `stats[${i}]`]);
+      });
+      spans.sort((a, b) => a[0] - b[0]);
+      for (let i = 1; i < spans.length; i++)
+        if (spans[i][0] < spans[i - 1][1])
+          errors.push(`${spans[i][2]} overlaps ${spans[i - 1][2]} on screen; keep top panels apart in time.`);
+      for (const s of edit.subtitles ?? [])
+        if (s.text.length > 140)
+          warnings.push(`English line "${s.text.slice(0, 40)}…" is ${s.text.length} characters (over 3 lines); shorten it.`);
+      if (edit.title && edit.title.split(/\s+/).length > 8) warnings.push(`title has more than 8 words: "${edit.title}".`);
+    } catch (err) {
+      if (!(err instanceof TypeError)) throw err;
+      errors.push(`edit.json is not in the shape the render reads (${err.message}); node scripts/check-schema.mjs ${slug} names the field.`);
+    }
     // A video built from a policy document shows the document's date on the end card.
     try {
       const { readLedger, oldestAsAt } = await import("./facts.mjs");
@@ -151,7 +157,8 @@ if (checked) {
   // The browser itself failing (not starting, dropping mid-call, a refused download, a hang) says nothing about
   // the edit, and the render runs the same schema and reports it: warn, do not block. Only a schema error blocks.
   const text = lines(schema).join("\n");
-  const browserFailure = schema.error?.code === "ETIMEDOUT" || (!SCHEMA_ERROR.test(text) && BROWSER_FAILURE.test(text));
+  // Exit 0 is a pass, whatever the renderer logged after it (a "Target closed" from closing the page).
+  const browserFailure = schema.error?.code === "ETIMEDOUT" || (schema.status !== 0 && !SCHEMA_ERROR.test(text) && BROWSER_FAILURE.test(text));
   if (browserFailure)
     warnings.push(`check-schema could not run (${schema.error?.code === "ETIMEDOUT" ? `no answer in ${SCHEMA_TIMEOUT_S} s` : why(schema).replace(/\.$/, "")}), so the composition schema is unchecked here; the render checks it again. node scripts/check-schema.mjs ${slug} shows it.`);
   else if (schema.status !== 0)

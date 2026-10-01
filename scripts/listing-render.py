@@ -129,8 +129,11 @@ def main() -> None:
     print("\n== 4 - GLOBAL RE FINISHED VIDEOS", flush=True)
     published = subprocess.run(["node", "--no-warnings", str(ROOT / "scripts" / "publish-listing.mjs"), slug, "--force"], cwd=ROOT)
     if published.returncode:
+        # Exit 4: same-title files with no recorded owner; only Daniel can say they are this listing's.
+        fix = "If the files are really this listing's, run:" if published.returncode == 4 else "Fix the problem above, then run:"
+        claim = " --claim" if published.returncode == 4 else ""
         print(f"\nNOT PUBLISHED: the render succeeded (files in {out_dir}), but nothing went in the finished "
-              f"folder. Fix the problem above, then run: node scripts/publish-listing.mjs {slug} --force", flush=True)
+              f"folder. {fix} node scripts/publish-listing.mjs {slug} --force{claim}", flush=True)
         sys.exit(3)
 
 

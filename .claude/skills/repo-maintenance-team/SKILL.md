@@ -55,7 +55,7 @@ Show Daniel: bug counts by severity (worst one named), the top gaps with payback
 
 ## Phase 5 — Deliver and learn
 
-Report: fixed (id, one line, evidence), not fixed (why), gaps awaiting Daniel, what to verify. Lessons that repeated go to `corrections.md` and, where measurable, become a check (the fixer already added it). Add a change-log line to `docs/agents/skills-and-harnesses.md` only if a team file changed. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify).
+Report: fixed (id, one line, evidence), not fixed (why), gaps awaiting Daniel, what to verify. Lessons that repeated go to `corrections.md` and, where measurable, become a check (the fixer already added it). Add a change-log line to `docs/agents/skills-and-harnesses.md` only if a team file changed. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify). Fill in the row's outcome at the end of the run, not left `in progress` (`check-teams.mjs` fails on an open row that is not the last).
 
 ## Files
 
@@ -66,7 +66,8 @@ Report: fixed (id, one line, evidence), not fixed (why), gaps awaiting Daniel, w
 | Situation | Action |
 |---|---|
 | A bug does not reproduce | Mark `unreproduced`; do not fix; list it |
-| Fixer would loosen or skip a check | Refuse; the check stays |
+| Fixer would loosen or skip a check | Refuse; the check stays. One exception, in force while Daniel's decision OD-1 (docs/agents/open-decisions.md) is open: a check whose own tool failed (not the data) may warn if a later step re-checks it, and its test must print SKIPPED/INCOMPLETE, never ok (run 3: a browser failure in check-schema warns in preflight; the render re-checks the schema) |
+| Commits pushed after the independent review (CI fixes) | They get their own lighter review, or the PR says they were not reviewed |
 | Fix needs a design decision | Stop that id; ask Daniel |
 | Reviewer and fixer disagree | Show Daniel both |
 | Client data in any file | Stop; path only |

@@ -3,12 +3,13 @@
 // same-title guard and stale-render stop (no media; a temp folder only): node scripts/check-publish.mjs -> "publish ok", exit 1 on failure.
 import assert from "node:assert/strict";
 import {
-  buildCaption, loadBroker, loadCompliance, postProblems, rg234Problems, topicFileName,
+  buildCaption, legacyOwnerStop, loadBroker, LOCK_STALE_MS, loadCompliance, postProblems, rg234Problems, titleSlugs, topicFileName,
 } from "./publish-video.mjs";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { onScreenHash, staleLangs, stampPath, staleStop } from "./publish-listing.mjs";
 
 // File names: Windows-forbidden characters go, dates stay readable, diacritics stay.
@@ -163,19 +164,54 @@ assert.match(old.text, /Thông tin chung\. Ví dụ minh hoạ\./);
   assert.match(publish("_test-a", a, "--force").stderr, /edit\.json, words\.json changed after the render \(no stamp/);
   writeFileSync(a, "AAA3"); // rendered after the edit
   assert.equal(publish("_test-a", a, "--force").status, 0);
+  // W5 (run 4): render-video.py marks the stamp "rendering" until the render is done; a render that
+  // stopped part way leaves a new mp4 that file times alone would publish as fresh.
+  writeFileSync(join(tmp, "a.inputs"), "rendering\n"); writeFileSync(a, "PARTIAL");
+  r = publish("_test-a", a, "--force");
+  assert.equal(r.status, 1, "a render that did not finish must not publish");
+  assert.match(r.stderr, /the last render of _test-a did not finish.*Re-render it: python scripts\/render-video\.py _test-a/s);
+  assert.doesNotMatch(r.stderr, /stale-ok/, "an unfinished render must not be offered --stale-ok (it would publish a partial file)");
+  assert.equal(publish("_test-a", a, "--force", "--stale-ok").status, 1, "--stale-ok must not publish an unfinished render");
+  const rv = readFileSync(join(import.meta.dirname, "render-video.py"), "utf8");
+  assert.ok(rv.indexOf('stamp.write_text("rendering\\n"') > 0 && rv.indexOf('stamp.write_text("rendering\\n"') < rv.indexOf('REMOTION + ["render"'),
+    "render-video.py must mark the stamp before the render");
   rmSync(tmp, { recursive: true });
 }
+
+// node flags for a child: a preload that breaks or slows fs calls (written in dir).
+const preloadIn = (dir, name, code) => {
+  const file = join(dir, name);
+  writeFileSync(file, `import fs from "node:fs";\nimport { syncBuiltinESMExports } from "node:module";\n${code}\nsyncBuiltinESMExports();\n`);
+  return ["--import", pathToFileURL(file).href];
+};
+// 1.5 s between a read of the owner record and what follows, so two publishes' read-modify-writes overlap.
+const SLOW_READ = `const r = fs.readFileSync;
+fs.readFileSync = (p, ...a) => {
+  const text = r(p, ...a);
+  if (String(p).endsWith(".publish-slugs.json")) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+  return text;
+};`;
+// Runs each [node args] as a child at once; resolves to [{code, err}].
+const together = (runs) => Promise.all(runs.map((argv) => new Promise((done) => {
+  const child = spawn(process.execPath, argv);
+  let err = "";
+  child.stderr.on("data", (d) => (err += d));
+  child.on("close", (code) => done({ code, err }));
+})));
 
 // The owner record .publish-slugs.json (R3 of run 3, round 2).
 {
   const tmp = repoTmp("publish-owner-"), pub = join(tmp, "pub"), out = join(tmp, "out"), v = join(tmp, "v.mp4");
   const sidecar = join(out, ".publish-slugs.json");
-  const publish = (slug, title) => {
+  const args = (slug, title, flags) => {
     mkdirSync(join(pub, "videos", slug), { recursive: true });
     writeFileSync(join(pub, "videos", slug, "edit.json"), JSON.stringify({ title: "T", post: { ...good, title } }));
-    return spawnSync(process.execPath, [join(import.meta.dirname, "publish-video.mjs"), slug, "--public-dir", pub,
-      "--out", out, "--video", v, "--stale-ok", "--force"], { encoding: "utf8" });
+    return [join(import.meta.dirname, "publish-video.mjs"), slug, "--public-dir", pub, "--out", out, "--video", v, "--stale-ok", "--force", ...flags];
   };
+  // node flags first (--import: a preload that breaks or slows fs calls), then publish-video's.
+  const publish = (slug, title, flags = [], node = []) =>
+    spawnSync(process.execPath, [...node, ...args(slug, title, flags)], { encoding: "utf8", timeout: 30_000 });
+  const preload = (name, code) => preloadIn(tmp, name, code);
   writeFileSync(v, "A"); mkdirSync(out, { recursive: true });
   assert.equal(publish("_test-a", "Cùng một chủ đề").status, 0);
   // (a) Windows file names ignore case, and NFD is the same name: both are the same files as _test-a's.
@@ -187,10 +223,10 @@ assert.match(old.text, /Thông tin chung\. Ví dụ minh hoạ\./);
   }
   assert.deepEqual(readdirSync(out).sort(), [".publish-slugs.json", "Cùng một chủ đề - caption.txt", "Cùng một chủ đề.mp4"]);
   assert.equal(readFileSync(join(out, "Cùng một chủ đề.mp4"), "utf8"), "A");
-  // (b) Titles that are Object.prototype names: a legacy file (no owner) is replaced, not owned by "function Object()".
+  // (b) Titles that are Object.prototype names: a legacy file (no owner) is claimed, not owned by "function Object()".
   for (const title of ["constructor", "toString", "__proto__"]) {
     writeFileSync(join(out, `${title}.mp4`), "legacy");
-    const r = publish("_test-p", title);
+    const r = publish("_test-p", title, ["--claim"]);
     assert.equal(r.status, 0, `${title}: ${r.stderr}`);
     assert.equal(JSON.parse(readFileSync(sidecar, "utf8"))[title.toLowerCase()], "_test-p");
   }
@@ -204,15 +240,146 @@ assert.match(old.text, /Thông tin chung\. Ví dụ minh hoạ\./);
     assert.equal(readFileSync(sidecar, "utf8"), bad, "the broken record is not replaced");
   }
   writeFileSync(sidecar, kept);
-  // (d) Through a temp file, before the copy: a failed write leaves the old record and copies nothing.
-  mkdirSync(`${sidecar}.tmp`);
+  // (d) Through a temp file, before the copy: a failed write (injected on *.tmp) leaves the old record and copies nothing.
+  const tmpFails = preload("tmp-fails.mjs", `const w = fs.writeFileSync;
+fs.writeFileSync = (p, ...a) => { if (String(p).endsWith(".tmp")) throw Object.assign(new Error("injected"), { code: "EIO" }); return w(p, ...a); };`);
   writeFileSync(v, "A2");
-  assert.notEqual(publish("_test-a", "Cùng một chủ đề").status, 0, "the owner write must go through .tmp");
+  assert.notEqual(publish("_test-a", "Cùng một chủ đề", [], tmpFails).status, 0, "the owner write must go through .tmp");
   assert.equal(readFileSync(sidecar, "utf8"), kept);
   assert.equal(readFileSync(join(out, "Cùng một chủ đề.mp4"), "utf8"), "A", "nothing copied when the owner write fails");
-  rmSync(`${sidecar}.tmp`, { recursive: true });
   assert.equal(publish("_test-a", "Cùng một chủ đề").status, 0);
-  assert.ok(!existsSync(`${sidecar}.tmp`));
+  const leftovers = () => readdirSync(out).filter((f) => f.endsWith(".tmp") || f.endsWith(".lock"));
+  assert.deepEqual(leftovers(), [], "no temp file or lock left behind (also after a failed run)");
+  // (f) CR2 of run 4: two publishes at once (1.5 s between each one's read of the record and its
+  // write, so their read-modify-writes overlap) keep both owners and both finish.
+  const slowRead = preload("slow-read.mjs", SLOW_READ);
+  const both = await together([["_test-x", "Chủ đề X"], ["_test-y", "Chủ đề Y"]].map(([slug, title]) => [...slowRead, ...args(slug, title, [])]));
+  for (const { code, err } of both) assert.equal(code, 0, `concurrent publish failed: ${err}`);
+  const owners = JSON.parse(readFileSync(sidecar, "utf8"));
+  assert.equal(owners["chủ đề x"], "_test-x", "a concurrent publish must not lose the other's owner entry");
+  assert.equal(owners["chủ đề y"], "_test-y", "a concurrent publish must not lose the other's owner entry");
+  // F1 of round 3: two videos, one new title, at once: which files exist is read inside the lock, so
+  // exactly one publishes and the other stops; the file is the recorded owner's. Raced 3 times.
+  for (const n of [1, 2, 3]) {
+    const title = `Chủ đề chung ${n}`, slugs = [`_test-r${n}a`, `_test-r${n}b`];
+    for (const slug of slugs) writeFileSync(join(tmp, `${slug}.mp4`), slug);
+    const runs = await together(slugs.map((slug) => [...slowRead, ...args(slug, title, []).map((a) => (a === v ? join(tmp, `${slug}.mp4`) : a))]));
+    const codes = runs.map(({ code }) => code);
+    assert.ok(codes.filter((c) => c === 0).length === 1 && codes.filter((c) => c === 1).length === 1,
+      `race ${n}: two videos with one title must not both publish: exits ${codes}; ${runs.map(({ err }) => err).join(" | ")}`);
+    const winner = slugs[codes.indexOf(0)];
+    assert.equal(JSON.parse(readFileSync(sidecar, "utf8"))[`chủ đề chung ${n}`], winner);
+    assert.equal(readFileSync(join(out, `${title}.mp4`), "utf8"), winner, `race ${n}: the file must be the recorded owner's`);
+  }
+  // A lock left by a crashed publish (older than LOCK_STALE_MS) is taken over, not waited on forever.
+  const lock = join(out, ".publish-slugs.lock");
+  writeFileSync(lock, ""); utimesSync(lock, (Date.now() - LOCK_STALE_MS - 5000) / 1000, (Date.now() - LOCK_STALE_MS - 5000) / 1000);
+  const r = publish("_test-a", "Cùng một chủ đề");
+  assert.equal(r.status, 0, `a stale lock must be taken over: ${r.stderr}${r.error ?? ""}`);
+  assert.deepEqual(leftovers(), []);
+  // Each publish has its own temp name: one a crashed run left behind does not block the next.
+  mkdirSync(`${sidecar}.tmp`);
+  assert.equal(publish("_test-a", "Cùng một chủ đề").status, 0, "a leftover .publish-slugs.json.tmp must not block publish");
+  rmSync(tmp, { recursive: true });
+}
+// W1/W2 of run 4, CR1 of round 2: same-title files with no owner on record (published before the
+// record existed) are never replaced without --claim; the repo's post titles only make the stop helpful.
+{
+  const tmp = repoTmp("publish-legacy-"), pub = join(tmp, "pub"), out = join(tmp, "out"), v = join(tmp, "v.mp4");
+  const mp4 = join(out, "Chủ đề cũ.mp4"), sidecar = join(out, ".publish-slugs.json");
+  const publish = (slug, title, ...flags) => {
+    mkdirSync(join(pub, "videos", slug), { recursive: true });
+    writeFileSync(join(pub, "videos", slug, "edit.json"), JSON.stringify({ title: "T", post: { ...good, title } }));
+    return spawnSync(process.execPath, [join(import.meta.dirname, "publish-video.mjs"), slug, "--public-dir", pub,
+      "--out", out, "--video", v, "--stale-ok", "--force", ...flags], { encoding: "utf8" });
+  };
+  mkdirSync(out, { recursive: true }); writeFileSync(v, "NEW");
+  writeFileSync(mp4, "OLD"); writeFileSync(join(out, "Chủ đề cũ - caption.txt"), "old");
+  // The code reviewer's case: _test-a was published as "Chủ đề cũ" with no owner, then its post.title
+  // was edited (upload copy: no re-render); _test-b now has that title. _test-b is the only match, yet
+  // the files are _test-a's: stop (exit 4) with the --claim command, keep the file, record nothing.
+  publish("_test-a", "Tiêu đề mới đã sửa");
+  let r = publish("_test-b", "Chủ đề cũ");
+  assert.equal(r.status, 4, "an ownerless file must not be replaced without --claim, even when one post title matches");
+  assert.match(r.stderr, /no recorded owner.*Nothing copied.*: "_test-b" \(looks like this video's\).*If the files are really "_test-b"'s: node scripts\/publish-video\.mjs _test-b --force --claim/s);
+  assert.equal(readFileSync(mp4, "utf8"), "OLD");
+  const owners = () => JSON.parse(readFileSync(sidecar, "utf8"));
+  assert.equal(owners()["chủ đề cũ"], undefined, "nothing recorded on a stop");
+  // Two slugs with that title (NFD and case folded): both named, none "looks like" it.
+  r = publish("_test-c", "CHỦ ĐỀ CŨ".normalize("NFD"));
+  assert.equal(r.status, 4);
+  assert.match(r.stderr, /file name: "_test-b", "_test-c"\./);
+  assert.equal(readFileSync(mp4, "utf8"), "OLD");
+  // --claim: Daniel says the files are this slug's. It proceeds and records the owner.
+  r = publish("_test-b", "Chủ đề cũ", "--claim");
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(readFileSync(mp4, "utf8"), "NEW");
+  assert.equal(owners()["chủ đề cũ"], "_test-b", "--claim records the owner");
+  // RV2: a RECORDED owner is never overridden by --claim.
+  writeFileSync(v, "OTHER");
+  r = publish("_test-c", "Chủ đề cũ", "--claim");
+  assert.equal(r.status, 1, "--claim must not override a recorded owner");
+  assert.match(r.stderr, /is video "_test-b", not "_test-c"/);
+  assert.equal(readFileSync(mp4, "utf8"), "NEW");
+  assert.equal(owners()["chủ đề cũ"], "_test-b");
+  // The pure message: none, one (this video's), others.
+  const ctx = { topic: "X", outDir: "out", where: "w", cmd: "c" };
+  assert.match(legacyOwnerStop("s", ["s"], ctx), /file name: "s" \(looks like this video's\)\.\nIf the files are really "s"'s: c --force --claim\n/);
+  assert.match(legacyOwnerStop("s", ["o"], ctx), /file name: "o"\.\n/);
+  assert.match(legacyOwnerStop("s", [], ctx), /file name: none\..*c --force --claim/s);
+  assert.deepEqual(titleSlugs(join(pub, "videos"), ["edit.json"], "chủ đề CŨ").sort(), ["_test-b", "_test-c"]);
+  rmSync(tmp, { recursive: true });
+}
+// RV1/RV2 of run 4, round 2: publish-listing end to end on a temp tree (--public-dir, --renders, --out).
+{
+  const tmp = repoTmp("publish-listing-e2e-"), pub = join(tmp, "pub"), renders = join(tmp, "renders"), out = join(tmp, "out");
+  const listing = {
+    slug: "x", agent: "deric", listingType: "sale", street: "1 Test St", suburb: "Sunnybank", postcode: "4109", state: "QLD",
+    propertyType: "house", bedrooms: 3, bathrooms: 2, carSpaces: 1, landSizeM2: 600, internalSizeM2: null, price: "$900,000",
+    auction: null, openHomes: [], availableFrom: null, features: [], nearby: [], doNotSay: [], tenanted: false, tenantPhotoConsent: null,
+    unknowns: [], estimatedSellingPrice: null, test: false, materialFacts: [],
+    photos: [{ file: "01.jpg", original: "a.jpg", width: 1080, height: 1920, note: null, edited: false }], location: null,
+  };
+  const scenes = ["intro", "facts", "agent"].map((kind) => ({ id: kind, photo: null, vi: "Nhà ba phòng ngủ.", en: "Three bedrooms.", kind }));
+  const post = { title: "Nhà mẫu", caption: "Nhà ba phòng ngủ ở Sunnybank.", captionEn: "A three-bedroom house in Sunnybank.",
+    hashtags: ["#globalre", "#sunnybank", "#nha", "#house", "#brisbane", "#qld", "#forsale"] };
+  const args = (slug, title, flags) => {
+    mkdirSync(join(pub, "listings", slug), { recursive: true }); mkdirSync(join(renders, slug), { recursive: true });
+    writeFileSync(join(pub, "listings", slug, "listing.json"), JSON.stringify({ ...listing, slug }));
+    writeFileSync(join(pub, "listings", slug, "script.json"), JSON.stringify({ title: "T", scenes, post: { ...post, title } }));
+    writeFileSync(join(renders, slug, `${slug}-vi.mp4`), slug);
+    return [join(import.meta.dirname, "publish-listing.mjs"), slug, "--public-dir", pub,
+      "--renders", join(renders, slug), "--out", out, "--force", "--stale-ok", ...flags];
+  };
+  const publish = (slug, ...flags) => spawnSync(process.execPath, args(slug, post.title, flags), { encoding: "utf8" });
+  mkdirSync(out, { recursive: true });
+  const mp4 = join(out, "Nhà mẫu (VI).mp4"), sidecar = join(out, ".publish-slugs.json");
+  writeFileSync(mp4, "OLD");
+  let r = publish("_test-l");
+  assert.equal(r.status, 4, `a listing's ownerless file must not be replaced without --claim: ${r.stderr}`);
+  assert.match(r.stderr, /no recorded owner.*"_test-l" \(looks like this video's\).*node scripts\/publish-listing\.mjs _test-l --force --claim/s);
+  assert.equal(readFileSync(mp4, "utf8"), "OLD");
+  assert.ok(!existsSync(sidecar));
+  r = publish("_test-l", "--claim");
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(readFileSync(mp4, "utf8"), "_test-l");
+  assert.equal(JSON.parse(readFileSync(sidecar, "utf8"))["nhà mẫu"], "_test-l", "--claim records the listing's owner");
+  // F2 of round 3: the owner's re-render (listing-render passes --force, never --claim) replaces its own files.
+  writeFileSync(mp4, "PREVIOUS RENDER");
+  r = publish("_test-l");
+  assert.equal(r.status, 0, `an owned listing must re-publish with --force alone: ${r.stderr}`);
+  assert.equal(readFileSync(mp4, "utf8"), "_test-l");
+  r = publish("_test-m", "--claim");
+  assert.equal(r.status, 1, "--claim must not override a listing's recorded owner");
+  assert.match(r.stderr, /is listing "_test-l", not "_test-m"/);
+  assert.equal(readFileSync(mp4, "utf8"), "_test-l");
+  assert.deepEqual(readdirSync(out).filter((f) => /\.(tmp|lock)$/.test(f)), []);
+  // CR2: two listings published at once keep both owners.
+  const slowRead = preloadIn(tmp, "slow-read.mjs", SLOW_READ);
+  const both = await together(["_test-n", "_test-o"].map((slug) => [...slowRead, ...args(slug, `Nhà ${slug}`, [])]));
+  for (const { code, err } of both) assert.equal(code, 0, `concurrent listing publish failed: ${err}`);
+  const owners = JSON.parse(readFileSync(sidecar, "utf8"));
+  assert.ok(owners["nhà _test-n"] === "_test-n" && owners["nhà _test-o"] === "_test-o", `both listing owners kept: ${JSON.stringify(owners)}`);
   rmSync(tmp, { recursive: true });
 }
 // (e) Windows reserved names, alone or before a dot.

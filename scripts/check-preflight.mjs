@@ -10,8 +10,9 @@
 //   node scripts/check-preflight.mjs -> "preflight checks ok", exit 1 on failure.
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { repoTmp } from "./tmp-dir.mjs";
 
 const slug = "_test-preflight-fixture";
@@ -51,6 +52,41 @@ try {
     skip("check-schema reports the bad design in its own words", r);
   else assert.match(schemaLines(r), /design/, `check-schema must name the schema error, got:\n${r.stderr}`);
   assert.match(r.stderr, /check-pacing could not run[\s\S]*design/, "a check-pacing crash blocks");
+  // W4 (run 4): fields preflight reads itself, missing or of the wrong type: a listed problem, not a raw TypeError.
+  for (const bad of [{ stats: [{ atMs: 0, durMs: 100, label: "x" }] }, { subtitles: [{ atMs: 0 }] }, { stats: "x" },
+    { cues: [{ kind: "compare", fromMs: 0, toMs: 100, cards: [{ rows: [{ label: "x" }] }] }] }]) {
+    r = preflight({ pacing: { mode: "off" }, ...bad });
+    assert.equal(r.status, 1, `${JSON.stringify(bad)} must block`);
+    assert.match(r.stderr, /^preflight: edit\.json is not in the shape the render reads .*check-schema\.mjs/m, `${JSON.stringify(bad)}:\n${r.stderr}`);
+    assert.match(r.stderr, /problem\(s\); nothing was rendered/);
+    assert.doesNotMatch(r.stderr, /^\s+at /m, "no stack trace");
+  }
+  // RV3 (run 4, round 2): only a TypeError is the edit's shape. A cue nested 5000 deep makes the
+  // block's JSON.stringify throw a RangeError: preflight must crash with it, not call edit.json misshapen.
+  writeFileSync(join(dir, "edit.json"), `{"title":"Thử","background":"vignette","pacing":{"mode":"off"},"cues":[{"kind":"x","fromMs":0,"toMs":1,"deep":${"[".repeat(5000)}${"]".repeat(5000)}}]}`);
+  r = spawnSync(process.execPath, ["--no-warnings", join(import.meta.dirname, "preflight.mjs"), slug, "--public-dir", pub], { encoding: "utf8" });
+  assert.notEqual(r.status, 0, "a RangeError in preflight must not pass");
+  assert.match(r.stderr, /RangeError: Maximum call stack/, `a non-TypeError must surface as itself:\n${r.stderr}`);
+  assert.doesNotMatch(r.stderr, /not in the shape the render reads/, "a non-TypeError must not be reported as a misshapen edit.json");
+
+  // CR5 (run 4, round 2): an invalid FINHUB_GL / FINHUB_SCHEMA_LOG is one line and the default, not a failure
+  // after the bundle (the run below stops early at the missing edit.json, so no bundle or browser).
+  r = spawnSync(process.execPath, ["--no-warnings", join(import.meta.dirname, "check-schema.mjs"), "_test-no-such-slug"],
+    { encoding: "utf8", env: { ...process.env, FINHUB_GL: "bogus", FINHUB_SCHEMA_LOG: "loud" } });
+  assert.match(r.stderr, /^check-schema: FINHUB_GL="bogus" is not one of swangle, .*; using the default\.$/m, r.stderr);
+  assert.match(r.stderr, /^check-schema: FINHUB_SCHEMA_LOG="loud" is not one of trace, verbose, info, warn, error; using the default\.$/m, r.stderr);
+  assert.match(r.stderr, /No edit\.json for "_test-no-such-slug"/, "an invalid env value must not stop the check");
+  r = spawnSync(process.execPath, ["--no-warnings", join(import.meta.dirname, "check-schema.mjs"), "_test-no-such-slug"],
+    { encoding: "utf8", env: { ...process.env, FINHUB_GL: "swangle", FINHUB_SCHEMA_LOG: "verbose" } });
+  assert.doesNotMatch(r.stderr, /using the default/, "valid values pass through");
+  // The two lists are copies of the installed @remotion/renderer's: an upgrade that changes one fails here.
+  const renderer = dirname(createRequire(import.meta.url).resolve("@remotion/renderer"));
+  const schemaSrc = readFileSync(join(import.meta.dirname, "check-schema.mjs"), "utf8");
+  for (const [name, file, key] of [["FINHUB_GL", "options/gl.js", "validOpenGlRenderers"], ["FINHUB_SCHEMA_LOG", "log-level.js", "logLevels"]]) {
+    const ours = JSON.parse(schemaSrc.match(new RegExp(`envOption\\("${name}", (\\[[^\\]]*\\])`))[1]);
+    assert.deepEqual(ours, createRequire(import.meta.url)(join(renderer, file))[key],
+      `check-schema's ${name} list must equal @remotion/renderer dist/${file} ${key} (Remotion upgraded? update check-schema.mjs)`);
+  }
 
   // Valid, but a long talk with no visuals: check-pacing exits 2, a warning, not a crash.
   writeFileSync(join(dir, "words.json"), JSON.stringify(Array.from({ length: 30 }, (_, i) => (
@@ -86,6 +122,10 @@ try {
   assert.match(r.stderr, /check-schema failed[\s\S]*at design/, "and name the field");
   r = withStub(stub("download", 'console.error("Error: Received a status code of 403 while downloading file https://example/chromium.zip");process.exit(1);'), ok);
   assert.equal(r.status, 0, "a refused browser download only warns");
+  // CI1 (run 4): exit 0 is a pass even when the renderer logged "Target closed" while closing the page.
+  r = withStub(stub("okclosed", 'console.log("MortgageReel x: 90 frames");console.error("Cleanup error: ProtocolError: Protocol error (Target.closeTarget): Target closed.");'), ok);
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(r.stdout, /check-schema could not run/, "check-schema exit 0 must not be reported as could not run");
   r = withStub(stub("clean", 'console.log("MortgageReel x: 90 frames");'), ok);
   assert.equal(r.status, 0);
   assert.doesNotMatch(r.stdout, /check-schema could not run/, "a clean run has no warning");

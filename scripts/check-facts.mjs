@@ -46,6 +46,25 @@ try {
   r = run("stale", [{ vi: "Lãi suất tiền mặt là 3,6 phần trăm.", en: "The cash rate is 3.6 percent.", facts: ["F1"] }],
     [fact("F1", "The cash rate target is 3.60 per cent.", daysAgo(200))]);
   expect("a stale asAt must warn, not fail", r.errors.length === 0 && r.warnings.some((w) => w.startsWith("F1 is 200 days old")), r);
+  // G1 (run 4): each of these survived a gutted guard.
+  r = run("en-number", [{ vi: "Lãi suất tiền mặt là 3,6 phần trăm.", en: "The cash rate is 4.1 percent.", facts: ["F1"] }, cta], ledger);
+  expect("an English line with a different number must fail", r.errors.some((e) => e.includes("(en) says 4.1")), r);
+  r = run("en-policy", [{ vi: "Bạn cần tiền đặt cọc.", en: "You must have a deposit." }, cta], ledger);
+  expect("an English-only policy word with no facts field must fail", r.errors.some((e) => e.includes("policy word")), r);
+  r = run("vi-policy", [{ vi: "Tiền đặt cọc tối thiểu cho khoản vay.", en: "A deposit for the loan." }, cta], ledger);
+  expect("a Vietnamese policy word other than phải must fail", r.errors.some((e) => e.includes("policy word")), r);
+  r = run("stale-120", [{ vi: "Lãi suất tiền mặt là 3,6 phần trăm.", en: "The cash rate is 3.6 percent.", facts: ["F1"] }],
+    [fact("F1", "The cash rate target is 3.60 per cent.", daysAgo(120))]);
+  expect("a source over 90 days old must warn", r.warnings.some((w) => w.startsWith("F1 is 120 days old")), r);
+  const bad = (what, entry, needle) => {
+    const res = run(`ledger-${what}`, [cta], [fact("F1", "x"), entry]);
+    expect(`a ledger entry with ${what} must fail`, res.errors.some((e) => e.includes(needle)), res);
+  };
+  bad("a bad asAt", fact("F2", "y", "1/10/2026"), '"asAt" must be');
+  bad("a duplicate id", fact("F1", "y"), "used twice");
+  bad("a missing field", { ...fact("F2", "y"), doc: "" }, '"doc" is missing');
+  bad("an unknown kind", { ...fact("F2", "y"), kind: "opinion" }, '"kind" must be');
+  bad("a bad id", fact("X2", "y"), "id must look like F1");
   expect("oldestAsAt picks the oldest source date (the end card's policy date)",
     oldestAsAt([fact("F1", "x", daysAgo(10)), fact("F2", "y", daysAgo(200)), { id: "F3" }]) === fact("F2", "y", daysAgo(200)).asAt,
     oldestAsAt([fact("F1", "x", daysAgo(10)), fact("F2", "y", daysAgo(200))]));

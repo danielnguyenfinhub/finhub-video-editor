@@ -70,9 +70,8 @@ export const listingStrings = (listing, script) => {
   return out;
 };
 
-/** Flags for a slug: [{where, text, phrase, reason}]. */
-export const checkSlug = async (slug) => {
-  const dir = join(ROOT, "public", "listings", slug);
+/** Flags for a slug: [{where, text, phrase, reason}]. `dir`: another listing folder (tests). */
+export const checkSlug = async (slug, dir = join(ROOT, "public", "listings", slug)) => {
   const read = (name) => {
     const p = join(dir, name);
     if (!existsSync(p)) throw new Error(`public/listings/${slug}/${name} not found.`);

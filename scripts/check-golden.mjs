@@ -70,6 +70,24 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (!ok) failed = true;
   };
 
+  // G3 (run 4): the locked geometry every design reads. A change is a decision for Daniel,
+  // and src/designs/README.md rules 3, 3b and 3c must change with it (this checks both).
+  {
+    const { SAFE, FACE, LOGO_HEIGHT } = await import(url(bundle));
+    const readme = readFileSync(join(import.meta.dirname, "..", "src", "designs", "README.md"), "utf8");
+    const locked = "locked (src/designs/README.md rule 3): changing it is Daniel's decision, and the README changes with it";
+    check("SAFE is y 420-1473, x 54-960", JSON.stringify(SAFE) === '{"top":420,"bottom":1473,"left":54,"right":960}', `${JSON.stringify(SAFE)}; ${locked}`);
+    check("FACE is x 250-830, y 480-1250", JSON.stringify(FACE) === '{"left":250,"right":830,"top":480,"bottom":1250}', `${JSON.stringify(FACE)}; ${locked}`);
+    check("LOGO_HEIGHT is 120", LOGO_HEIGHT === 120, `${LOGO_HEIGHT}; ${locked}`);
+    // The README text, matched with any dash (en, em, hyphen) and any spacing or line wrap.
+    const norm = (t) => t.replace(/\s*[–—-]\s*/g, "-").replace(/\s+/g, " ");
+    for (const [rule, text] of [["3", "y 420–1473, x 54–960"], ["3b", "x 250–830, y 480–1250"], ["3c", "120 px high"]]) {
+      const ok = norm(readme).includes(norm(text));
+      check(`src/designs/README.md rule ${rule} has "${text}"`, ok, ok ? "" : `src/designs/README.md no longer contains "${text}" (rule ${rule}); ` +
+        "the README and golden.ts must change together, and a change is Daniel's decision");
+    }
+  }
+
   // "4" ".1" glue; "1 năm" and "2 người" are counts, "5 triệu" is a figure;
   // "100" ".000" "%" glues. Words 400 ms apart, so figures 4 s apart survive.
   // Distinct fillers: a repeated word would be auto-cut as a stutter.

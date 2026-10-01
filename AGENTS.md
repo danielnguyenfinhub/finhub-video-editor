@@ -12,6 +12,7 @@ This is Daniel's video editor, and the editing interface is a Claude Code chat. 
 npm i                 # install dependencies
 npm run dev           # Remotion Studio preview (http://localhost:3000)
 npm run lint          # ESLint + TypeScript check — run before committing
+npm run test:py       # the Python checks CI runs; run it (with npm test) after a .py change
 npm run research -- trending   # what's trending for a faceless video (runbook B1.0; also topic/read/transcript)
 npm run listing -- "<folder>"  # Global RE listing video: prep a folder from "3 - GLOBAL RE LISTINGS" (docs/agents/listing-video.md)
 npx remotion render   # render a composition to a video file
@@ -58,6 +59,7 @@ The rest of the guide is in `docs/agents/`; read a file only when the task needs
 | Rendering environments without a GPU, What this sandbox can't do | [rendering-without-gpu](docs/agents/rendering-without-gpu.md) |
 | Third-party API keys | [api-keys](docs/agents/api-keys.md) |
 | Skills, harness change logs | [skills-and-harnesses](docs/agents/skills-and-harnesses.md) |
+| Decisions waiting on Daniel (defaults, costs) | [open-decisions](docs/agents/open-decisions.md) |
 | Elements (`.claude/elements/`, remocn) | [elements](docs/agents/elements.md) |
 | Starter templates | [starters](docs/agents/starters.md) |
 | Language: fonts, stacked marks, speech-to-text, voiceover | [language](docs/agents/language.md) |
@@ -70,9 +72,9 @@ Read list per task, on top of this file. `refs/` is `.claude/skills/vietnamese-f
 
 | Task | Files | Bytes |
 |---|---|---|
-| Mode A edit (existing design, re-edit) | editor `SKILL.md`, `refs/landmines.md`, `refs/edit-json.md`, `refs/corrections.md` | 43,418 |
-| New design (each new talking-head video): Mode A plus | `refs/design-space.md`, `refs/design-architecture.md`, `refs/toolkit.md`, `refs/editing-principles.md`, `.claude/elements/CATALOG.md`, remocn index | +45,207 = 88,625 |
-| Mode B faceless | `refs/faceless-script.md`, `refs/corrections.md`, `video-production-team` and `video-compliance-review` SKILL.md, the five `video-*` agents | 68,662 |
+| Mode A edit (existing design, re-edit) | editor `SKILL.md`, `refs/landmines.md`, `refs/edit-json.md`, `refs/corrections.md` | 43,613 |
+| New design (each new talking-head video): Mode A plus | `refs/design-space.md`, `refs/design-architecture.md`, `refs/toolkit.md`, `refs/editing-principles.md`, `.claude/elements/CATALOG.md`, remocn index | +45,207 = 88,820 |
+| Mode B faceless | `refs/faceless-script.md`, `refs/corrections.md`, `video-production-team` and `video-compliance-review` SKILL.md, the five `video-*` agents | 68,857 |
 | Repo or tooling change | [code-changes](docs/agents/code-changes.md), [project-structure](docs/agents/project-structure.md), [mortgage-reel](docs/agents/mortgage-reel.md) | 8,669 |
 
 ## Corrections: the templates get better with every video
