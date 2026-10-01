@@ -33,4 +33,6 @@ jobs:
         with: { node-version: 24, cache: npm }
       - run: npm ci --no-audit --no-fund
       - run: New-Item -ItemType Directory -Force .ci-tmp
+      # check-speech-cuts.selftest synthesizes a tone with ffmpeg (no footage needed).
+      - run: choco install ffmpeg --no-progress -y
       - run: npm test
