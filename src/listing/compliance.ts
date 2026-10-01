@@ -85,13 +85,17 @@ const listingAware = (text: string, ctx: ListingContext): ListingFlag[] => {
   return flags;
 };
 
-// "$1,250,000" / "$1.2m" / "$650 per week" -> dollars; "Contact agent" -> undefined.
+// "$1,250,000" / "$1.2m" / "$1.2 million" / "$850 thousand" / "$650 per week"
+// -> dollars; "Contact agent" -> undefined.
 const dollars = (price = ""): number | undefined => {
-  const m = /\$\s?(\d[\d,]*(?:\.\d+)?)\s?([km])?\b/i.exec(price);
+  const m = /\$\s?(\d[\d,]*(?:\.\d+)?)(?!\d)(?:\s?(million|mil|mn|thousand|k|m)(?![a-z]))?/i.exec(price);
   if (!m) return undefined;
   const n = parseFloat(m[1].replace(/,/g, ""));
-  return n * ({ k: 1e3, m: 1e6 }[m[2]?.toLowerCase() as "k" | "m"] ?? 1);
+  const unit = (m[2] ?? "").toLowerCase();
+  return n * (unit.startsWith("m") ? 1e6 : unit === "k" || unit === "thousand" ? 1e3 : 1);
 };
+// A sale price under this was misread ("$1.2 - 1.3 million" -> 1.2), not a price.
+const MIN_SALE_DOLLARS = 1000;
 
 // The shape of compliance-rules.ts that is used here.
 type Hit = { rule: string; severity: string; match: string; reason: string };
@@ -113,12 +117,25 @@ export const makeListingChecker = (rulesModule?: unknown) => {
     if (scan) {
       const lease = ctx.listingType === "rent";
       const amount = dollars(ctx.price);
+      const estimate = ctx.estimatedSellingPrice ?? undefined;
+      // A dollar price that does not read as a figure would set the s 73 floor
+      // to nothing; say so instead of checking against it.
+      const unreadable =
+        !lease &&
+        estimate !== undefined &&
+        /\$|\baud\b/i.test(ctx.price ?? "") &&
+        !(amount !== undefined && amount >= MIN_SALE_DOLLARS);
+      if (unreadable)
+        flags.push({
+          phrase: ctx.price ?? "",
+          reason: `listing price "${ctx.price}" does not read as a dollar figure, so the PSAA s 73 underquoting floor cannot use it; write it as "$1,250,000" or "$1.25m"`,
+        });
       const features = fold((ctx.features ?? []).join(" | "));
       for (const h of scan(
         { text: t },
         {
           mode: lease ? "lease" : "sale",
-          priceMin: lease ? undefined : (amount ?? ctx.estimatedSellingPrice ?? undefined),
+          priceMin: lease ? undefined : unreadable ? estimate : (amount ?? estimate),
           rentPerWeek: lease ? amount : undefined,
         },
       ))

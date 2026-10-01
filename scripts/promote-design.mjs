@@ -20,6 +20,7 @@ import { isAbsolute, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { COLOUR, checkDesign, describe as describeContrast, hexOf } from "./check-contrast.mjs";
 import { MANIFEST_FIELDS, OPTIONAL_FIELDS, loadManifests } from "./select-template.mjs";
+import { MIN_TEXT_PX, smallText } from "./check-text-size.mjs";
 
 const root = join(import.meta.dirname, "..");
 const REPO_DESIGNS = join(root, "src", "designs");
@@ -241,6 +242,10 @@ export async function promote(id, opts = {}) {
     if (p.level === "fail") fail("contrast", describeContrast(p));
     else notes.push(`contrast: ${describeContrast(p)}`);
   }
+
+  // Text size: report only until Daniel sets the floor (scripts/check-text-size.mjs).
+  const small = smallText(dir);
+  if (small.length) notes.push(`text size: ${small.length} fontSize literal(s) under ${MIN_TEXT_PX}px (report only): ${small.map((h) => `${h.file}:${h.line}=${h.px}`).join(" ")}`);
 
   if (failures.length) return { failures, notes, promoted: false };
   if (opts.dryRun) {

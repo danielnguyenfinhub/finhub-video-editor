@@ -230,7 +230,7 @@ def speak(jobs_path: str, voice_path: str, num_step: int) -> None:
         audio = model.generate(text=job["text"], voice_clone_prompt=prompt, language="vi", num_step=num_step)[0]
         total = len(audio) / SAMPLE_RATE
         sf.write(job["wav"], audio, SAMPLE_RATE)
-        matched, _ = time_audio(whisper, job, total)
+        matched, _, _ = time_audio(whisper, job, total)
         note = "" if matched >= MIN_MATCH else f" WARNING: only {matched:.0%} of words recognised, caption timing is approximate"
         print(f"{n}/{len(jobs)}: {total:.1f}s voiced in {time.perf_counter() - t0:.0f}s, {matched:.0%} words timed{note}", flush=True)
 

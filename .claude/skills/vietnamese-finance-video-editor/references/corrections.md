@@ -45,7 +45,8 @@ screen ("the rate card"), never whose.
 - 25/09/2026 · all · "logo too big / always there" → 120 px logo, first and last 10 s only →
   golden rule 3c, `LogoMark` · `rule`
 - 25/09/2026 · design:kitchen, all · "text too small" → template text is large; judge it on
-  a phone-size still, not the Studio canvas · no home yet · `noted`
+  a phone-size still, not the Studio canvas · no floor yet (Daniel to set);
+  `check-text-size.mjs` lists sizes under a placeholder 30 px, report only · `noted`
 - 25/09/2026 · all · "too static" → a visual change every 1.5–3 s, except a card or number
   held for its reading time → golden rule 5b, `READING` · `rule`
 - 27/09/2026 · all · "panels cover my head" → no cue panel over the whole head, hair
@@ -57,8 +58,9 @@ screen ("the rate card"), never whose.
   default; opt-in quick mode vignette; raw room never shown while talking; covers may use
   the recorded frame → golden rule 4; check-golden labels quick mode · `checked`
 - 27/09/2026 · design:explainer · the small bar in the bars card ("Phí năm") is pale pink
-  and hard to read (QC still, not yet fixed) → every bar and its label reach readable
-  contrast on the backdrop · open, no home yet · `noted`
+  and hard to read (QC still) → every bar and its label reach readable contrast on the
+  backdrop → bar hatch at 80%/100% in `src/designs/explainer/Cues.tsx`; `check-contrast`
+  fails a see-through chart fill under 3:1 (01/10/2026) · `checked`
 - 30/09/2026 · design:cards · "accept the cards pace" (the 6.5-minute doi-nha video) → on talks
   over about 3 minutes the cards design holds chapter and points cards for long stretches;
   accepted, reported as INFO by `check-pacing` → golden rule 5b exception · `rule`

@@ -6,6 +6,8 @@ import {
   LISTING_RULES, CITATIONS, LISTING_DISCLAIMER_EN, LISTING_DISCLAIMER_VI,
   scanListingCopy, assertListingCopy,
 } from "../src/listing/compliance-rules.ts";
+import * as rulesModule from "../src/listing/compliance-rules.ts";
+import { makeListingChecker } from "../src/listing/compliance.ts";
 
 const failures = [];
 const rulesHit = (text, ctx) => scanListingCopy({ line: text }, ctx).map((h) => h.rule);
@@ -77,6 +79,31 @@ if (threw(() => assertListingCopy({ title: "Walking distance to station" }, sale
 ]))) failures.push("substantiated flag did not clear");
 if (!threw(() => assertListingCopy({ title: "3 bedrooms" }, { mode: "lease" })))
   failures.push("lease ad without rentPerWeek passed");
+
+// The listing's price line sets the s 73 floor (src/listing/compliance.ts dollars()).
+// "$1.2 million" once read as $1.20, so any lower figure in the copy passed.
+const checkListing = makeListingChecker(rulesModule);
+const floorOf = (price, est = null) => {
+  const r = checkListing("Priced at $850,000", { listingType: "sale", price, estimatedSellingPrice: est });
+  return r.flags.map((f) => f.reason).join(" | ");
+};
+for (const [price, floor] of [["$1.2 million", "$1,200,000"], ["$1.25 mil", "$1,250,000"], ["$1.2m", "$1,200,000"], ["$900 thousand", "$900,000"], ["$900K", "$900,000"]])
+  if (!floorOf(price).includes(`advertised price ${floor}`)) failures.push(`price "${price}" not read as ${floor}: ${floorOf(price) || "no flag"}`);
+// A letter right after the number must not make the reader stop mid-number ("$650pw" was $65).
+if (!floorOf("$1,250,000AUD").includes("advertised price $1,250,000")) failures.push(`price "$1,250,000AUD" not read as $1,250,000: ${floorOf("$1,250,000AUD") || "no flag"}`);
+{
+  const r = checkListing("Rent $600 per week", { listingType: "lease", price: "$650pw" });
+  if (!r.flags.some((f) => f.reason.includes("$650"))) failures.push(`lease "$650pw" not read as $650: ${r.flags.map((f) => f.reason).join(" | ") || "no flag"}`);
+  if (r.flags.some((f) => f.reason.includes("$65 "))) failures.push(`lease "$650pw" misread as $65`);
+}
+for (const price of ["AUD 1,250,000", "$1.2 - 1.3 million"]) {
+  const r = checkListing("3 bedrooms", { listingType: "sale", price, estimatedSellingPrice: 1_200_000 });
+  if (!r.flags.some((f) => f.reason.includes("does not read as a dollar figure"))) failures.push(`unreadable price "${price}" with an estimate not flagged`);
+}
+for (const price of ["$1,250,000", "Contact agent", "Auction 14 June"]) {
+  const r = checkListing("3 bedrooms", { listingType: "sale", price, estimatedSellingPrice: 1_200_000 });
+  if (!r.ok) failures.push(`price "${price}" flagged: ${r.flags.map((f) => f.reason).join(" | ")}`);
+}
 
 if (failures.length) {
   console.error(`listing compliance FAILED\n  ${failures.join("\n  ")}`);

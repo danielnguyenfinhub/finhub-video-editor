@@ -1,6 +1,7 @@
 // COPY of C:\Users\Daniel\video-edits\remotion\src\compliance.ts (verbatim, 2026-09-24).
 // Keep in sync with that file. No edits were needed: `npm run lint` (tsc, lib
 // es2015) accepts it unchanged.
+// 2026-10-01: `fold` (NFC + whitespace) added here only; port it to the original.
 
 /**
  * ASIC RG 234 / NCCP advertising guards for Finance Hub & Networks.
@@ -138,6 +139,15 @@ const hit = (haystack: string, term: string): boolean =>
     : haystack.includes(term);
 
 /**
+ * One form for scanned copy and terms: lower case, NFC (transcripts and pasted
+ * text arrive NFD), every whitespace run (newline, U+00A0, U+202F...) as one
+ * space. Without it "miễn phí" in NFD or "no  obligation" passed unseen.
+ */
+const fold = (s: string) => s.toLowerCase().normalize("NFC").replace(/\s+/g, " ");
+const PROMOTIONAL = [...PROMOTIONAL_EN, ...PROMOTIONAL_VI].map(fold);
+const CONTEXT = [...CONTEXT_EN, ...CONTEXT_VI].map(fold);
+
+/**
  * Case-insensitive, diacritic-preserving scan of every supplied string.
  *
  * @param fields   copy to scan, keyed by a name that appears in errors
@@ -156,14 +166,14 @@ export const assertCompliantCopy = (
   for (const [key, value] of Object.entries(fields)) {
     if (!value) continue;
     for (const raw of Array.isArray(value) ? value : [value]) {
-      const hay = raw.toLowerCase();
+      const hay = fold(raw);
 
       const scan = (terms: string[], tier: "promotional" | "context") => {
         for (const term of terms) {
           if (!hit(hay, term)) continue;
 
           const i = exemptions.findIndex(
-            (e) => e.field === key && e.term.toLowerCase() === term,
+            (e) => e.field === key && fold(e.term) === term,
           );
           const ex = i >= 0 ? exemptions[i] : undefined;
 
@@ -191,8 +201,8 @@ export const assertCompliantCopy = (
         }
       };
 
-      scan([...PROMOTIONAL_EN, ...PROMOTIONAL_VI], "promotional");
-      scan([...CONTEXT_EN, ...CONTEXT_VI], "context");
+      scan(PROMOTIONAL, "promotional");
+      scan(CONTEXT, "context");
     }
   }
 

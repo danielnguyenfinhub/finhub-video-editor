@@ -2,7 +2,8 @@
 // Run: node scripts/check-numbers-kit.mjs (exit 1 on failure). Proves the
 // rateType and advertised-rate refines, swapAtMs bounds, the test edits
 // parse, and that the new cue strings reach the RG 234 guard exactly as a
-// kinetic cue's text does.
+// kinetic cue's text does. Also the RG 234 scan itself: NFD text, odd
+// whitespace and captionFixes[].to (round 2 maintain fixes C1, C2).
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -78,6 +79,28 @@ check("a banned phrase in change.label is flagged", viaChange.includes(`"${banne
 check("… the same way as in a kinetic cue", viaChange === viaKinetic, `change: ${viaChange}\n      kinetic: ${viaKinetic}`);
 const viaTrend = guard({ ...trend, rateType: "cash", points: [{ label: banned, value: 1 }, { label: "B", value: 2 }] });
 check("a banned phrase in a trend point label is flagged", viaTrend.includes(`"${banned}"`), viaTrend);
+
+// RG 234 scan sees a phrase however it is encoded or spaced (compliance.ts fold).
+const flagged = (fields) => { try { assertCompliantCopy(fields, []); return ""; } catch (err) { return err.message.split("\n")[1].trim(); } };
+for (const [name, body, term] of [
+  ["NFD Vietnamese", "Dịch vụ miễn phí".normalize("NFD"), "dịch vụ miễn phí"],
+  ["two spaces", "no  obligation", "no obligation"],
+  ["a newline", "financial\nadvice", "financial advice"],
+  ["a non-breaking space", "You will\u00A0qualify", "will qualify"],
+  ["a narrow no-break space in Vietnamese", "lãi suất\u202Ftốt nhất", "lãi suất tốt nhất"],
+]) {
+  const got = flagged({ body });
+  check(`a banned phrase with ${name} is flagged`, got.includes(`"${term}" — promotional`), got || "not flagged");
+}
+check("an exemption still clears the folded phrase", (() => {
+  try {
+    const a = assertCompliantCopy({ body: "LMI is not\u00A0free" }, [{ field: "body", term: "free", reason: "negation", note: "says it is not free" }]);
+    return a.cleared.length === 1 && a.unused.length === 0;
+  } catch { return false; }
+})());
+check("clean copy with odd whitespace stays clean", flagged({ body: "Lãi suất\u00A0cạnh tranh,\n  tuỳ hồ sơ".normalize("NFD") }) === "");
+const fixed = flagged(onScreenCopy(editSchema.parse(edit([], { captionFixes: [{ from: "vay", to: "guaranteed approval" }] }))));
+check("a banned phrase in captionFixes[].to is flagged under captionFixes", fixed.startsWith('captionFixes: "guaranteed approval"'), fixed || "not flagged");
 
 // The end card's policy date (faceless videos built from a policy document).
 const { policyAsAtLine } = await import(pathToFileURL(join(dir, "compliance.mjs")).href);
