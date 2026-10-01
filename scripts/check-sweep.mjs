@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
-import { chunk, dedupeByDeltas, evenIndices, frameBudget, outDirProblem, parseShowinfo, sheetLayout, sweep } from "./sweep-render.mjs";
+import { chunk, dedupeByDeltas, evenIndices, frameBudget, outDirProblem, parseShowinfo, sheetLayout, sweep, withSyncFlag } from "./sweep-render.mjs";
 
 let failed = 0;
 const check = (ok, what) => {
@@ -69,6 +69,31 @@ for (const bad of [root, join(root, "out"), join(root, "public"), join(root, "ou
   check(outDirProblem(join(fakeRoot, "out", "fresh", "sub"), fakeRoot) === null, "out: a new folder under a real out/ is allowed");
   rmSync(fakeRoot, { recursive: true, force: true });
   rmSync(elsewhere, { recursive: true, force: true });
+}
+
+// The sync flag: new first, the old one only when ffmpeg does not know the new (CI's ffmpeg dropped -vsync).
+{
+  const calls = [];
+  const ok = withSyncFlag((f) => (calls.push(f.join(" ")), "stderr"));
+  check(ok === "stderr" && calls.length === 1 && calls[0] === "-fps_mode vfr", `sync: -fps_mode first and used when known (${calls})`);
+  const seen = [];
+  withSyncFlag((f) => {
+    seen.push(f.join(" "));
+    if (f[0] === "-fps_mode") throw new Error("scene pass: ffmpeg exited 1\nUnrecognized option 'fps_mode'.");
+    return "";
+  });
+  check(seen.join(" | ") === "-fps_mode vfr | -vsync vfr", `sync: falls back to -vsync on an old ffmpeg (${seen.join(" | ")})`);
+  let n = 0;
+  let threw = false;
+  try {
+    withSyncFlag(() => {
+      n++;
+      throw new Error("scene pass: ffmpeg exited 1\nInvalid data found when processing input");
+    });
+  } catch {
+    threw = true;
+  }
+  check(threw && n === 1, "sync: any other ffmpeg error is rethrown, not retried");
 }
 
 const ffmpeg = spawnSync("ffmpeg", ["-version"], { encoding: "utf8" });

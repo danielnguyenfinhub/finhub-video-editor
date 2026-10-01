@@ -85,6 +85,20 @@ const ff = (args, what) => {
   return r.stderr;
 };
 
+/**
+ * Variable-frame-rate output needs "-fps_mode vfr" (ffmpeg 5.1+) or the older "-vsync vfr", which recent
+ * ffmpeg (CI's) no longer has. Try the new flag; only an "Unrecognized option" error falls back to the old.
+ * run(flagArgs) returns ffmpeg's stderr or throws.
+ */
+export const withSyncFlag = (run) => {
+  try {
+    return run(["-fps_mode", "vfr"]);
+  } catch (e) {
+    if (!/Unrecognized option 'fps_mode'/.test(String(e.message))) throw e;
+    return run(["-vsync", "vfr"]);
+  }
+};
+
 export const durationOf = (file) =>
   Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file], { encoding: "utf8" }).trim());
 
@@ -174,7 +188,9 @@ export const sweep = (file, outDir, { max = 80, sheet = false } = {}) => {
   // Engine 1: scene cuts, whole video decoded (a cap would drop the tail).
   let engine = "scene";
   let times = parseShowinfo(
-    ff(["-i", file, "-vf", `select='eq(n,0)+gt(scene,${SCENE_THRESHOLD})',${scale},showinfo`, "-vsync", "vfr", "-q:v", "3", join(outDir, "raw_%05d.jpg")], "scene pass"),
+    withSyncFlag((sync) =>
+      ff(["-i", file, "-vf", `select='eq(n,0)+gt(scene,${SCENE_THRESHOLD})',${scale},showinfo`, ...sync, "-q:v", "3", join(outDir, "raw_%05d.jpg")], "scene pass"),
+    ),
   );
   if (times.length < SCENE_MIN_FRAMES) {
     // Engine 2: evenly spaced, at most MAX_FPS.
