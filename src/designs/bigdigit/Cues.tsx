@@ -19,6 +19,7 @@ import {
   INK,
   LABEL_W,
   LINE,
+  PUSH,
   Rule,
   SLATE,
   STAGE,
@@ -266,7 +267,7 @@ export const ChangeStage: React.FC<{
   const up = cue.direction !== "down";
   const cols = columnsOf(cue.from, cue.to);
   const room = W - (cue.direction ? 130 : 0);
-  const size = giantSize([cue.from, cue.to], room, 260);
+  const size = giantSize([cue.from, cue.to], room / PUSH, 260);
   const after = frame >= swap;
   const colour = toneColor(cue.tone ?? "neutral", ACCENT);
   // The old value shrinks from the giant line into the "trước" caption.
@@ -284,7 +285,7 @@ export const ChangeStage: React.FC<{
       fontWeight: 800,
       letterSpacing: "4.8px",
     }).width + 8;
-  const push = interpolate(frame, [0, dur], [1, 1.035]);
+  const push = interpolate(frame, [0, dur], [1, PUSH]);
   return (
     <StageFrame dur={dur}>
       <Kicker text={cue.kicker ?? cue.label} />

@@ -376,5 +376,6 @@ export const neon: Design = {
     "Điện thoại",
     "Email",
     "Website",
+    "Daniel Nguyen",
   ],
 };

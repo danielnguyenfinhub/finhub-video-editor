@@ -27,7 +27,22 @@ import { FONT, clamp, enter } from "../../mortgage/style";
 
 export const STAGE = { top: 640, bottom: 1200 };
 const AMBER = brand.highlight;
-const SKY = "#7FC4FF";
+
+// Theme tints, built at runtime so every colour stays a brand token (rule 7):
+// a + b mixed (t = share of b) -> "#rrggbb"; alpha as an 8-digit hex suffix.
+const channels = (hex: string) =>
+  [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const hex2 = (v: number) => Math.round(v).toString(16).padStart(2, "0");
+const mix = (a: string, b: string, t: number) =>
+  `#${channels(a)
+    .map((v, i) => hex2(v + (channels(b)[i] - v) * t))
+    .join("")}`;
+const alpha = (hex: string, a: number) => `${hex}${hex2(a * 255)}`;
+const SKY = mix(brand.primary, brand.card, 0.57); // light logo blue
+const GLOW = alpha(mix(brand.primary, brand.card, 0.38), 0.35);
+// Navy gradient of the backdrop and the footage veil: background -> a touch
+// of logo blue -> toward the deep navy.
+export const NAVY_GRADIENT = `linear-gradient(170deg, ${brand.background} 0%, ${mix(brand.background, brand.primary, 0.27)} 60%, ${mix(brand.navy, brand.background, 0.25)} 100%)`;
 
 // Brand navy that never sits still: two soft lights drift and a fine grid
 // slides, so there is movement between beats (rule 5b).
@@ -38,9 +53,9 @@ export const FacelessBackdrop: React.FC = () => {
   return (
     <AbsoluteFill
       style={{
-        background: `radial-gradient(circle 520px at ${300 + a}px ${700 + b}px, rgba(79,163,224,0.35), transparent 70%),
+        background: `radial-gradient(circle 520px at ${300 + a}px ${700 + b}px, ${GLOW}, transparent 70%),
           radial-gradient(circle 460px at ${800 - b}px ${1300 + a}px, rgba(245,165,36,0.18), transparent 70%),
-          linear-gradient(170deg, #0B1F3D 0%, #0B2F5E 60%, #07172E 100%)`,
+          ${NAVY_GRADIENT}`,
       }}
     >
       <AbsoluteFill

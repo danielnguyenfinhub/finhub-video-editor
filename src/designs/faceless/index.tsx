@@ -5,12 +5,13 @@
 // chart) or a named bank (logo card) takes it. English line at the bottom.
 import { fitText } from "@remotion/layout-utils";
 import type React from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AbsoluteFill,
   Img,
   interpolate,
   useCurrentFrame,
+  useDelayRender,
   useVideoConfig,
 } from "remotion";
 import type { TikTokPage } from "@remotion/captions";
@@ -22,11 +23,18 @@ import type {
   OverlayProps,
   TalkProps,
 } from "../../mortgage/design";
-import { SAFE } from "../../mortgage/golden";
+import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import type { Reel } from "../../mortgage/schema";
-import { FONT, LOGO, clamp, emphasised, enter } from "../../mortgage/style";
+import {
+  FONT,
+  LOGO,
+  clamp,
+  emphasised,
+  enter,
+  reelFontReady,
+} from "../../mortgage/style";
 import { chapterTransition } from "../../mortgage/transitions";
 import { MotionTrack, type NumbersLook } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
@@ -34,6 +42,7 @@ import {
   ChapterPills,
   EnglishLine,
   FacelessBackdrop,
+  NAVY_GRADIENT,
   STAGE,
   StageLayer,
   busyFrames,
@@ -56,17 +65,39 @@ const LOW_BOTTOM = 1920 - (STAGE.bottom + 14 + Math.ceil(SMALL * 1.3));
 // to end at the bottom of the stage (panels start at PANEL_TOP).
 const FACELESS_NUMBERS: NumbersLook = { change: "swap", trendZoom: 0.84 };
 
+// True once Be Vietnam Pro is loaded; holds the frame until then (rule 5:
+// measure only after reelFontReady()). Same hook as paper/Desk.tsx useFontReady.
+// fitText caches its measurement, so a measure taken before the font lands
+// would stick even though MortgageReel holds the screenshot.
+const useFontReady = (why: string): boolean => {
+  const { delayRender, continueRender, cancelRender } = useDelayRender();
+  const [handle] = useState(() => delayRender(why));
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    reelFontReady()
+      .then(() => {
+        setReady(true);
+        continueRender(handle);
+      })
+      .catch((err) => cancelRender(err));
+  }, [handle, continueRender, cancelRender]);
+  return ready;
+};
+
 const Cover: React.FC<CoverProps> = ({ title, subtitle, keywords }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const ready = useFontReady("faceless cover: Be Vietnam Pro");
   const words = title.split(/\s+/).filter(Boolean);
   const hit = emphasised(words, keywords);
-  const { fontSize } = fitText({
-    text: title,
-    withinWidth: 900,
-    fontFamily: FONT,
-    fontWeight: 900,
-  });
+  const fontSize = ready
+    ? fitText({
+        text: title,
+        withinWidth: 900,
+        fontFamily: FONT,
+        fontWeight: 900,
+      }).fontSize
+    : 0;
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
       <FacelessBackdrop />
@@ -119,7 +150,7 @@ const Cover: React.FC<CoverProps> = ({ title, subtitle, keywords }) => {
           background: "#fff",
         }}
       >
-        <Img src={LOGO} style={{ height: 120, display: "block" }} />
+        <Img src={LOGO} style={{ height: LOGO_HEIGHT, display: "block" }} />
       </div>
     </AbsoluteFill>
   );
@@ -243,8 +274,7 @@ const FootageVeil: React.FC<{ level: number[] }> = ({ level }) => {
   return (
     <AbsoluteFill
       style={{
-        background:
-          "linear-gradient(170deg, #0B1F3D 0%, #0B2F5E 60%, #07172E 100%)",
+        background: NAVY_GRADIENT,
         opacity: (level[frame] ?? 0) * VEIL_OPACITY,
       }}
     />

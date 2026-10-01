@@ -71,8 +71,10 @@ export const hardCodedStrings = (code) => {
   for (const [, , s] of code.matchAll(/(["'`])((?:\\.|(?!\1)[^\\\n])*)\1/g))
     if (!s.includes("${") && /[^\x00-\x7F]/.test(s) && /\p{L}/u.test(s)) found.add(s.trim());
   // A tag's closing ">" touches its tag or starts a line; a comparison ">" has a space before it.
-  for (const [, s] of code.matchAll(/(?<![=-])(?:(?<=\S)|(?<=^[ \t]*))>([^<>{}]*)[<{]/gm))
-    if (/\p{L}/u.test(s) && !/[();=]/.test(s)) found.add(s.trim());
+  for (const [, s, next] of code.matchAll(/(?<![=-])(?:(?<=\S)|(?<=^[ \t]*))>([^<>{}]*)([<{]\/?)/gm))
+    // A bare "| Name" / "& Name" followed by "<" (not "</") is a TypeScript union/intersection of
+    // generics (A<"x"> | B<"y">); the same text closed by a tag, or with an entity, is on screen.
+    if (/\p{L}/u.test(s) && !/[();=]/.test(s) && !(next === "<" && /^\s*[|&]\s*[A-Za-z_$][\w.$]*\s*$/.test(s))) found.add(s.trim());
   return [...found];
 };
 

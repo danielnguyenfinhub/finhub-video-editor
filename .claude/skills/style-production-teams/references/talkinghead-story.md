@@ -1,6 +1,6 @@
 # Recipe: talking-head, story-led styles
 
-Styles: editorial, explainer, chatstory, kitchen, checklist, neon, reaction. Pipeline A, matted cut-out, all `face-required` and `cueRoom`.
+Styles: editorial, explainer, chatstory, kitchen, checklist, neon, reaction. Pipeline A, matted cut-out, all `face-required`; all but `explainer` set `cueRoom` (explainer has no `useCueRoom`, so check-golden reports its cue panels as face-hidden time).
 
 **Pick this team when** the talk is a story, a myth, a Q&A, a step list or a reaction to news: intents `story`, `explain`, `qa`, `process`, `warn`, `news`; shapes `narrative` or `steps`.
 

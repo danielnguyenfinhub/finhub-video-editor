@@ -181,8 +181,8 @@ export const FigureCard: React.FC<{ figure: Figure }> = ({ figure }) => {
 // Slot b sits under LogoMark (golden rule: y >= SAFE.top + 170), same as the
 // compare column it shares a header row with.
 const SLOT = {
-  a: { left: 60, width: 440, top: SAFE.top },
-  b: { left: 580, width: 380, top: SAFE.top + 170 },
+  a: { left: SAFE.left + 6, width: 440, top: SAFE.top },
+  b: { left: SAFE.right - 380, width: 380, top: SAFE.top + 170 },
 } as const;
 
 // A lender chip in the column header slot, with a diagonal shine sweeping

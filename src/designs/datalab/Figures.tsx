@@ -16,6 +16,7 @@ import { brand } from "../../brand/theme";
 import { Oscilloscope } from "../../elements/Oscilloscope";
 import type { Figure } from "../../mortgage/golden";
 import {
+  FACE,
   LOGO_HEIGHT,
   SAFE,
   figuresOf,
@@ -135,11 +136,12 @@ const PipOscilloscope: React.FC<{ src: string; reel: Reel; from: number }> = ({
     <div
       style={{
         position: "absolute",
-        // On Daniel's shoulder: below his face, above the captions.
-        left: 60,
+        // Left of FACE (rule 3b). Content-box: 190 px
+        // + 2 x 3 px border = 196 px, so x 54-250 ends at FACE.left (250).
+        left: SAFE.left,
         top: 1080,
-        width: 200,
-        height: 200,
+        width: FACE.left - SAFE.left - 6,
+        height: FACE.left - SAFE.left - 6,
         borderRadius: "50%",
         overflow: "hidden",
         border: `3px solid ${brand.accent}`,
@@ -151,8 +153,8 @@ const PipOscilloscope: React.FC<{ src: string; reel: Reel; from: number }> = ({
           src={src}
           frame={srcFrame}
           color={LIGHT_BLUE}
-          width={180}
-          height={180}
+          width={170}
+          height={170}
           lineWidth={4}
           amplitude={2.4}
         />
@@ -195,8 +197,9 @@ export const FiguresBehindLayer: React.FC<{
   );
 };
 
-// Overlay layer: the voice PiP only, kept in front (it sits outside FACE and
-// below the caption band, so it stays as a golden-rule-safe Overlay element).
+// Overlay layer: the voice PiP only, kept in front. It sits left of FACE:
+// x SAFE.left (54) to 54 + 190 + 6 border = 250 = FACE.left (y 1080-1276;
+// clearance from a tall caption page is unviewed), so it never enters FACE.
 export const FiguresPipLayer: React.FC<{ reel: Reel; src: string }> = ({
   reel,
   src,
