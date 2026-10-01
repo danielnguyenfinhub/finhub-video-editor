@@ -41,7 +41,7 @@ Where it matters:
   block and footer are added automatically), exactly 7 hashtags incl. `#finhub` `#vietnamese`.
   The render then fills `2 - FINISHED VIDEOS/`; if it prints a post problem, fix and rerun
   `node scripts/publish-video.mjs <slug>`. Pipeline B's post is the writer's, in `script.json`.
-- **Music (A5.3):** `public/music/` only (see its README); `@remotion/sfx` brand-safe sounds; no memes.
+- **Music (A5.3):** `public/music/` only (see its README); sound effects from `public/sfx/` through `<Audio>` (not `@remotion/sfx`: its sounds load from `remotion.media`, which a sandboxed render cannot reach, `docs/findings.md`); no memes.
 - **Hand over only when A6.1 passes** (`node scripts/check-schema.mjs <slug>`), `node scripts/check-pacing.mjs <slug>`
   is clean (or only the cards long-talk INFO), and your own stills pass the editor skill's
   Self-Correction Loop. Fix pacing gaps by adding light cues built from Daniel's own words only

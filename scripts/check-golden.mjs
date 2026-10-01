@@ -5,14 +5,14 @@
 // every card, cue or caption page shown for less than its reading time. scripts/brief.mjs imports
 // the exports below; the checks run only when this file is the entry point.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // golden.ts imports sibling .ts files without extensions (Bundler resolution),
 // which Node's type stripping cannot follow, so bundle it first.
-const bundle = join(mkdtempSync(join(tmpdir(), "golden-")), "golden.mjs");
+const bundle = join(repoTmp("golden-"), "golden.mjs");
 execFileSync(process.execPath, [
   "node_modules/esbuild/bin/esbuild", "src/mortgage/golden.ts", "src/mortgage/timeline.ts",
   "src/mortgage/captionPages.ts",

@@ -7,7 +7,8 @@ import {
   scanListingCopy, assertListingCopy,
 } from "../src/listing/compliance-rules.ts";
 import * as rulesModule from "../src/listing/compliance-rules.ts";
-import { makeListingChecker } from "../src/listing/compliance.ts";
+import { fold as listingFold, makeListingChecker } from "../src/listing/compliance.ts";
+import { fold as mortgageFold } from "../src/mortgage/compliance.ts";
 
 const failures = [];
 const rulesHit = (text, ctx) => scanListingCopy({ line: text }, ctx).map((h) => h.rule);
@@ -108,6 +109,23 @@ for (const price of ["AUD 1,250,000", "$1.2 - 1.3 million"]) {
 for (const price of ["$1,250,000", "Contact agent", "Auction 14 June"]) {
   const r = checkListing("3 bedrooms", { listingType: "sale", price, estimatedSellingPrice: 1_200_000 });
   if (!r.ok) failures.push(`price "${price}" flagged: ${r.flags.map((f) => f.reason).join(" | ")}`);
+}
+
+// One fold for both guards (src/mortgage/compliance.ts): NFD copy, NBSP / odd spaces and
+// zero-width characters must not hide a banned word, a "Do not say" term or a feature.
+const NBSP = "\u00A0", ZWSP = "\u200B";
+for (const s of ["Brand  New", `close${NBSP}to\nschools`, `brand${ZWSP} new`, "Nhà mới xây".normalize("NFD"), `soft\u00ADhyphen\u202Fx`])
+  if (listingFold(s) !== mortgageFold(s)) failures.push(`listing fold differs from mortgage fold on ${JSON.stringify(s)}`);
+for (const [text, ctx, why] of [
+  ["Căn nhà này chắc chắn tăng giá trong 5 năm tới.".normalize("NFD"), { listingType: "sale" }, "NFD copy"],
+  [`Best${NBSP}street`, { listingType: "sale" }, "NBSP"],
+  [`Brand${ZWSP} new home`, { listingType: "sale" }, "zero-width in a condition word"],
+  [`Close${NBSP} to  schools`, { listingType: "sale", doNotSay: ["close to schools"] }, "spaces in a Do not say term"],
+]) if (checkListing(text, ctx).ok) failures.push(`${why}: "${JSON.stringify(text)}" passed the listing guard`);
+// A feature written with odd spaces still allows its own condition word (confirm, not flag).
+{
+  const r = checkListing("Brand new home", { listingType: "sale", features: [`brand${NBSP}${NBSP}new`] });
+  if (!r.ok) failures.push(`feature "brand<NBSP><NBSP>new" did not allow "brand new": ${r.flags.map((f) => f.reason).join(" | ")}`);
 }
 
 if (failures.length) {

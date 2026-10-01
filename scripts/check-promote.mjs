@@ -1,13 +1,13 @@
 // Self-test for scripts/promote-design.mjs on fixture designs in a temp copy of
 // the src/designs layout (no lint, no renders, no media):
 //   node scripts/check-promote.mjs -> "promote ok", exit 1 on failure.
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { hardCodedStrings, promote } from "./promote-design.mjs";
 import { loadManifests } from "./select-template.mjs";
 
-const dir = mkdtempSync(join(tmpdir(), "promote-"));
+const dir = repoTmp("promote-");
 const put = (path, text) => {
   mkdirSync(join(dir, path, ".."), { recursive: true });
   writeFileSync(join(dir, path), text);

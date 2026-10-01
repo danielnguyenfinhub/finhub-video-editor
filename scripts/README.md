@@ -49,12 +49,14 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-schema.mjs <slug>` | `edit.json` against the MortgageReel schema; prints frames and seconds | local |
 | `check-speech-cuts.mjs <slug>` | Speech lost or doubled at the automatic cuts and chapter joins, before the first render | local |
 | `check-pacing.mjs <slug>` | Rule 5b: a visual change every 1.5-3 s | local |
-| `check-golden.mjs [slug]` | `golden.ts` layout rules | local |
-| `check-caption-pages.mjs [slug]` | `captionPages.ts` | local |
-| `check-sweep.mjs` | `sweep-render.mjs` frame budget and parsing | local |
-| `check-video-status.mjs` | `video-status.mjs` on synthetic runs | local |
-| `check-library.mjs` | `library.mjs` and library-first routing | local |
-| `check-clips.py`, `check-reframe.py`, `check-migrate-assets.py` | `prep-video.py --clips`, `reframe.py` maths, `migrate-assets.py` | local |
+| `check-golden.mjs [slug]` | `golden.ts` layout rules (synthetic without a slug) | **test** |
+| `check-caption-pages.mjs [slug]` | `captionPages.ts` | **test** |
+| `check-sweep.mjs` | `sweep-render.mjs` frame budget and parsing; `--out` only inside `out/`; end to end when ffmpeg is on PATH | **test** |
+| `check-video-status.mjs` | `video-status.mjs` on synthetic runs | **test** |
+| `check-library.mjs` | `library.mjs` and library-first routing | **test** |
+| `preflight.mjs` (no slug) | The Vietnamese font-subset gate every render runs first | **test** |
+| `check-clips.py`, `check-reframe.py`, `check-migrate-assets.py` | `prep-video.py --clips`, `reframe.py` maths, `migrate-assets.py` (standard library only, but CI sets up no Python) | local |
+| `check-spoken-phrases.mjs <slug>` | Advisory, always exit 0: RG 234 watch phrases spoken in `words.json` (syllables joined and folded), with times, for the compliance reviewer's verify list | local |
 | `check-agents-split.mjs` | One-time WP9 `AGENTS.md` split (needs full git history) | local |
 | `check-captions.mjs`, `check-caption-fixes.mjs` | Shared caption layer; caption slip fixes in `timeline.ts` | **test** |
 | `check-contrast.mjs` | Text legibility of every design | **test** |
@@ -62,12 +64,12 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-selector.mjs` | `select-template.mjs` ranking; every design has a manifest; nothing fits = a stop, not `pick: null` | **test** |
 | `check-element-copy.mjs` | RG 234 scan of text in `src/elements/` | **test** |
 | `check-facts.mjs`, `check-visuals.mjs` | `facts.mjs`; the AI judge's pure parts | **test** |
-| `check-listing-compliance.mjs`, `check-listing-prep.mjs` | Listing compliance rules and the price-line floor ("$1.2 million", also in the copy and listing.txt); listing parsing; CLI slugs (`assertSlug`) against every real folder | **test** |
+| `check-listing-compliance.mjs`, `check-listing-prep.mjs` | Listing compliance rules and the price-line floor ("$1.2 million", also in the copy and listing.txt); listing parsing; CLI slugs (`assertSlug`) against every real folder, and every slug entry point still calls it | **test** |
 | `check-numbers-kit.mjs` | Numbers-kit cues in `schema.ts`; RG 234 scan of NFD / odd-whitespace / zero-width copy and `captionFixes[].to` | **test** |
-| `check-promote.mjs`, `check-publish.mjs` | `promote-design.mjs` (nothing written when a check fails), `publish-video.mjs` and publish-listing's stale-language refusal on fixtures | **test** |
+| `check-promote.mjs`, `check-publish.mjs` | `promote-design.mjs` (nothing written when a check fails), `publish-video.mjs` and publish-listing's stale-language refusal on fixtures (a post-only edit publishes, an on-screen edit stops, `--stale-ok` overrides) | **test** |
 | `timeline.selftest.mjs` | Pins what `timeline.ts` does: cuts, pacing, chapter overlap, time maps | **test** |
 | `check-pacing.selftest.mjs`, `check-speech-cuts.selftest.mjs` | The two checks above, on synthetic data | **test** |
-| `check-scripts-index.mjs` | Every file in this folder is listed in this README | **test** |
+| `check-scripts-index.mjs` | Every file in this folder is listed in this README, and the **test** marks here match `npm test` | **test** |
 | `check-teams.mjs` | Every design is in exactly one style team (`config/style-teams.json`); team agents and skills exist and are wired | **test** |
 
 ## Tooling (rarely run)
@@ -76,4 +78,5 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `vendor-skills.mjs`, `vendor-elements.mjs`, `build-chat-skill.mjs` | Re-vendor Remotion skills and the Elements library; build the claude.ai skill zip. |
 | `generate-sample-media.mjs`, `fetch-noto-emoji.mjs` | Regenerate sample clips; fetch Noto animated emoji. |
 | `renderer-apis.mjs` | Exercises the Node-side Remotion APIs that cannot run inside a scene. |
+| `tmp-dir.mjs` | Temp folders inside the repo (`node_modules/.cache/finhub-tmp`) so esbuild bundles resolve `remotion`; use it instead of `os.tmpdir()`. |
 | `third_party/` | Licence text for borrowed code (HyperFrames, Apache-2.0). |

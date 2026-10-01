@@ -16,8 +16,8 @@
 // invisible first character). Never replaces a file unless --force.
 // render-video.py runs this after every render.
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { assertSlug } from "./listing-prep.mjs";
@@ -123,7 +123,7 @@ export const buildCaption = (post, broker, c) => {
 
 /** compliance.ts bundled to plain JS (Node can't load its TS directly). */
 export const loadCompliance = async () => {
-  const dir = mkdtempSync(join(tmpdir(), "publish-"));
+  const dir = repoTmp("publish-");
   execFileSync(process.execPath, [
     join(ROOT, "node_modules/esbuild/bin/esbuild"), join(ROOT, "src/mortgage/compliance.ts"),
     "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", `--outdir=${dir}`,

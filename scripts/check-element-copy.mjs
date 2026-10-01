@@ -4,14 +4,14 @@
 // covers what no reel carries. Run: node scripts/check-element-copy.mjs (exit 1
 // on a hit). A planted banned phrase proves the guard still fires.
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import ts from "typescript";
 
 const root = join(import.meta.dirname, "..");
-const dir = mkdtempSync(join(tmpdir(), "element-copy-"));
+const dir = repoTmp("element-copy-");
 execFileSync(process.execPath, [
   join(root, "node_modules/esbuild/bin/esbuild"), join(root, "src/mortgage/compliance.ts"),
   "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", "--log-level=warning",

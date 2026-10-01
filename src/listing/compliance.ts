@@ -61,7 +61,10 @@ const CONDITION: { pattern: RegExp; word: string }[] = [
   },
 ];
 
-const fold = (s: string) => s.normalize("NFC").toLowerCase();
+// The same fold as src/mortgage/compliance.ts (lower case, NFC, zero-width and soft
+// hyphen dropped, every whitespace run one space): a copy, because Node's own TS
+// loader cannot follow an extensionless import. check-listing-compliance.mjs compares them.
+export const fold = (s: string) => s.toLowerCase().normalize("NFC").replace(/[\u00AD\u200B-\u200D\u2060\uFEFF]/g, "").replace(/\s+/g, " ");
 
 const listingAware = (text: string, ctx: ListingContext): ListingFlag[] => {
   const flags: ListingFlag[] = [];
@@ -76,7 +79,7 @@ const listingAware = (text: string, ctx: ListingContext): ListingFlag[] => {
   }
   for (const banned of ctx.doNotSay ?? []) {
     const b = fold(banned).trim();
-    if (b && fold(text).includes(b))
+    if (b && text.includes(b))
       flags.push({
         phrase: banned,
         reason: 'listing.txt says the video must not say this ("Do not say")',
@@ -111,7 +114,7 @@ export const makeListingChecker = (rulesModule?: unknown) => {
       ? (mod.scanListingCopy as Scan)
       : null;
   return (text: string, ctx: ListingContext = {}): ListingCheck => {
-    const t = text.normalize("NFC");
+    const t = fold(text);
     const flags = listingAware(t, ctx);
     const confirm: ListingFlag[] = [];
     if (scan) {

@@ -12,8 +12,8 @@
 // calculateMetadata fetches, hard-linked), deleted at the end.
 import { bundle } from "@remotion/bundler";
 import { selectComposition } from "@remotion/renderer";
-import { copyFileSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { copyFileSync, existsSync, linkSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { dirname, join, resolve } from "node:path";
 import { bundlerOverride } from "../bundler-override.mjs";
 import { recordingPath } from "../src/mortgage/recording.ts";
@@ -28,7 +28,7 @@ const fail = (msg) => {
   process.exitCode = 1;
 };
 
-const tmp = mkdtempSync(join(tmpdir(), "check-schema-"));
+const tmp = repoTmp("check-schema-");
 try {
   if (!slug) throw new Error("Usage: node scripts/check-schema.mjs <slug> [--public-dir <dir>]");
   const editPath = join(ROOT, "public", "videos", slug, "edit.json");

@@ -1,12 +1,12 @@
 // The one runnable check for scripts/facts.mjs: node scripts/check-facts.mjs
 // Builds synthetic fixtures in a temp directory (never under public/), prints
 // "facts ok" and exits 0, or names what failed and exits 1.
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { checkFacts, oldestAsAt, readLedger } from "./facts.mjs";
 
-const root = mkdtempSync(join(tmpdir(), "facts-"));
+const root = repoTmp("facts-");
 const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 const fact = (id, verbatim, asAt = daysAgo(10)) => ({
   id, claim_vi: "Lãi suất tiền mặt là 3,6 phần trăm.", claim_en: "The cash rate is 3.6 percent.",

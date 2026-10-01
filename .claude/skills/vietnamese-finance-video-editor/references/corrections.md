@@ -35,9 +35,12 @@ screen ("the rate card"), never whose.
 ## Entries
 
 - 25/09/2026 · all · "every number needs a visual" → each spoken number gets a chart or
-  counter (`figuresOf`) → golden rule 1 · `rule`
+  counter (`figuresOf`) → golden rule 1; check-golden fails when `figuresOf` misses a spoken
+  figure or a stat stops covering it (01/10/2026) · `checked`
 - 25/09/2026 · all · "show the bank's logo" → a named bank shows its logo, neutral frame,
-  logo centred in its bar → golden rule 2, `LenderLogo` · `rule`
+  logo centred in its bar → golden rule 2, `LenderLogo`; check-golden fails when a named bank
+  (aliases, repeats) is not detected by `lenderMentionsOf`; the frame and centring are still
+  judged on stills (01/10/2026) · `checked`
 - 25/09/2026 · all · "must work in the Facebook feed" → all text inside `SAFE` (4:5 band) →
   golden rule 3 · `rule`
 - 25/09/2026 · all · "charts cover my face" → overlays stay out of `FACE`; figures render
@@ -48,7 +51,8 @@ screen ("the rate card"), never whose.
   a phone-size still, not the Studio canvas · no floor yet (Daniel to set);
   `check-text-size.mjs` lists sizes under a placeholder 30 px, report only · `noted`
 - 25/09/2026 · all · "too static" → a visual change every 1.5–3 s, except a card or number
-  held for its reading time → golden rule 5b, `READING` · `rule`
+  held for its reading time → golden rule 5b, `READING`; `check-pacing <slug>` exits 2 on a gap
+  over 3 s or an empty card, and check-golden pins the `READING` floor (01/10/2026) · `checked`
 - 27/09/2026 · all · "panels cover my head" → no cue panel over the whole head, hair
   included; panels sized to content → `useCueRoom`, `"cueRoom": true`; check-golden counts
   face-hidden time · `checked`
@@ -63,7 +67,8 @@ screen ("the rate card"), never whose.
   fails a see-through chart fill under 3:1 (01/10/2026) · `checked`
 - 30/09/2026 · design:cards · "accept the cards pace" (the 6.5-minute doi-nha video) → on talks
   over about 3 minutes the cards design holds chapter and points cards for long stretches;
-  accepted, reported as INFO by `check-pacing` → golden rule 5b exception · `rule`
+  accepted, reported as INFO by `check-pacing` → golden rule 5b exception;
+  `check-pacing.selftest` fails if the exception stops applying (01/10/2026) · `checked`
 - 30/09/2026 · all · Daniel asked why a 3-video batch took a whole day → process rules: render
   once after `check-schema`, `check-speech-cuts` and `check-pacing` pass; one round for cosmetic
   findings; QC measures rule 5b only with `check-pacing` → `video-production-team` "Render once"

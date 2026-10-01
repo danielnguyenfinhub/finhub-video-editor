@@ -7,6 +7,7 @@
 // about a quarter of a full still to look at.
 //
 //   node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet]
+//   (--out must be inside out/: it is deleted and remade)
 //
 // Writes out/videos/<slug>/team/qc/sweep/sweep-<n>-<time>.jpg and sweep.json,
 // and prints one line per frame: open every one and look (video-qc skill).
@@ -18,8 +19,8 @@
 // sheet idea is crisng95/flowkit's fk-review-video (frames tiled with burned-in
 // timestamps), rewritten without its Google Flow generation path.
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, mkdirSync, readdirSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { assertSlug } from "./listing-prep.mjs";
 
@@ -142,6 +143,28 @@ export const contactSheets = (frames, outDir, { cols = SHEET_COLS, rows = SHEET_
   });
 };
 
+/** Why outDir may not be swept (sweep empties it first), or null: it must sit inside <root>/out, not be out itself. */
+export const outDirProblem = (outDir, root) => {
+  const outRoot = resolve(root, "out");
+  const inside = (a, b) => {
+    const rel = relative(a, b);
+    return rel !== "" && rel.split(sep)[0] !== ".." && !isAbsolute(rel);
+  };
+  const msg = `--out ${outDir} is not a folder inside ${outRoot}; the sweep deletes its folder first, so only a folder under out/ is allowed`;
+  if (!inside(outRoot, resolve(outDir))) return msg;
+  // A symlink or junction under out/ can point anywhere: compare real paths, using the
+  // nearest part of --out that exists (the folder itself may not exist yet).
+  let probe = resolve(outDir);
+  while (!existsSync(probe) && dirname(probe) !== probe) probe = dirname(probe);
+  if (existsSync(outRoot) && existsSync(probe)) {
+    const real = realpathSync(probe);
+    const realOut = realpathSync(outRoot);
+    if (real !== realOut && !inside(realOut, real)) return `${msg} (it resolves through a link to ${real})`;
+    if (real === realOut && resolve(outDir) === outRoot) return msg;
+  }
+  return null;
+};
+
 export const sweep = (file, outDir, { max = 80, sheet = false } = {}) => {
   const seconds = durationOf(file);
   const budget = Math.min(max, frameBudget(seconds, max));
@@ -195,6 +218,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     process.exit(1);
   }
   const outDir = resolve(opt("--out") ?? join(root, "out", "videos", slug, "team", "qc", "sweep"));
+  const bad = outDirProblem(outDir, root);
+  if (bad) {
+    console.error(`sweep: ${bad}`);
+    process.exit(1);
+  }
   const r = sweep(file, outDir, { max: Number(opt("--max") ?? 80), sheet: args.includes("--sheet") });
   console.log(`sweep: ${r.frames.length} frames (${r.engine}, ${r.candidates} candidates, ${r.duplicatesDropped} duplicates dropped) from ${r.seconds.toFixed(1)} s`);
   for (const f of r.frames) console.log(`- ${f.path} (t=${f.s}s)`);

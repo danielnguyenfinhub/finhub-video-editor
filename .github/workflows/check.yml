@@ -21,9 +21,8 @@ jobs:
   checks:
     # Windows, like the pipeline: scripts run `node node_modules/esbuild/bin/esbuild`, which is a native binary on Linux.
     runs-on: windows-latest
-    # Checks bundle into os.tmpdir() and import `remotion` from there. On Daniel's machine a
-    # C:\Users\Daniel\node_modules above the temp dir makes that resolve; here the temp dir
-    # sits inside the workspace so it resolves to the repo's node_modules.
+    # Checks bundle into scripts/tmp-dir.mjs (node_modules/.cache/finhub-tmp), so `remotion`
+    # resolves on any OS. TEMP/TMP stay inside the workspace for anything else that writes there.
     env:
       TEMP: ${{ github.workspace }}\.ci-tmp
       TMP: ${{ github.workspace }}\.ci-tmp

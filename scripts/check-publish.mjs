@@ -1,13 +1,13 @@
 // Self-test for scripts/publish-video.mjs on synthetic posts and publish-listing's
-// stale-language check (no media; a temp folder only): node scripts/check-publish.mjs -> "publish ok", exit 1 on failure.
+// stale-language check (file times, and listing-render's on-screen hash stamp) (no media; a temp folder only): node scripts/check-publish.mjs -> "publish ok", exit 1 on failure.
 import assert from "node:assert/strict";
 import {
   buildCaption, loadBroker, loadCompliance, postProblems, rg234Problems, topicFileName,
 } from "./publish-video.mjs";
-import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
-import { staleLangs } from "./publish-listing.mjs";
+import { onScreenHash, staleLangs, stampPath, staleStop } from "./publish-listing.mjs";
 
 // File names: Windows-forbidden characters go, dates stay readable, diacritics stay.
 assert.equal(topicFileName("Lãi suất 4,35%: điều cần biết trước ngày 29/9"),
@@ -70,7 +70,7 @@ assert.match(old.text, /Thông tin chung\. Ví dụ minh hoạ\./);
 
 // publish-listing: after a --lang vi re-render, the older en video is stale and is not published.
 {
-  const tmp = mkdtempSync(join(tmpdir(), "publish-listing-")), base = join(tmp, "in"), out = join(tmp, "out");
+  const tmp = repoTmp("publish-listing-"), base = join(tmp, "in"), out = join(tmp, "out");
   mkdirSync(base); mkdirSync(out);
   const at = (f, sec) => (writeFileSync(f, "x"), utimesSync(f, sec, sec));
   at(join(out, "s-en.mp4"), 1000);
@@ -82,6 +82,33 @@ assert.match(old.text, /Thông tin chung\. Ví dụ minh hoạ\./);
   assert.deepEqual(staleLangs(out, base, "s"), []);
   at(join(base, "words-vi.json"), 4000); // vi re-voiced, not re-rendered
   assert.deepEqual(staleLangs(out, base, "s"), ["vi"]);
+  rmSync(tmp, { recursive: true });
+}
+
+// publish-listing with listing-render's stamp: "post" is upload copy, not on screen, so fixing
+// it after the render (exit 3's runbook) publishes; a scene edit still stops; --stale-ok overrides.
+{
+  const tmp = repoTmp("publish-stamp-"), base = join(tmp, "in"), out = join(tmp, "out");
+  mkdirSync(base); mkdirSync(out);
+  const script = { title: "T", scenes: [{ vi: "Nhà ba phòng ngủ.", en: "Three bedrooms." }], post: { title: "Old", hashtags: [] } };
+  const save = (s) => writeFileSync(join(base, "script.json"), JSON.stringify(s, null, 2));
+  save(script);
+  writeFileSync(join(base, "listing.json"), "{}"); writeFileSync(join(base, "words-vi.json"), "[]");
+  writeFileSync(join(out, "s-vi.mp4"), "x"); utimesSync(join(out, "s-vi.mp4"), 1000, 1000);
+  writeFileSync(stampPath(out, "s", "vi"), `${onScreenHash(base, "vi")}\n`); // rendered
+  save({ ...script, post: { title: "Fixed title", hashtags: ["#globalre"] } }); // newer than the mp4
+  assert.deepEqual(staleLangs(out, base, "s"), [], "a post-only edit must not mark the render stale");
+  assert.equal(staleStop(out, base, "s", false), null);
+  save({ ...script, scenes: [{ vi: "Nhà bốn phòng ngủ.", en: "Four bedrooms." }] });
+  assert.deepEqual(staleLangs(out, base, "s"), ["vi"], "an on-screen edit must still stop publish");
+  assert.match(staleStop(out, base, "s", false), /vi video .*--stale-ok/);
+  assert.equal(staleStop(out, base, "s", true), null, "--stale-ok overrides");
+  save(script);
+  writeFileSync(join(base, "words-vi.json"), "[{}]"); // re-voiced, not re-rendered
+  assert.deepEqual(staleLangs(out, base, "s"), ["vi"]);
+  writeFileSync(join(base, "words-vi.json"), "[]");
+  writeFileSync(join(out, "s-vi.mp4"), "y"); // re-rendered without a stamp: file times decide
+  assert.deepEqual(staleLangs(out, base, "s"), []);
   rmSync(tmp, { recursive: true });
 }
 

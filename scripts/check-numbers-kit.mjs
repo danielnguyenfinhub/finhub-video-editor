@@ -3,14 +3,15 @@
 // rateType and advertised-rate refines, swapAtMs bounds, the test edits
 // parse, and that the new cue strings reach the RG 234 guard exactly as a
 // kinetic cue's text does. Also the RG 234 scan itself: NFD text, odd
-// whitespace and captionFixes[].to (round 2 maintain fixes C1, C2).
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+// whitespace and captionFixes[].to (round 2 maintain fixes C1, C2), and the
+// advisory spoken-phrase scan (check-spoken-phrases.mjs) on synthetic words.
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const dir = mkdtempSync(join(tmpdir(), "numbers-kit-"));
+const dir = repoTmp("numbers-kit-");
 execFileSync(process.execPath, [
   "node_modules/esbuild/bin/esbuild", "src/mortgage/schema.ts", "src/mortgage/compliance.ts",
   "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", "--log-level=warning",
@@ -111,6 +112,25 @@ check("policy date line carries the date in both languages", line.split("01/08/2
 check("the policy date line passes the RG 234 guard", (() => { try { assertCompliantCopy([line], []); return true; } catch { return false; } })(), line);
 check("compliance.policyAsAt accepts YYYY-MM-DD", issues(edit([], { compliance: { policyAsAt: "2026-08-01" } })).length === 0);
 check("compliance.policyAsAt rejects DD/MM/YYYY", issues(edit([], { compliance: { policyAsAt: "01/08/2026" } })).some((i) => i.includes("policyAsAt")));
+
+// Spoken watch phrases (scripts/check-spoken-phrases.mjs, advisory): words.json is one
+// syllable per entry, so the words are joined and folded before the lists are matched.
+{
+  const { spokenHits } = await import("./check-spoken-phrases.mjs");
+  const said = [" Bên", " em", " tư", " vấn", " miễn".normalize("NFD"), "\u200B phí", " cho", " bạn,", " rất", "\u00A0đơn", " giản."];
+  const words = said.map((text, i) => ({ text, startMs: 1000 + i * 300, endMs: 1250 + i * 300 }));
+  const hits = spokenHits(words);
+  const promo = hits.find((h) => h.term === "tư vấn miễn phí");
+  check("spoken: a promotional phrase split over syllables (NFD, zero-width) is found", promo?.tier === "promotional" && promo.startMs === 1600, JSON.stringify(hits));
+  check("spoken: a context phrase after an NBSP is found at its own time", hits.some((h) => h.term === "đơn giản" && h.startMs === 3700), JSON.stringify(hits));
+  check("spoken: clean speech has no hits", spokenHits([" Lãi", " suất", " cạnh", " tranh."].map((text, i) => ({ text, startMs: i * 300 }))).length === 0);
+  const pub = repoTmp("spoken-");
+  mkdirSync(join(pub, "videos", "_test-spoken"), { recursive: true });
+  writeFileSync(join(pub, "videos", "_test-spoken", "words.json"), JSON.stringify(words));
+  const r = spawnSync(process.execPath, ["--no-warnings", "scripts/check-spoken-phrases.mjs", "_test-spoken", "--public-dir", pub], { encoding: "utf8" });
+  check("spoken: the CLI prints the hits with times and exits 0 (never a gate)", r.status === 0 && /0:01\.6 {2}\[promotional\] "tư vấn miễn phí"/.test(r.stdout), `exit ${r.status}: ${r.stdout}${r.stderr}`);
+  rmSync(pub, { recursive: true, force: true });
+}
 
 console.log(failed ? `\n${failed} check(s) failed` : "\nall numbers-kit checks passed");
 process.exit(failed ? 1 : 0);
