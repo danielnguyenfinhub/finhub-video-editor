@@ -7,7 +7,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { join, relative } from "node:path";
-import { add, find, index, stats } from "./library.mjs";
+import { add, find, index, resolveVisuals, stats } from "./library.mjs";
 import { AI_MODEL, aiClip, aiLicence, stockClips } from "./visuals.mjs";
 
 const tmp = repoTmp("library-check-");
@@ -62,6 +62,15 @@ try {
   assert.equal(find("ducks on a lake", { lib }).length, 0);
   assert.equal(find("signing documents", { kind: "music", lib }).length, 0);
 
+  // S3 (run 4), in a second library so the counts below stay: a long query needs most of its
+  // stems (2 of 5 is not enough), and a clip whose keywords Daniel has not confirmed matches exactly only.
+  const lib2 = join(tmp, "library2");
+  mkdirSync(lib2);
+  assert.equal(find("document signing ducks lake pond", { lib }).length, 0, "2 of 5 stems must not match");
+  const u = add(fixture("clip-u.mp4", "unverified bytes"), { kind: "stock-video", provider: "pexels", keywords: { en: ["bank building"] }, keywordsUnverified: true }, { lib: lib2 });
+  assert.equal(find("bank building", { lib: lib2 })[0]?.path, u.path, "an unverified clip still matches exactly");
+  assert.equal(find("building bank", { lib: lib2 }).length, 0, "an unverified clip must not match on stems");
+
   // Routing: an exact or synonym hit never calls the network and records the slug.
   const clips = await stockClips("signing documents", 2, work, { slug: "slug-c", lib, fetchStock: noNetwork });
   assert.deepEqual(clips, [a.path]);
@@ -112,6 +121,17 @@ try {
   assert.equal(s.byKind["ai-image"].reuses, 1); // slug-x + y
   assert.equal(s.byKind["ai-image"].costAvoidedUsd, 0.03);
   assert.equal(s.total.bytes, 15 + 11 + 10 + readFileSync(still).length);
+
+  // B17: resolveVisuals with one miss throws and marks nothing used; with none it marks the hit.
+  mkdirSync(join(tmp, "videos", "rv"), { recursive: true });
+  const usedIn = () => JSON.parse(readFileSync(`${a.path}.meta.json`, "utf8")).usedIn;
+  const before = usedIn();
+  writeFileSync(join(tmp, "videos", "rv", "edit.json"), JSON.stringify({ visuals: [{ asset: { find: "signing documents" } }, { asset: { find: "ducks on a lake" } }] }));
+  assert.throws(() => resolveVisuals("rv", { publicDir: tmp }), /ducks on a lake/);
+  assert.deepEqual(usedIn(), before, "a failed resolve must not mark clips used");
+  writeFileSync(join(tmp, "videos", "rv", "edit.json"), JSON.stringify({ visuals: [{ asset: { find: "signing documents" } }] }));
+  resolveVisuals("rv", { publicDir: tmp });
+  assert.deepEqual(usedIn().sort(), [...before, "rv"].sort());
 
   console.log("library ok");
 } finally {

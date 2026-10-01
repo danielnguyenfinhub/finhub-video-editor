@@ -48,7 +48,7 @@ One message: `workflow-analyst` and `architecture-auditor` (it writes under `out
 
 ## Phase 4 — Deliver
 
-Before → after for each kept cut (minutes, tokens, or "unmeasured" with the reason), reverted cuts and why, files changed, what Daniel must verify, and one next step. Add the change to the `AGENTS.md` "Work lean" list only if it is a rule agents must follow every session. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify).
+Before → after for each kept cut (minutes, tokens, or "unmeasured" with the reason), reverted cuts and why, files changed, what Daniel must verify, and one next step. Add the change to the `AGENTS.md` "Work lean" list only if it is a rule agents must follow every session. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify). Fill in the row's outcome at the end of the run, not left `in progress` (`check-teams.mjs` fails on an open row that is not the last).
 
 ## Files
 

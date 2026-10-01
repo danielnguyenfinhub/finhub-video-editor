@@ -1,11 +1,12 @@
 // Self-test for scripts/promote-design.mjs on fixture designs in a temp copy of
 // the src/designs layout (no lint, no renders, no media):
 //   node scripts/check-promote.mjs -> "promote ok", exit 1 on failure.
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { hardCodedStrings, promote } from "./promote-design.mjs";
 import { loadManifests } from "./select-template.mjs";
+import { driftLine, parseLog, shallowBoundary } from "./report-promotion-drift.mjs";
 
 const dir = repoTmp("promote-");
 const put = (path, text) => {
@@ -122,6 +123,25 @@ const again = await promote("good", opts);
 check("pool failure named", again.failures.some((f) => f.startsWith("pool: ")), again.failures.join(" | "));
 const kept = JSON.parse(readFileSync(join(dir, "good", "template.json"), "utf8"));
 check("pool failure: manifest unchanged", !again.promoted && kept.uses === 7 && kept.promoted === "2026-01-02", JSON.stringify(kept));
+
+// report-promotion-drift.mjs (P1, run 4): its pure parts. A shallow clone's cut-off commit looks like it
+// set every line, so an anchor on it is "no history", never "unchanged".
+const log = parseLog("abc1234 fix: one\n\ndef5678 feat: two words\n");
+check("drift: parses sha and subject", JSON.stringify(log) === '[{"sha":"abc1234","subject":"fix: one"},{"sha":"def5678","subject":"feat: two words"}]', JSON.stringify(log));
+const anchor = "a".repeat(40);
+check("drift: lists the commits", /^x: changed since promotion \(aaaaaaa, 2026-09-28\), 2 commit\(s\):\n    abc1234 fix: one\n    def5678 feat: two words$/.test(driftLine({ id: "x", promoted: "2026-09-28", anchor, commits: log })));
+check("drift: unchanged", driftLine({ id: "x", promoted: "d", anchor, commits: [] }) === "x: unchanged since promotion (aaaaaaa, d)");
+check("drift: shallow boundary is no history", /no history \(shallow clone/.test(driftLine({ id: "x", promoted: "d", anchor, commits: [], boundary: [anchor] })));
+{
+  // CR3 (run 4, round 2): in a linked worktree `git rev-parse --git-path shallow` is absolute.
+  const dir = repoTmp("drift-shallow-");
+  writeFileSync(join(dir, "shallow"), "aaaa\nbbbb\n");
+  check("drift: absolute shallow path (linked worktree)", JSON.stringify(shallowBoundary(import.meta.dirname, join(dir, "shallow"))) === '["aaaa","bbbb"]');
+  check("drift: relative shallow path", JSON.stringify(shallowBoundary(dir, "shallow")) === '["aaaa","bbbb"]');
+  check("drift: no shallow file", JSON.stringify(shallowBoundary(dir, "none")) === "[]");
+  rmSync(dir, { recursive: true });
+}
+check("drift: no anchor is no history", /no history/.test(driftLine({ id: "x", promoted: "d", anchor: null, commits: [] })));
 
 if (failed) process.exit(1);
 console.log("promote ok");

@@ -2,7 +2,7 @@
 // the post title and one caption file, in "4 - GLOBAL RE FINISHED VIDEOS"
 // (Global RE's own folder; "2 - FINISHED VIDEOS" is Finance Hub's).
 //
-//   node scripts/publish-listing.mjs <slug> [--force] [--stale-ok]
+//   node scripts/publish-listing.mjs <slug> [--force] [--stale-ok] [--claim] [--public-dir <dir>] [--renders <dir>] [--out <dir>]
 //   node scripts/publish-listing.mjs <slug> --inputs-hash <lang>   (listing-render.py's stamp)
 //
 // Reads public/listings/<slug>/script.json "post" {title, caption (VI),
@@ -14,19 +14,24 @@
 // Checks: exactly 7 hashtags incl. #globalre and the suburb's, and the listing
 // compliance guard over everything (scripts/listing-compliance.mjs). A listing
 // with "unknown" agency-agreement facts is a TEST: files start "TEST - " and the
-// caption says not to post. Never replaces a file unless --force. Refuses a
+// caption says not to post. Never replaces a file unless --force, and never
+// another slug's same-title files (publish-video's owner record, lock and
+// --claim, in this folder's .publish-slugs.json; no owner on record: exit 4,
+// --claim only). --public-dir (listings/<slug>), --renders (out/listings/<slug>)
+// and --out (the finished folder) are for tests. Refuses a
 // language whose on-screen inputs (script.json without "post", listing.json, its
 // words) changed since it was rendered, unless --stale-ok. "post" is upload copy,
 // not on screen, so fixing it never needs a re-render.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { checkSlug, loadChecker } from "./listing-compliance.mjs";
 import { assertSlug } from "./listing-prep.mjs";
-import { hashInputs, topicFileName } from "./publish-video.mjs";
+import { fold, hashInputs, legacyOwnerStop, lockOwners, readOwners, titleSlugs, topicFileName, writeOwners } from "./publish-video.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 export const OUTPUT_DIR = join(ROOT, "4 - GLOBAL RE FINISHED VIDEOS");
+const FINISHED = OUTPUT_DIR;
 const LANGS = { vi: "VI", en: "EN" };
 
 export const suburbTag = (suburb) => `#${suburb.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/gi, "").toLowerCase()}`;
@@ -97,14 +102,23 @@ export const buildListingCaption = ({ post, listing, business, agent, licensee, 
   ].join("\n\n") + "\n";
 
 const main = async () => {
-  const fail = (msg) => {
+  const fail = (msg, code = 1) => {
     console.error(`publish-listing: ${msg}`);
-    process.exit(1);
+    process.exit(code);
   };
-  const slug = process.argv.slice(2).find((a) => !a.startsWith("--"));
-  if (!slug) fail("usage: node scripts/publish-listing.mjs <slug> [--force]");
+  const argv = process.argv.slice(2);
+  const valued = ["--public-dir", "--renders", "--out"];
+  const value = (flag) => {
+    if (!argv.includes(flag)) return undefined;
+    const v = argv[argv.indexOf(flag) + 1];
+    if (!v || v.startsWith("--")) fail(`${flag} needs a value.`);
+    return resolve(v);
+  };
+  const slug = argv.find((a, k) => !a.startsWith("--") && !valued.includes(argv[k - 1]));
+  if (!slug) fail("usage: node scripts/publish-listing.mjs <slug> [--force] [--stale-ok] [--claim]");
   assertSlug(slug);
-  const dir = join(ROOT, "public", "listings", slug);
+  const listings = join(value("--public-dir") ?? join(ROOT, "public"), "listings");
+  const dir = join(listings, slug);
   const hashLang = process.argv[process.argv.indexOf("--inputs-hash") + 1];
   if (process.argv.includes("--inputs-hash")) {
     if (!(hashLang in LANGS)) fail("usage: node scripts/publish-listing.mjs <slug> --inputs-hash vi|en");
@@ -118,7 +132,7 @@ const main = async () => {
   const { post } = read("script.json");
   const problems = listingPostProblems(post, listing.suburb);
   if (problems.length) fail(`fix the post in public/listings/${slug}/script.json first:\n${problems.map((p) => `  - ${p}`).join("\n")}\nThen run: ${cmd}`);
-  const { flags, confirm } = await checkSlug(slug);
+  const { flags, confirm } = await checkSlug(slug, dir);
   if (flags.length) fail(`listing compliance:\n${flags.map((f) => `  ${f.where}: "${f.phrase}" — ${f.reason}`).join("\n")}\nRewrite, re-render, then run: ${cmd}`);
 
   const business = JSON.parse(readFileSync(join(ROOT, "config", "businesses", "globalre.json"), "utf8"));
@@ -128,7 +142,8 @@ const main = async () => {
   const test = listing.unknowns?.length ? `thiếu / missing: ${listing.unknowns.join(", ")}` : listing.test ? "thử quy trình / pipeline test" : null;
   const topic = `${test ? "TEST - " : ""}${topicFileName(post.title)}`;
 
-  const outDir = join(ROOT, "out", "listings", slug);
+  const outDir = value("--renders") ?? join(ROOT, "out", "listings", slug);
+  const OUTPUT_DIR = value("--out") ?? FINISHED;
   const copies = Object.entries(LANGS).flatMap(([lang, tag]) => [
     [join(outDir, `${slug}-${lang}.mp4`), `${topic} (${tag}).mp4`],
     [join(outDir, `${slug}-${lang}-feed.mp4`), `${topic} (${tag}) - feed 4x5.mp4`],
@@ -141,6 +156,26 @@ const main = async () => {
   if (!process.argv.includes("--force"))
     for (const path of [...copies.map(([, name]) => join(OUTPUT_DIR, name)), txt])
       if (existsSync(path)) fail(`"${path}" already exists, nothing copied. Same listing re-rendered? ${cmd} --force`);
+  try {
+    lockOwners(OUTPUT_DIR);
+  } catch (err) {
+    fail(`${err.message}. Nothing copied.`);
+  }
+  let owner;
+  try {
+    owner = readOwners(OUTPUT_DIR);
+  } catch (err) {
+    fail(`${OUTPUT_DIR}/.publish-slugs.json is broken (${err.message}), so which listing owns each title is unknown. Nothing copied. Fix it by hand.`);
+  }
+  const other = owner.get(fold(topic));
+  const there = [...copies.map(([, name]) => join(OUTPUT_DIR, name)), txt].some((p) => existsSync(p));
+  if (other && other !== slug && there)
+    fail(`"${topic}" in ${OUTPUT_DIR} is listing "${other}", not "${slug}": same post title. Nothing copied. Give "${slug}" its own post title in public/listings/${slug}/script.json, then run: ${cmd} --force`);
+  if (!other && !process.argv.includes("--claim") && there)
+    fail(legacyOwnerStop(slug, titleSlugs(listings, ["script.json"], post.title),
+      { topic, outDir: OUTPUT_DIR, where: `public/listings/${slug}/script.json`, cmd }), 4);
+  owner.set(fold(topic), slug);
+  writeOwners(OUTPUT_DIR, owner);
   for (const [src, name] of copies) copyFileSync(src, join(OUTPUT_DIR, name));
   writeFileSync(txt, buildListingCaption({ post, listing, business, agent, licensee, disclaimer: DISCLAIMER, test }), "utf8");
   console.log(`publish-listing: ready in "4 - GLOBAL RE FINISHED VIDEOS":\n${[...copies.map(([, n]) => n), `${topic} - caption.txt`].map((n) => `  ${n}`).join("\n")}`);

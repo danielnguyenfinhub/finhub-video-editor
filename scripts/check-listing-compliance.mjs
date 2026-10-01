@@ -50,6 +50,8 @@ expectHit("Walking distance to Cabramatta station", sale, "vague-location-en");
 expectHit("Đi bộ vài phút ra ga", sale, "vague-location-vi");
 expectHit("Brand new home on a quiet street", sale, "condition-claim-en");
 expectHit("Award-winning top agent", sale, "agent-claim-en");
+expectHit("Nhà mới xây, hướng bắc", sale, "condition-claim-vi");
+expectHit("Đại lý đoạt giải, uy tín nhất vùng", sale, "agent-claim-vi");
 expectHit("Đất 556 m² (theo sổ đỏ)", sale, "size-claim");
 expectHit("Make an offer! $650 per week", lease, "rent-bidding-en");
 expectHit("Giá thuê thương lượng, ai trả cao hơn sẽ được ưu tiên", lease, "rent-bidding-vi");
@@ -60,6 +62,8 @@ expectHit("Không nuôi thú cưng", lease, "no-pets-vi");
 // Good lines.
 expectClean("Price guide $900,000 – $950,000", sale);
 expectClean("Ba phòng ngủ, hai phòng tắm, gara đôi.", sale);
+expectClean("Nhà xây năm 2015, sân sau rộng.", sale); // condition-claim-vi's clean twin
+expectClean("Liên hệ đại lý để hẹn xem nhà.", sale); // agent-claim-vi's clean twin
 expectClean("1.2 km to Cabramatta station (Google Maps)", { mode: "sale", priceMin: 1_200_000 });
 expectClean("$650 per week · 3 bedrooms · available now", lease);
 expectClean("Giá thuê $650 mỗi tuần", lease);

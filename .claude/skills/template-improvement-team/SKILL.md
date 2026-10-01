@@ -61,7 +61,7 @@ One message: `golden-rules-auditor` (re-check; compare with each `01_golden_audi
 
 ## Phase 6 — Deliver and learn
 
-Plain-words report: violations fixed (rule number), options built, designs now promotable, what is unviewed or unproven, the exact stills for Daniel to look at, and one next step. Logged lessons go to `corrections.md` and become checks where measurable. Add a line to the change log in `docs/agents/skills-and-harnesses.md` if a team file changed. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify). Commit only if Daniel asked.
+Plain-words report: violations fixed (rule number), options built, designs now promotable, what is unviewed or unproven, the exact stills for Daniel to look at, and one next step. Logged lessons go to `corrections.md` and become checks where measurable. Add a line to the change log in `docs/agents/skills-and-harnesses.md` if a team file changed. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify). Fill in the row's outcome at the end of the run, not left `in progress` (`check-teams.mjs` fails on an open row that is not the last). Commit only if Daniel asked.
 
 ## Files
 

@@ -1,7 +1,7 @@
 // Hand a rendered video to Daniel: a copy named after its topic and a caption
 // file ready to paste, both in the finished-videos folder.
 //
-//   node scripts/publish-video.mjs <slug> [--force] [--out <dir>] [--public-dir <dir>] [--video <file>]
+//   node scripts/publish-video.mjs <slug> [--force] [--claim] [--out <dir>] [--public-dir <dir>] [--video <file>]
 //
 // Reads "post" {title, caption, hashtags} from public/videos/<slug>/edit.json
 // (talking-head) or, failing that, script.json (faceless). Checks: a title and
@@ -15,15 +15,18 @@
 // UTF-8 without a BOM (Windows 11 Notepad reads it; a BOM would be pasted as an
 // invisible first character). Never replaces a file unless --force, and even
 // with --force never replaces another slug's files of the same topic (the owner
-// of each topic is kept in <out>/.publish-slugs.json).
+// of each topic is kept in <out>/.publish-slugs.json, written under
+// .publish-slugs.lock). Files with no owner on record (published before
+// 01/10/2026) are replaced only with --claim (Daniel says they are this slug's):
+// exit 4 names the videos whose post title gives that file name.
 // Refuses a render older than its on-screen inputs (edit.json/script.json without
 // "post", words.json; render-video.py stamps their hash in <slug>.inputs), unless
-// --stale-ok. "post" is upload copy, so fixing it never needs a re-render.
+// --stale-ok; a render that did not finish (stamp "rendering") is never published. "post" is upload copy, so fixing it never needs a re-render.
 // render-video.py runs this after every render.
 //   node scripts/publish-video.mjs <slug> --inputs-hash [--public-dir <dir>]   (render-video.py's stamp)
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { createHash, randomBytes } from "node:crypto";
+import { closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { basename, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -75,6 +78,12 @@ export const videoInputs = (dir, publicDir) => {
   return [join(dir, "edit.json"), join(dir, "script.json"), words];
 };
 
+/** True when render-video.py's stamp <video>.inputs still says "rendering": the render stopped part way. */
+export const unfinishedRender = (video) => {
+  const stamp = video.replace(/\.mp4$/i, "") + ".inputs";
+  return existsSync(stamp) && readFileSync(stamp, "utf8").trim() === "rendering";
+};
+
 /** Why `video` is older than its on-screen inputs, or null. Stamp <video>.inputs (render-video.py); none: file times. */
 export const staleVideo = (video, inputs) => {
   const t = (f) => (existsSync(f) ? statSync(f).mtimeMs : 0);
@@ -82,6 +91,92 @@ export const staleVideo = (video, inputs) => {
   if (t(stamp) >= t(video)) return readFileSync(stamp, "utf8").trim() === hashInputs(inputs) ? null : "its on-screen inputs changed since the render";
   const newer = inputs.filter((f) => t(f) > t(video));
   return newer.length ? `${newer.map((f) => f.split(/[\\/]/).pop()).join(", ")} changed after the render (no stamp, file times)` : null;
+};
+
+// Windows file names ignore case: compare names folded (NFC, lower case), on every OS.
+export const fold = (s) => s.normalize("NFC").toLowerCase();
+
+/** <outDir>/.publish-slugs.json, which slug each topic's files came from (keys folded). Missing: empty. Throws when broken. */
+export const readOwners = (outDir) => {
+  try {
+    const data = JSON.parse(readFileSync(join(outDir, ".publish-slugs.json"), "utf8"));
+    if (!data || typeof data !== "object" || Array.isArray(data) || Object.values(data).some((v) => typeof v !== "string"))
+      throw new Error("not a {title: slug} object");
+    return new Map(Object.entries(data).map(([k, v]) => [fold(k), v]));
+  } catch (err) {
+    if (err.code === "ENOENT") return new Map(); // none yet: files published before 01/10/2026 have no owner
+    throw err;
+  }
+};
+
+/** Writes the owner record through this process's own temp file: a failed write leaves the old record. */
+export const writeOwners = (outDir, owner) => {
+  const owners = join(outDir, ".publish-slugs.json");
+  const tmp = `${owners}.${process.pid}-${randomBytes(4).toString("hex")}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify(Object.fromEntries(owner), null, 1)}\n`);
+  renameSync(tmp, owners);
+};
+
+// ponytail: a lock older than this is a crashed publish's and is taken over; a copy that
+// holds it longer (a very slow network folder) could be overtaken: raise it then.
+export const LOCK_STALE_MS = 60_000;
+
+/**
+ * Holds <outDir>/.publish-slugs.lock (exclusive create) until this process exits, so two publishes
+ * at once read, check and write the owner record one after the other. Throws after 2 x LOCK_STALE_MS.
+ */
+export const lockOwners = (outDir) => {
+  const lock = join(outDir, ".publish-slugs.lock");
+  const start = Date.now();
+  for (;;) {
+    try {
+      closeSync(openSync(lock, "wx"));
+      process.once("exit", () => rmSync(lock, { force: true }));
+      return;
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    }
+    let age;
+    try {
+      age = Date.now() - statSync(lock).mtimeMs;
+    } catch {
+      continue; // released meanwhile
+    }
+    if (age > LOCK_STALE_MS) rmSync(lock, { force: true });
+    else if (Date.now() - start > 2 * LOCK_STALE_MS) throw new Error(`${lock} is held by another publish (delete it if none is running)`);
+    else Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+  }
+};
+
+/** Slugs under root whose post (the first of `files` that has one) gives the same file name as `title`. */
+export const titleSlugs = (root, files, title) => {
+  const key = fold(topicFileName(title));
+  return (existsSync(root) ? readdirSync(root) : []).filter((slug) => {
+    for (const file of files) {
+      let post;
+      try {
+        post = JSON.parse(readFileSync(join(root, slug, file), "utf8")).post;
+      } catch {
+        continue; // no such file, or broken: publish of that slug reports it
+      }
+      if (post) return typeof post.title === "string" && fold(topicFileName(post.title)) === key;
+    }
+    return false;
+  });
+};
+
+/**
+ * The stop for same-topic files with no owner on record (published before 01/10/2026): they are
+ * never replaced without --claim, since a post title can change after a publish. `matches`
+ * (titleSlugs) only names the videos whose post title gives that file name today.
+ */
+export const legacyOwnerStop = (slug, matches, { topic, outDir, where, cmd }) => {
+  const seen = !matches.length ? "none"
+    : `${matches.map((s) => `"${s}"`).join(", ")}${matches.length === 1 && matches[0] === slug ? " (looks like this video's)" : ""}`;
+  return `"${topic}" files in ${outDir} have no recorded owner (published before owners were recorded), so they are not replaced on a guess. Nothing copied.\n` +
+    `Videos in the repo whose post title gives this file name: ${seen}.\n` +
+    `If the files are really "${slug}"'s: ${cmd} --force --claim\n` +
+    `Otherwise give "${slug}" its own post title in ${where}, then run: ${cmd} --force`;
 };
 
 /** What is wrong with a post, in plain words; [] when it is fine. */
@@ -183,11 +278,11 @@ export const loadBroker = (path = join(ROOT, "config", "broker.json")) => {
 };
 
 const main = async () => {
-  const fail = (msg) => {
+  const fail = (msg, code = 1) => {
     console.error(`publish-video: ${msg}`);
-    process.exit(1);
+    process.exit(code);
   };
-  const USAGE = "usage: node scripts/publish-video.mjs <slug> [--force] [--stale-ok] [--out <dir>] [--public-dir <dir>] [--video <file>]";
+  const USAGE = "usage: node scripts/publish-video.mjs <slug> [--force] [--stale-ok] [--claim] [--out <dir>] [--public-dir <dir>] [--video <file>]";
   const argv = process.argv.slice(2);
   const valued = ["--out", "--public-dir", "--video"];
   const value = (flag) => {
@@ -240,6 +335,9 @@ const main = async () => {
 
   const video = resolve(value("--video") ?? join(ROOT, "out", "videos", slug, `${slug}.mp4`));
   if (!existsSync(video)) fail(`The rendered video ${video} is not there yet. Render it first: python scripts/render-video.py ${slug}`);
+  if (unfinishedRender(video))
+    fail(`the last render of ${slug} did not finish (render-video.py stopped part way), so ${video} may be partial or not loudness-normalised. Nothing copied.\n` +
+      `Re-render it: python scripts/render-video.py ${slug}`);
   const stale = argv.includes("--stale-ok") ? null : staleVideo(video, videoInputs(dir, publicDir));
   if (stale)
     fail(`${video} shows old copy: ${stale} (edit.json/script.json other than "post", or words.json). Nothing copied.\n` +
@@ -256,10 +354,8 @@ const main = async () => {
   const topic = topicFileName(post.title);
   const mp4 = join(outDir, `${topic}.mp4`);
   const txt = join(outDir, `${topic} - caption.txt`);
-  // Windows file names ignore case: compare names folded (NFC, lower case), on every OS.
-  const fold = (s) => s.normalize("NFC").toLowerCase();
-  const names = new Set(readdirSync(outDir).map(fold));
-  const exists = (path) => names.has(fold(basename(path)));
+  // Read live on each call, so the owner checks after lockOwners see a file a concurrent publish just copied.
+  const exists = (path) => readdirSync(outDir).some((name) => fold(name) === fold(basename(path)));
   if (!argv.includes("--force"))
     for (const path of [mp4, txt])
       if (exists(path))
@@ -268,28 +364,30 @@ const main = async () => {
           `A different video? Give it a different post title in ${where}.`);
   // Which slug each topic's files came from: --force replaces only the same slug's.
   const owners = join(outDir, ".publish-slugs.json");
-  let owner = new Map(); // none yet: files published before 01/10/2026 have no owner
   try {
-    const data = JSON.parse(readFileSync(owners, "utf8"));
-    if (!data || typeof data !== "object" || Array.isArray(data) || Object.values(data).some((v) => typeof v !== "string"))
-      throw new Error("not a {title: slug} object");
-    owner = new Map(Object.entries(data).map(([k, v]) => [fold(k), v]));
+    lockOwners(outDir);
   } catch (err) {
-    if (err.code !== "ENOENT")
-      fail(`${owners} is broken (${err.message}), so which video owns each title is unknown. Nothing copied.\n` +
-        `Fix it by hand. Deleting it lets --force replace any same-title files in ${outDir}.`);
+    fail(`${err.message}. Nothing copied.`);
+  }
+  let owner;
+  try {
+    owner = readOwners(outDir);
+  } catch (err) {
+    fail(`${owners} is broken (${err.message}), so which video owns each title is unknown. Nothing copied.\n` +
+      `Fix it by hand. Deleting it leaves every title in ${outDir} with no owner (each then needs --claim).`);
   }
   const other = owner.get(fold(topic));
   if (other && other !== slug && [mp4, txt].some(exists))
     fail(`"${topic}" in ${outDir} is video "${other}", not "${slug}": both have the post title "${post.title}". Nothing copied.\n` +
       `Give "${slug}" its own post title in ${where}, then run: ${cmd} --force\n` +
       `(Only if "${other}" is gone for good: delete its "${topic}" files first.)`);
+  if (!other && !argv.includes("--claim") && [mp4, txt].some(exists))
+    fail(legacyOwnerStop(slug, titleSlugs(join(publicDir, "videos"), ["edit.json", "script.json"], post.title), { topic, outDir, where, cmd }), 4);
 
   const { text, removed } = buildCaption(post, broker, compliance);
   // The owner first, through a temp file: a failed write leaves the old record and copies nothing.
   owner.set(fold(topic), slug);
-  writeFileSync(`${owners}.tmp`, `${JSON.stringify(Object.fromEntries(owner), null, 1)}\n`);
-  renameSync(`${owners}.tmp`, owners);
+  writeOwners(outDir, owner);
   copyFileSync(video, mp4);
   writeFileSync(txt, text, "utf8");
   if (removed.length)

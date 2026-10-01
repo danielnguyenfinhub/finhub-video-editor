@@ -1,7 +1,8 @@
 // Checks the agent teams are wired: every design (src/designs, src/youtube/designs) and the
 // listing reel belongs to exactly one team in config/style-teams.json; each team's director
 // agent and recipe exist; every agent a team skill names exists; every agent file has the
-// frontmatter Claude Code needs; the AGENTS.md read-list byte counts are within 15%. Run: node scripts/check-teams.mjs (exit 1 and the problems).
+// frontmatter Claude Code needs; the AGENTS.md read-list byte counts are within 15%; only the last
+// docs/agents/team-runs.md row may be "in progress" / "pending". Run: node scripts/check-teams.mjs (exit 1 and the problems).
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -82,6 +83,17 @@ for (const row of rows) {
   } else if (off(stated, real)) problems.push(`AGENTS.md read list "${task}": says ${bytesCell}, files measure ${fmt(real)}`);
   prev = real;
 }
+
+// docs/agents/team-runs.md: only the last row (the run now in progress) may still say
+// "in progress" in Outcome or "pending" in PR; every older row must have been closed.
+const runRows = readFileSync(at("docs/agents/team-runs.md"), "utf8").replace(/\r\n/g, "\n")
+  .split("\n").filter((l) => /^\| \d{4}-\d{2}-\d{2} \|/.test(l));
+if (!runRows.length) problems.push("docs/agents/team-runs.md: no run rows");
+runRows.slice(0, -1).forEach((row) => {
+  const [, date, team, , outcome, pr] = row.split("|").map((c) => c.trim());
+  if (/in progress/i.test(outcome) || /pending/i.test(pr))
+    problems.push(`docs/agents/team-runs.md: ${date} ${team} is not the last row but its outcome or PR is still open ("${outcome}" | "${pr}"): fill it in`);
+});
 
 if (problems.length) {
   console.error(problems.join("\n"));

@@ -1,0 +1,37 @@
+# Open decisions for Daniel
+
+As of 1 October 2026 (maintenance run 4). One list of what is still unanswered, so a team run reads it instead of re-asking. Each default is a recommendation and is his to change; when he answers, strike the row through and add the answer and date. Sources: `docs/audit/templates-2026-10-01/02_concepts_*.md` (D rulings: `data` = faceless-data, `expl` = faceless-explainer, `thd` = talkinghead-data, `story` = talkinghead-story), PR #121 "Still open", [team-runs](team-runs.md). Decided already, not listed: Python checks in CI, text-size ratchet, repo `compliance.ts` canonical, YouTube preview-only (5009bc5).
+
+## Rulings with a default
+
+| # | Decision (source) | Recommended default | What each answer costs |
+|---|---|---|---|
+| OD-1 | CI: is a check-schema browser SKIP a warning (819214d, d33ef22, not reviewed) or a failure (PR #121 as reviewed)? | Failure, once check-schema passes on the Windows runner (`swangle` probe, maintenance run 4 gap 1) | Warning: CI stays green without proving the schema. Failure now: red CI on every PR until the browser runs there |
+| OD-2 | Do rule 3 (SAFE) and 3c ("same size and place") bind Covers? (data D1, expl D1, thd D2) | "Same size" binds; "place" is per cover; Daniel adds that reading to the locked README | Strict: about 20 cover edits across designs, each needing a still. Per cover: the logo jumps at the cover-to-talk cut and feed crops can clip titles |
+| OD-3 | Is classic's grandfathered placement still accepted (stat cards y 120, always-on logo)? (thd D1) | Still accepted until a render-capable session | Accept: the 4:5 feed crop cuts stat cards and classic cannot pass promotion honestly. Rules bind: B3/B5/B6, and ty-do (the reference reel) changes look |
+| OD-4 | May a design show a computed difference the reel never said? (data D2) | Allowed (arithmetic on two stated values, one unit); compliance notes it once | Allowed: none. Not allowed: five chips go (flash, scale, receipt, splitscreen, flipcard), part of their signature moment, a still each |
+| OD-5 | Is set "FINANCE HUB" text (calendar, receipt, editorial masthead) an always-on logo under 3c? (data D3, story D2) | No, it is set type; keep | No: a precedent that any design may carry brand text all video. Yes: three small edits, stills |
+| OD-6 | flash's fixed "CẬP NHẬT LÃI SUẤT" label (data D4) | Restrict flash `intents` to rate moves | Restrict: data only. Change label: small code plus a still |
+| OD-7 | Faceless designs and quick mode / a faceless source shown at 55% (data D6, expl D4) | Refuse `vignette` for faceless designs at select time | Guard: small core or selector change. Leave: one wrong flag shows the raw room (rule 4) |
+| OD-8 | faceless's grandfathered `promoted` (expl D2) | Keep; show it on the promotion drift list | Keep: the worst-overlap design ranks "proven". Demote: the rba-sept-2026 default and selector picks change |
+| OD-9 | May a design frame the shared Outro in its own skin? (expl D3) | No until a render-capable session | Yes: compliance re-checks one outro still per framed design. No: C-X4 dropped |
+| OD-10 | Is `background: room` a sanctioned exception to README 4.3? (story D1) | Yes, plus the 4.5 privacy check on room videos | Yes: weaker rule, a privacy review per room video. No: two real videos re-render with a matte |
+| OD-11 | Text-size floor: raise the 116 existing literals under 30 px; literal or effective px? (data D5, thd D3, story D3) | Ratchet only (no new ones); raise existing literals per design when it is next touched, with a still | Raise all now: the 116 baseline literals (`config/text-size-baseline.json`), layout knock-ons. Leave: "text too small" may return on stills |
+| OD-12 | Identity palettes under rule 7 (kitchen, explainer, chatstory, …) and `theme-exempt` markers (story D4, template run 1 held) | Daniel adds a paper/cream token to `src/brand/theme.ts`; literals map to it | Token: one core change, stills per design. Strict: looks shift. Markers: rule 7 weakens line by line |
+| OD-13 | cards' relocated face as an accepted exception (thd D4) | Accept and record it in corrections.md | Accept: one check special case. Strict: invisible code, may break the split identity |
+| OD-14 | Rule 5b: does ambient motion in a held card count? (thd D5) | No; it is the edit's job | Yes: check-pacing models it per design, plus the motion. No: short talks need more cues |
+| OD-15 | Compliance-flavoured look calls (series and checklist "ví dụ minh hoạ" at 14-16 px, scenario's brighter half, newsroom "TIN NÓNG") (thd D6, story D5) | The compliance reviewer rules; a disclaimer stays and is made readable | Compliance: these become B fixes. Taste: a possible "implies urgency" finding later |
+| OD-16 | Decoration outside SAFE (explainer progress line, oscilloscope) (story D6) | No, leave them | Yes: move or drop two elements |
+| OD-17 | LogoMark tile crosses the FACE rectangle in every design (story D7) | Accept; judged on stills | Core change to the logo tile or FACE, outside the teams' rights |
+| OD-18 | Faceless data stage scheduler A0-A11 (template run 1, held) | Hold until a render-capable session | Build unseen: three similar fixes were reverted after re-check |
+| OD-19 | A render replacing a finished file that has no owner entry (maintenance run 4, W1) | Stop; `--claim` takes ownership (decided run 4, after a review found the title inference could hand B the file of A: every replacement of an unowned file needs `--claim`) | Stop: one extra flag the first time per old video. Backfill: a one-off list of current files. Leave: old videos replaced silently |
+| OD-20 | Should a re-matte, library visual, music or `facts.json` change make a render stale? (run 4, L5) | Yes for `foreground.webm` and `facts.json`; no for music | Yes: more re-renders. No: an old render can publish |
+| OD-21 | Re-promote the 9 designs changed since promotion (PR #121, run 4 gap 2) | Re-run `promote-design.mjs` on his PC | Renders on his machine; until then the selector ranks them "proven" |
+
+## Facts only Daniel knows (no default)
+
+| # | Question | Default |
+|---|---|---|
+| OD-F1 | Which 27/09 videos were published (`design-log.json`) | no default: only Daniel knows |
+| OD-F2 | Is YouTube long-form in use? (5009bc5 made it preview-only because nothing showed it is) | no default: only Daniel knows |
+| OD-F3 | How long check-schema takes on his machine (video-status now allows preflight 420 s, its 300 s schema limit plus 120 s; a check-schema that times out is only a preflight warning, so video-status shows the video as ready with that warning, never blocked; run 4, W3) | no default: only Daniel knows |

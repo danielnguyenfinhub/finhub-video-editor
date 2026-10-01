@@ -45,7 +45,7 @@ script: `references/listing-script.md`. Read both before the first step.
    every scene. Check: no text on text, no stretched photo,
    captions inside y 420–1473, logo sharp, agent face not cropped, callout on the right thing.
    Fix, then re-check the frames you touched.
-7. **Render**: `npm run listing-render -- <slug>`. Exit 3 means rendered but not published (a compliance flag, a post problem, or a language whose on-screen inputs changed since its render; `--stale-ok` publishes it anyway): do not re-render, fix it, then run the printed `publish-listing` command. A `post` fix (title, caption, hashtags: upload copy, not on screen) never makes a render stale; a scene, `listing.json` or words edit does. It runs the compliance guard and preflight
+7. **Render**: `npm run listing-render -- <slug>`. Exit 3 means rendered but not published (a compliance flag, a post problem, or a language whose on-screen inputs changed since its render; `--stale-ok` publishes it anyway): do not re-render, fix it, then run the printed `publish-listing` command. A `post` fix (title, caption, hashtags: upload copy, not on screen) never makes a render stale; a scene, `listing.json` or words edit does. An existing finished file with no recorded owner is never replaced silently: `publish-listing` stops (exit 4, shown as exit 3 by `listing-render`), names the listings whose `post.title` gives that file name and prints the command with `--claim` (run it only if the files really are this listing's; a recorded owner is never overridden). It runs the compliance guard and preflight
    first and publishes to `4 - GLOBAL RE FINISHED VIDEOS/`.
 8. **Report**: the two video paths, the verify list (items to confirm with the agent, TEST
    blockers, anything guessed from a photo).

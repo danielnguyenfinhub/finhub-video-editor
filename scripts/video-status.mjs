@@ -95,6 +95,15 @@ export const nextOf = (root, slug) => {
 
 const run = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: "utf8", timeout: 30000, ...opts });
 
+// Preflight gives check-schema SCHEMA_TIMEOUT_S, then runs the cut and pacing checks: wait that long
+// plus a margin, or a slow but valid video reads "blocked: ETIMEDOUT". preflight.mjs runs its checks
+// on import, so its constant is read from its source; a rename fails here, not silently.
+export const preflightTimeoutMs = () => {
+  const s = /^const SCHEMA_TIMEOUT_S = (\d+);/m.exec(readFileSync(join(import.meta.dirname, "preflight.mjs"), "utf8"))?.[1];
+  if (!s) throw new Error("video-status: SCHEMA_TIMEOUT_S not found in scripts/preflight.mjs; update preflightTimeoutMs.");
+  return (Number(s) + 120) * 1000;
+};
+
 // Readiness before spending tokens (idea from HKUDS/OpenHarness): static checks only, each
 // with the shortest fix. blocked = the run would fail; warning = it may stop early.
 export const readinessOf = (root, slug) => {
@@ -111,7 +120,7 @@ export const readinessOf = (root, slug) => {
     if (!existsSync(src)) add("blocked", `the prepared recording is missing (${relative(root, src)})`, "prepare the recording again (runbook A1.1)");
   }
   // Preflight bundles the project for check-schema: longer than the 30 s the probes get.
-  const pre = edit && run(process.execPath, [join(root, "scripts/preflight.mjs"), slug], { cwd: root, timeout: 180000 });
+  const pre = edit && run(process.execPath, [join(root, "scripts/preflight.mjs"), slug], { cwd: root, timeout: preflightTimeoutMs() });
   if (pre && pre.status !== 0) {
     // Say what failed (edit.json, the speech-cuts check, fonts...), not a guess.
     const found = (pre.stderr ?? "").split("\n").filter((l) => l.startsWith("preflight: ") && !/nothing was rendered/.test(l)).map((l) => l.slice(11).trim());

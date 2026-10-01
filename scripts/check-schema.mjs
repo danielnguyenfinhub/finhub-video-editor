@@ -10,6 +10,10 @@
 // checkout's public/ (a worktree); edit.json still comes from here.
 // Bundles once per run into a temp dir with a minimal public/ (only the files
 // calculateMetadata fetches, hard-linked), deleted at the end.
+// FINHUB_GL sets the browser's chromiumOptions.gl (e.g. "swangle": --use-gl=angle
+// --use-angle=swiftshader, open-browser.js in @remotion/renderer); unset, Chrome chooses.
+// FINHUB_SCHEMA_LOG sets the logLevel ("verbose" prints the browser's own stderr); unset, "error".
+// An invalid value of either prints one line and the default is used (not a schema failure).
 import { bundle } from "@remotion/bundler";
 import { selectComposition } from "@remotion/renderer";
 import { copyFileSync, existsSync, linkSync, mkdirSync, readFileSync, rmSync } from "node:fs";
@@ -23,6 +27,15 @@ const args = process.argv.slice(2);
 const dirAt = args.indexOf("--public-dir");
 const slug = args.find((a, i) => !a.startsWith("--") && (dirAt < 0 || i !== dirAt + 1));
 const pub = resolve(dirAt >= 0 ? args[dirAt + 1] : join(ROOT, "public"));
+// @remotion/renderer 4.0.527: dist/options/gl.js validOpenGlRenderers; dist/log-level.js logLevels.
+const envOption = (name, valid) => {
+  const v = process.env[name];
+  if (!v || valid.includes(v)) return v || undefined;
+  console.error(`check-schema: ${name}="${v}" is not one of ${valid.join(", ")}; using the default.`);
+  return undefined;
+};
+const gl = envOption("FINHUB_GL", ["swangle", "angle", "egl", "swiftshader", "vulkan", "angle-egl"]);
+const logLevel = envOption("FINHUB_SCHEMA_LOG", ["trace", "verbose", "info", "warn", "error"]) ?? "error";
 const fail = (msg) => {
   console.error(String(msg).split("\n").slice(0, 5).join("\n"));
   process.exitCode = 1;
@@ -62,7 +75,10 @@ try {
     outDir: join(tmp, "bundle"),
     publicDir: join(tmp, "public"),
   });
-  const c = await selectComposition({ serveUrl, id: "MortgageReel", inputProps: { slug }, logLevel: "error" });
+  const c = await selectComposition({
+    serveUrl, id: "MortgageReel", inputProps: { slug }, logLevel,
+    ...(gl ? { chromiumOptions: { gl } } : {}),
+  });
   console.log(`MortgageReel ${slug}: ${c.durationInFrames} frames (${(c.durationInFrames / c.fps).toFixed(1)} s)`);
 } catch (err) {
   // The renderer keeps only the first line in .message; the zod paths are in
