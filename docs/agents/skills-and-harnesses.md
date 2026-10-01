@@ -35,6 +35,17 @@ Whatever skill is driving (Remotion's, the editor skill, or a scene written by h
 |---|---|---|---|
 | 2026-09-26 | Initial team | the four agents, `refactor-team`, `repo-audit-tools`, `.claude/settings.json` (Read-deny rules for the emoji, typeface and country JSON blobs) | Five copies of one 273 MB recording across slug folders; nothing measured the token cost of a session |
 
+### Harness: repo and style teams
+
+**Goal:** four teams run the repo's own work: build from existing resources (1), maintain by finding bugs and gaps (2), find faster and cheaper ways to work (3), and one production team per video style family (4).
+
+**Trigger:** see the table in [AGENTS.md](../../AGENTS.md) ("Harness: repo and style teams"). Rules every team agent reads: [team-ground-rules](team-ground-rules.md). Style ownership: `config/style-teams.json`.
+
+**Change log:**
+| Date | Change | Files | Why |
+|---|---|---|---|
+| 2026-10-01 | Initial four teams. New agents: `resource-scout`, `repo-builder`, `bug-hunter`, `gap-analyst`, `repo-fixer`, `workflow-analyst`, `automation-builder`, six style directors. Reused: `code-architect`, `code-reviewer`, `quality-reviewer`, `architecture-auditor`, `pipeline-optimizer`, the `video-*` crew | the four team skills, `config/style-teams.json`, `scripts/check-teams.mjs` (in `npm test`), `team-ground-rules.md`, six recipes under `style-production-teams/references/` | Daniel asked for teams to build, maintain and speed up the repo and to produce each video style |
+
 `.claude/` also holds 18 other subagents in `.claude/agents/` and 7 skills (accessibility, bun-runtime, codebase-onboarding, error-handling, react-patterns, react-performance, search-first) imported from ECC (see `.claude/ECC.md`), and the `ponytail-review`, `ponytail-audit` and `ponytail-debt` skills from ponytail (see `.claude/PONYTAIL.md`). They run only when asked; AGENTS.md, these docs and the Remotion and owner skills win where they conflict.
 
 When upgrading Remotion, re-vendor the skills so guidance matches the installed version:
