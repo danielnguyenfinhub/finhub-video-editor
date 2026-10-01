@@ -30,7 +30,7 @@ for (const s of real) if (!owner.has(s)) problems.push(`style ${s} is in no team
 const agentFiles = readdirSync(at(".claude/agents")).filter((f) => f.endsWith(".md"));
 const agents = new Set(agentFiles.map((f) => f.replace(/\.md$/, "")));
 for (const f of agentFiles) {
-  const fm = readFileSync(at(".claude/agents", f), "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
+  const fm = readFileSync(at(".claude/agents", f), "utf8").replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
   for (const key of ["name", "description", "tools", "model"]) {
     if (!new RegExp(`^${key}:`, "m").test(fm)) problems.push(`.claude/agents/${f}: frontmatter lacks ${key}`);
   }
@@ -42,7 +42,7 @@ const TEAM_SKILLS = ["repo-build-team", "repo-maintenance-team", "dev-efficiency
 for (const skill of TEAM_SKILLS) {
   const path = at(".claude/skills", skill, "SKILL.md");
   if (!existsSync(path)) { problems.push(`missing skill ${skill}`); continue; }
-  const table = readFileSync(path, "utf8").split(/^## /m).find((s) => s.startsWith("The team")) ?? "";
+  const table = readFileSync(path, "utf8").replace(/\r\n/g, "\n").split(/^## /m).find((s) => s.startsWith("The team")) ?? "";
   const named = [...table.matchAll(/^\| `([a-z0-9-]+)`/gm)].map((m) => m[1]);
   if (!named.length) problems.push(`${skill}: "The team" table names no agents`);
   for (const a of named) if (!agents.has(a)) problems.push(`${skill}: names agent ${a}, which has no file`);
