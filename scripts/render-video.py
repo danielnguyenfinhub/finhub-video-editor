@@ -7,7 +7,7 @@ voice, music and sound effects set to -14 LUFS, the level YouTube, Facebook
 and TikTok play at), <slug>-mobile.mp4 (720x1280, two-pass x264 sized to about
 27 MB), <slug>-feed.mp4 (1080x1350, the 4:5 middle for the Facebook feed),
 thumbnail.png (the cover card, frame 45) and <slug>.srt. Exits non-zero
-on the first failure.
+on the first failure; exit 3 = rendered (files kept in out/) but not published.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from recordings import PUBLIC, read_edit, recording_dir
+from recordings import PUBLIC, check_slug, read_edit, recording_dir
 
 ROOT = Path(__file__).resolve().parent.parent
 # The Remotion CLI run through node directly: same as `npx remotion`, without
@@ -99,7 +99,7 @@ def normalize_loudness(path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("slug", help="folder name under public/videos/")
+    parser.add_argument("slug", type=check_slug, help="folder name under public/videos/")
     slug: str = parser.parse_args().slug
 
     # The rest of edit.json is validated by the render itself.
@@ -183,15 +183,17 @@ def main() -> None:
 
     # Daniel's "2 - FINISHED VIDEOS" folder: the video named after its topic and
     # its caption file (scripts/publish-video.mjs). A missing or invalid post
-    # only skips this step; the render itself has succeeded. --force: a
+    # skips this step and exits 3; the render files stay in out_dir. --force: a
     # re-render replaces that topic's files (the originals stay in out_dir).
     print("\n== finished-videos folder", flush=True)
     published = subprocess.run(
         ["node", "--no-warnings", str(ROOT / "scripts" / "publish-video.mjs"), slug, "--force"],
         cwd=ROOT)
     if published.returncode:
-        print(f"\nThe render succeeded (files above, in {out_dir}); only the copy to "
-              "the finished-videos folder waits for the fix above.", flush=True)
+        print(f"\nNOT PUBLISHED: the render succeeded (files above, in {out_dir}), but nothing went "
+              f"in the finished-videos folder. Fix the problem above, then run: "
+              f"node scripts/publish-video.mjs {slug} --force", flush=True)
+        sys.exit(3)
 
 
 if __name__ == "__main__":

@@ -59,12 +59,12 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-captions.mjs`, `check-caption-fixes.mjs` | Shared caption layer; caption slip fixes in `timeline.ts` | **test** |
 | `check-contrast.mjs` | Text legibility of every design | **test** |
 | `check-text-size.mjs [id ...]` | Report only: `fontSize` literals under `MIN_TEXT_PX` (placeholder 30, Daniel to set) per design; never fails, promote-design prints it as a note | local |
-| `check-selector.mjs` | `select-template.mjs` ranking; every design has a manifest | **test** |
+| `check-selector.mjs` | `select-template.mjs` ranking; every design has a manifest; nothing fits = a stop, not `pick: null` | **test** |
 | `check-element-copy.mjs` | RG 234 scan of text in `src/elements/` | **test** |
 | `check-facts.mjs`, `check-visuals.mjs` | `facts.mjs`; the AI judge's pure parts | **test** |
-| `check-listing-compliance.mjs`, `check-listing-prep.mjs` | Listing compliance rules and the price-line floor ("$1.2 million"); listing parsing | **test** |
-| `check-numbers-kit.mjs` | Numbers-kit cues in `schema.ts`; RG 234 scan of NFD / odd-whitespace copy and `captionFixes[].to` | **test** |
-| `check-promote.mjs`, `check-publish.mjs` | `promote-design.mjs`, `publish-video.mjs` on fixtures | **test** |
+| `check-listing-compliance.mjs`, `check-listing-prep.mjs` | Listing compliance rules and the price-line floor ("$1.2 million", also in the copy and listing.txt); listing parsing; CLI slugs (`assertSlug`) against every real folder | **test** |
+| `check-numbers-kit.mjs` | Numbers-kit cues in `schema.ts`; RG 234 scan of NFD / odd-whitespace / zero-width copy and `captionFixes[].to` | **test** |
+| `check-promote.mjs`, `check-publish.mjs` | `promote-design.mjs` (nothing written when a check fails), `publish-video.mjs` and publish-listing's stale-language refusal on fixtures | **test** |
 | `timeline.selftest.mjs` | Pins what `timeline.ts` does: cuts, pacing, chapter overlap, time maps | **test** |
 | `check-pacing.selftest.mjs`, `check-speech-cuts.selftest.mjs` | The two checks above, on synthetic data | **test** |
 | `check-scripts-index.mjs` | Every file in this folder is listed in this README | **test** |

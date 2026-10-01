@@ -45,7 +45,7 @@ script: `references/listing-script.md`. Read both before the first step.
    every scene. Check: no text on text, no stretched photo,
    captions inside y 420–1473, logo sharp, agent face not cropped, callout on the right thing.
    Fix, then re-check the frames you touched.
-7. **Render**: `npm run listing-render -- <slug>`. It runs the compliance guard and preflight
+7. **Render**: `npm run listing-render -- <slug>`. Exit 3 means rendered but not published (a compliance flag, or a language older than the latest script/listing change; `--stale-ok` publishes it anyway): do not re-render, fix it, then run the printed `publish-listing` command. It runs the compliance guard and preflight
    first and publishes to `4 - GLOBAL RE FINISHED VIDEOS/`.
 8. **Report**: the two video paths, the verify list (items to confirm with the agent, TEST
    blockers, anything guessed from a photo).

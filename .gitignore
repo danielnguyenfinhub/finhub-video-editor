@@ -1,8 +1,11 @@
 node_modules
 dist
 .DS_Store
-.env
-.env.local
+.env*
+!.env.example
+# Voice profiles (OmniVoice .pt, ~/.finhub-voice copies) are biometric: never in the repo.
+*.pt
+.finhub-voice/
 
 # Ignore the output video from Git but not videos you import into src/.
 out
@@ -35,6 +38,7 @@ remotion-video-skill.zip
 __pycache__/
 /public/videos/*/foreground.webm
 /public/videos/*/foreground.webm.part
+/public/videos/*/**/*.part.*
 /public/videos/*/voice/
 /.omnivoice/
 

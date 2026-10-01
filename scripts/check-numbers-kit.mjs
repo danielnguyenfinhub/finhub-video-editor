@@ -88,6 +88,8 @@ for (const [name, body, term] of [
   ["a newline", "financial\nadvice", "financial advice"],
   ["a non-breaking space", "You will\u00A0qualify", "will qualify"],
   ["a narrow no-break space in Vietnamese", "lãi suất\u202Ftốt nhất", "lãi suất tốt nhất"],
+  ["a zero-width space inside a word", "Dịch vụ miễn ph\u200Bí", "dịch vụ miễn phí"],
+  ["a soft hyphen inside a word", "guaran\u00ADteed approval", "guaranteed approval"],
 ]) {
   const got = flagged({ body });
   check(`a banned phrase with ${name} is flagged`, got.includes(`"${term}" — promotional`), got || "not flagged");

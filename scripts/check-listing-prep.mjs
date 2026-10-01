@@ -1,7 +1,9 @@
 // Self-check for scripts/listing-prep.mjs parsing (synthetic listing, no files).
 //   node scripts/check-listing-prep.mjs
 import assert from "node:assert/strict";
-import { amounts, orderPhotos, parseListingTxt, priceProblems, slugify, validateListing } from "./listing-prep.mjs";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { amounts, orderPhotos, parseListingTxt, priceProblems, slugOk, slugify, validateListing } from "./listing-prep.mjs";
 
 const AGENTS = { deric: { name: "Test Agent" } };
 
@@ -92,6 +94,23 @@ assert.deepEqual(priceProblems("rent", "$650 per week"), []);
 assert.match(priceProblems("rent", "$650 - $700 per week").join(), /one weekly rent/);
 assert.match(priceProblems("rent", "Offers from $650 per week").join(), /one fixed amount/);
 assert.deepEqual(amounts("$1.2m to $850k"), [1200000, 850000]);
+// Unit words ("$1.2 million" once read as 1.2, so the estimate was $1.20).
+assert.deepEqual(amounts("$1.2 million"), [1200000]);
+assert.deepEqual(amounts("$1.25 mil to $900 thousand"), [1250000, 900000]);
+assert.deepEqual(amounts("$1,250,000"), [1250000]);
+assert.match(priceProblems("sale", "$1.1 million", "$1.2 million").join(), /below the estimated selling price/);
+assert.deepEqual(priceProblems("sale", "$1.2 million", "$1,200,000"), []);
+
+// CLI slugs (assertSlug): every real folder, the docs' examples and listing slugs pass;
+// anything that could leave public/ or out/ does not.
+const ROOT = join(import.meta.dirname, "..");
+const real = ["public/videos", "public/listings", "public/recordings", "out/videos", "out/listings"]
+  .flatMap((d) => (existsSync(join(ROOT, d)) ? readdirSync(join(ROOT, d), { withFileTypes: true }) : []))
+  .filter((e) => e.isDirectory()).map((e) => e.name);
+for (const s of [...real, "my-slug", "rba-sept-2026", "_test-cards", "1-example-street-canley-vale", "v2.1"])
+  assert.ok(slugOk(s), `slug "${s}" should pass`);
+for (const s of ["..", "../x", "a/b", "a\\b", "/etc", "a..b", "Ty-Do", "-x", ".hidden", "", "c:x", undefined])
+  assert.ok(!slugOk(s), `slug "${s}" should be refused`);
 
 // Unknown agent.
 assert.match(validateListing(parseListingTxt("Agent: nobody"), AGENTS).errors.join("\n"), /agent "nobody" is not in config/);

@@ -103,13 +103,14 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 
 ### Harness: repo and style teams
 
-**Trigger:** four teams built with the `harness` and OpenHarness method, all in `.claude/agents/` and `.claude/skills/`, ground rules in [team-ground-rules](docs/agents/team-ground-rules.md):
+**Trigger:** five teams built with the `harness` and OpenHarness method, all in `.claude/agents/` and `.claude/skills/`, ground rules in [team-ground-rules](docs/agents/team-ground-rules.md):
 
 | Daniel asks | Skill |
 |---|---|
 | build or add something to the repo from what exists ("add a design", "bring feature Y over") | `repo-build-team` (Team 1) |
 | keep the repo healthy ("check for bugs", "find gaps and improve it") | `repo-maintenance-team` (Team 2) |
 | work faster or cheaper ("why did that take so long", "save tokens") | `dev-efficiency-team` (Team 3) |
+| improve existing templates ("audit the designs", "make cards better", golden-rules check) | `template-improvement-team` (Team 5; creative team, golden rules, design) |
 | a video in a named style, or a batch ("make a kinetic video", "make these three") | `style-production-teams` (Team 4; routes by `config/style-teams.json`, then `video-production-team`) |
 
 `node scripts/check-teams.mjs` fails if a design is in no style team, or an agent a team names has no file.

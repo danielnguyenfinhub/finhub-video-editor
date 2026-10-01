@@ -285,10 +285,15 @@ const App = () => {
                 tone: "ok",
                 text: `Rendered. Files are in out/videos/${slug}/.`,
               }
-            : {
-                tone: "bad",
-                text: `Render failed (exit ${r.exitCode}). See the log below.`,
-              },
+            : r.exitCode === 3
+              ? {
+                  tone: "bad",
+                  text: `Rendered, NOT published (exit 3): the files are in out/videos/${slug}/. Fix what the log says, then run: node scripts/publish-video.mjs ${slug} --force. Do not render again.`,
+                }
+              : {
+                  tone: "bad",
+                  text: `Render failed (exit ${r.exitCode}). See the log below.`,
+                },
         );
       }
     }, 2000);

@@ -127,11 +127,16 @@ if (slug) {
 if (slug && !errors.length && !existsSync(join(ROOT, "public", "videos", slug, "script.json"))) {
   const run = (script) => spawnSync(process.execPath, [join(ROOT, "scripts", script), slug], { encoding: "utf8", cwd: ROOT });
   const cuts = run("check-speech-cuts.mjs");
-  if (cuts.status === 1) {
-    const hits = cuts.stdout.split("\n").filter((l) => l.startsWith("ERROR"));
+  const hits = cuts.status === 1 ? cuts.stdout.split("\n").filter((l) => l.startsWith("ERROR")) : [];
+  if (hits.length) {
     for (const h of hits) errors.push(`speech cut: ${h.trim()}`);
     errors.push(`fix the ${hits.length} speech cut(s) above (node scripts/check-speech-cuts.mjs ${slug} shows the fix for each).`);
-  } else if (cuts.status !== 0) warnings.push(`check-speech-cuts could not run: ${(cuts.stderr || cuts.stdout).trim().split("\n").pop()}`);
+  } else if (cuts.status !== 0) {
+    // A crash, kill or usage error is not a pass: the cuts were never checked, so the render waits.
+    const out = (cuts.stderr || cuts.stdout || "").trim().split("\n").filter((l) => l.trim() && !/^Node\.js v/.test(l));
+    const why = cuts.error?.message ?? out.find((l) => /^\w*Error\b/.test(l)) ?? out.at(-1) ?? (cuts.signal ? `killed (${cuts.signal})` : `exit ${cuts.status}`);
+    errors.push(`check-speech-cuts could not run, so the speech cuts are unchecked: ${why.replace(/\.$/, "")}. Fix it, then run node scripts/check-speech-cuts.mjs ${slug}.`);
+  }
   const pace = run("check-pacing.mjs");
   if (pace.status === 2) warnings.push(`pacing: gaps with no visual change; see node scripts/check-pacing.mjs ${slug}.`);
 }

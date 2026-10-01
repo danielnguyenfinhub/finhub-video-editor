@@ -88,5 +88,5 @@ changes under `"changes"`.
 
 ## Errors
 
-The editor skill's Error Handling table. A render or command failing twice for the same reason:
+The editor skill's Error Handling table. A render or command failing twice for the same reason (exit 3 from a renderer is not a failed render: the files are in `out/` and only the copy to the finished folder was refused; fix what the last lines say and run the printed publish command, never re-render):
 return `status: "failed"` with the last 5 lines of output.

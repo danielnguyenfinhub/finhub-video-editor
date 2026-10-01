@@ -38,7 +38,7 @@ for (const f of agentFiles) {
 }
 
 // Each team skill lists its agents as `agent-name` in backticks inside its "## The team" table.
-const TEAM_SKILLS = ["repo-build-team", "repo-maintenance-team", "dev-efficiency-team", "style-production-teams"];
+const TEAM_SKILLS = ["repo-build-team", "repo-maintenance-team", "dev-efficiency-team", "style-production-teams", "template-improvement-team"];
 for (const skill of TEAM_SKILLS) {
   const path = at(".claude/skills", skill, "SKILL.md");
   if (!existsSync(path)) { problems.push(`missing skill ${skill}`); continue; }

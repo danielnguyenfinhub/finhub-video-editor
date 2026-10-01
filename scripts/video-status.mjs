@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
+import { assertSlug } from "./listing-prep.mjs";
 
 const readJson = (p) => {
   try {
@@ -101,7 +102,7 @@ export const readinessOf = (root, slug) => {
   const add = (level, problem, fix) => items.push({ level, problem, fix });
   if (run("ffmpeg", ["-version"]).error) add("blocked", "ffmpeg is missing (prep and render need it)", "install ffmpeg and add it to PATH");
   if (run("python", ["--version"]).error) add("warning", "python is missing (prep, render and voicing scripts)", "install Python 3");
-  if (run("git", ["status", "--porcelain"], { cwd: root }).stdout.trim())
+  if (run("git", ["status", "--porcelain"], { cwd: root }).stdout?.trim())
     add("warning", "uncommitted changes (the team's intake stops on them)", "commit them, or tell Claude to go ahead");
   const edit = readJson(join(root, "public/videos", slug, "edit.json"));
   const pipeline = existsSync(join(root, "public/videos", slug, "script.json")) ? "B" : "A";
@@ -144,6 +145,7 @@ const main = () => {
   const slug = process.argv[2];
   if (slug === "--check") return check(root);
   if (!slug) return board(root);
+  assertSlug(slug);
   const ready = readinessOf(root, slug);
   console.log(`readiness: ${ready.level}`);
   for (const i of ready.items) console.log(`  ${i.level}: ${i.problem} -> ${i.fix}`);

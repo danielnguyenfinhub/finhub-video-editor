@@ -8,8 +8,8 @@ out/listings/<slug>/: <slug>-<lang>.mp4 (1080x1920, -14 LUFS),
 (1080x1350: the 4:5 middle, with the agent and legal end cards scaled whole),
 <slug>-<lang>-thumbnail.png and <slug>-<lang>.srt. Then
 scripts/publish-listing.mjs puts the topic-named videos and caption.txt in
-"4 - GLOBAL RE FINISHED VIDEOS". Stops before rendering if the listing
-compliance guard or the font preflight fails. Pipeline: docs/agents/listing-video.md.
+"4 - GLOBAL RE FINISHED VIDEOS" (exit 3 when that fails: rendered, not published).
+Stops before rendering if the listing compliance guard or the font preflight fails. Pipeline: docs/agents/listing-video.md.
 """
 
 from __future__ import annotations
@@ -101,7 +101,7 @@ def render(slug: str, lang: str, scenes: list[dict], out_dir: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("slug", help="folder name under public/listings/")
+    parser.add_argument("slug", type=rv.check_slug, help="folder name under public/listings/")
     parser.add_argument("--lang", choices=["vi", "en"], help="only this language (default: every one voiced)")
     args = parser.parse_args()
     slug: str = args.slug
@@ -122,7 +122,9 @@ def main() -> None:
     print("\n== 4 - GLOBAL RE FINISHED VIDEOS", flush=True)
     published = subprocess.run(["node", "--no-warnings", str(ROOT / "scripts" / "publish-listing.mjs"), slug, "--force"], cwd=ROOT)
     if published.returncode:
-        print(f"\nThe render succeeded (files in {out_dir}); only the copy to the finished folder waits for the fix above.", flush=True)
+        print(f"\nNOT PUBLISHED: the render succeeded (files in {out_dir}), but nothing went in the finished "
+              f"folder. Fix the problem above, then run: node scripts/publish-listing.mjs {slug} --force", flush=True)
+        sys.exit(3)
 
 
 if __name__ == "__main__":

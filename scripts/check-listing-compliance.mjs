@@ -38,6 +38,11 @@ expectHit("Chủ nhà cần bán gấp, giá hời!", sale, "bargain-vi");
 expectHit("Must sell — bargain buy", sale, "bargain-en");
 expectHit("Priced at $850,000", sale, "price-below-advertised");
 expectHit("Chỉ khoảng 850 nghìn đô", sale, "price-below-advertised");
+// Unit words in the copy ("$850 thousand" once read as $850, under half the floor, so never compared).
+expectHit("Yours for $850 thousand", sale, "price-below-advertised");
+expectHit("Just $0.85 million", sale, "price-below-advertised");
+expectHit("Chỉ $0.85 mil", sale, "price-below-advertised");
+expectClean("Priced at $1.1 million", sale);
 expectHit("8% rental yield, positive cash flow", sale, "investment-return-en");
 expectHit("Lợi nhuận 8% mỗi năm", sale, "investment-return-vi");
 expectHit("Walking distance to Cabramatta station", sale, "vague-location-en");
