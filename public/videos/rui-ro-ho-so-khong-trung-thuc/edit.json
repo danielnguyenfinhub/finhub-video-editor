@@ -1,0 +1,288 @@
+{
+  "source": "rui-ro-ho-so-khong-trung-thuc",
+  "design": "cards",
+  "background": "vignette",
+  "title": "Rủi ro: hồ sơ vay không đúng",
+  "pacing": {
+    "mode": "off"
+  },
+  "chapters": [
+    {
+      "atMs": 31220,
+      "title": "Hãy suy nghĩ kỹ",
+      "effect": "slide"
+    },
+    {
+      "atMs": 99260,
+      "title": "Tại sao mình nhắc lại hoài",
+      "effect": "pushCut"
+    }
+  ],
+  "stats": [],
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 22600,
+      "toMs": 30400,
+      "title": "Xác suất bị phát hiện?",
+      "items": [
+        {
+          "text": "Có thể đúng",
+          "atMs": 22840
+        },
+        {
+          "text": "Mình không biết",
+          "atMs": 24200
+        },
+        {
+          "text": "Nếu chỉ tính một người",
+          "atMs": 27080
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 37300,
+      "toMs": 47140,
+      "title": "Hệ sinh thái đó",
+      "items": [
+        {
+          "text": "Người làm hồ sơ cho bạn",
+          "atMs": 38180
+        },
+        {
+          "text": "Người chủ giúp bạn",
+          "atMs": 41220
+        },
+        {
+          "text": "Người kế toán giúp bạn",
+          "atMs": 43560
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 47300,
+      "toMs": 55000,
+      "title": "Những người đó",
+      "items": [
+        {
+          "text": "Bạn sẽ không biết",
+          "atMs": 47460
+        },
+        {
+          "text": "Có thể đã bị ngân hàng cảnh giác",
+          "atMs": 52760
+        }
+      ]
+    },
+    {
+      "kind": "kinetic",
+      "fromMs": 77200,
+      "toMs": 83000,
+      "struck": [
+        {
+          "text": "Bạn là vấn đề",
+          "atMs": 77560,
+          "strikeMs": 78300
+        }
+      ],
+      "slam": {
+        "text": "Hệ sinh thái là vấn đề",
+        "atMs": 79940
+      }
+    },
+    {
+      "kind": "points",
+      "fromMs": 85600,
+      "toMs": 96830,
+      "title": "Hệ sinh thái đó",
+      "items": [
+        {
+          "text": "Có thể đã bị cảnh giác",
+          "atMs": 85860
+        },
+        {
+          "text": "Trong tình huống đó",
+          "atMs": 88440
+        },
+        {
+          "text": "Xác suất bị phát hiện cao hơn nhiều",
+          "atMs": 91700
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 102900,
+      "toMs": 108700,
+      "title": "Chỉ hy vọng",
+      "items": [
+        {
+          "text": "Không ai rơi vào tình cảnh đó",
+          "atMs": 103480
+        },
+        {
+          "text": "Đáng lẽ tìm được nhà mơ ước",
+          "atMs": 105840
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 108900,
+      "toMs": 115000,
+      "title": "Tình cảnh đó",
+      "items": [
+        {
+          "text": "Không có nhà",
+          "atMs": 109160
+        },
+        {
+          "text": "Còn mất thêm tiền",
+          "atMs": 110400
+        },
+        {
+          "text": "Đó là lý do mình nhắc mãi",
+          "atMs": 112700
+        }
+      ]
+    }
+  ],
+  "compliance": {
+    "illustrativeNumbers": true
+  },
+  "notes": [
+    "Tóm tắt: Daniel trả lời phản biện 'ngoài kia bao nhiêu người làm hồ sơ không trung thực, xác suất bị phát hiện rất mong manh'. Anh thừa nhận tỷ lệ bị phát hiện của một cá nhân có thể không cao, nhưng người làm hồ sơ, người chủ, kế toán đã 'giúp' nhiều người trước đó và có thể đã nằm trong tầm cảnh giác của ngân hàng; bước vào hệ sinh thái đó thì xác suất bị phát hiện cao hơn rất nhiều. Kết: anh nhắc đi nhắc lại để không ai mất căn nhà mơ ước mà còn mất thêm tiền.",
+    "Hook @0ms: 'Những khi mà mình chia sẻ những rủi ro ... trời ơi, ngoài kia bao nhiêu người làm như vậy.' (0-12340ms).",
+    "Chuyển ý: @31220 'Nhưng các bạn hãy suy nghĩ kỹ như thế này nè' (lập luận hệ sinh thái); @86520 'Cho nên ... tỷ lệ xác suất cao hơn rất là nhiều' (kết luận lập luận); @95160 'việc mình chia sẻ điều này ...' (vì sao nhắc lại); @108780 hậu quả: không có nhà, mất thêm tiền.",
+    "Con số: không có số liệu định lượng. 'ít hơn trúng số' (@19860, @23120) là lời người khác, Daniel nói không biết; 'tỷ lệ một người như vậy ... không phải là quá cao' (@28180) và 'cao hơn rất là nhiều' (@91280) là so sánh định tính, không có phép tính. Không được hiện thành con số hay biểu đồ.",
+    "Từ cần theo dõi (RG 234): không có từ nào trong danh sách compliance.ts được Daniel nói. 'hấp dẫn' chỉ nằm trong đoạn Whisper bịa ở cuối (đã cắt).",
+    "Thuế / lãi suất: không có. Ngân hàng: chỉ nói chung 'các ngân hàng' (@53400), không nêu tên. Không có dữ liệu khách hàng.",
+    "Cắt: [117900,118300] 'Hãy subscribe cho kênh Ghiền Mì Gõ ...' là Whisper bịa trong khoảng lặng cuối (các từ dài 0 ms tại 118180, file dài 118.3 s), Daniel không nói. [50060,51080] câu bắt đầu lại 'có đã bị... hay là'. [84160,84820] câu bắt đầu lại 'đã được...'. [93360,94880] câu bắt đầu lại 'Cho nên khi mà mình nói,' (nói lại ngay: 'cũng như mình nói là ...').",
+    "Sửa phụ đề (chỉ chữ, không đụng âm thanh): phản bị→phản biện, khả sát sức→xác suất, sát xuất→xác suất, rấy ràng→rõ ràng, trầm (lặp)→ẩn, cải sinh thái→hệ sinh thái, không loại→không lợi, vê→vào.",
+    "Chưa chắc (giữ nguyên): @62000 'vùng tàu' (có thể 'vùng tối'/'vùng xám'); @104940 'ra họ' (có thể 'mà họ'); @98000 'loại'→'lợi' là đoán theo ngữ cảnh.",
+    "Editor (A3/A4): design cards (Daniel: use cards template), quick mode vignette (Daniel). Signature moments: hook 0ms quote card; @31220 chapter; points @33820 (3 people Daniel lists); kinetic @76000 (không phải bạn là vấn đề, hệ sinh thái là vấn đề); @99260 chapter; CTA. No figures, no stats, no charts. Music serious-documentary from 0ms.",
+    "30/09/2026 pacing set to off: auto pacing played segments at 0.9x-1.2x and shifted Daniel's pitch and tone (was {\"mode\":\"auto\"})."
+  ],
+  "remove": [
+    [
+      50060,
+      51080
+    ],
+    [
+      84160,
+      84820
+    ],
+    [
+      93360,
+      94880
+    ],
+    [
+      117900,
+      118300
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "bị",
+      "to": "biện",
+      "atMs": 8520
+    },
+    {
+      "from": "khả",
+      "to": "",
+      "atMs": 13500
+    },
+    {
+      "from": "sát",
+      "to": "xác",
+      "atMs": 13700
+    },
+    {
+      "from": "sức",
+      "to": "suất",
+      "atMs": 13960
+    },
+    {
+      "from": "sát",
+      "to": "xác",
+      "atMs": 91700
+    },
+    {
+      "from": "xuất",
+      "to": "suất",
+      "atMs": 91880
+    },
+    {
+      "from": "rấy",
+      "to": "rõ",
+      "atMs": 90140
+    },
+    {
+      "from": "trầm",
+      "to": "",
+      "atMs": 71480
+    },
+    {
+      "from": "cải",
+      "to": "hệ",
+      "atMs": 79940
+    },
+    {
+      "from": "loại",
+      "to": "lợi",
+      "atMs": 98000
+    },
+    {
+      "from": "vê",
+      "to": "vào",
+      "atMs": 104040
+    },
+    {
+      "from": "lập",
+      "to": "lặp",
+      "atMs": 100260
+    },
+    {
+      "from": "lập",
+      "to": "lặp",
+      "atMs": 100580
+    },
+    {
+      "from": "đó",
+      "to": "đôi",
+      "atMs": 77040
+    }
+  ],
+  "coverFrameMs": 31500,
+  "hook": {
+    "big": "BAO NHIÊU NGƯỜI LÀM?",
+    "sub": "“Trời ơi, ngoài kia bao nhiêu người làm như vậy”"
+  },
+  "music": {
+    "file": "music/serious-documentary.mp3",
+    "startMs": 0
+  },
+  "keywords": [
+    "hệ sinh thái",
+    "cảnh giác",
+    "tầm ngắm"
+  ],
+  "cta": {
+    "question": "Bạn cần tư vấn hồ sơ vay?"
+  },
+  "post": {
+    "title": "Rủi ro khi làm hồ sơ vay không trung thực",
+    "caption": "Có người nói: ngoài kia bao nhiêu người làm hồ sơ không đúng, xác suất bị phát hiện rất thấp. Nhưng người làm hồ sơ, người chủ hay kế toán giúp bạn có thể đã giúp rất nhiều người trước đó, và có thể đã nằm trong tầm cảnh giác của ngân hàng. Khi bước vào hệ sinh thái đó, khả năng bạn bị phát hiện cao hơn rất nhiều. Mình nhắc đi nhắc lại chỉ mong không ai mất căn nhà mơ ước mà còn mất thêm tiền. Bạn cần tư vấn hồ sơ vay? Nhắn tin cho mình.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#hosovay",
+      "#vaymuanha",
+      "#nganhang",
+      "#ruiro",
+      "#muanha"
+    ]
+  }
+}
