@@ -44,7 +44,11 @@ try {
   // A wrong type the schema rejects; preflight's own checks do not look at "design", check-pacing's schema does.
   r = preflight({ pacing: { mode: "off" }, design: 42 });
   assert.equal(r.status, 1, `a schema-invalid edit.json must block, got:\n${r.stdout}${r.stderr}`);
-  if (noBrowser(r)) skip("check-schema reports the bad design in its own words", r);
+  assert.match(r.stderr, /at design/, `the block must name the field (check-pacing does, with no browser), got:\n${r.stderr}`);
+  // The field is named by check-pacing (no browser), so the block itself is proved above and below. check-schema's
+  // own words are a bonus: when its browser dropped mid-call ("Target closed") they never arrive, which is SKIPPED, not a pass.
+  if (noBrowser(r) || (!/design/.test(schemaLines(r)) && /Target closed|Protocol error|Failed to launch/i.test(schemaLines(r))))
+    skip("check-schema reports the bad design in its own words", r);
   else assert.match(schemaLines(r), /design/, `check-schema must name the schema error, got:\n${r.stderr}`);
   assert.match(r.stderr, /check-pacing could not run[\s\S]*design/, "a check-pacing crash blocks");
 

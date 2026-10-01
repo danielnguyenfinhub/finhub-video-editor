@@ -140,9 +140,9 @@ const BROWSER_FAILURE = /Target closed|Protocol error|Failed to launch|chrom(e|i
 const SCHEMA_TIMEOUT_S = 300; // a bundle and a browser start; a hung browser must not hold the render forever
 const lines = (r) => (r.stderr || r.stdout || "").trim().split("\n").filter((l) => l.trim() && !/^Node\.js v/.test(l) && !/^\s+at /.test(l));
 // A failed check's own words: from its "Error:" line if it has one, else its first lines.
-const detail = (r) => {
+const detail = (r, n = 3) => {
   const l = lines(r), k = l.findIndex((x) => /^\w*Error\b/.test(x));
-  return (r.error ? [r.error.message] : k >= 0 ? l.slice(k, k + 3) : l.slice(0, 5)).join("\n    ") || `exit ${r.status}`;
+  return (r.error ? [r.error.message] : k >= 0 ? l.slice(k, k + n) : l.slice(0, Math.max(5, n))).join("\n    ") || `exit ${r.status}`;
 };
 const why = (r) => r.error?.message ?? lines(r).find((l) => /^\w*Error\b/.test(l)) ?? lines(r).at(-1) ?? (r.signal ? `killed (${r.signal})` : `exit ${r.status}`);
 const checked = slug && !errors.length; // each check below runs; every failure is listed
@@ -155,7 +155,7 @@ if (checked) {
   if (browserFailure)
     warnings.push(`check-schema could not run (${schema.error?.code === "ETIMEDOUT" ? `no answer in ${SCHEMA_TIMEOUT_S} s` : why(schema).replace(/\.$/, "")}), so the composition schema is unchecked here; the render checks it again. node scripts/check-schema.mjs ${slug} shows it.`);
   else if (schema.status !== 0)
-    errors.push(`check-schema failed, so the render would too:\n    ${detail(schema)}\n  Fix it, then run node scripts/check-schema.mjs ${slug}.`);
+    errors.push(`check-schema failed, so the render would too:\n    ${detail(schema, 14)}\n  Fix it, then run node scripts/check-schema.mjs ${slug}.`);
 }
 if (checked && !existsSync(join(dir, "script.json"))) {
   const cuts = run("check-speech-cuts.mjs");
