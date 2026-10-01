@@ -58,6 +58,7 @@ import { fileURLToPath } from "node:url";
 import { checkFacts, readLedger } from "./facts.mjs";
 import { find } from "./library.mjs";
 import { omnivoicePython, resolveProfile } from "./omnivoice.mjs";
+import { spendProblem } from "./spend.mjs";
 import { aiClip, stockClips } from "./visuals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -228,7 +229,21 @@ if (withFootage) {
       console.log(`  ${i + 1}. ai: ${show([...find(s.ai, { kind: "ai-image" }), ...find(s.footage, { kind: "ai-image" })], "would generate")}`);
   });
 }
-if (dryRun) process.exit(0);
+// Spend guard (scripts/spend.mjs): a paid run needs the --dry-run estimate Daniel saw.
+const aiImages = withFootage ? scenes.filter((s) => s.ai).length : 0;
+const estimateFile = join(dir, "spend-estimate.json");
+if (dryRun) {
+  if (engine === "elevenlabs" || aiImages > 0) {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(estimateFile, JSON.stringify({ at: new Date().toISOString().slice(0, 10), engine, chars, aiImages }));
+    console.log(`Estimate recorded (${estimateFile.slice(ROOT.length + 1).replace(/\\/g, "/")}): a real run may use up to 50% more characters or images before it asks again.`);
+  }
+  process.exit(0);
+}
+{
+  const problem = spendProblem({ engine, chars, aiImages }, existsSync(estimateFile) ? JSON.parse(readFileSync(estimateFile, "utf8")) : null);
+  if (problem) fail(`spend guard: ${problem}`);
+}
 
 for (const envFile of [".env.local", ".env"]) {
   if (existsSync(join(ROOT, envFile))) {

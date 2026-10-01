@@ -140,6 +140,6 @@ RG 234 scans all of it.
 
 ## Steps
 
-1. **Write** `facts.json` and `script.json` and run `node scripts/voice-video.mjs <slug> --dry-run`. It checks RG 234 and the fact ledger, and prints the character count and the footage searches.
+1. **Write** `facts.json` and `script.json` and run `node scripts/voice-video.mjs <slug> --dry-run`. It checks RG 234 and the fact ledger, and prints the character count and the footage searches. For a paid engine (`elevenlabs`) or fal.ai images it also records `spend-estimate.json`; a real run refuses without it, and refuses again if the script has grown more than 50% since (re-run `--dry-run`, show Daniel the new cost).
 2. **Send Daniel the script** as a readable list (Vietnamese, English, footage, post copy) with the character count. Wait for his approval.
 3. **Build.** Run `node scripts/voice-video.mjs <slug>`, then add the hook, chapters and stats to `edit.json` (`references/edit-json.md`), and `"compliance": {"policyAsAt": "<oldest asAt in facts.json>"}` so the end card shows the policy date (preflight blocks the render without it). Check stills, then render with `python scripts/render-video.py <slug>`.
