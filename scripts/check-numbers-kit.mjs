@@ -79,5 +79,13 @@ check("… the same way as in a kinetic cue", viaChange === viaKinetic, `change:
 const viaTrend = guard({ ...trend, rateType: "cash", points: [{ label: banned, value: 1 }, { label: "B", value: 2 }] });
 check("a banned phrase in a trend point label is flagged", viaTrend.includes(`"${banned}"`), viaTrend);
 
+// The end card's policy date (faceless videos built from a policy document).
+const { policyAsAtLine } = await import(pathToFileURL(join(dir, "compliance.mjs")).href);
+const line = policyAsAtLine("2026-08-01");
+check("policy date line carries the date in both languages", line.split("01/08/2026").length === 3, line);
+check("the policy date line passes the RG 234 guard", (() => { try { assertCompliantCopy([line], []); return true; } catch { return false; } })(), line);
+check("compliance.policyAsAt accepts YYYY-MM-DD", issues(edit([], { compliance: { policyAsAt: "2026-08-01" } })).length === 0);
+check("compliance.policyAsAt rejects DD/MM/YYYY", issues(edit([], { compliance: { policyAsAt: "01/08/2026" } })).some((i) => i.includes("policyAsAt")));
+
 console.log(failed ? `\n${failed} check(s) failed` : "\nall numbers-kit checks passed");
 process.exit(failed ? 1 : 0);

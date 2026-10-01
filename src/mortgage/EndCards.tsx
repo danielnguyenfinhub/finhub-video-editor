@@ -14,6 +14,7 @@ import {
   LICENSING_STATEMENT,
   TAX_NOTE,
   comparisonWarningVi,
+  policyAsAtLine,
 } from "./compliance";
 import { SAFE } from "./golden";
 import type { EditJson } from "./schema";
@@ -65,6 +66,9 @@ export const complianceLines = (
       : []),
     ...(compliance?.taxNote
       ? [{ text: TAX_NOTE, base: 38, color: "#33445A" }]
+      : []),
+    ...(compliance?.policyAsAt
+      ? [{ text: policyAsAtLine(compliance.policyAsAt), base: 38, color: "#33445A" }]
       : []),
     ...(rate
       ? [

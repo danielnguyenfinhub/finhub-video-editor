@@ -4,7 +4,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { checkFacts, readLedger } from "./facts.mjs";
+import { checkFacts, oldestAsAt, readLedger } from "./facts.mjs";
 
 const root = mkdtempSync(join(tmpdir(), "facts-"));
 const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
@@ -46,6 +46,9 @@ try {
   r = run("stale", [{ vi: "Lãi suất tiền mặt là 3,6 phần trăm.", en: "The cash rate is 3.6 percent.", facts: ["F1"] }],
     [fact("F1", "The cash rate target is 3.60 per cent.", daysAgo(200))]);
   expect("a stale asAt must warn, not fail", r.errors.length === 0 && r.warnings.some((w) => w.startsWith("F1 is 200 days old")), r);
+  expect("oldestAsAt picks the oldest source date (the end card's policy date)",
+    oldestAsAt([fact("F1", "x", daysAgo(10)), fact("F2", "y", daysAgo(200)), { id: "F3" }]) === fact("F2", "y", daysAgo(200)).asAt,
+    oldestAsAt([fact("F1", "x", daysAgo(10)), fact("F2", "y", daysAgo(200))]));
 } finally {
   rmSync(root, { recursive: true, force: true });
 }

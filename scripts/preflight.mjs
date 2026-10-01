@@ -103,6 +103,16 @@ if (slug) {
       if (s.text.length > 140)
         warnings.push(`English line "${s.text.slice(0, 40)}…" is ${s.text.length} characters (over 3 lines); shorten it.`);
     if (edit.title && edit.title.split(/\s+/).length > 8) warnings.push(`title has more than 8 words: "${edit.title}".`);
+    // A video built from a policy document shows the document's date on the end card.
+    try {
+      const { readLedger, oldestAsAt } = await import("./facts.mjs");
+      const ledger = readLedger(dir);
+      const want = ledger?.length ? oldestAsAt(ledger) : undefined;
+      if (want && edit.compliance?.policyAsAt !== want)
+        errors.push(`facts.json's oldest source is dated ${want}: set "compliance": {"policyAsAt": "${want}"} in edit.json so the end card shows it.`);
+    } catch (err) {
+      errors.push(String(err.message));
+    }
     // Auto pacing plays segments at 0.9-1.2x and the render shifts Daniel's pitch and tone with
     // the speed (measured: +31% at 1.2x, -9% at 0.9x). Faceless voice-overs (script.json) are synthetic.
     if (edit.pacing?.mode !== "off" && !existsSync(join(dir, "script.json")))
