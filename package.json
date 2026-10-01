@@ -91,7 +91,7 @@
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
-    "test": "node scripts/check-caption-fixes.mjs && node scripts/check-captions.mjs && node scripts/check-element-copy.mjs && node scripts/check-facts.mjs && node scripts/check-listing-compliance.mjs && node scripts/check-listing-prep.mjs && node scripts/check-numbers-kit.mjs && node scripts/check-promote.mjs && node scripts/check-publish.mjs && node scripts/check-visuals.mjs && node scripts/check-pacing.selftest.mjs && node scripts/check-speech-cuts.selftest.mjs && node review/check-shift.mjs && node review/check-timeline.mjs",
+    "test": "node scripts/check-caption-fixes.mjs && node scripts/check-captions.mjs && node scripts/check-contrast.mjs && node scripts/check-selector.mjs && node scripts/check-element-copy.mjs && node scripts/check-facts.mjs && node scripts/check-listing-compliance.mjs && node scripts/check-listing-prep.mjs && node scripts/check-numbers-kit.mjs && node scripts/check-promote.mjs && node scripts/check-publish.mjs && node scripts/check-visuals.mjs && node scripts/check-pacing.selftest.mjs && node scripts/check-speech-cuts.selftest.mjs && node review/check-shift.mjs && node review/check-timeline.mjs",
     "review":"node review/build.mjs",
     "setup-voice": "node scripts/setup-omnivoice.mjs",
     "clone-voice": "node scripts/clone-voice.mjs",

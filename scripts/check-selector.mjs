@@ -1,6 +1,6 @@
 // Self-test for scripts/select-template.mjs on synthetic briefs (no slug, no
 // media): node scripts/check-selector.mjs -> "selector ok", exit 1 on failure.
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { intentsOf } from "./brief.mjs";
 import { confidenceOf, loadManifests, overrideOf, rank } from "./select-template.mjs";
@@ -23,7 +23,10 @@ const brief = (over) => ({
   assets: { foreground: true, voice: false, script: false }, ...over,
 });
 
-check("14 manifests", manifests.length === 14, String(manifests.length));
+// Every design folder (one with an index.tsx) has a manifest, and none was dropped on load.
+const designsDir = join(import.meta.dirname, "..", "src", "designs");
+const designs = readdirSync(designsDir).filter((id) => existsSync(join(designsDir, id, "index.tsx")));
+check("every design has a manifest", manifests.length === designs.length, `${manifests.length} manifests, ${designs.length} designs`);
 
 // A number-heavy talk ranks the data templates above the story ones.
 const numbers = brief({
