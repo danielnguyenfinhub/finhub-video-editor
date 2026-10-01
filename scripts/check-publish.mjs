@@ -1,10 +1,12 @@
 // Self-test for scripts/publish-video.mjs on synthetic posts and publish-listing's
-// stale-language check (file times, and listing-render's on-screen hash stamp) (no media; a temp folder only): node scripts/check-publish.mjs -> "publish ok", exit 1 on failure.
+// stale-language check (file times, and listing-render's on-screen hash stamp), publish-video's
+// same-title guard and stale-render stop (no media; a temp folder only): node scripts/check-publish.mjs -> "publish ok", exit 1 on failure.
 import assert from "node:assert/strict";
 import {
   buildCaption, loadBroker, loadCompliance, postProblems, rg234Problems, topicFileName,
 } from "./publish-video.mjs";
-import { mkdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { onScreenHash, staleLangs, stampPath, staleStop } from "./publish-listing.mjs";
@@ -111,5 +113,111 @@ assert.match(old.text, /Thông tin chung\. Ví dụ minh hoạ\./);
   assert.deepEqual(staleLangs(out, base, "s"), []);
   rmSync(tmp, { recursive: true });
 }
+
+// publish-video end to end on a temp public/ and out/ (B1, G2 of maintenance run 3).
+{
+  const tmp = repoTmp("publish-video-"), pub = join(tmp, "pub"), out = join(tmp, "out");
+  const publish = (slug, video, ...flags) => spawnSync(process.execPath,
+    [join(import.meta.dirname, "publish-video.mjs"), slug, "--public-dir", pub, "--out", out, "--video", video, ...flags],
+    { encoding: "utf8" });
+  const edit = (slug, extra = {}) => {
+    mkdirSync(join(pub, "videos", slug), { recursive: true });
+    writeFileSync(join(pub, "videos", slug, "edit.json"), JSON.stringify({ title: "T", ...extra, post: { ...good, title: "Cùng một chủ đề", ...extra.post } }, null, 2));
+  };
+  // What render-video.py writes next to <video> once the render is done.
+  const stamp = (slug, video) => writeFileSync(video.replace(/\.mp4$/, ".inputs"), spawnSync(process.execPath,
+    [join(import.meta.dirname, "publish-video.mjs"), slug, "--inputs-hash", "--public-dir", pub], { encoding: "utf8" }).stdout);
+  edit("_test-a"); edit("_test-b");
+  writeFileSync(join(pub, "videos", "_test-a", "words.json"), "[]");
+  const a = join(tmp, "a.mp4"), b = join(tmp, "b.mp4");
+  writeFileSync(a, "AAA"); writeFileSync(b, "BBB"); stamp("_test-b", b);
+  const mp4 = join(out, "Cùng một chủ đề.mp4");
+  let r = publish("_test-a", a, "--force");
+  assert.equal(r.status, 0, r.stderr);
+  // B1: a second slug with the same post title must not replace the first one's files, even with --force.
+  r = publish("_test-b", b, "--force");
+  assert.equal(r.status, 1, "another slug's same-title files must not be replaced");
+  assert.match(r.stderr, /is video "_test-a", not "_test-b".*Nothing copied/s);
+  assert.equal(readFileSync(mp4, "utf8"), "AAA");
+  writeFileSync(a, "AAA2"); // the same slug re-rendered: --force replaces
+  assert.equal(publish("_test-a", a, "--force").status, 0);
+  assert.equal(readFileSync(mp4, "utf8"), "AAA2");
+  edit("_test-b", { post: { title: "Chủ đề khác" } }); // the advice: its own title
+  r = publish("_test-b", b, "--force"); assert.equal(r.status, 0, r.stderr + r.stdout);
+
+  // G2: render-video.py's stamp. A post-only fix publishes; an on-screen edit stops unless --stale-ok.
+  stamp("_test-a", a); // rendered
+  assert.match(readFileSync(join(tmp, "a.inputs"), "utf8"), /^[0-9a-f]{64}\n$/);
+  edit("_test-a", { post: { caption: `${good.caption} Gọi ngay.` } }); // newer than the mp4 and the stamp
+  r = publish("_test-a", a, "--force"); assert.equal(r.status, 0, r.stderr);
+  edit("_test-a", { title: "Changed on screen" });
+  r = publish("_test-a", a, "--force");
+  assert.equal(r.status, 1, "an on-screen edit after the render must stop publish");
+  assert.match(r.stderr, /shows old copy.*--stale-ok/s);
+  assert.equal(publish("_test-a", a, "--force", "--stale-ok").status, 0, "--stale-ok overrides");
+  edit("_test-a"); writeFileSync(join(pub, "videos", "_test-a", "words.json"), "[{}]"); // re-voiced, not re-rendered
+  assert.equal(publish("_test-a", a, "--force").status, 1, "a words.json change stops publish");
+  // No stamp: file times decide.
+  rmSync(join(tmp, "a.inputs"));
+  utimesSync(a, 1000, 1000);
+  assert.match(publish("_test-a", a, "--force").stderr, /edit\.json, words\.json changed after the render \(no stamp/);
+  writeFileSync(a, "AAA3"); // rendered after the edit
+  assert.equal(publish("_test-a", a, "--force").status, 0);
+  rmSync(tmp, { recursive: true });
+}
+
+// The owner record .publish-slugs.json (R3 of run 3, round 2).
+{
+  const tmp = repoTmp("publish-owner-"), pub = join(tmp, "pub"), out = join(tmp, "out"), v = join(tmp, "v.mp4");
+  const sidecar = join(out, ".publish-slugs.json");
+  const publish = (slug, title) => {
+    mkdirSync(join(pub, "videos", slug), { recursive: true });
+    writeFileSync(join(pub, "videos", slug, "edit.json"), JSON.stringify({ title: "T", post: { ...good, title } }));
+    return spawnSync(process.execPath, [join(import.meta.dirname, "publish-video.mjs"), slug, "--public-dir", pub,
+      "--out", out, "--video", v, "--stale-ok", "--force"], { encoding: "utf8" });
+  };
+  writeFileSync(v, "A"); mkdirSync(out, { recursive: true });
+  assert.equal(publish("_test-a", "Cùng một chủ đề").status, 0);
+  // (a) Windows file names ignore case, and NFD is the same name: both are the same files as _test-a's.
+  writeFileSync(v, "C");
+  for (const title of ["CÙNG MỘT CHỦ ĐỀ", "Cùng một chủ đề".normalize("NFD")]) {
+    const r = publish("_test-c", title);
+    assert.equal(r.status, 1, `a case-only or NFD title clash must not replace another slug's files: ${title}`);
+    assert.match(r.stderr, /is video "_test-a", not "_test-c"/);
+  }
+  assert.deepEqual(readdirSync(out).sort(), [".publish-slugs.json", "Cùng một chủ đề - caption.txt", "Cùng một chủ đề.mp4"]);
+  assert.equal(readFileSync(join(out, "Cùng một chủ đề.mp4"), "utf8"), "A");
+  // (b) Titles that are Object.prototype names: a legacy file (no owner) is replaced, not owned by "function Object()".
+  for (const title of ["constructor", "toString", "__proto__"]) {
+    writeFileSync(join(out, `${title}.mp4`), "legacy");
+    const r = publish("_test-p", title);
+    assert.equal(r.status, 0, `${title}: ${r.stderr}`);
+    assert.equal(JSON.parse(readFileSync(sidecar, "utf8"))[title.toLowerCase()], "_test-p");
+  }
+  // (c) A broken record stops publish, names the file and is kept as it is.
+  const kept = readFileSync(sidecar, "utf8");
+  for (const bad of ["{broken", "[]", "null", '{"x": 1}']) {
+    writeFileSync(sidecar, bad);
+    const r = publish("_test-a", "Cùng một chủ đề");
+    assert.equal(r.status, 1, `a broken owner record must stop publish: ${bad}`);
+    assert.match(r.stderr, /\.publish-slugs\.json is broken.*Nothing copied/s);
+    assert.equal(readFileSync(sidecar, "utf8"), bad, "the broken record is not replaced");
+  }
+  writeFileSync(sidecar, kept);
+  // (d) Through a temp file, before the copy: a failed write leaves the old record and copies nothing.
+  mkdirSync(`${sidecar}.tmp`);
+  writeFileSync(v, "A2");
+  assert.notEqual(publish("_test-a", "Cùng một chủ đề").status, 0, "the owner write must go through .tmp");
+  assert.equal(readFileSync(sidecar, "utf8"), kept);
+  assert.equal(readFileSync(join(out, "Cùng một chủ đề.mp4"), "utf8"), "A", "nothing copied when the owner write fails");
+  rmSync(`${sidecar}.tmp`, { recursive: true });
+  assert.equal(publish("_test-a", "Cùng một chủ đề").status, 0);
+  assert.ok(!existsSync(`${sidecar}.tmp`));
+  rmSync(tmp, { recursive: true });
+}
+// (e) Windows reserved names, alone or before a dot.
+assert.equal(topicFileName("nul.mp4 hướng dẫn"), "nul video.mp4 hướng dẫn");
+assert.equal(topicFileName("com1.x"), "com1 video.x");
+assert.equal(topicFileName("Con cái"), "Con cái");
 
 console.log("publish ok");

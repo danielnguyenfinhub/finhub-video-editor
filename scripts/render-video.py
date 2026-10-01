@@ -6,7 +6,8 @@ Writes to out/videos/<slug>/: <slug>.mp4 (1080x1920 H.264, its final mix of
 voice, music and sound effects set to -14 LUFS, the level YouTube, Facebook
 and TikTok play at), <slug>-mobile.mp4 (720x1280, two-pass x264 sized to about
 27 MB), <slug>-feed.mp4 (1080x1350, the 4:5 middle for the Facebook feed),
-thumbnail.png (the cover card, frame 45) and <slug>.srt. Exits non-zero
+thumbnail.png (the cover card, frame 45), <slug>.srt and <slug>.inputs (a hash
+of the on-screen inputs, so publish-video.mjs can tell a stale render). Exits non-zero
 on the first failure; exit 3 = rendered (files kept in out/) but not published.
 """
 
@@ -125,6 +126,12 @@ def main() -> None:
     mobile = out_dir / f"{slug}-mobile.mp4"
     thumb = out_dir / "thumbnail.png"
     props = json.dumps({"slug": slug})
+    # Hash the on-screen inputs now (what this render reads); write it only once
+    # the render is done, so publish-video.mjs can tell a stale render.
+    stamp = out_dir / f"{slug}.inputs"
+    stamp.unlink(missing_ok=True)
+    inputs = run(["node", "--no-warnings", str(ROOT / "scripts" / "publish-video.mjs"), slug,
+                  "--inputs-hash", "--public-dir", str(PUBLIC)], "on-screen inputs hash", capture=True).strip()
 
     # ponytail: concurrency 4 measured fastest on the i9-13900H / Iris Xe
     # (full reel 195 s vs 230 s at 8); re-time if the render machine changes.
@@ -180,11 +187,13 @@ def main() -> None:
               f"audio mean {mean_volume_db(path)}")
     for path in (thumb, srt):
         print(f"{path}  {path.stat().st_size / 1e3:.0f} KB")
+    stamp.write_text(inputs + "\n", encoding="utf-8")
 
     # Daniel's "2 - FINISHED VIDEOS" folder: the video named after its topic and
     # its caption file (scripts/publish-video.mjs). A missing or invalid post
     # skips this step and exits 3; the render files stay in out_dir. --force: a
-    # re-render replaces that topic's files (the originals stay in out_dir).
+    # re-render replaces that topic's files (the originals stay in out_dir), but
+    # never another slug's files with the same title (publish-video.mjs stops).
     print("\n== finished-videos folder", flush=True)
     published = subprocess.run(
         ["node", "--no-warnings", str(ROOT / "scripts" / "publish-video.mjs"), slug, "--force"],

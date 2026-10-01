@@ -25,7 +25,9 @@ edit.json then names that recording. b-roll entries are only listed.
    keyframe every 8 s, which times out parallel renders. Checked frame-for-frame
    against the original, so transcript timestamps apply to both. Its audio gets
    the VOICE_CLEANUP chain below unless --no-clean (for an already clean
-   studio recording).
+   studio recording). source.from.json beside it records the video file (size,
+   time, duration) and the clean-up, so a retry after a failed step 2 resumes
+   only for the same file.
 2. public/recordings/<id>/words.json: word-level faster-whisper large-v3
    transcript (Vietnamese) of the proxy, hesitation sounds (ờ, ừm) included so
    the timeline can cut them. Slow on CPU; progress is printed.
@@ -112,19 +114,54 @@ def reframe_args(src: Path) -> list[str]:
     return ["-vf", f"crop={c['w']}:{c['h']}:{c['x']}:{c['y']}"]
 
 
+def proxy_record(src: Path, clean: bool) -> dict:
+    """What a proxy was made from, kept beside it in source.from.json: a retry
+    resumes only when the video file and the voice clean-up are the same."""
+    st = src.stat()
+    duration = run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                    "-of", "default=nw=1:nk=1", str(src)], f"ffprobe {src.name}").strip()
+    return {"size": st.st_size, "mtimeNs": st.st_mtime_ns, "duration": duration, "clean": clean}
+
+
 def make_proxy(src: Path, proxy: Path, clean: bool) -> None:
+    """Encode to source.part.mp4 and rename once checked: a killed or failed
+    encode never leaves a source.mp4 that looks prepared."""
+    part = proxy.with_name(f"{proxy.stem}.part{proxy.suffix}")
     print(f"Encoding proxy -> {proxy} "
           f"({'voice clean-up' if clean else 'audio as recorded'}) ...", flush=True)
     run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(src),
          *reframe_args(src), *PROXY_VIDEO, *(["-af", VOICE_CLEANUP] if clean else []),
-         *PROXY_AUDIO, str(proxy)], "proxy encode")
-    original, copy = frame_count(src), frame_count(proxy)
+         *PROXY_AUDIO, str(part)], "proxy encode")
+    original, copy = frame_count(src), frame_count(part)
     if original != copy:
         raise SystemExit(
             f"Frame-count mismatch: original {original}, proxy {copy}. The proxy "
             f"dropped or duplicated frames (variable frame rate?), so transcript "
             f"timestamps would drift. Not continuing.")
+    proxy.with_name("source.from.json").write_text(json.dumps(proxy_record(src, clean)), encoding="utf-8")
+    part.replace(proxy)
     print(f"Proxy OK: {copy} frames, identical to the original.", flush=True)
+
+
+def resumable(src: Path, proxy: Path, clean: bool) -> bool:
+    """A source.mp4 with no words.json (the transcription failed or was stopped):
+    True when source.from.json shows it was made from `src` with the same clean-up
+    and it is whole, so only the transcription is left. Otherwise stop (no record
+    too); the file is never replaced or deleted here."""
+    try:
+        record = json.loads(proxy.with_name("source.from.json").read_text(encoding="utf-8"))
+        whole = record == proxy_record(src, clean) and frame_count(proxy) == frame_count(src)
+    except (OSError, ValueError, SystemExit):
+        whole = False
+    if not whole:
+        raise SystemExit(
+            f"{proxy} has no words.json and is not a whole proxy of {src} with "
+            f"{'--no-clean' if not clean else 'the voice clean-up'} (another video, another "
+            f"--no-clean, an encode that was stopped, or no source.from.json beside it). "
+            f"Nothing was changed. Prepare this video as a new "
+            f"take with --recording <other-id>, or ask Daniel to move {proxy.parent} away.")
+    print(f"Resuming: {proxy} is already a whole proxy of this video; transcribing it.", flush=True)
+    return True
 
 
 def transcribe(proxy: Path) -> list[dict]:
@@ -382,17 +419,19 @@ def main() -> None:
                          "existing recording")
         if not (proxy.exists() and words_path.exists()):
             raise SystemExit(f"No prepared recording in {folder} (it needs source.mp4 and "
-                             f"words.json). Give the video file to prepare it.")
+                             f"words.json). Give the video file to prepare it"
+                             f"{' (the same file again finishes it)' if proxy.exists() else ''}.")
         title = slug
     else:
         src: Path = args.video.resolve()
         if not src.is_file():
             raise SystemExit(f"Video not found: {src}")
-        if proxy.exists():
+        if proxy.exists() and words_path.exists():
             refuse_existing(folder, recording, slug)
         title = src.stem
         folder.mkdir(parents=True, exist_ok=True)
-        make_proxy(src, proxy, clean=not args.no_clean)
+        if not (proxy.exists() and resumable(src, proxy, not args.no_clean)):
+            make_proxy(src, proxy, clean=not args.no_clean)
         words = transcribe(proxy)
         words_path.write_text(json.dumps(words, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"Wrote {words_path} ({len(words)} tokens)")

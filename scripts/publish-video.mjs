@@ -13,12 +13,19 @@
 //                           hashtags, then the licence and disclaimer footer
 // Topic = post.title made safe as a Windows file name. The caption file is
 // UTF-8 without a BOM (Windows 11 Notepad reads it; a BOM would be pasted as an
-// invisible first character). Never replaces a file unless --force.
+// invisible first character). Never replaces a file unless --force, and even
+// with --force never replaces another slug's files of the same topic (the owner
+// of each topic is kept in <out>/.publish-slugs.json).
+// Refuses a render older than its on-screen inputs (edit.json/script.json without
+// "post", words.json; render-video.py stamps their hash in <slug>.inputs), unless
+// --stale-ok. "post" is upload copy, so fixing it never needs a re-render.
 // render-video.py runs this after every render.
+//   node scripts/publish-video.mjs <slug> --inputs-hash [--public-dir <dir>]   (render-video.py's stamp)
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { assertSlug } from "./listing-prep.mjs";
 
@@ -38,7 +45,43 @@ export const topicFileName = (title) => {
     .replace(/\s+/g, " ")
     .trim();
   const capped = [...name].slice(0, MAX_NAME).join("").replace(/[. ]+$/, "");
-  return /^(con|prn|aux|nul|com\d|lpt\d)$/i.test(capped) ? `${capped} video` : capped;
+  // Reserved on Windows, alone or before a dot ("nul.x"): "CON" -> "CON video", "nul.x" -> "nul video.x".
+  return capped.replace(/^(con|prn|aux|nul|com\d|lpt\d)(?=\.|$)/i, "$1 video");
+};
+
+/** Hash of the files a render shows, in order; "post" is taken out of edit.json and script.json. */
+export const hashInputs = (paths) =>
+  createHash("sha256").update(JSON.stringify(paths.map((path) => {
+    let text = existsSync(path) ? readFileSync(path, "utf8") : "";
+    if (/(^|[\\/])(edit|script)\.json$/.test(path))
+      try {
+        const { post: _upload, ...shown } = JSON.parse(text);
+        text = JSON.stringify(shown);
+      } catch {
+        // not JSON: hash the raw text
+      }
+    return text;
+  }))).digest("hex");
+
+/** What MortgageReel reads for <dir> = public/videos/<slug>: edit.json, script.json, the recording's words.json. */
+export const videoInputs = (dir, publicDir) => {
+  let source;
+  try {
+    source = JSON.parse(readFileSync(join(dir, "edit.json"), "utf8")).source;
+  } catch {
+    // no or broken edit.json: words.json sits in the slug's folder
+  }
+  const words = source ? join(publicDir, "recordings", source, "words.json") : join(dir, "words.json");
+  return [join(dir, "edit.json"), join(dir, "script.json"), words];
+};
+
+/** Why `video` is older than its on-screen inputs, or null. Stamp <video>.inputs (render-video.py); none: file times. */
+export const staleVideo = (video, inputs) => {
+  const t = (f) => (existsSync(f) ? statSync(f).mtimeMs : 0);
+  const stamp = video.replace(/\.mp4$/i, "") + ".inputs";
+  if (t(stamp) >= t(video)) return readFileSync(stamp, "utf8").trim() === hashInputs(inputs) ? null : "its on-screen inputs changed since the render";
+  const newer = inputs.filter((f) => t(f) > t(video));
+  return newer.length ? `${newer.map((f) => f.split(/[\\/]/).pop()).join(", ")} changed after the render (no stamp, file times)` : null;
 };
 
 /** What is wrong with a post, in plain words; [] when it is fine. */
@@ -144,7 +187,7 @@ const main = async () => {
     console.error(`publish-video: ${msg}`);
     process.exit(1);
   };
-  const USAGE = "usage: node scripts/publish-video.mjs <slug> [--force] [--out <dir>] [--public-dir <dir>] [--video <file>]";
+  const USAGE = "usage: node scripts/publish-video.mjs <slug> [--force] [--stale-ok] [--out <dir>] [--public-dir <dir>] [--video <file>]";
   const argv = process.argv.slice(2);
   const valued = ["--out", "--public-dir", "--video"];
   const value = (flag) => {
@@ -158,7 +201,9 @@ const main = async () => {
   assertSlug(slug);
   const cmd = `node scripts/publish-video.mjs ${slug}`;
 
-  const dir = join(resolve(value("--public-dir") ?? join(ROOT, "public")), "videos", slug);
+  const publicDir = resolve(value("--public-dir") ?? join(ROOT, "public"));
+  const dir = join(publicDir, "videos", slug);
+  if (argv.includes("--inputs-hash")) return console.log(hashInputs(videoInputs(dir, publicDir)));
   const read = (name) => {
     const path = join(dir, name);
     if (!existsSync(path)) return null;
@@ -195,6 +240,10 @@ const main = async () => {
 
   const video = resolve(value("--video") ?? join(ROOT, "out", "videos", slug, `${slug}.mp4`));
   if (!existsSync(video)) fail(`The rendered video ${video} is not there yet. Render it first: python scripts/render-video.py ${slug}`);
+  const stale = argv.includes("--stale-ok") ? null : staleVideo(video, videoInputs(dir, publicDir));
+  if (stale)
+    fail(`${video} shows old copy: ${stale} (edit.json/script.json other than "post", or words.json). Nothing copied.\n` +
+      `Re-render it: python scripts/render-video.py ${slug}\nTo publish it as it is: ${cmd} --force --stale-ok`);
   let broker;
   try {
     broker = loadBroker();
@@ -207,14 +256,40 @@ const main = async () => {
   const topic = topicFileName(post.title);
   const mp4 = join(outDir, `${topic}.mp4`);
   const txt = join(outDir, `${topic} - caption.txt`);
+  // Windows file names ignore case: compare names folded (NFC, lower case), on every OS.
+  const fold = (s) => s.normalize("NFC").toLowerCase();
+  const names = new Set(readdirSync(outDir).map(fold));
+  const exists = (path) => names.has(fold(basename(path)));
   if (!argv.includes("--force"))
     for (const path of [mp4, txt])
-      if (existsSync(path))
+      if (exists(path))
         fail(`"${path}" already exists, so nothing was copied.\n` +
           `Same video, re-rendered? Replace it: ${cmd} --force\n` +
           `A different video? Give it a different post title in ${where}.`);
+  // Which slug each topic's files came from: --force replaces only the same slug's.
+  const owners = join(outDir, ".publish-slugs.json");
+  let owner = new Map(); // none yet: files published before 01/10/2026 have no owner
+  try {
+    const data = JSON.parse(readFileSync(owners, "utf8"));
+    if (!data || typeof data !== "object" || Array.isArray(data) || Object.values(data).some((v) => typeof v !== "string"))
+      throw new Error("not a {title: slug} object");
+    owner = new Map(Object.entries(data).map(([k, v]) => [fold(k), v]));
+  } catch (err) {
+    if (err.code !== "ENOENT")
+      fail(`${owners} is broken (${err.message}), so which video owns each title is unknown. Nothing copied.\n` +
+        `Fix it by hand. Deleting it lets --force replace any same-title files in ${outDir}.`);
+  }
+  const other = owner.get(fold(topic));
+  if (other && other !== slug && [mp4, txt].some(exists))
+    fail(`"${topic}" in ${outDir} is video "${other}", not "${slug}": both have the post title "${post.title}". Nothing copied.\n` +
+      `Give "${slug}" its own post title in ${where}, then run: ${cmd} --force\n` +
+      `(Only if "${other}" is gone for good: delete its "${topic}" files first.)`);
 
   const { text, removed } = buildCaption(post, broker, compliance);
+  // The owner first, through a temp file: a failed write leaves the old record and copies nothing.
+  owner.set(fold(topic), slug);
+  writeFileSync(`${owners}.tmp`, `${JSON.stringify(Object.fromEntries(owner), null, 1)}\n`);
+  renameSync(`${owners}.tmp`, owners);
   copyFileSync(video, mp4);
   writeFileSync(txt, text, "utf8");
   if (removed.length)

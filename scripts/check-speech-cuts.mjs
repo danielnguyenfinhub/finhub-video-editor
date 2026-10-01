@@ -260,7 +260,8 @@ export const checkSpeechCuts = (slug, publicDir = join(ROOT, "public")) => {
       throw new Error(`Cannot read ${what} for "${slug}" (${path}): ${err.message}`);
     }
   };
-  const edit = read(join(ROOT, "public", "videos", slug, "edit.json"), "edit.json");
+  // This checkout's edit.json; failing that, publicDir's (a fixture: scripts/check-preflight.mjs).
+  const edit = read([join(ROOT, "public"), publicDir].map((d) => join(d, "videos", slug, "edit.json")).find(existsSync) ?? join(ROOT, "public", "videos", slug, "edit.json"), "edit.json");
   const raw = read(join(publicDir, recordingPath(slug, edit.source, "words.json")), "words.json");
   const source = join(publicDir, recordingPath(slug, edit.source, "source.mp4"));
   if (!existsSync(source)) throw new Error(`No source.mp4 for "${slug}" at ${source}; the cut check measures the source audio.`);

@@ -35,11 +35,11 @@ Prompts carry the repo root, `out/teams/maintain/`, the scope (whole repo / last
 
 ## Phase 0 — Scope
 
-Ask nothing if Daniel gave a scope; default is the whole repo. `git status` first. Check `out/teams/maintain/` as the other teams do (new, partial re-run, fresh run → move to `maintain_prev/`).
+Ask nothing if Daniel gave a scope; default is the whole repo. `git status` first. Check `out/teams/maintain/` as the other teams do (new, partial re-run, fresh run → move to `maintain_prev/`). Then read the previous run (`out/teams/maintain_prev/` and the last maintenance rows of `docs/agents/team-runs.md`): ids it fixed or Daniel decided are closed, and every prompt carries that list so nothing is re-found.
 
 ## Phase 1 — Find (parallel)
 
-One message: `bug-hunter` and `gap-analyst`. When the bug list names paths that need judgement, a second message fans those paths to `silent-failure-hunter`, `typescript-reviewer` and `security-reviewer` (read-only, report findings as lines for `01_bugs.md`). Merge and de-duplicate by file and line yourself.
+One message: `bug-hunter` and `gap-analyst`. When the bug list names paths that need judgement, a second message fans those paths to `silent-failure-hunter`, `typescript-reviewer` and `security-reviewer` (read-only, report findings as lines for `01_bugs.md`). Merge and de-duplicate by file and line yourself. `01_bugs.md` ends with a **carried over** list: each id the previous run left open, with its status now (still open, fixed since, or Daniel's).
 
 ## Phase 2 — Gate
 
@@ -47,19 +47,19 @@ Show Daniel: bug counts by severity (worst one named), the top gaps with payback
 
 ## Phase 3 — Fix
 
-`repo-fixer` with the approved ids. Type or build errors go to `build-error-resolver`. `blocked` → show Daniel.
+`repo-fixer` with the approved ids. Type or build errors go to `build-error-resolver`. `blocked` → show Daniel. Two fixers run in parallel only on disjoint paths (for example scripts/config and review/docs), each writing its own `03_fixes_<A|B>.md` and, in a later round, appending its own `Round 2` section to it.
 
 ## Phase 4 — Review
 
-`quality-reviewer` (phase `refactor`) with `03_fixes.md`. FIX → back to the fixer, at most 2 rounds. BLOCK → stop, plain words. PASS → Phase 5.
+`quality-reviewer` (phase `refactor`) with the `03_fixes*.md` files. FIX → back to the fixer, at most 2 rounds: after the independent review returns FIX, one more fix round, then a second, lighter review on that round's delta only (the new findings' `clears_when`, plus lint and tests). BLOCK → stop, plain words. PASS → Phase 5. No PR for a fixer's work until this review has run and its verdict is in `04_review.json`.
 
 ## Phase 5 — Deliver and learn
 
-Report: fixed (id, one line, evidence), not fixed (why), gaps awaiting Daniel, what to verify. Lessons that repeated go to `corrections.md` and, where measurable, become a check (the fixer already added it). Add a change-log line to `docs/agents/skills-and-harnesses.md` only if a team file changed.
+Report: fixed (id, one line, evidence), not fixed (why), gaps awaiting Daniel, what to verify. Lessons that repeated go to `corrections.md` and, where measurable, become a check (the fixer already added it). Add a change-log line to `docs/agents/skills-and-harnesses.md` only if a team file changed. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify).
 
 ## Files
 
-`out/teams/maintain/`: `01_bugs.md` · `02_gaps.md` · `03_fixes.md` · `04_review.json`.
+`out/teams/maintain/`: `01_bugs.md` · `02_gaps.md` · `03_fixes.md` (or `03_fixes_A.md` / `03_fixes_B.md` with two fixers) · `04_review.json`.
 
 ## Errors
 

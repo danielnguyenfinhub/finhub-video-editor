@@ -19,6 +19,16 @@ npx remotion render ExtendedReel out/extended-reel.mp4 --browser-executable=/tmp
 
 Without this, effects/`<ThreeCanvas>` scenes render as solid black — Chromium accepts the render silently rather than erroring, so check with `--log=verbose` for the "Automatic fallback to software WebGL has been deprecated" warning if a canvas-based scene comes out blank.
 
+## Can this session render a still? Probe first
+
+Before planning any still, run one tiny still (about a minute; needs no recording, uses the Playwright headless shell when `npx remotion browser ensure` can't download):
+
+```sh
+node node_modules/@remotion/cli/remotion-cli.js still src/index.ts ElementCatalog out/stills/probe.png --frame=30 --scale=0.5 --gl=swangle --chrome-mode=headless-shell --browser-executable=$(ls -d /opt/pw-browsers/chromium_headless_shell-*/*/headless_shell | head -1)
+```
+
+`Rendered 1/1` means stills work (look at the PNG: a cream card reading "Lãi suất cố định" in Be Vietnam Pro). Any error means no still: audit from code and previews and mark every look claim "not viewed". A `MortgageReel` still also needs its recording (`words.json`, `source.mp4`): the `_test-*` slugs point at recordings that are not in a fresh clone, so they fail with HTTP 404 or a `source.mp4` delayRender timeout, which is not a sandbox limit. `ListingReel` still fails here: it fetches Playfair Display from `fonts.gstatic.com` (below).
+
 ## What this sandbox can't do
 
 Each was confirmed with a real render. The details, and how the showcase works around each one, are in `docs/findings.md`.

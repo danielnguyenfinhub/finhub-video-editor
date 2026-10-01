@@ -18,13 +18,12 @@
 // language whose on-screen inputs (script.json without "post", listing.json, its
 // words) changed since it was rendered, unless --stale-ok. "post" is upload copy,
 // not on screen, so fixing it never needs a re-render.
-import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { checkSlug, loadChecker } from "./listing-compliance.mjs";
 import { assertSlug } from "./listing-prep.mjs";
-import { topicFileName } from "./publish-video.mjs";
+import { hashInputs, topicFileName } from "./publish-video.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 export const OUTPUT_DIR = join(ROOT, "4 - GLOBAL RE FINISHED VIDEOS");
@@ -49,17 +48,7 @@ export const listingPostProblems = (post, suburb) => {
 };
 
 /** Hash of what a language's render shows: script.json without "post", listing.json, words-<lang>.json. */
-export const onScreenHash = (base, lang) => {
-  const text = (f) => (existsSync(join(base, f)) ? readFileSync(join(base, f), "utf8") : "");
-  let script = text("script.json");
-  try {
-    const { post: _upload, ...shown } = JSON.parse(script);
-    script = JSON.stringify(shown);
-  } catch {
-    // not JSON: hash the raw text
-  }
-  return createHash("sha256").update(JSON.stringify([script, text("listing.json"), text(`words-${lang}.json`)])).digest("hex");
-};
+export const onScreenHash = (base, lang) => hashInputs(["script.json", "listing.json", `words-${lang}.json`].map((f) => join(base, f)));
 
 /** listing-render.py writes onScreenHash here once <slug>-<lang>.mp4 is finished. */
 export const stampPath = (outDir, slug, lang) => join(outDir, `${slug}-${lang}.inputs`);

@@ -39,11 +39,12 @@ Whatever skill is driving (Remotion's, the editor skill, or a scene written by h
 
 **Goal:** five teams run the repo's own work (the fifth improves the templates): build from existing resources (1), maintain by finding bugs and gaps (2), find faster and cheaper ways to work (3), and one production team per video style family (4).
 
-**Trigger:** see the table in [AGENTS.md](../../AGENTS.md) ("Harness: repo and style teams"). Rules every team agent reads: [team-ground-rules](team-ground-rules.md). Style ownership: `config/style-teams.json`.
+**Trigger:** see the table in [AGENTS.md](../../AGENTS.md) ("Harness: repo and style teams"). Rules every team agent reads: [team-ground-rules](team-ground-rules.md). Style ownership: `config/style-teams.json`. Every run is recorded in [team-runs](team-runs.md) (append-only ledger).
 
 **Change log:**
 | Date | Change | Files | Why |
 |---|---|---|---|
+| 2026-10-01 | Maintenance run 3: run ledger `team-runs.md` appended by every team; reviewers get Write and run 2's "prove the checks bite" method; ground rules: five teams, no-render probe, verify before editing; template team A/B/C/D classes and per-group file names; maintenance reads the previous run and keeps a carried-over list | `team-runs.md`, `team-ground-rules.md`, the five team skills, `quality-reviewer`, `video-compliance-reviewer`, `creative-director`, `golden-rules-auditor`, `design-critic`, `template-improver` | Agent files had drifted from what the runs actually did (gap analysis, run 3) |
 | 2026-10-01 | Team 5 added: `template-improvement-team` with `golden-rules-auditor`, `design-critic`, `creative-director`, `template-improver`; reuses `quality-reviewer` | the skill, four agents, `check-teams.mjs` | Daniel asked for a creative team experienced in golden rules, logic and design to improve the existing templates |
 | 2026-10-01 | Initial four teams. New agents: `resource-scout`, `repo-builder`, `bug-hunter`, `gap-analyst`, `repo-fixer`, `workflow-analyst`, `automation-builder`, six style directors. Reused: `code-architect`, `code-reviewer`, `quality-reviewer`, `architecture-auditor`, `pipeline-optimizer`, the `video-*` crew | the four team skills, `config/style-teams.json`, `scripts/check-teams.mjs` (in `npm test`), `team-ground-rules.md`, six recipes under `style-production-teams/references/` | Daniel asked for teams to build, maintain and speed up the repo and to produce each video style |
 

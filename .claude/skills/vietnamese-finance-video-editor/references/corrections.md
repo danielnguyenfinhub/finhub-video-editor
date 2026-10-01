@@ -50,7 +50,7 @@ screen ("the rate card"), never whose.
 - 25/09/2026 · design:kitchen, all · "text too small" → template text is large; judge it on
   a phone-size still, not the Studio canvas · floor 30 px (about 11 pt on a phone; decided 01/10/2026
   while Daniel was away, he can change it); `check-text-size.mjs` is a ratchet: no design may add
-  fontSize literals under it beyond `config/text-size-baseline.json` (103 today, to be reduced by design
+  fontSize literals under it beyond `config/text-size-baseline.json` (116 today, to be reduced by design
   work; sizes computed at run time are not seen) · `checked` for growth, `open` for the existing ones
 - 25/09/2026 · all · "too static" → a visual change every 1.5–3 s, except a card or number
   held for its reading time → golden rule 5b, `READING`; `check-pacing <slug>` exits 2 on a gap
@@ -74,7 +74,9 @@ screen ("the rate card"), never whose.
 - 30/09/2026 · all · Daniel asked why a 3-video batch took a whole day → process rules: render
   once after `check-schema`, `check-speech-cuts` and `check-pacing` pass; one round for cosmetic
   findings; QC measures rule 5b only with `check-pacing` → `video-production-team` "Render once"
-  and FIX policy · `rule`
+  and FIX policy · `checked` for "check before render": `preflight.mjs` runs `check-schema`,
+  `check-speech-cuts` and `check-pacing` and blocks on a failure or a crash (`check-preflight.mjs`);
+  the one-round FIX policy stays a `rule`
 - 30/09/2026 · scope A · "don't monitor me in edit footage; use compliance to correct yourself when
   generating scripts" → spoken words in his footage are advisory verify notes, never a gate;
   team-written text and Pipeline B scripts stay gated → `video-compliance-review` "Scope" · `rule`

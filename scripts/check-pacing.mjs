@@ -206,7 +206,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (!slug) throw new Error("Usage: node scripts/check-pacing.mjs <slug> [--public-dir <dir>] [--json] [--max 3]");
     const maxS = Number(flag("--max") ?? 3);
     if (!(maxS > 0)) throw new Error(`--max must be a positive number of seconds, got "${flag("--max")}".`);
-    const editPath = join(ROOT, "public", "videos", slug, "edit.json");
+    // This checkout's edit.json; failing that, the --public-dir one (a fixture: scripts/check-preflight.mjs).
+    const editPath = [join(ROOT, "public"), resolve(flag("--public-dir") ?? join(ROOT, "public"))]
+      .map((d) => join(d, "videos", slug, "edit.json")).find(existsSync) ?? join(ROOT, "public", "videos", slug, "edit.json");
     if (!existsSync(editPath)) throw new Error(`No edit.json for "${slug}" (${editPath}).`);
     const editJson = JSON.parse(readFileSync(editPath, "utf8"));
     const rel = recordingPath(slug, editJson.source, "words.json");

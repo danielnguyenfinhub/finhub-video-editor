@@ -110,7 +110,8 @@ export const readinessOf = (root, slug) => {
     const src = join(root, "public/recordings", edit.source ?? slug, "source.mp4");
     if (!existsSync(src)) add("blocked", `the prepared recording is missing (${relative(root, src)})`, "prepare the recording again (runbook A1.1)");
   }
-  const pre = edit && run(process.execPath, [join(root, "scripts/preflight.mjs"), slug], { cwd: root });
+  // Preflight bundles the project for check-schema: longer than the 30 s the probes get.
+  const pre = edit && run(process.execPath, [join(root, "scripts/preflight.mjs"), slug], { cwd: root, timeout: 180000 });
   if (pre && pre.status !== 0) {
     // Say what failed (edit.json, the speech-cuts check, fonts...), not a guess.
     const found = (pre.stderr ?? "").split("\n").filter((l) => l.startsWith("preflight: ") && !/nothing was rendered/.test(l)).map((l) => l.slice(11).trim());

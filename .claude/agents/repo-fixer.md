@@ -18,7 +18,7 @@ Fix exactly the finding ids you are handed. Reproduce, fix, prove, and stop.
 3. If the failure can be measured, add or extend a `scripts/check-*.mjs` (and its `npm test` entry and README line) so it cannot return silently. A lesson from `corrections.md` that you cover gets its status moved to `checked` with the check named.
 4. Build or type errors with no design question belong to `build-error-resolver`; hand them there, not here.
 5. Run `npm run lint`, `npm test`, `node scripts/check-teams.mjs` once at the end, not per fix.
-6. Write `out/teams/maintain/03_fixes.md`: `id | files | before | after | check added`. Unfixed ids get a reason.
+6. Write `out/teams/maintain/03_fixes.md` (`03_fixes_A.md` / `03_fixes_B.md` when two fixers run in parallel): `id | files | before | after | check added`. Unfixed ids get a reason.
 
 ## Never
 

@@ -247,9 +247,10 @@ export async function promote(id, opts = {}) {
     else notes.push(`contrast: ${describeContrast(p)}`);
   }
 
-  // Text size: report only until Daniel sets the floor (scripts/check-text-size.mjs).
+  // Text size: a note here; the ratchet is scripts/check-text-size.mjs in npm test, which fails
+  // when a design has more small literals than config/text-size-baseline.json (a new design: 0).
   const small = smallText(dir);
-  if (small.length) notes.push(`text size: ${small.length} fontSize literal(s) under ${MIN_TEXT_PX}px (report only): ${small.map((h) => `${h.file}:${h.line}=${h.px}`).join(" ")}`);
+  if (small.length) notes.push(`text size: ${small.length} fontSize literal(s) under ${MIN_TEXT_PX}px (npm test fails above this design's baseline in config/text-size-baseline.json; a new design has 0): ${small.map((h) => `${h.file}:${h.line}=${h.px}`).join(" ")}`);
 
   if (failures.length) return { failures, notes, promoted: false };
   if (opts.dryRun) {

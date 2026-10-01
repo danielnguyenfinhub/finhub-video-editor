@@ -15,16 +15,19 @@ import {
   writeFileSync,
 } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import type { AddressInfo } from "node:net";
 import { extname, join, relative, resolve } from "node:path";
 import { z } from "zod";
 import { recordingPath } from "../src/mortgage/recording";
 import { editSchema } from "../src/mortgage/schema";
+import { inside, readBody, sameOrigin } from "./guard";
 
 const ROOT = resolve(__dirname, "..", "..");
 const DIST = join(ROOT, "review", "dist");
-const PUBLIC = join(ROOT, "public");
+// REVIEW_PUBLIC: a temp public/ for review/check-server.mjs, so its saves never touch real videos.
+const PUBLIC = process.env.REVIEW_PUBLIC ? resolve(process.env.REVIEW_PUBLIC) : join(ROOT, "public");
 const VIDEOS = join(PUBLIC, "videos");
-const PORT = 4100;
+const PORT = Number(process.env.REVIEW_PORT ?? 4100); // review/check-server.mjs uses 0 (any free port)
 const MAX_BODY = 1_000_000;
 const MAX_FOREGROUND = 8_000_000_000;
 const SLUG = /^[a-z0-9][a-z0-9-]*$/;
@@ -53,7 +56,7 @@ const json = (res: ServerResponse, status: number, body: unknown) => {
 // Serves a file inside `base`, answering Range requests.
 const serveFile = (req: IncomingMessage, res: ServerResponse, base: string, rel: string) => {
   const file = resolve(base, `.${rel}`);
-  if (!file.startsWith(base) || !existsSync(file) || statSync(file).isDirectory()) {
+  if (!inside(base, file) || !existsSync(file) || statSync(file).isDirectory()) {
     res.writeHead(404).end();
     return;
   }
@@ -62,28 +65,25 @@ const serveFile = (req: IncomingMessage, res: ServerResponse, base: string, rel:
     "Content-Type": TYPES[extname(file).toLowerCase()] ?? "application/octet-stream",
     "Accept-Ranges": "bytes",
   };
+  // A read error after the headers went out can only cut the response.
+  const send = (opts?: { start: number; end: number }) =>
+    createReadStream(file, opts).on("error", () => res.destroy()).pipe(res);
   const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? "");
   if (!range) {
     res.writeHead(200, { ...headers, "Content-Length": size });
-    createReadStream(file).pipe(res);
+    send();
     return;
   }
-  const start = range[1] === "" ? size - Number(range[2]) : Number(range[1]);
+  // "-N" is the last N bytes; "-", "-0", "5-2" and a start past the end are unsatisfiable.
+  const start = range[1] === "" ? Math.max(0, size - Number(range[2] || 0)) : Number(range[1]);
   const end = range[1] !== "" && range[2] !== "" ? Math.min(Number(range[2]), size - 1) : size - 1;
+  if (!(start <= end)) {
+    res.writeHead(416, { ...headers, "Content-Range": `bytes */${size}` }).end();
+    return;
+  }
   res.writeHead(206, { ...headers, "Content-Range": `bytes ${start}-${end}/${size}`, "Content-Length": end - start + 1 });
-  createReadStream(file, { start, end }).pipe(res);
+  send({ start, end });
 };
-
-const readBody = (req: IncomingMessage) =>
-  new Promise<string>((ok, fail) => {
-    let body = "";
-    req.on("data", (c: Buffer) => {
-      body += c;
-      if (body.length > MAX_BODY) fail(new Error("edit.json is larger than 1 MB"));
-    });
-    req.on("end", () => ok(body));
-    req.on("error", fail);
-  });
 
 // A recording file (source.mp4, foreground.webm, words.json) of a video: in
 // public/recordings/<source>/ when edit.json names one, else in its own folder.
@@ -112,7 +112,7 @@ const listVideos = () =>
 const saveEdit = async (req: IncomingMessage, res: ServerResponse, slug: string) => {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(await readBody(req));
+    parsed = JSON.parse(await readBody(req, MAX_BODY));
   } catch (e) {
     return json(res, 400, { error: `Not saved: ${(e as Error).message}` });
   }
@@ -210,6 +210,8 @@ const startRender = (res: ServerResponse, slug: string) => {
 
 const server = createServer(async (req, res) => {
   try {
+    const { port } = server.address() as AddressInfo;
+    if (!sameOrigin(req.headers, port)) return json(res, 403, { error: `Open the review page at http://localhost:${port}/` });
     const url = new URL(req.url ?? "/", "http://localhost");
     const path = decodeURIComponent(url.pathname);
     const api = /^\/api\/(edit|render|foreground)\/([^/]+)$/.exec(path);
@@ -230,7 +232,9 @@ const server = createServer(async (req, res) => {
     if (path.startsWith("/public/")) return serveFile(req, res, PUBLIC, path.slice("/public".length));
     return serveFile(req, res, DIST, path === "/" ? "/index.html" : path);
   } catch (e) {
-    json(res, 500, { error: (e as Error).message });
+    // Headers already sent: a second writeHead would throw and stop the server.
+    if (res.headersSent) res.destroy();
+    else json(res, 500, { error: (e as Error).message });
   }
 });
 server.on("error", (e: NodeJS.ErrnoException) => {
@@ -242,5 +246,5 @@ server.on("error", (e: NodeJS.ErrnoException) => {
   process.exit(1);
 });
 server.listen(PORT, "127.0.0.1", () => {
-  console.log(`Review page: http://localhost:${PORT}/  (Ctrl+C to stop)`);
+  console.log(`Review page: http://localhost:${(server.address() as AddressInfo).port}/  (Ctrl+C to stop)`);
 });

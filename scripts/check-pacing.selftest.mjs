@@ -35,5 +35,7 @@ check("gap inside the card's reading time: excused", read.gaps.length === 0, rea
 
 const cards = run(edit({ design: "cards" }), 460);
 check("cards, talk > 180 s: accepted exception", cards.accepted && cards.gaps.length > 0, { accepted: cards.accepted, talkMs: cards.talkMs });
+const shortCards = run(edit({ design: "cards" }), 400); // 160 s of talk
+check("cards, talk < 180 s: not an exception", !shortCards.accepted && shortCards.gaps.length > 0, { accepted: shortCards.accepted, talkMs: shortCards.talkMs });
 
 process.exitCode = failed ? 1 : 0;

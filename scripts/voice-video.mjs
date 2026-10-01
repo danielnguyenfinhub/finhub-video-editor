@@ -60,7 +60,7 @@ import { assertSlug } from "./listing-prep.mjs";
 import { find } from "./library.mjs";
 import { omnivoicePython, resolveProfile } from "./omnivoice.mjs";
 import { spendProblem } from "./spend.mjs";
-import { aiClip, stockClips } from "./visuals.mjs";
+import { aiClip, aiStillsPerScene, stockClips } from "./visuals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MODEL_ID = "eleven_v3"; // speaks Vietnamese; eleven_multilingual_v2 doesn't
@@ -195,6 +195,13 @@ if (!listing) {
   if (facts.errors.length) fail(`facts blocked the script, nothing was voiced.\n${facts.errors.join("\n")}`);
 }
 
+// Before the estimate: GEMINI_API_KEY and AI_CANDIDATES set how many fal.ai stills a scene buys.
+for (const envFile of [".env.local", ".env"]) {
+  if (existsSync(join(ROOT, envFile))) {
+    process.loadEnvFile(join(ROOT, envFile));
+    break;
+  }
+}
 const chars = scenes.reduce((n, s) => n + s.vi.length, 0);
 const engine = engineFlag ?? script.engine ?? listingVoice?.engine ?? "google";
 if (!["google", "omnivoice", "elevenlabs"].includes(engine)) fail(`unknown engine "${engine}". ${USAGE}`);
@@ -209,9 +216,10 @@ if (withFootage) {
       `  ${i + 1}. ${s.footage ? `free stock "${s.footage}"${s.ai ? " (paid AI fallback ready)" : ""}` : "element (edit.json, free)"}`,
     ),
   );
-  const images = scenes.filter((s) => s.ai).length;
+  const aiScenes = scenes.filter((s) => s.ai).length;
+  const images = aiScenes * aiStillsPerScene();
   if (images)
-    console.log(`fal.ai: at most ${images} image(s), about US$${(images * 0.03).toFixed(2)}, only where stock finds nothing.`);
+    console.log(`fal.ai: at most ${images} image(s) (${aiScenes} scene(s) x ${aiStillsPerScene()} candidate(s)), about US$${(images * 0.03).toFixed(2)}, only where stock finds nothing.`);
   // Library first (scripts/library.mjs), no network: every scene showing a
   // hit proves the run needs no stock or AI call. A stem match is only a
   // candidate: the real run treats it as a miss until its keyword is added.
@@ -232,7 +240,7 @@ if (withFootage) {
   });
 }
 // Spend guard (scripts/spend.mjs): a paid run needs the --dry-run estimate Daniel saw.
-const aiImages = withFootage ? scenes.filter((s) => s.ai).length : 0;
+const aiImages = withFootage ? scenes.filter((s) => s.ai).length * aiStillsPerScene() : 0;
 const estimateFile = join(dir, "spend-estimate.json");
 if (dryRun) {
   if (engine === "elevenlabs" || aiImages > 0) {
@@ -247,12 +255,6 @@ if (dryRun) {
   if (problem) fail(`spend guard: ${problem}`);
 }
 
-for (const envFile of [".env.local", ".env"]) {
-  if (existsSync(join(ROOT, envFile))) {
-    process.loadEnvFile(join(ROOT, envFile));
-    break;
-  }
-}
 const voiceDir = join(dir, "voice");
 mkdirSync(voiceDir, { recursive: true });
 const sha = (s) => createHash("sha1").update(s).digest("hex").slice(0, 12);

@@ -13,12 +13,12 @@ Be the creative lead with the rules in your head. For each template, decide what
 
 ## How
 
-1. Read `docs/agents/team-ground-rules.md`, then `out/teams/templates/01_golden_audit.md` and `01_critique.md`.
+1. Read `docs/agents/team-ground-rules.md`, then `out/teams/templates/01_golden_audit_<group>.md` and `01_critique_<group>.md` for your group (one style-team family).
 2. Keep each template's identity (its `grammar` and the skin axes the critic named as strengths). Lift one or two weak axes, not all.
 3. Reuse in this order: `.claude/elements/CATALOG.md` and `head -n 22 .claude/elements/remocn/CATALOG.md`, then grep; `src/showcase/` scenes; an installed `@remotion/*` package (`docs/findings.md`, grep by package). New code last.
-4. For every template write one to three options: `name | what changes | which axis | resources reused | golden rules touched (none, or which, with how it stays inside) | effort | risk | what Daniel will see`. Mark rule fixes from the audit separately as `fix` (no choice needed) and look changes as `option` (Daniel picks by stills).
-5. Order the work: fixes first, then options by effect over effort. Say what you would not do and why.
-6. Write `out/teams/templates/02_concepts.md`.
+4. For every template write one to three options: `name | what changes | which axis | resources reused | golden rules touched (none, or which, with how it stays inside) | effort | risk | what Daniel will see`. Put every item in exactly one class: **A fix-provable** (a rule break the audit proved from code or a check; a check or the auditor's harness proves the fix, no still needed), **B fix-needs-render** (correct, but its layout must be seen on a still first; held when no render is possible), **C option** (a look change Daniel picks by stills), **D ruling** (a question only Daniel can answer). Give the counts per class.
+5. Order the work: A, then B, then options by effect over effort. Say what you would not do and why.
+6. Write `out/teams/templates/02_concepts_<group>.md`.
 
 ## Never
 
@@ -26,4 +26,4 @@ Propose a new dependency when an installed package or element covers it; change 
 
 ## Output
 
-Report path; fixes count; options per template; the one choice that matters most for Daniel.
+Report path; counts A/B/C/D; options per template; the one choice that matters most for Daniel.

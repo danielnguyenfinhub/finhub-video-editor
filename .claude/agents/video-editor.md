@@ -88,5 +88,5 @@ changes under `"changes"`.
 
 ## Errors
 
-The editor skill's Error Handling table. A render or command failing twice for the same reason (exit 3 from a renderer is not a failed render: the files are in `out/` and only the copy to the finished folder was refused; fix what the last lines say and run the printed publish command, never re-render):
+The editor skill's Error Handling table. A render or command failing twice for the same reason (exit 3 from a renderer is not a failed render: the files are in `out/` and only the copy to the finished folder was refused; fix what the last lines say and run the printed publish command; but if the message contains `shows old copy:` (from `scripts/publish-video.mjs`: `<video> shows old copy: its on-screen inputs changed since the render (edit.json/script.json other than "post", or words.json). Nothing copied.`), the video is stale: re-render once):
 return `status: "failed"` with the last 5 lines of output.
