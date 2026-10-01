@@ -55,12 +55,12 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-video-status.mjs` | `video-status.mjs` on synthetic runs | **test** |
 | `check-library.mjs` | `library.mjs` and library-first routing | **test** |
 | `preflight.mjs` (no slug) | The Vietnamese font-subset gate every render runs first | **test** |
-| `check-clips.py`, `check-reframe.py`, `check-migrate-assets.py` | `prep-video.py --clips`, `reframe.py` maths, `migrate-assets.py` (standard library only, but CI sets up no Python) | local |
+| `check-clips.py`, `check-reframe.py`, `check-migrate-assets.py` | `prep-video.py --clips`, `reframe.py` maths, `migrate-assets.py` (standard library only; run by the `checks` job in CI after `setup-python`, not by `npm test`; `research.py selftest` and `omnivoice-tts.py selftest` too) | ci |
 | `check-spoken-phrases.mjs <slug>` | Advisory, always exit 0: RG 234 watch phrases spoken in `words.json` (syllables joined and folded), with times, for the compliance reviewer's verify list | local |
 | `check-agents-split.mjs` | One-time WP9 `AGENTS.md` split (needs full git history) | local |
 | `check-captions.mjs`, `check-caption-fixes.mjs` | Shared caption layer; caption slip fixes in `timeline.ts` | **test** |
 | `check-contrast.mjs` | Text legibility of every design | **test** |
-| `check-text-size.mjs [id ...]` | Report only: `fontSize` literals under `MIN_TEXT_PX` (placeholder 30, Daniel to set) per design; never fails, promote-design prints it as a note | local |
+| `check-text-size.mjs [id ...]` | Ratchet: `fontSize` literals under `MIN_TEXT_PX` (30 px, about 11 pt on a phone) may not exceed `config/text-size-baseline.json` per design; `--update-baseline` lowers it; sizes computed at run time are not seen; promote-design prints the count | **test** |
 | `check-selector.mjs` | `select-template.mjs` ranking; every design has a manifest; nothing fits = a stop, not `pick: null` | **test** |
 | `check-element-copy.mjs` | RG 234 scan of text in `src/elements/` | **test** |
 | `check-facts.mjs`, `check-visuals.mjs` | `facts.mjs`; the AI judge's pure parts | **test** |

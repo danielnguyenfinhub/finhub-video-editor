@@ -1,7 +1,7 @@
-// COPY of C:\Users\Daniel\video-edits\remotion\src\compliance.ts (verbatim, 2026-09-24).
-// Keep in sync with that file. No edits were needed: `npm run lint` (tsc, lib
-// es2015) accepts it unchanged.
-// 2026-10-01: `fold` (NFC + whitespace + zero-width) added here only; port it to the original.
+// Started as a copy of C:\Users\Daniel\video-edits\remotion\src\compliance.ts (verbatim, 2026-09-24).
+// 2026-10-01: THIS FILE IS NOW THE SOURCE OF TRUTH. `fold` (NFC + whitespace + zero-width) exists
+// only here, and check-numbers-kit / check-listing-compliance fail if it is removed. Never sync
+// from the old Windows copy into this repo: copy this file over that one instead.
 // 2026-10-01: the term lists, `fold` and `hit` exported (no behaviour change) for
 // scripts/check-spoken-phrases.mjs and src/listing/compliance.ts's fold test.
 
