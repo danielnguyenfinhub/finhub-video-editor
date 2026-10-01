@@ -17,6 +17,7 @@ remotion-video-skill.zip
 /public/recordings/*/*
 !/public/recordings/*/words.json
 /public/videos/*/*.bak
+/public/videos/*/spend-estimate.json
 /public/4.1*.mp4
 /public/videos/*/source.mp4
 /public/videos/*/original.*

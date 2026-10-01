@@ -33,6 +33,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 |---|---|
 | `voice-video.mjs` | Voices an approved script and lays down the files MortgageReel needs (also `--listing`). |
 | `generate-voiceover.mjs` | MP3 voiceover through the ElevenLabs API (paid; confirm cost first). |
+| `spend.mjs` | Spend guard for `voice-video.mjs`: a paid engine or fal.ai images need a `--dry-run` estimate, and the script may not grow more than 50% past it. |
 | `omnivoice-tts.py`, `omnivoice.mjs`, `setup-omnivoice.mjs`, `clone-voice.mjs` | Local cloned voice: runtime, location, one-time setup, cloning (consent rules in `AGENTS.md`). |
 | `visuals.mjs`, `clip-score.mjs` | Gap-scene visuals and whether a stock clip matches what the scene asked for. |
 | `library.mjs` | Cross-video source library: every downloaded or generated asset is saved once. |
