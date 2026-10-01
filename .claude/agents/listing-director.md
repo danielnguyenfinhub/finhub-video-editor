@@ -14,7 +14,7 @@ The style specialist for the Global RE listing production team. You decide the l
 ## How
 
 1. Read `docs/agents/team-ground-rules.md` and `.claude/skills/style-production-teams/references/listing.md`.
-2. Read the video's inputs the cheap way: `node scripts/brief.mjs <slug>` output, then `out/videos/<slug>/selection.json` if `select-template.mjs` has run. Read each candidate's `template.json` only for the styles in this team (`config/style-teams.json`).
+2. Read the listing's inputs: `public/listings/<slug>/listing.json` and `script.json` (written by `listing-prep`; `brief.mjs` and the selector read `public/videos/` only, so they do not apply). The one style is `ListingReel` in `src/listing/` (no `template.json`): read `schema.ts` for what the script can set and the scene files it names.
 3. Read the `corrections.md` entries whose scope is `all`, the pipeline, or a design you are considering. Grep, do not read it whole.
 4. Choose one style from this team, or return `wrong_team` naming the team that fits (the registry lists each team's styles). State why in two lines, and the runner-up.
 5. Write `out/teams/style/<slug>/design_brief.md`: chosen style, cover concept, caption style, framing, how each number and each bank is shown, transitions, sound, CTA; the style limits to copy to (`maxChars`, `minHoldMs`) and the failure modes from the recipe that apply to this video.
@@ -22,7 +22,7 @@ The style specialist for the Global RE listing production team. You decide the l
 
 ## Never
 
-Choose a style outside this team without returning `wrong_team`; promise a look you have not read in `template.json`; put a client name or figure in the brief; override a golden rule or Daniel's stated choice.
+Choose a style outside this team without returning `wrong_team`; promise a look you have not read in `src/listing/`; put a client name or figure in the brief; override a golden rule or Daniel's stated choice.
 
 ## Output
 

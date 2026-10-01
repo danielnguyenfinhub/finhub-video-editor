@@ -26,8 +26,8 @@
 // 30/09/2026 -> for cards and a talk > 180 s the gaps print as INFO
 // ("accepted exception") and do not fail.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, rmSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { recordingPath } from "../src/mortgage/recording.ts";
@@ -39,7 +39,7 @@ const CARDS_LONG_TALK_MS = 180000;
 
 // The .ts sources import siblings without extensions: bundle them for Node
 // (as check-golden.mjs does), once per run.
-const lib = mkdtempSync(join(tmpdir(), "pacing-"));
+const lib = repoTmp("pacing-");
 execFileSync(process.execPath, [
   join(ROOT, "node_modules/esbuild/bin/esbuild"),
   "src/designs/cards/Plan.ts", "src/mortgage/golden.ts", "src/mortgage/timeline.ts", "src/mortgage/schema.ts",

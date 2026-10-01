@@ -4,15 +4,15 @@
 // src/designs carries its own copy of the pager (captionPages + the
 // "durationMs + <tail>" Sequence loop) instead of <PagedCaptions>.
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readdirSync, readFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = join(import.meta.dirname, "..");
 // PagedCaptions imports golden.ts, whose sibling imports have no extension
 // (Bundler resolution): bundle it first, as check-golden.mjs does.
-const out = mkdtempSync(join(tmpdir(), "captions-"));
+const out = repoTmp("captions-");
 execFileSync(process.execPath, [
   join(root, "node_modules/esbuild/bin/esbuild"),
   join(root, "src/mortgage/PagedCaptions.tsx"), join(root, "src/mortgage/golden.ts"),

@@ -110,8 +110,13 @@ export const readinessOf = (root, slug) => {
     const src = join(root, "public/recordings", edit.source ?? slug, "source.mp4");
     if (!existsSync(src)) add("blocked", `the prepared recording is missing (${relative(root, src)})`, "prepare the recording again (runbook A1.1)");
   }
-  if (edit && run(process.execPath, [join(root, "scripts/preflight.mjs"), slug], { cwd: root }).status !== 0)
-    add("blocked", "preflight finds problems in edit.json", `run: node scripts/preflight.mjs ${slug}`);
+  const pre = edit && run(process.execPath, [join(root, "scripts/preflight.mjs"), slug], { cwd: root });
+  if (pre && pre.status !== 0) {
+    // Say what failed (edit.json, the speech-cuts check, fonts...), not a guess.
+    const found = (pre.stderr ?? "").split("\n").filter((l) => l.startsWith("preflight: ") && !/nothing was rendered/.test(l)).map((l) => l.slice(11).trim());
+    const what = found[0] ?? pre.error?.message ?? `exit ${pre.status}`;
+    add("blocked", `preflight: ${what}${found.length > 1 ? ` (+${found.length - 1} more)` : ""}`, `run: node scripts/preflight.mjs ${slug}`);
+  }
   const level = items.some((i) => i.level === "blocked") ? "blocked" : items.length ? "warning" : "ready";
   return { level, items };
 };

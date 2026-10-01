@@ -6,7 +6,8 @@ For each language voiced (public/listings/<slug>/words-<lang>.json), writes to
 out/listings/<slug>/: <slug>-<lang>.mp4 (1080x1920, -14 LUFS),
 <slug>-<lang>-mobile.mp4 (720x1280, about 27 MB), <slug>-<lang>-feed.mp4
 (1080x1350: the 4:5 middle, with the agent and legal end cards scaled whole),
-<slug>-<lang>-thumbnail.png and <slug>-<lang>.srt. Then
+<slug>-<lang>-thumbnail.png, <slug>-<lang>.srt and <slug>-<lang>.inputs (a hash of
+the on-screen inputs, so publish-listing.mjs can tell a stale language). Then
 scripts/publish-listing.mjs puts the topic-named videos and caption.txt in
 "4 - GLOBAL RE FINISHED VIDEOS" (exit 3 when that fails: rendered, not published).
 Stops before rendering if the listing compliance guard or the font preflight fails. Pipeline: docs/agents/listing-video.md.
@@ -56,6 +57,11 @@ def render(slug: str, lang: str, scenes: list[dict], out_dir: Path) -> None:
         raise SystemExit(f"{lang}: timeline-{lang}.json unreadable ({err}). Voice it: "
                          f"node scripts/voice-video.mjs {slug} --listing --lang {lang}") from err
     full = out_dir / f"{slug}-{lang}.mp4"
+    # Hash the on-screen inputs now (what this render reads); write it only once the render is done.
+    stamp = out_dir / f"{slug}-{lang}.inputs"
+    stamp.unlink(missing_ok=True)
+    inputs = subprocess.run(["node", "--no-warnings", str(ROOT / "scripts" / "publish-listing.mjs"), slug, "--inputs-hash", lang],
+                            cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
     props = json.dumps({"slug": slug, "lang": lang})
     rv.run(rv.REMOTION + ["render", "src/index.ts", "ListingReel", str(full), f"--props={props}",
                           "--codec=h264", "--gl=angle", "--concurrency=4", "--timeout=120000"],
@@ -97,6 +103,7 @@ def render(slug: str, lang: str, scenes: list[dict], out_dir: Path) -> None:
     write_srt(out_dir / f"{slug}-{lang}.srt", scenes, timeline, lang)
     for path in (full, mobile, feed):
         print(f"{path}  {path.stat().st_size / 1e6:.1f} MB  {rv.duration_s(path):.2f} s  audio mean {rv.mean_volume_db(path)}")
+    stamp.write_text(inputs + "\n", encoding="utf-8")
 
 
 def main() -> None:

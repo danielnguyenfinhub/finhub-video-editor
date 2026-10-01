@@ -4,13 +4,13 @@
 //   node scripts/check-library.mjs      -> prints "library ok"
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join, relative } from "node:path";
 import { add, find, index, stats } from "./library.mjs";
 import { AI_MODEL, aiClip, aiLicence, stockClips } from "./visuals.mjs";
 
-const tmp = mkdtempSync(join(tmpdir(), "library-check-"));
+const tmp = repoTmp("library-check-");
 const lib = join(tmp, "library");
 const work = join(tmp, "work");
 const fixture = (name, text) => {

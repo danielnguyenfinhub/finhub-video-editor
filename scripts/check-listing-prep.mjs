@@ -1,7 +1,7 @@
 // Self-check for scripts/listing-prep.mjs parsing (synthetic listing, no files).
 //   node scripts/check-listing-prep.mjs
 import assert from "node:assert/strict";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { amounts, orderPhotos, parseListingTxt, priceProblems, slugOk, slugify, validateListing } from "./listing-prep.mjs";
 
@@ -111,6 +111,22 @@ for (const s of [...real, "my-slug", "rba-sept-2026", "_test-cards", "1-example-
   assert.ok(slugOk(s), `slug "${s}" should pass`);
 for (const s of ["..", "../x", "a/b", "a\\b", "/etc", "a..b", "Ty-Do", "-x", ".hidden", "", "c:x", undefined])
   assert.ok(!slugOk(s), `slug "${s}" should be refused`);
+
+// Every entry point that joins a CLI slug into a path still validates it: a call to
+// assertSlug (Node) or an argparse type=check_slug (Python), outside comments and imports.
+// A new script that calls it is added here (the reverse check below says so).
+const SLUG_ENTRY_POINTS = [
+  "brief.mjs", "export-srt.mjs", "library.mjs", "listing-stills.mjs", "publish-listing.mjs", "publish-video.mjs",
+  "select-template.mjs", "sweep-render.mjs", "video-status.mjs", "voice-video.mjs", "check-spoken-phrases.mjs",
+  "render-video.py", "listing-render.py",
+];
+const code = (f) => readFileSync(join(ROOT, "scripts", f), "utf8").split("\n")
+  .filter((l) => !/^\s*(\/\/|\*|\/\*|#|import\b|from\s+\S+\s+import\b)/.test(l)).join("\n");
+const validates = (f) => (f.endsWith(".py") ? /type\s*=\s*(\w+\.)?check_slug\b/ : /\bassertSlug\(/).test(code(f));
+for (const f of SLUG_ENTRY_POINTS) assert.ok(validates(f), `scripts/${f} no longer validates its CLI slug (assertSlug / type=check_slug)`);
+const callers = readdirSync(join(ROOT, "scripts"))
+  .filter((f) => /\.(mjs|py)$/.test(f) && !f.startsWith("check-") && !["listing-prep.mjs", "recordings.py"].includes(f) && validates(f));
+for (const f of callers) assert.ok(SLUG_ENTRY_POINTS.includes(f), `scripts/${f} validates a slug: add it to SLUG_ENTRY_POINTS in check-listing-prep.mjs`);
 
 // Unknown agent.
 assert.match(validateListing(parseListingTxt("Agent: nobody"), AGENTS).errors.join("\n"), /agent "nobody" is not in config/);

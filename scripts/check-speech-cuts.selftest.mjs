@@ -7,12 +7,12 @@
 // plays both sides' audio: over the 1 s pause it is silent (no finding); over a
 // 100 ms pause split by a pause-only remove, two "words" play at once: an ERROR.
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { rmSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { findSpeechCuts, loadAudio } from "./check-speech-cuts.mjs";
 
-const dir = mkdtempSync(join(tmpdir(), "speech-cuts-"));
+const dir = repoTmp("speech-cuts-");
 // A 200 Hz tone gated on during each [fromS, toS].
 const tone = (name, spans) => {
   const wav = join(dir, name);

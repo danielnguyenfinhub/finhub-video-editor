@@ -1,12 +1,12 @@
 // Self-check for script./video-status.mjs on synthetic runs in a temp folder: the next stage,
 // the gates and the stops come out right for both pipelines. Run: node scripts/check-video-status.mjs
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { dirname, join } from "node:path";
-import { nextOf } from "./video-status.mjs";
+import { nextOf, readinessOf } from "./video-status.mjs";
 
-const root = mkdtempSync(join(tmpdir(), "video-status-"));
+const root = repoTmp("video-status-");
 const put = (p, body) => {
   mkdirSync(dirname(join(root, p)), { recursive: true });
   writeFileSync(join(root, p), typeof body === "string" ? body : JSON.stringify(body));
@@ -58,4 +58,11 @@ assert.equal(next("b").stage, "voice (B3)");
 put("public/videos/b/words.json", []);
 assert.equal(next("b").stage, "build (video-editor)");
 
-console.log("video-status ok (pipeline A, quick mode, pipeline B)");
+// Readiness names what preflight found, not "edit.json" for every failure (a stand-in preflight).
+put("scripts/preflight.mjs", 'console.error("preflight: check-speech-cuts could not run, so the speech cuts are unchecked: no source.mp4.");\nconsole.error("preflight: 1 problem(s); nothing was rendered.");\nprocess.exit(1);\n');
+const pre = readinessOf(root, "q").items.find((i) => i.problem.startsWith("preflight"));
+assert.equal(pre?.level, "blocked");
+assert.match(pre.problem, /^preflight: check-speech-cuts could not run/);
+assert.doesNotMatch(pre.problem, /edit\.json|nothing was rendered/);
+
+console.log("video-status ok (pipeline A, quick mode, pipeline B, readiness)");

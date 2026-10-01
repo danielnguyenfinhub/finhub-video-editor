@@ -9,8 +9,8 @@
 // voice-video.mjs --listing runs it before voicing, listing-render.py before
 // rendering. There is no exemption list on purpose: rewrite the line.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -20,7 +20,7 @@ const RULES = join(ROOT, "src", "listing", "compliance-rules.ts");
 // compliance.ts (+ the rules file if present) + copy.ts bundled to plain JS:
 // Node can't follow extensionless TS imports or the JSON config on its own.
 export const loadChecker = async () => {
-  const dir = mkdtempSync(join(tmpdir(), "listing-compliance-"));
+  const dir = repoTmp("listing-compliance-");
   const abs = (p) => JSON.stringify(join(ROOT, p).replace(/\\/g, "/"));
   const hasRules = existsSync(RULES);
   writeFileSync(

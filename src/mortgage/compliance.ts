@@ -2,6 +2,8 @@
 // Keep in sync with that file. No edits were needed: `npm run lint` (tsc, lib
 // es2015) accepts it unchanged.
 // 2026-10-01: `fold` (NFC + whitespace + zero-width) added here only; port it to the original.
+// 2026-10-01: the term lists, `fold` and `hit` exported (no behaviour change) for
+// scripts/check-spoken-phrases.mjs and src/listing/compliance.ts's fold test.
 
 /**
  * ASIC RG 234 / NCCP advertising guards for Finance Hub & Networks.
@@ -54,7 +56,7 @@ export const DISCLAIMER_VI =
  * approval" as a neutral definition, so only `quoted` and `negation` can clear
  * one of these; `definition` and `third-party-name` cannot.
  */
-const PROMOTIONAL_EN = [
+export const PROMOTIONAL_EN = [
   "free assessment", "free service", "free consultation", "free advice",
   "best rate", "best rates", "best deal", "best deals", "best loan", "best option",
   "great rate", "great rates", "great deal", "cheapest rate", "cheapest loan",
@@ -66,7 +68,7 @@ const PROMOTIONAL_EN = [
   "will qualify", "will be approved", "no obligation",
 ];
 
-const PROMOTIONAL_VI = [
+export const PROMOTIONAL_VI = [
   "dịch vụ miễn phí", "tư vấn miễn phí", "đánh giá miễn phí",
   "lãi suất tốt nhất", "gói vay tốt nhất", "lựa chọn tốt nhất", "ngân hàng tốt nhất",
   "lãi suất rẻ nhất", "đảm bảo được duyệt", "bảo đảm được duyệt",
@@ -79,14 +81,14 @@ const PROMOTIONAL_VI = [
  * looks, cleared by declaring any of the four reasons. This is the list that
  * used to hard-throw unconditionally.
  */
-const CONTEXT_EN = [
+export const CONTEXT_EN = [
   "free", "best", "great", "guarantee", "guaranteed", "independent",
   "instant", "immediate", "quickest", "cheap", "cheapest", "substantial",
   "easy", "easiest", "fast", "fastest", "simple", "simplest", "approved",
 ];
 
 /** Vietnamese is the language actually reaching the consumer here. */
-const CONTEXT_VI = [
+export const CONTEXT_VI = [
   "miễn phí", "tốt nhất", "rẻ nhất", "giá rẻ", "đảm bảo", "bảo đảm",
   "độc lập", "nhanh nhất", "nhanh chóng", "ngay lập tức", "dễ dàng", "đơn giản",
 ];
@@ -133,7 +135,7 @@ const WORD_SAFE = /[a-z]/i;
  * character (U+0008), not a regex word boundary, which silently disables every
  * single-word check.
  */
-const hit = (haystack: string, term: string): boolean =>
+export const hit = (haystack: string, term: string): boolean =>
   WORD_SAFE.test(term) && !term.includes(" ") && !term.includes("-")
     ? new RegExp(String.raw`\b${term}\b`, "i").test(haystack)
     : haystack.includes(term);
@@ -144,7 +146,7 @@ const hit = (haystack: string, term: string): boolean =>
  * space. Without it "miễn phí" in NFD or "no  obligation" passed unseen.
  */
 // Zero-width characters and the soft hyphen draw nothing, so they are dropped, not spaced.
-const fold = (s: string) => s.toLowerCase().normalize("NFC").replace(/[\u00AD\u200B-\u200D\u2060\uFEFF]/g, "").replace(/\s+/g, " ");
+export const fold = (s: string) => s.toLowerCase().normalize("NFC").replace(/[\u00AD\u200B-\u200D\u2060\uFEFF]/g, "").replace(/\s+/g, " ");
 const PROMOTIONAL = [...PROMOTIONAL_EN, ...PROMOTIONAL_VI].map(fold);
 const CONTEXT = [...CONTEXT_EN, ...CONTEXT_VI].map(fold);
 

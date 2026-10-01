@@ -51,8 +51,8 @@
 // The API key is read here only (see AGENTS.md "Third-party API keys").
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { repoTmp } from "./tmp-dir.mjs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkFacts, readLedger } from "./facts.mjs";
@@ -159,7 +159,7 @@ if (listing) {
 // RG 234 before any credits are spent: the narration and the English lines
 // reach clients just like on-screen copy. compliance.ts is bundled because Node
 // can't follow its extensionless TS imports.
-const bundleDir = mkdtempSync(join(tmpdir(), "voice-"));
+const bundleDir = repoTmp("voice-");
 run(process.execPath, [
   join(ROOT, "node_modules/esbuild/bin/esbuild"), join(ROOT, "src/mortgage/compliance.ts"),
   "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", `--outdir=${bundleDir}`,

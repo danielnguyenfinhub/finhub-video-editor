@@ -3,6 +3,7 @@
 // (Global RE's own folder; "2 - FINISHED VIDEOS" is Finance Hub's).
 //
 //   node scripts/publish-listing.mjs <slug> [--force] [--stale-ok]
+//   node scripts/publish-listing.mjs <slug> --inputs-hash <lang>   (listing-render.py's stamp)
 //
 // Reads public/listings/<slug>/script.json "post" {title, caption (VI),
 // captionEn, hashtags} and copies out/listings/<slug>/<slug>-<lang>.mp4 and
@@ -14,8 +15,10 @@
 // compliance guard over everything (scripts/listing-compliance.mjs). A listing
 // with "unknown" agency-agreement facts is a TEST: files start "TEST - " and the
 // caption says not to post. Never replaces a file unless --force. Refuses a
-// language rendered before the last change to script.json, listing.json or its
-// words (left over from a --lang re-render of the other one) unless --stale-ok.
+// language whose on-screen inputs (script.json without "post", listing.json, its
+// words) changed since it was rendered, unless --stale-ok. "post" is upload copy,
+// not on screen, so fixing it never needs a re-render.
+import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -45,13 +48,39 @@ export const listingPostProblems = (post, suburb) => {
   return problems;
 };
 
-/** Languages whose render in outDir is older than script.json, listing.json or its own words. */
+/** Hash of what a language's render shows: script.json without "post", listing.json, words-<lang>.json. */
+export const onScreenHash = (base, lang) => {
+  const text = (f) => (existsSync(join(base, f)) ? readFileSync(join(base, f), "utf8") : "");
+  let script = text("script.json");
+  try {
+    const { post: _upload, ...shown } = JSON.parse(script);
+    script = JSON.stringify(shown);
+  } catch {
+    // not JSON: hash the raw text
+  }
+  return createHash("sha256").update(JSON.stringify([script, text("listing.json"), text(`words-${lang}.json`)])).digest("hex");
+};
+
+/** listing-render.py writes onScreenHash here once <slug>-<lang>.mp4 is finished. */
+export const stampPath = (outDir, slug, lang) => join(outDir, `${slug}-${lang}.inputs`);
+
+/** Languages whose render in outDir shows older on-screen inputs than base has now. */
 export const staleLangs = (outDir, base, slug) => {
   const t = (f) => (existsSync(f) ? statSync(f).mtimeMs : 0);
   return Object.keys(LANGS).filter((lang) => {
-    const mp4 = join(outDir, `${slug}-${lang}.mp4`);
-    return existsSync(mp4) && t(mp4) < Math.max(...["script.json", "listing.json", `words-${lang}.json`].map((f) => t(join(base, f))));
+    const mp4 = join(outDir, `${slug}-${lang}.mp4`), stamp = stampPath(outDir, slug, lang);
+    if (!existsSync(mp4)) return false;
+    if (t(stamp) >= t(mp4)) return readFileSync(stamp, "utf8").trim() !== onScreenHash(base, lang);
+    // No stamp (rendered before 01/10/2026, or not by listing-render.py): file times.
+    return t(mp4) < Math.max(...["script.json", "listing.json", `words-${lang}.json`].map((f) => t(join(base, f))));
   });
+};
+
+/** publish-listing's stop for stale languages, or null (none stale, or --stale-ok). */
+export const staleStop = (outDir, base, slug, staleOk) => {
+  const stale = staleOk ? [] : staleLangs(outDir, base, slug);
+  const cmd = `node scripts/publish-listing.mjs ${slug}`;
+  return stale.length ? `the ${stale.join(" and ")} video in out/listings/${slug}/ was rendered before the last on-screen change (script.json scenes, listing.json or its words; not "post"), so it shows old copy. Nothing copied. Re-render it: npm run listing-render -- ${slug} --lang ${stale[0]}. To publish it as it is: ${cmd} --force --stale-ok` : null;
 };
 
 /** The caption file's text. */
@@ -86,8 +115,14 @@ const main = async () => {
   const slug = process.argv.slice(2).find((a) => !a.startsWith("--"));
   if (!slug) fail("usage: node scripts/publish-listing.mjs <slug> [--force]");
   assertSlug(slug);
-  const cmd = `node scripts/publish-listing.mjs ${slug}`;
   const dir = join(ROOT, "public", "listings", slug);
+  const hashLang = process.argv[process.argv.indexOf("--inputs-hash") + 1];
+  if (process.argv.includes("--inputs-hash")) {
+    if (!(hashLang in LANGS)) fail("usage: node scripts/publish-listing.mjs <slug> --inputs-hash vi|en");
+    console.log(onScreenHash(dir, hashLang));
+    return;
+  }
+  const cmd = `node scripts/publish-listing.mjs ${slug}`;
   const read = (f) => JSON.parse(readFileSync(join(dir, f), "utf8"));
   if (!existsSync(join(dir, "script.json"))) fail(`There is no listing "${slug}" (public/listings/${slug}/script.json).`);
   const listing = read("listing.json");
@@ -110,9 +145,8 @@ const main = async () => {
     [join(outDir, `${slug}-${lang}-feed.mp4`), `${topic} (${tag}) - feed 4x5.mp4`],
   ]).filter(([src]) => existsSync(src));
   if (!copies.length) fail(`Nothing rendered yet in out/listings/${slug}/. Render first: npm run listing-render -- ${slug}`);
-  const stale = staleLangs(outDir, dir, slug);
-  if (stale.length && !process.argv.includes("--stale-ok"))
-    fail(`the ${stale.join(" and ")} video in out/listings/${slug}/ was rendered before the last change to script.json, listing.json or its words, so it has old copy. Nothing copied. Re-render it: npm run listing-render -- ${slug} --lang ${stale[0]}. To publish it as it is: ${cmd} --force --stale-ok`);
+  const stop = staleStop(outDir, dir, slug, process.argv.includes("--stale-ok"));
+  if (stop) fail(stop);
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const txt = join(OUTPUT_DIR, `${topic} - caption.txt`);
   if (!process.argv.includes("--force"))
