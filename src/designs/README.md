@@ -41,6 +41,20 @@ or `toOutMs` (timeline.ts). Reel data: `reel.edit` (edit.json), `reel.timeline.c
    number as said, `label` = the words around it). Render EVERY figure in the template's
    chart/counter language: `<Sequence from={f.fromFrame} durationInFrames={f.frames}>`.
    Auto figures are short (2.6 s): a counter or a one-bar chart, not a full card.
+   Exception (Daniel, 02/10/2026): **a year or a date is shown as said.** It stays a
+   figure, but `asSaid(f.big)` (golden.ts) is true for it: never counted up, never
+   flipped or spun through other digits, no thousands dot, no bar, ring, meter or
+   needle; plain text, with no rate label (an automatic year or date gets `label: ""`;
+   a neutral word such as "NĂM" / "NGÀY" is fine, `saidKind`). `asSaid` is for years
+   and dates only: a year is 19xx/20xx alone or after "năm" ("2026", "năm 2026", not
+   "2000 đô"); a date is day/month, day 1-31 and month 1-12 ("29/9", not the ratio
+   "20/80"). **A figure said during the hook waits for it:** with a hook, `figuresOf`
+   starts such a figure at `HOOK_FRAMES`, and one said while that wait is still held
+   waits for it in turn, so they never overlap; each keeps its reading time (a stat its
+   whole hold, an automatic figure what is left of its span, never under
+   `READING.minNumberHoldMs`). `saidFrame` is when it was said (a stable key). Figures
+   said after the hook keep their time unless an earlier waiting figure is still held,
+   in which case they wait for it.
 2. **Bank named → its logo.** `lenderMentionsOf(reel)` returns
    `{ lender, startMs, endMs }` (talk-timeline ms). Render each with
    `<LenderLogo lender={m.lender} height={…}/>` (`src/mortgage/LenderLogo.tsx`: official

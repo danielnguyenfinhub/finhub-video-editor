@@ -13,7 +13,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { LOGO_HEIGHT, SAFE, type Figure } from "../../mortgage/golden";
+import { LOGO_HEIGHT, SAFE, type Figure, asSaid } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { FONT, LOGO, STROKE, clamp, enter } from "../../mortgage/style";
@@ -103,6 +103,25 @@ export const HookText: React.FC<{ big: string; sub?: string }> = ({
   );
 };
 
+// ponytail: a light heuristic (first run of digits, comma as the decimal
+// mark) — good enough for edit.json's "$4,1 TỶ" / "~$400" style figures;
+// upgrade to a real formatter if a figure needs true locale parsing.
+// A year or a date is shown as said (golden rule 1).
+export const counted = (big: string, t: number): string => {
+  const m = big.match(/\d[\d.,]*/);
+  if (!m || m.index === undefined || asSaid(big)) return big;
+  const target = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
+  const decimals = m[0].includes(",") ? m[0].split(",")[1].length : 0;
+  return (
+    big.slice(0, m.index) +
+    (target * t).toLocaleString("vi-VN", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }) +
+    big.slice(m.index + m[0].length)
+  );
+};
+
 // A figure card pinned to the artefact's bottom-left corner, protruding below
 // its bottom edge. "auto" figures render smaller than a declared "stat".
 export const SoWhatCard: React.FC<{ figure: Figure }> = ({ figure }) => {
@@ -110,23 +129,7 @@ export const SoWhatCard: React.FC<{ figure: Figure }> = ({ figure }) => {
   const { fps } = useVideoConfig();
   const p = enter(frame, fps);
   const small = figure.source === "auto";
-  // ponytail: a light heuristic (first run of digits, comma as the decimal
-  // mark) — good enough for edit.json's "$4,1 TỶ" / "~$400" style figures;
-  // upgrade to a real formatter if a figure needs true locale parsing.
-  const m = figure.big.match(/\d[\d.,]*/);
-  const target = m
-    ? parseFloat(m[0].replace(/\./g, "").replace(",", "."))
-    : null;
-  const decimals = m && m[0].includes(",") ? m[0].split(",")[1].length : 0;
-  const count =
-    target === null
-      ? figure.big
-      : figure.big.slice(0, m!.index) +
-        interpolate(frame, [0, 20], [0, target], clamp).toLocaleString(
-          "vi-VN",
-          { minimumFractionDigits: decimals, maximumFractionDigits: decimals },
-        ) +
-        figure.big.slice((m!.index ?? 0) + m![0].length);
+  const count = counted(figure.big, interpolate(frame, [0, 20], [0, 1], clamp));
   return (
     <div
       style={{

@@ -14,7 +14,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, asSaid } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import { FONT, clamp, pop } from "../../mortgage/style";
 import { FALL, type Hero } from "./Plan";
@@ -31,7 +31,8 @@ export const CHIP_TOP = 502;
 
 // "4,35%" counts 0 → 4,35 with the same decimals; a year or a date is shown
 // as said, never counted.
-const counted = (big: string, p: number): string => {
+export const counted = (big: string, p: number): string => {
+  if (asSaid(big)) return big; // a year or a date: as said (golden rule 1)
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;
   if (/^(19|20)\d\d$/.test(m[0]) || /\d\/\d/.test(big)) return big;

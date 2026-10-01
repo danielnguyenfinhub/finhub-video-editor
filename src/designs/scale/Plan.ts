@@ -171,7 +171,7 @@ export const onScale = (c: Cue): c is OwnScaleCue =>
 
 const overlaps = (a: Span, b: Span) => a[0] < b[1] && b[0] < a[1];
 
-const hookScene = (hook: Hook): ScaleScene => ({
+export const hookScene = (hook: Hook): ScaleScene => ({
   kind: "hook",
   from: 0,
   to: HOOK_FRAMES,
@@ -195,8 +195,9 @@ const hookScene = (hook: Hook): ScaleScene => ({
             },
     },
   ],
-  // A lone weight against an empty pan: the beam goes all the way down.
-  tilts: [{ at: 4 + FALL, angle: MAX_TILT }],
+  // One value, nothing to weigh it against: the beam stays level (viewed
+  // critique 08: a full tilt read "4,35% versus nothing").
+  tilts: [{ at: 4 + FALL, angle: 0 }],
 });
 
 const changeScene = (

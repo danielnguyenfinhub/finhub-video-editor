@@ -13,9 +13,11 @@ import { brand } from "../../brand/theme";
 import {
   HOOK_FRAMES,
   SAFE,
+  asSaid,
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  saidKind,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -34,6 +36,18 @@ import {
 
 export const HOOK_KICKER = "TIÊU ĐIỂM";
 export const FIGURE_KICKER = "CON SỐ";
+export const YEAR_KICKER = "NĂM";
+export const DATE_KICKER = "NGÀY";
+// A year or a date is not "the number" of anything (recheck 09): its own
+// neutral word, shown as said (golden rule 1).
+export const kickerOf = (big: string): string => {
+  const kind = saidKind(big);
+  return kind === "year"
+    ? YEAR_KICKER
+    : kind === "date"
+      ? DATE_KICKER
+      : FIGURE_KICKER;
+};
 export const LENDER_KICKER = "ĐANG NHẮC TỚI";
 export const LENDER_SUB = "Ngân hàng";
 
@@ -85,60 +99,17 @@ const Kicker: React.FC<{ text: string; color?: string }> = ({
   </div>
 );
 
-// A figure said during the hook: a compact quote row under the headline, so
-// the two share the stage instead of stacking (golden rule 1 still shows it).
-const MiniFigure: React.FC<{ figure: Figure; start: number }> = ({
-  figure,
-  start,
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const p = enter(frame, fps, start);
-  return (
-    <div
-      style={{
-        marginTop: 26,
-        display: "flex",
-        alignItems: "center",
-        gap: 18,
-        padding: "10px 22px",
-        borderRadius: 12,
-        background: "rgba(6,19,42,0.85)",
-        border: `2px solid ${SKY}`,
-        opacity: p,
-        transform: `translateY(${interpolate(p, [0, 1], [20, 0])}px)`,
-      }}
-    >
-      <Led color={SKY} size={14} />
-      <span
-        style={{ color: SKY, fontWeight: 900, fontSize: 28, letterSpacing: 4 }}
-      >
-        {FIGURE_KICKER}
-      </span>
-      <FlipTiles
-        text={figure.big}
-        start={start + 2}
-        tileW={tileFor(figure.big, 420, 52)}
-        color={AMBER}
-        stagger={2}
-      />
-    </div>
-  );
-};
-
 const HookBoard: React.FC<{
   hook: NonNullable<EditJson["hook"]>;
-  minis: Figure[];
-}> = ({ hook, minis }) => {
+}> = ({ hook }) => {
   const frame = useCurrentFrame();
-  const mini = minis.filter((f) => f.fromFrame <= frame).pop();
   return (
     <StageBox>
       <Kicker text={HOOK_KICKER} />
       <FlipTiles
         text={hook.big}
         start={2}
-        tileW={tileFor(hook.big, W - 40, minis.length ? 128 : 150)}
+        tileW={tileFor(hook.big, W - 40, 150)}
         color={AMBER}
       />
       {hook.sub ? (
@@ -157,16 +128,15 @@ const HookBoard: React.FC<{
           <FlipText text={hook.sub} start={18} />
         </div>
       ) : null}
-      {mini ? (
-        <MiniFigure key={mini.fromFrame} figure={mini} start={mini.fromFrame} />
-      ) : null}
     </StageBox>
   );
 };
 
 // How far the meter fills: a percentage on a 10 % scale below 10 % (rates),
 // else 100 %; a date, count or amount has no scale, so the meter fills.
-const meterFill = (big: string): number => {
+// A year or a date has no meter (null): shown as said.
+export const meterFill = (big: string): number | null => {
+  if (asSaid(big)) return null;
   const m = big.match(/\d[\d.,]*/);
   if (!m || !big.includes("%")) return 1;
   const v = parseFloat(m[0].replace(",", "."));
@@ -199,8 +169,9 @@ const NeutralTick: React.FC<{ h: number }> = ({ h }) => {
 const FigureBoard: React.FC<{ figure: Figure }> = ({ figure }) => {
   const frame = useCurrentFrame();
   const tileW = tileFor(figure.big, W - 200, 130);
+  const fillTo = meterFill(figure.big);
   const fill =
-    meterFill(figure.big) *
+    (fillTo ?? 0) *
     interpolate(frame, [10, 34], [0, 1], {
       ...clamp,
       easing: (x) => 1 - (1 - x) ** 3,
@@ -208,30 +179,32 @@ const FigureBoard: React.FC<{ figure: Figure }> = ({ figure }) => {
   const label = figure.source === "stat" ? figure.label : "";
   return (
     <StageBox>
-      <Kicker text={FIGURE_KICKER} color={SKY} />
+      <Kicker text={kickerOf(figure.big)} color={SKY} />
       <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
         <FlipTiles text={figure.big} start={2} tileW={tileW} color={AMBER} />
         <NeutralTick h={tileW * 1.38} />
       </div>
-      <div
-        style={{
-          marginTop: 30,
-          width: Math.min(W - 80, 720),
-          height: 14,
-          borderRadius: 7,
-          background: "rgba(255,255,255,0.1)",
-          overflow: "hidden",
-        }}
-      >
+      {fillTo === null ? null : (
         <div
           style={{
-            width: `${fill * 100}%`,
-            height: "100%",
-            background: `linear-gradient(90deg, ${SKY}, ${AMBER})`,
-            boxShadow: `0 0 18px ${AMBER}`,
+            marginTop: 30,
+            width: Math.min(W - 80, 720),
+            height: 14,
+            borderRadius: 7,
+            background: "rgba(255,255,255,0.1)",
+            overflow: "hidden",
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              width: `${fill * 100}%`,
+              height: "100%",
+              background: `linear-gradient(90deg, ${SKY}, ${AMBER})`,
+              boxShadow: `0 0 18px ${AMBER}`,
+            }}
+          />
+        </div>
+      )}
       {label ? (
         <div
           style={{
@@ -305,34 +278,17 @@ const LenderQuote: React.FC<{ lender: Lender }> = ({ lender }) => {
   );
 };
 
-// While the hook holds the stage (HOOK_FRAMES): a figure said early enough
-// to stay up for the minimum number hold joins the hook board as a mini row;
-// one said later waits for the hook to end and keeps at least that hold.
-const MIN_HOLD = 45; // READING.minNumberHoldMs at 30 fps
-
+// A figure said during the hook waits for it to end: the core does that
+// (figuresOf, golden rule 1), so the hook board shows the hook alone.
 export const TickerStage: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
   const hook = reel.edit.hook;
-  const figures = figuresOf(reel, fps);
-  const minis = hook
-    ? figures.filter((f) => f.fromFrame < HOOK_FRAMES - MIN_HOLD)
-    : [];
-  const boards = figures
-    .filter((f) => !minis.includes(f))
-    .map((f) => {
-      if (!hook || f.fromFrame >= HOOK_FRAMES) return f;
-      const shift = HOOK_FRAMES - f.fromFrame;
-      return {
-        ...f,
-        fromFrame: HOOK_FRAMES,
-        frames: Math.max(MIN_HOLD, f.frames - shift),
-      };
-    });
+  const boards = figuresOf(reel, fps);
   return (
     <>
       {hook ? (
         <Sequence durationInFrames={HOOK_FRAMES}>
-          <HookBoard hook={hook} minis={minis} />
+          <HookBoard hook={hook} />
         </Sequence>
       ) : null}
       {boards.map((f) => (

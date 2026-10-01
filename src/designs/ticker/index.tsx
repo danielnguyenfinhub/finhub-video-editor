@@ -24,7 +24,7 @@ import type {
   OverlayProps,
   TalkProps,
 } from "../../mortgage/design";
-import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
+import { HOOK_FRAMES, LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
@@ -58,6 +58,8 @@ import {
   LENDER_KICKER,
   LENDER_SUB,
   TickerStage,
+  YEAR_KICKER,
+  DATE_KICKER,
 } from "./Stage";
 
 const RAMP_FRAMES = 8;
@@ -368,7 +370,10 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
       <TickerStage reel={reel} />
       <BoardCueTrack reel={reel} />
       <Captions reel={reel} keywords={keywords} level={level} />
-      <Tape items={items} />
+      {/* The hook board is the one mover in the hook: the tape starts after it. */}
+      <Sequence from={reel.edit.hook ? HOOK_FRAMES : 0} layout="none">
+        <Tape items={items} />
+      </Sequence>
       <EnglishLine reel={reel} />
       <LogoMark talkFrames={talkFrames} />
     </>
@@ -388,6 +393,8 @@ export const ticker: Design = {
     TAPE_LABEL,
     HOOK_KICKER,
     FIGURE_KICKER,
+    YEAR_KICKER,
+    DATE_KICKER,
     LENDER_KICKER,
     LENDER_SUB,
     VS,

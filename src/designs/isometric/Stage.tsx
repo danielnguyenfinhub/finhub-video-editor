@@ -14,7 +14,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { HOOK_FRAMES, SAFE, type Figure } from "../../mortgage/golden";
+import { HOOK_FRAMES, SAFE, type Figure, asSaid } from "../../mortgage/golden";
 import type { EditJson } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
 import {
@@ -55,6 +55,7 @@ export const SLAB: React.CSSProperties = {
 // or a date ("2026", "29/9") is shown as said; a thousands separator only if
 // the spoken number had one.
 export const counted = (big: string, t: number): string => {
+  if (asSaid(big)) return big; // a year or a date: as said (golden rule 1)
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;
   if (/^(19|20)\d\d$/.test(m[0]) || /\d\/\d/.test(big)) return big;

@@ -15,6 +15,7 @@ import { brand } from "../../brand/theme";
 import {
   HOOK_FRAMES,
   SAFE,
+  asSaid,
   figuresOf,
   lenderMentionsOf,
   type Figure,
@@ -85,9 +86,6 @@ const StageBox: React.FC<{ children: React.ReactNode; place?: Place }> = ({
 // "4,1 tỷ" -> counts 0 → 4,1 with the same decimals; text around it kept.
 // A date ("29/9") or a year ("2026") is shown as said: counting it up would
 // flash wrong dates.
-const asSaid = (big: string) =>
-  /\d\s*\/\s*\d/.test(big) ||
-  /^(19|20)\d\d$/.test(big.match(/\d[\d.,]*/)?.[0] ?? "");
 export const counted = (big: string, t: number): string => {
   if (asSaid(big)) return big;
   const m = big.match(/\d[\d.,]*/);

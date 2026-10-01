@@ -9,7 +9,12 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { HOOK_FRAMES, SAFE, type Figure } from "../../mortgage/golden";
+import {
+  HOOK_FRAMES,
+  SAFE,
+  type Figure,
+  saidKind,
+} from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
@@ -42,6 +47,18 @@ import {
 
 export const HOOK_KICKER = "TIN NHANH";
 export const FIGURE_KICKER = "CON SỐ";
+export const YEAR_KICKER = "NĂM";
+export const DATE_KICKER = "NGÀY";
+// A year or a date is not "the number" of anything (recheck 09): its own
+// neutral word, shown as said (golden rule 1).
+export const kickerOf = (big: string): string => {
+  const kind = saidKind(big);
+  return kind === "year"
+    ? YEAR_KICKER
+    : kind === "date"
+      ? DATE_KICKER
+      : FIGURE_KICKER;
+};
 export const LENDER_KICKER = "ĐANG NHẮC TỚI";
 export const LENDER_SUB = "Ngân hàng";
 
@@ -121,7 +138,7 @@ const FigureStage: React.FC<{ figure: Figure; frames: number }> = ({
   const size = giantSize([figure.big], W / PUSH, max);
   return (
     <Frame frames={frames}>
-      <Kicker text={FIGURE_KICKER} />
+      <Kicker text={kickerOf(figure.big)} />
       <Giant text={figure.big} size={size} frames={frames} />
       {figure.label ? <Label text={figure.label} /> : null}
     </Frame>
@@ -178,7 +195,7 @@ const Chip: React.FC<{ item: Item }> = ({ item }) => {
       }}
     >
       <Caps size={22}>
-        {item.kind === "figure" ? FIGURE_KICKER : LENDER_KICKER}
+        {item.kind === "figure" ? kickerOf(item.figure.big) : LENDER_KICKER}
       </Caps>
       <div style={{ marginTop: 8 }}>
         {item.kind === "figure" ? (

@@ -18,6 +18,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  hookCount,
 } from "../../mortgage/golden";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
@@ -46,9 +47,18 @@ import {
   type Line,
 } from "./Paper";
 import { HEAD_H, HeadLine, TextLine, ValueRow, fitRow } from "./Rows";
+import { keepUnits } from "../../elements/keepUnits";
 
 export const TOTAL_WORD = "TỔNG";
 export const CHAPTER_WORD = "PHẦN";
+// A rate is not a sum (viewed critique 08): "TỔNG" only on an amount.
+export const totalWordOf = (hook: NonNullable<EditJson["hook"]>): string =>
+  /%/.test(hook.big + (hook.suffix ?? "")) ? "" : TOTAL_WORD;
+// The hook total at count progress t: through hookCount, never from 0.
+export const hookValue = (
+  hook: NonNullable<EditJson["hook"]>,
+  t: number,
+): string => counted(hook.big, hookCount(1, Math.max(0, Math.min(1, t))));
 
 const MIN_HOLD = 45; // READING.minNumberHoldMs at 30 fps
 const WAIT = 15;
@@ -146,17 +156,19 @@ const HookReceipt: React.FC<{
   const inner = width - 60;
   const lines: Line[] = [{ key: "head", at: 0, h: HEAD_H, node: <HeadLine /> }];
   if (hook.sub) {
-    const s = fit(hook.sub, inner, 2, 56, 900);
+    const sub = keepUnits(hook.sub); // never "sau 3 / lần tăng"
+    const s = fit(sub, inner, 2, 56, 900);
     lines.push({
       key: "sub",
       at: 0,
       h: s.lines * s.size * 1.22 + 24,
-      node: <TextLine text={hook.sub} size={s.size} />,
+      node: <TextLine text={sub} size={s.size} />,
     });
   }
   const ordered = inOrder(lines, 6);
   const totalAt = ordered[ordered.length - 1].at + 8;
-  const f = fitRow(TOTAL_WORD, hook.big, inner, 170, true, true);
+  const word = totalWordOf(hook);
+  const f = fitRow(word, hook.big, inner, 170, true, true);
   const t = hook.countTo === undefined ? 1 : (frame - totalAt) / COUNT;
   const all: Line[] = [
     ...ordered,
@@ -166,8 +178,8 @@ const HookReceipt: React.FC<{
       h: f.h,
       node: (
         <ValueRow
-          label={TOTAL_WORD}
-          value={counted(hook.big, Math.max(0, Math.min(1, t)))}
+          label={word}
+          value={hookValue(hook, t)}
           f={f}
           total
           highlightAt={totalAt + COUNT + 4}

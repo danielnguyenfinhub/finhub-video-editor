@@ -32,6 +32,7 @@ import {
   type Row,
   type Scene,
 } from "./Plan";
+import { keepUnits } from "../../elements/keepUnits";
 
 export const BEFORE_WORD = "TRƯỚC";
 export const AFTER_WORD = "SAU";
@@ -833,7 +834,7 @@ export const MiniLender: React.FC<{ lender: Lender; show: number }> = ({
 
 // ------------------------------------------------------------- points
 
-const CARDS_TOP = 596;
+const CARDS_TOP = MINI.y + MINI.r + 16; // under the dial
 const CARDS_BOTTOM = 1040;
 
 export const PointsScene: React.FC<{
@@ -861,7 +862,7 @@ export const PointsScene: React.FC<{
           left: MINI.x + MINI.r + 22,
           maxWidth: TOP_RIGHT - MINI.x - MINI.r - 22,
           top: MINI.y,
-          transform: `translate(${(1 - title) * -30}px, -50%)`,
+          transform: `translate(${(1 - title) * 30}px, -50%)`, // in from the right, never under the dial
           opacity: title,
           fontSize: 42,
           fontWeight: 900,
@@ -870,7 +871,7 @@ export const PointsScene: React.FC<{
           textWrap: "balance",
         }}
       >
-        {s.title}
+        {keepUnits(s.title)}
       </div>
       {s.items.map((it, i) => {
         if (t < it.at) return null;

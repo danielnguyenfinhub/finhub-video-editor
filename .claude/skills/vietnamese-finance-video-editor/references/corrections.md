@@ -100,3 +100,40 @@ screen ("the rate card"), never whose.
   `check-design-figures` fails when a design loses it · `checked`
 - 02/10/2026 · design:kinetic · audit C-X3/C-ki2 (unsaid words "close to invisible", navy on navy)
   → unsaid caption words at `GHOST` 0.35 (was 0.16), readable ahead · `rule`
+- 02/10/2026 · all designs (core) · "Yes approve and fix", then "Option 1, allow it and retry" (viewed
+  critiques 08 V1/S2: "CON SỐ 2026" during the hook in all eleven data designs, ticker flipping it as
+  "5 2 4") → golden rule 1 exception: a year or a date is shown as said (core `asSaid`, years and dates
+  only: 19xx/20xx alone or after "năm", day/month with day 1-31 and month 1-12, so not "2000 đô" or
+  "20/80"; still a figure, never counted, flipped or spun, no thousands dot, no bar, ring, meter or
+  needle, no rate label: an automatic year or date gets `label: ""`, a design may use a neutral
+  "NĂM" / "NGÀY"); with a hook, `figuresOf` makes a figure said under it wait for `HOOK_FRAMES`, the
+  next waits for its hold (no overlap), each keeps its reading time, `saidFrame` keeps when it was
+  said; figures said after the hook keep their time unless an earlier waiting figure is still held,
+  in which case they wait for it (rba-sept-2026: "3,6" said at 133 shows at 150) →
+  `src/designs/README.md` rule 1; `check-golden` (self-tests, README text) and `check-design-figures`
+  (evaluated: the core, every design file that defines a figure counter, the ten data stage plans,
+  ticker flaps, flash/ticker/kinetic meters, faceless ring, gauge needle, the neutral kickers) ·
+  `checked`; that a meter is drawn only through its fill function is a source check · `rule`
+- 02/10/2026 · design:gauge, pulse, scale, receipt, calendar, timelapse, splitscreen, flipcard · viewed
+  critiques 08 V2/S1 (hook count-up from 0 paused at "4,06%", "2,39%", "0,00%" for a 4,35% rate) → a
+  hook number never counts from 0: only its last tenth, exact by half the design's count (`hookCount`,
+  golden.ts) → `check-design-figures` evaluates each design's hook text at progress 0, 0.5 and 1 ·
+  `checked`
+- 02/10/2026 · design:flipcard · cue text in the fallback font; "ThángHai" again → the cue track sets
+  `fontFamily: FONT` (source check · `rule`); the said word's card grows into a fixed side margin
+  (`saidRoom`, evaluated), never into the word space · `checked`
+- 02/10/2026 · design:ticker · "Lãi suất 4,35%: cần CVSB R" (random-capital decode) → a letter never
+  spins through other letters (flaps on itself), only a non-year digit spins · `checked`; the tape
+  starts after the hook (one mover in the hook): source check only · `rule`
+- 02/10/2026 · design:receipt, calendar, scale, timelapse · viewed critique 08 → "TỔNG" only on an
+  amount, never on a rate; calendar tears the title page off before a points notepad comes in; a lone
+  hook value keeps the scale beam level and no plaque covers the pillar → evaluated in
+  `check-design-figures` · `checked`; timelapse keeps the dial large (r 118) beside the points title:
+  needs a render · `rule`
+- 02/10/2026 · design:kinetic (and every design with its own counter) · recheck 09: kinetic counted
+  "2026" up from 0 over a bar ("2021" at frame 200) once the year left the hook → every design
+  counter returns a year or date as said (`asSaid`), kinetic draws no bar for it; a design file that
+  defines `counted` must be listed in `check-design-figures`, which evaluates it · `checked`
+- 02/10/2026 · design:receipt, timelapse · recheck 09: "sau 3 / lần tăng", "cơ / bản" → a headline
+  never splits a number from its word or a two-word finance unit (`keepUnits`, no-break spaces;
+  src/elements/keepUnits.ts) → evaluated in `check-design-figures`, its use by source · `checked`

@@ -11,7 +11,7 @@ import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
-import { FIGURE_WORD, LENDER_WORD, SplitChip } from "./Chip";
+import { LENDER_WORD, SplitChip, kickerOf } from "./Chip";
 import {
   changeLayers,
   compareLayers,
@@ -35,6 +35,7 @@ import {
   StageBox,
   W,
 } from "./Slider";
+import { hookCount } from "../../mortgage/golden";
 
 const FADE = 8;
 const LEFT_PARK = 40;
@@ -42,15 +43,19 @@ const ease = (x: number) => 1 - (1 - x) ** 3;
 
 // ------------------------------------------------------------- hook
 
+// The hook number at count progress t (0 -> 1): through hookCount, never
+// from 0 (exported for check-design-figures).
+export const hookText = (hook: Hook, t: number): string =>
+  hook.countTo === undefined
+    ? hook.big
+    : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
+        minimumFractionDigits: hook.decimals ?? 0,
+        maximumFractionDigits: hook.decimals ?? 0,
+      })}${hook.suffix ?? ""}`;
+
 const hookLayers = (hook: Hook, lf: number, fps: number, x: number): Layers => {
   const t = interpolate(lf, [6, 40], [0, 1], { ...clamp, easing: ease });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const size = Math.min(
     200,
     fitText({
@@ -160,7 +165,7 @@ const figureLayers = (f: Figure, lf: number, fps: number): Layers => {
                   color: SKY,
                 }}
               >
-                {FIGURE_WORD}
+                {kickerOf(f.big)}
               </span>
               {label ? (
                 <span

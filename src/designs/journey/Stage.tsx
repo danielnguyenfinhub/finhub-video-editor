@@ -19,6 +19,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  asSaid,
 } from "../../mortgage/golden";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
@@ -40,6 +41,7 @@ const PIN_HALF = 44; // half the marker's width, with its glow
 // year or a date ("2026", "29/9") is shown as said, never counted; thousands
 // dots only if the number was said with one.
 export const counted = (big: string, t: number): string => {
+  if (asSaid(big)) return big; // a year or a date: as said (golden rule 1)
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;
   if (/^(19|20)\d\d$/.test(m[0]) || /\d\s*\/\s*\d/.test(big)) return big;

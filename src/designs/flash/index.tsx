@@ -37,7 +37,7 @@ import { Captions, EnglishLine } from "./Captions";
 import { AlertBar } from "./AlertBar";
 import { VS } from "./Compare";
 import { FlashCueTrack, cueBeats, isOwnCue } from "./Cues";
-import { FIGURE_TAG } from "./Figures";
+import { FIGURE_TAG, YEAR_KICKER, DATE_KICKER } from "./Figures";
 import { POINTS_UNIT } from "./diff";
 import {
   ALERT_LABEL,
@@ -266,6 +266,8 @@ export const flash: Design = {
     CHAPTER_WORD,
     HOOK_TAG,
     FIGURE_TAG,
+    YEAR_KICKER,
+    DATE_KICKER,
     LENDER_TAG,
     LENDER_SUB,
     POINTS_UNIT,

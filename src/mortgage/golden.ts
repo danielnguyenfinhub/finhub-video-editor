@@ -184,7 +184,30 @@ export type Figure = {
   big: string; // the number as said, e.g. "4,1", "0,4%", "1.600"
   label: string; // stat label, or the short phrase after an automatic figure ("" if none)
   source: "stat" | "auto";
+  saidFrame?: number; // figuresOf: when it was said, before the hook wait (a stable key)
 };
+
+// A calendar year or a date is shown as said (Daniel, 02/10/2026): never
+// counted up, no thousands dot, no bar, ring or scale, no rate label. Years
+// and dates only: a year is 19xx/20xx alone or after "năm" ("2026", "năm
+// 1999"; not "2000 đô"); a date is day/month with day 1-31 and month 1-12
+// ("29/9", "1/12/2026"; not the ratio "20/80").
+const DATE =
+  /(^|[^\d.,])(0?[1-9]|[12]\d|3[01])\s*\/\s*(0?[1-9]|1[0-2])(?![\d.,])/;
+export const saidKind = (big: string): "year" | "date" | null =>
+  /^(năm\s+)?(19|20)\d\d$/iu.test(big.trim())
+    ? "year"
+    : DATE.test(big)
+      ? "date"
+      : null;
+export const asSaid = (big: string): boolean => saidKind(big) !== null;
+
+// The hook's count-up (viewed critique 08, V2/S1): never from 0, which shows
+// rates that never existed. `t` is the design's own 0 -> 1 count progress;
+// the value counts only its last tenth and is exact from half way, so the
+// true number is up by the hook's peak.
+export const hookCount = (to: number, t: number): number =>
+  to * (0.9 + 0.1 * Math.min(1, Math.max(0, t) * 2));
 
 const AUTO_MS = 2600;
 const AUTO_GAP_MS = 4000;
@@ -244,9 +267,12 @@ const spokenNumbers = (reel: Reel) => {
         .join("")
         .trim()
         .split(/\s+/);
+      const said = clean(big) + (percent ? "%" : "");
       out.push({
-        big: clean(big) + (percent ? "%" : ""),
-        label: autoLabel(after),
+        big: said,
+        // A year or a date gets no label: the words after it describe
+        // something else ("2026 lãi suất cơ bản" read as "the rate is 2026").
+        label: asSaid(said) ? "" : autoLabel(after),
         startMs: caps[i].startMs,
       });
     }
@@ -309,7 +335,26 @@ export const figuresOf = (reel: Reel, fps: number): Figure[] => {
       source: "auto",
     });
   }
-  return [...stats, ...autos].sort((a, b) => a.fromFrame - b.fromFrame);
+  // The hook owns the screen for HOOK_FRAMES (Daniel, 02/10/2026): a figure
+  // said under it waits until the hook ends, and one said while that wait
+  // is still held waits for it in turn, so they never overlap. A stat keeps
+  // its whole reading time; an automatic figure what is left of its span,
+  // never less than READING.minNumberHoldMs. Figures said after the hook
+  // are untouched.
+  const hold = toFrame(READING.minNumberHoldMs);
+  let free = reel.edit.hook ? HOOK_FRAMES : 0;
+  return [...stats, ...autos]
+    .sort((a, b) => a.fromFrame - b.fromFrame)
+    .map((f) => {
+      if (f.fromFrame >= free) return { ...f, saidFrame: f.fromFrame };
+      const frames =
+        f.source === "stat"
+          ? Math.max(f.frames, hold)
+          : Math.max(f.fromFrame + f.frames - free, hold);
+      const staged = { ...f, saidFrame: f.fromFrame, fromFrame: free, frames };
+      free += frames;
+      return staged;
+    });
 };
 
 export const lenderMentionsOf = (reel: Reel): LenderMention[] =>

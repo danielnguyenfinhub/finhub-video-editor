@@ -51,7 +51,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-speech-cuts.mjs <slug>` | Speech lost or doubled at the automatic cuts and chapter joins, before the first render | local |
 | `check-pacing.mjs <slug>` | Rule 5b: a visual change every 1.5-3 s | local |
 | `check-golden.mjs [slug]` | `golden.ts` layout rules (synthetic without a slug) | **test** |
-| `check-design-figures.mjs` | faceless/paper `counted` shows a year or date as said; faceless `stagedFigures` never overlap (rba-sept-2026 and two stats in the hook); the five scaling caption designs keep `saidRoom` | **test** |
+| `check-design-figures.mjs` | evaluated: the core `asSaid` / `hookCount` / hook wait, every design file that defines a figure `counted` (listed, else it fails), the ten data stage plans (no figure in the hook), each counting design's hook text at progress 0 / 0.5 / 1, no meter, ring or needle for a year, neutral year/date kickers, scale level beam and pillar clearance, no "TỔNG" on a rate, calendar tear timing, `keepUnits`, `saidRoom`, kinetic `FIT_W`; plus comment-stripped source checks (faceless staged helper, ticker tape, flipcard cue font) | **test** |
 | `check-caption-pages.mjs [slug]` | `captionPages.ts` | **test** |
 | `check-sweep.mjs` | `sweep-render.mjs` frame budget and parsing; `--out` only inside `out/`; end to end when ffmpeg is on PATH | **test** |
 | `check-video-status.mjs` | `video-status.mjs` on synthetic runs | **test** |

@@ -12,7 +12,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, saidKind } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import { FONT, clamp } from "../../mortgage/style";
 import { counted } from "./numbers";
@@ -20,6 +20,18 @@ import type { Chip } from "./Plan";
 import { GOLD, MID, SKY, STAGE } from "./Slider";
 
 export const FIGURE_WORD = "CON SỐ";
+export const YEAR_KICKER = "NĂM";
+export const DATE_KICKER = "NGÀY";
+// A year or a date is not "the number" of anything (recheck 09): its own
+// neutral word, shown as said (golden rule 1).
+export const kickerOf = (big: string): string => {
+  const kind = saidKind(big);
+  return kind === "year"
+    ? YEAR_KICKER
+    : kind === "date"
+      ? DATE_KICKER
+      : FIGURE_WORD;
+};
 export const LENDER_WORD = "ĐANG NHẮC TỚI";
 const FADE = 8;
 const ease = (x: number) => 1 - (1 - x) ** 3;
@@ -140,7 +152,7 @@ const ChipView: React.FC<{ chip: Chip }> = ({ chip }) => {
               color: SKY,
             }}
           >
-            {chip.lender ? LENDER_WORD : FIGURE_WORD}
+            {chip.lender ? LENDER_WORD : kickerOf(big)}
           </span>
         }
         right={

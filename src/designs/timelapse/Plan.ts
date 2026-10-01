@@ -9,6 +9,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  hookCount,
 } from "../../mortgage/golden";
 import type { Lender } from "../../mortgage/lenders";
 import {
@@ -289,5 +290,5 @@ export const hookScrub = (hook: NonNullable<Reel["edit"]["hook"]>) => {
   return target === undefined
     ? null
     : (p: number) =>
-        `${format(target * Math.min(1, p), hook.decimals ?? 0, false)}${hook.suffix ?? ""}`;
+        `${format(hookCount(target, p), hook.decimals ?? 0, false)}${hook.suffix ?? ""}`;
 };

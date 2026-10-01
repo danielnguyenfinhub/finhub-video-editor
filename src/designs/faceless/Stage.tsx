@@ -17,6 +17,7 @@ import {
   HOOK_FRAMES,
   READING,
   SAFE,
+  asSaid,
   figuresOf,
   lenderMentionsOf,
   type Figure,
@@ -71,13 +72,12 @@ export const FacelessBackdrop: React.FC = () => {
   );
 };
 
-// Faceless only. The hook owns the stage for its first HOOK_FRAMES: a figure
-// said under it waits until the hook ends. A stat keeps its whole reading
-// time (`frames`, already stretched by the core's reading floor); an
-// automatic figure keeps what is left of its span, never less than
-// READING.minNumberHoldMs. Staged figures never overlap in time: when a hold
-// is not over yet, the next figure waits for it (it starts late, its own
-// hold intact). `saidFrame` is the core's original start (a stable key).
+// The core (figuresOf) already makes a figure said under the hook wait until
+// HOOK_FRAMES. Faceless adds: staged figures never overlap anywhere in the
+// talk (when a hold is not over yet, the next figure waits for it, its own
+// hold intact), a stat keeps its whole reading time and an automatic figure
+// what is left of its span, never less than READING.minNumberHoldMs.
+// `saidFrame` is the core's original start (a stable key).
 export const stagedFigures = (
   reel: Reel,
   fps: number,
@@ -91,7 +91,12 @@ export const stagedFigures = (
         ? Math.max(f.frames, hold)
         : Math.max(f.fromFrame + f.frames - from, hold);
     free = from + frames;
-    return { ...f, saidFrame: f.fromFrame, fromFrame: from, frames };
+    return {
+      ...f,
+      saidFrame: f.saidFrame ?? f.fromFrame,
+      fromFrame: from,
+      frames,
+    };
   });
 };
 
@@ -157,8 +162,7 @@ const StageBox: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 // A year or a date ("2026", "29/9") is shown as said, never counted.
 export const counted = (big: string, t: number): string => {
   const m = big.match(/\d[\d.,]*/);
-  if (!m || m.index === undefined) return big;
-  if (/^(19|20)\d\d$/.test(m[0]) || /\d\s*\/\s*\d/.test(big)) return big;
+  if (!m || m.index === undefined || asSaid(big)) return big;
   const target = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
   if (!Number.isFinite(target)) return big;
   const decimals = m[0].includes(",") ? m[0].split(",")[1].length : 0;
@@ -170,9 +174,11 @@ export const counted = (big: string, t: number): string => {
 };
 
 // How far the ring closes: a percentage fills to its value (on a 10 % scale
-// below 10 %, e.g. interest rates, else 100 %); a date, count or amount has
+// below 10 %, e.g. interest rates, else 100 %); a count or amount has
 // no scale, so the ring closes.
-const ringFill = (big: string): number => {
+// A year or a date has no ring at all (null): shown as said, on a plain disc.
+export const ringFill = (big: string): number | null => {
+  if (asSaid(big)) return null;
   const m = big.match(/\d[\d.,]*/);
   if (!m || !big.includes("%")) return 1;
   const v = parseFloat(m[0].replace(",", "."));
@@ -207,20 +213,22 @@ const FigureHero: React.FC<{ figure: Figure }> = ({ figure }) => {
             r={R}
             fill="rgba(6,19,42,0.7)"
             stroke="rgba(255,255,255,0.12)"
-            strokeWidth={26}
+            strokeWidth={fill === null ? 0 : 26}
           />
-          <circle
-            cx={R + 30}
-            cy={R + 30}
-            r={R}
-            fill="none"
-            stroke={t >= 1 ? AMBER : SKY}
-            strokeWidth={26}
-            strokeLinecap="round"
-            strokeDasharray={C}
-            strokeDashoffset={C * (1 - fill * t)}
-            transform={`rotate(-90 ${R + 30} ${R + 30})`}
-          />
+          {fill === null ? null : (
+            <circle
+              cx={R + 30}
+              cy={R + 30}
+              r={R}
+              fill="none"
+              stroke={t >= 1 ? AMBER : SKY}
+              strokeWidth={26}
+              strokeLinecap="round"
+              strokeDasharray={C}
+              strokeDashoffset={C * (1 - fill * t)}
+              transform={`rotate(-90 ${R + 30} ${R + 30})`}
+            />
+          )}
         </svg>
         <div
           style={{

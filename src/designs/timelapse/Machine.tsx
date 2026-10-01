@@ -16,7 +16,9 @@ export const INK = `color-mix(in srgb, ${brand.navy} 88%, transparent)`;
 
 export const CLOCK = { x: 540, y: 790, r: 205 };
 export const DISC_R = 160; // the dark disc a value sits on
-export const MINI = { x: SAFE.left + 58, y: SAFE.top + 60, r: 54 }; // points
+// The dial during points: still the hero (viewed critique 08: a 54 px corner
+// clock lost it), top left, the cue title beside it, the rows under it.
+export const MINI = { x: SAFE.left + 126, y: SAFE.top + 126, r: 118 }; // bezel inside SAFE
 export const TRACK = { y: 1118, x0: 118, x1: 930 };
 export const PINS = [300, 780] as const; // before, after
 export const TOP = SAFE.top + 6; // the top slot (titles, small chips)

@@ -32,7 +32,7 @@ import {
   useFontReady,
 } from "./Frame";
 import { cueSpans } from "./Cues";
-import { FIGURE_TAG, FigureCard } from "./Figures";
+import { FigureCard, kickerOf } from "./Figures";
 
 export const HOOK_TAG = "TIN NHANH";
 export const LENDER_TAG = "ĐANG NHẮC TỚI";
@@ -333,7 +333,7 @@ export const FlashStage: React.FC<{
           {slot.chip ? (
             <Chip side="left">
               <span style={{ color: DIM, fontWeight: 900, fontSize: 26 }}>
-                {FIGURE_TAG}
+                {kickerOf(figure.big)}
               </span>
               <span style={{ color: GOLD, fontWeight: 900, fontSize: 46 }}>
                 {figure.big}
