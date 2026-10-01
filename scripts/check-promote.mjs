@@ -39,9 +39,9 @@ put("bad/index.tsx", [
   "};",
   "",
 ].join("\n"));
-// Registered, but template.json has no facePolicy.
+// Registered, but template.json has no facePolicy and a mistyped cueRoom.
 put("partial/index.tsx", 'export const partial = { id: "partial", copy: ["PHẦN"] };\n');
-const { facePolicy, ...noFace } = manifest("partial");
+const { facePolicy, ...noFace } = manifest("partial", { cueRoom: "yes" });
 put("partial/template.json", JSON.stringify(noFace, null, 2));
 // Everything in order: promotes.
 put("good/index.tsx", [
@@ -57,7 +57,7 @@ put("good/index.tsx", [
   "};",
   "",
 ].join("\n"));
-put("good/template.json", JSON.stringify(manifest("good"), null, 2));
+put("good/template.json", JSON.stringify(manifest("good", { cueRoom: true }), null, 2));
 
 let failed = false;
 const check = (name, ok, detail = "") => {
@@ -79,6 +79,7 @@ check("bad: not promoted", !bad.promoted);
 
 const partial = await promote("partial", opts);
 check("partial: missing field named", partial.failures.some((f) => f === 'template.json: missing field "facePolicy"'), partial.failures.join(" | "));
+check("partial: mistyped cueRoom named", partial.failures.some((f) => f.startsWith('template.json: field "cueRoom"')), partial.failures.join(" | "));
 check("partial: registered", !partial.failures.some((f) => f.startsWith("registered")), partial.failures.join(" | "));
 check("partial: not promoted", !partial.promoted && readFileSync(join(dir, "partial", "template.json"), "utf8").includes('"uses": 5'));
 

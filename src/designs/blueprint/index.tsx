@@ -52,8 +52,10 @@ import {
 import { StageLayer } from "./Stage";
 
 const RAMP_FRAMES = 10;
-// Caption band: bottom-anchored under the stage, above the English line.
-const CAPTION_BOTTOM = 1300;
+// Caption band: bottom-anchored under the stage, above the English line,
+// which keeps ENGLISH_ROOM px over SAFE.bottom (1473 - 173 = 1300).
+const ENGLISH_ROOM = 173;
+const CAPTION_BOTTOM = SAFE.bottom - ENGLISH_ROOM;
 const CAPTION_SIZE = 54;
 
 // ---------------------------------------------------------------- cover

@@ -92,6 +92,10 @@ Used and load-bearing: `@remotion/captions` (30 files), `@remotion/layout-utils`
 5. `overlays/social-safe-zones` (an Instagram/TikTok safe-zone overlay) is catalogued but
    QC checks safe zones only by numbers (`check-golden.mjs`). Rendering the stills at
    A6.2 with this overlay on would let the reviewer see the band, not compute it.
+   **Done** (`241190c`): `"safeZones": true` in the still's `--props` draws the SAFE band
+   and FACE box from `golden.ts` (`src/mortgage/SafeZones.tsx`, never in a render;
+   runbook A6.2, video-qc step 3). It draws this repo's own rule, not the catalogued
+   Instagram/TikTok element.
 
 ## Recommended order
 
@@ -103,7 +107,8 @@ Used and load-bearing: `@remotion/captions` (30 files), `@remotion/layout-utils`
    `@remotion/gsap` and the four whisper packages from `package.json` (lockstep rule
    still holds for what remains). Saves install time; changes no video.
 4. A `visuals` lane on the review timeline (same drag logic as cues).
-5. A `--safe-zones` flag on the QC still step using the catalogued overlay.
+5. A `--safe-zones` flag on the QC still step using the catalogued overlay. Done as the
+   `safeZones` prop (item 5 above).
 
 Sources: `package.json`, `src/`, `.claude/elements/`, `review/`, the editor skill's
 references, read 28 September 2026 at `f3680fe`.

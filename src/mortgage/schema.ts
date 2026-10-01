@@ -420,6 +420,8 @@ export const onScreenCopy = (edit: EditJson): Record<string, string[]> => {
     chapters: (edit.chapters ?? []).map((c) => c.title),
     stats: (edit.stats ?? []).flatMap((s) => [s.big, s.label]),
     subtitles: (edit.subtitles ?? []).map((s) => s.text),
+    // Drawn as caption words (timeline.ts captionFixes).
+    captionFixes: (edit.captionFixes ?? []).map((f) => f.to),
     cta: [edit.cta?.question ?? DEFAULT_CTA_QUESTION, CTA_BUTTON],
   };
   (edit.cues ?? []).forEach((c, i) => {

@@ -10,6 +10,12 @@
 //   node scripts/check-contrast.mjs [design-id ...]   every design by default; --brand prints the token matrix
 //
 // A line with `// contrast-exempt: <why>` inside the object is skipped.
+//
+// Chart fills: a `background:` with see-through `${colour}NN` stops and no
+// literal colour (a bar's hatch) has no text pair, so it is checked on its own:
+// its weakest stop, laid over white and over brand.background, must reach MIN_RATIO against
+// the better of the two. A local variable (`${ink}`) stands for every colour
+// constant in its file, worst one counts; with none it is a note, not skipped.
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -128,6 +134,33 @@ export const fileTokens = (code, tokens) =>
       .filter(([, v]) => v),
   );
 
+// `hex` at `alpha` laid over `bg` (both 6-digit hex).
+export const over = (hex, alpha, bg) =>
+  `#${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * alpha + parseInt(bg.slice(i, i + 2), 16) * (1 - alpha)).toString(16).padStart(2, "0")).join("")}`;
+
+// See-through chart fills (header): [{ line, fill, ratio, level }].
+// ponytail: line-based and backdrop-blind (white or brand.background); give a
+// design's own backdrop if a dark-card chart fill gets misjudged.
+export const fillProblems = (code, tokens) => {
+  const local = fileTokens(code, tokens);
+  const all = { ...tokens, ...local };
+  const backs = ["#ffffff", tokens.background ?? "#0b1f3d"];
+  return code.split("\n").flatMap((text, i) => {
+    if (/contrast-exempt:/.test(text)) return [];
+    const fill = propertyValue(text, "backgroundColor") ?? propertyValue(text, "background");
+    if (!fill) return [];
+    // `${name}` stops (bare = opaque); only a fill with a `${name}NN` stop and no literal colour.
+    const stops = [...fill.matchAll(/\$\{(?:brand\.)?(\w+)\}([0-9a-fA-F]{2}\b)?/g)];
+    if (!stops.some(([, , a]) => a) || (fill.replace(/\$\{[^}]*\}/g, "").match(COLOUR) ?? []).length) return [];
+    const alpha = Math.min(...stops.map(([, , a]) => (a ? parseInt(a, 16) / 255 : 1)));
+    const name = stops[0][1];
+    const colours = all[name] ? [all[name]] : Object.values(local);
+    if (!colours.length) return [{ line: i + 1, fill, ratio: null, level: "note" }];
+    const ratio = Math.min(...colours.map((c) => Math.max(...backs.map((b) => contrast(over(c, alpha, b), b)))));
+    return ratio < MIN_RATIO ? [{ line: i + 1, fill, ratio, level: "fail" }] : [];
+  });
+};
+
 // Problems in one file's code: [{ line, color, background, ratio, level }].
 export const contrastProblems = (code, tokens) => {
   const all = { ...tokens, ...fileTokens(code, tokens) };
@@ -151,10 +184,14 @@ const designFiles = (dir) =>
 
 // Every problem across a design folder, with file names.
 export const checkDesign = (dir, tokens = brandTokens()) =>
-  designFiles(dir).flatMap((f) => contrastProblems(f.code, tokens).map((p) => ({ ...p, file: f.name })));
+  designFiles(dir).flatMap((f) =>
+    [...contrastProblems(f.code, tokens), ...fillProblems(f.code, tokens)].map((p) => ({ ...p, file: f.name })),
+  );
 
 export const describe = (p) =>
-  `${p.file}:${p.line} ${p.color.trim()} on ${p.background.trim()} = ${p.ratio} (${p.hex.join(" on ")}; ${p.level === "fail" ? `needs ${MIN_RATIO}` : `under ${GOOD_RATIO}, fine for large text`})`;
+  p.fill
+    ? `${p.file}:${p.line} see-through fill ${p.fill.trim()} ${p.ratio === null ? "not judged (no colour known)" : `= ${p.ratio} on its backdrop (needs ${MIN_RATIO})`}`
+    : `${p.file}:${p.line} ${p.color.trim()} on ${p.background.trim()} = ${p.ratio} (${p.hex.join(" on ")}; ${p.level === "fail" ? `needs ${MIN_RATIO}` : `under ${GOOD_RATIO}, fine for large text`})`;
 
 const selftest = () => {
   const tokens = { text: "#ffffff", background: "#0b1f3d", accent: "#f5a524", card: "#ffffff" };
@@ -176,6 +213,16 @@ const g = { color: INK, background: \`repeating-linear-gradient(180deg, transpar
   const pairs = pairsIn(code).length; // a, b, c (inner), d, f, g; e is exempt
   if (!ok || pairs !== 6) {
     console.error(`contrast selftest failed: ${pairs} pairs, ${JSON.stringify(got)}`);
+    process.exit(1);
+  }
+  const fills = fillProblems(`const BAD = "#c8322b";
+const p = { background: \`repeating-linear-gradient(135deg, \${ink}33 0 10px, \${ink}66 10px 14px)\` };
+const q = { background: \`repeating-linear-gradient(135deg, \${ink}CC 0 10px, \${ink} 10px 14px)\` };
+const r = { background: \`\${BAD}CC\` };
+`, tokens);
+  // line 2: the old explainer bar (BAD at 20%) fails; 3 (weakest 80%) and 4 pass.
+  if (fills.length !== 1 || fills[0].line !== 2 || fills[0].level !== "fail" || fillProblems("const s = { background: `${x}33` };", tokens)[0]?.level !== "note") {
+    console.error(`contrast selftest: chart fills ${JSON.stringify(fills)}`);
     process.exit(1);
   }
   if (contrast("#ffffff", "#000000") !== 21 || contrast("#0064a8", "#ffffff") !== 6.2) {

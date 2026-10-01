@@ -43,9 +43,10 @@ export const MANIFEST_FIELDS = {
   lastUsed: "string|null",
   promoted: "string", // YYYY-MM-DD promote-design.mjs passed it; absent = unproven
   promotedNote: "string",
+  cueRoom: "boolean", // the design moves Daniel aside for a cue (src/mortgage/cueRoom.ts, designs README)
 };
-// Fields a manifest may leave out (promotion writes them).
-export const OPTIONAL_FIELDS = ["uses", "lastUsed", "promoted", "promotedNote"];
+// Fields a manifest may leave out (promotion writes the first four).
+export const OPTIONAL_FIELDS = ["uses", "lastUsed", "promoted", "promotedNote", "cueRoom"];
 
 // Kinds of on-screen text; brief.mjs measures each separately (longestCard.vi).
 export const KINDS = ["hook", "chapter", "stat", "cue"];

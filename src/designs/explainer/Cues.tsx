@@ -340,7 +340,9 @@ const Bar: React.FC<{
             bottom: 0,
             width,
             height: h * grow,
-            background: `repeating-linear-gradient(135deg, ${ink}33 0 10px, ${ink}66 10px 14px)`,
+            // Weakest stripe 80%: every tone ink reaches 3:1 on the white card
+            // (a 20/40% hatch read pale pink, corrections 27/09; check-contrast).
+            background: `repeating-linear-gradient(135deg, ${ink}CC 0 10px, ${ink} 10px 14px)`,
           }}
         />
         <svg
