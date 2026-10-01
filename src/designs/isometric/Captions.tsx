@@ -17,6 +17,15 @@ import { FONT, emphasised, enter } from "../../mortgage/style";
 import { CAPTION_BOTTOM, SLAB, fadeOut } from "./Stage";
 import { PALE, SKY, WHITE, slabEdge } from "./World";
 
+// The said word's scale grows it past its layout box and into the space to
+// its neighbours ("ThángHai"). Every word keeps a fixed side margin of half
+// that overflow (width about 0.6 em a character); with the neighbour's half
+// the space stays about as wide as said, and the line never reflows.
+// ponytail: width estimated from the character count; measure it with
+// measureText if a caption font ever differs much from 0.6 em a character.
+const saidRoom = (scale: number, text: string) =>
+  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
+
 // ------------------------------------------------------------- chapters
 
 const ChapterSlab: React.FC<{ index: number; title: string }> = ({
@@ -145,6 +154,7 @@ const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
                   display: "inline-block",
                   color: hit.has(i) ? brand.highlight : WHITE,
                   opacity: spoken ? 1 : 0.6,
+                  margin: `0 ${saidRoom(1.07, t.text)}em`,
                   transform: `translateY(${now ? -4 : 0}px) scale(${now ? 1.07 : 1})`,
                   textShadow: now ? `0 5px 0 ${brand.primary}` : "none",
                 }}

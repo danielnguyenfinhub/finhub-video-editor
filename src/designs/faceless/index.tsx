@@ -46,6 +46,7 @@ import {
   STAGE,
   StageLayer,
   busyFrames,
+  stagedFigures,
 } from "./Stage";
 
 const RAMP_FRAMES = 8;
@@ -257,7 +258,7 @@ const useBusyLevel = (reel: Reel, talkFrames: number): number[] => {
   const { fps } = useVideoConfig();
   return useMemo(() => {
     const l = new Array<number>(talkFrames + 1).fill(0);
-    for (const [a, b] of busyFrames(reel, fps))
+    for (const [a, b] of busyFrames(reel, fps, stagedFigures(reel, fps)))
       for (let f = Math.max(0, a); f < Math.min(l.length, b); f++) l[f] = 1;
     const step = 1 / RAMP_FRAMES;
     for (let f = 1; f < l.length; f++) l[f] = Math.min(l[f], l[f - 1] + step);

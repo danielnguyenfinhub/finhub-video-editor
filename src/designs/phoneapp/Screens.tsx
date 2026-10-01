@@ -16,13 +16,14 @@ import { brand } from "../../brand/theme";
 import type { Figure } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
-import type { EditJson, Reel } from "../../mortgage/schema";
+import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
 import {
   CONTENT,
   Card,
   GOLD,
   HOME_TOP,
+  BODY_BOTTOM,
   INK,
   MUTED,
   Ring,
@@ -41,6 +42,9 @@ import { level, type Plan } from "./plan";
 const CARD_TOP = HOME_TOP + 16;
 const CARD_PAD = 28;
 const NUM_W = CONTENT.width - 2 * CARD_PAD - 170; // number beside the ring
+// Under the banner (head, number line, at most two headline lines), where
+// the number shows before the card opens.
+const HERO_GAP = 270;
 
 export const numberSize = (s: string, width: number, max: number) =>
   Math.min(
@@ -122,14 +126,15 @@ const NumberRow: React.FC<{ big: string; shown: string; t: number }> = ({
 );
 
 // A card that drops in as a push notification under the status bar, is
-// tapped, and opens into a widget: big number, ring, the line under it.
+// tapped, and opens into a widget: big number, ring, the line under it. The
+// number has already filled the screen as said, so the card shows it as said
+// too (no count from 0); only the ring fills.
 const NotifyCard: React.FC<{
   big: string;
-  shown: (t: number) => string;
   line?: string;
   dur: number;
   openAt: number;
-}> = ({ big, shown, line, dur, openAt }) => {
+}> = ({ big, line, dur, openAt }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const drop = enter(frame, fps);
@@ -147,6 +152,27 @@ const NotifyCard: React.FC<{
   const width = CONTENT.width + 20 - open * 20;
   return (
     <div style={{ opacity: fadeOut(frame, dur), fontFamily: FONT }}>
+      {/* Until it opens, the number fills the screen under the banner; it is
+          gone before the opening card reaches it (the card then carries it). */}
+      <div
+        style={{
+          position: "absolute",
+          left: CONTENT.left,
+          width: CONTENT.width,
+          top: bannerTop + HERO_GAP,
+          height: BODY_BOTTOM - bannerTop - HERO_GAP,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: numberSize(big, CONTENT.width - 40, 200),
+          fontWeight: 900,
+          color: INK,
+          whiteSpace: "nowrap",
+          opacity: Math.min(drop, 1 - Math.min(1, open * 4)),
+        }}
+      >
+        {big}
+      </div>
       <Card
         style={{
           position: "absolute",
@@ -158,10 +184,12 @@ const NotifyCard: React.FC<{
         }}
       >
         <NotifyHead />
-        {/* Collapsed body: the headline in one line. */}
+        {/* Collapsed body: the number, then the headline in at most two
+            lines (normal wrap, cut cleanly with an ellipsis beyond that), so
+            the banner never passes HERO_GAP. */}
         <div
           style={{
-            maxHeight: (1 - open) * 60,
+            maxHeight: (1 - open) * 140,
             overflow: "hidden",
             opacity: 1 - open,
             marginTop: 8 * (1 - open),
@@ -169,11 +197,12 @@ const NotifyCard: React.FC<{
             fontWeight: 700,
             lineHeight: 1.3,
             color: INK,
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
           }}
         >
-          {[big, line].filter(Boolean).join(" · ")}
+          <div>{big}</div>
+          {line ? (
+            <div style={{ ...clampLines(2), textWrap: "wrap" }}>{line}</div>
+          ) : null}
         </div>
         <div
           style={{
@@ -183,7 +212,7 @@ const NotifyCard: React.FC<{
             marginTop: 18 * open,
           }}
         >
-          <NumberRow big={big} shown={shown(t)} t={t} />
+          <NumberRow big={big} shown={big} t={t} />
           {line ? (
             <div
               style={{
@@ -204,16 +233,6 @@ const NotifyCard: React.FC<{
     </div>
   );
 };
-
-const hookShown =
-  (hook: NonNullable<EditJson["hook"]>) =>
-  (t: number): string =>
-    hook.countTo === undefined
-      ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
 
 // An automatic figure: a widget card sliding up, tapped, its ring filling.
 // Its words are already in the captions, so the card holds the number only.
@@ -323,7 +342,6 @@ export const ScreenItems: React.FC<{ reel: Reel; plan: Plan }> = ({
             {i.kind === "hook" && reel.edit.hook ? (
               <NotifyCard
                 big={reel.edit.hook.big}
-                shown={hookShown(reel.edit.hook)}
                 line={reel.edit.hook.sub}
                 dur={dur}
                 openAt={26}
@@ -331,7 +349,6 @@ export const ScreenItems: React.FC<{ reel: Reel; plan: Plan }> = ({
             ) : i.kind === "figure" && i.figure.source === "stat" ? (
               <NotifyCard
                 big={i.figure.big}
-                shown={(t) => counted(i.figure.big, t)}
                 line={i.figure.label}
                 dur={dur}
                 openAt={18}

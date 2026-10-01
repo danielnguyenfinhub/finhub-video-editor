@@ -87,3 +87,16 @@ screen ("the rate card"), never whose.
   timbre changed; the docs wrongly said "pitch preserved" and no check listened. Rule: his footage
   always has `"pacing": {"mode": "off"}`; a segment at exactly 1× matched his spectrum within
   0.4 dB → `edit-json.md`, `scripts/preflight.mjs` blocks the render otherwise · `checked`
+- 02/10/2026 · design:faceless, paper · "go ahead and fix it" (viewed critique: "2026" counted up
+  as "1.426" / "1554") → a calendar year (19xx/20xx) or a date is shown as said, never counted
+  up, never given a thousands dot or a scale bar. Faceless: a figure said during the hook waits
+  until `HOOK_FRAMES`; staged figures never overlap (the next waits for a hold to end) and a
+  stat keeps its whole reading time (`stagedFigures`) → `check-design-figures` fails on a
+  counted year or an overlap · `checked`
+- 02/10/2026 · design:journey, orbit, isometric, retro, kinetic · "ThángHai" (viewed critique:
+  the said word's scale-up eats the space) → a caption word that scales when said keeps a fixed
+  side margin of half its overflow on every word (constant, so the line never reflows); kinetic's
+  slam is 1.12 (was 1.28), scaled about the baseline with no drop → `saidRoom` in each design;
+  `check-design-figures` fails when a design loses it · `checked`
+- 02/10/2026 · design:kinetic · audit C-X3/C-ki2 (unsaid words "close to invisible", navy on navy)
+  → unsaid caption words at `GHOST` 0.35 (was 0.16), readable ahead · `rule`
