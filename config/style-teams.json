@@ -1,0 +1,89 @@
+{
+  "_about": "Which production team owns each video style. scripts/check-teams.mjs fails if a design in src/designs, src/youtube/designs or the listing reel is in no team, in two, or if a director or recipe file is missing.",
+  "teams": {
+    "talkinghead-data": {
+      "director": "talkinghead-data-director",
+      "recipe": "talkinghead-data.md",
+      "pipeline": "A",
+      "styles": [
+        "classic",
+        "datalab",
+        "series",
+        "studio",
+        "cards",
+        "newsroom",
+        "scenario"
+      ]
+    },
+    "talkinghead-story": {
+      "director": "talkinghead-story-director",
+      "recipe": "talkinghead-story.md",
+      "pipeline": "A",
+      "styles": [
+        "editorial",
+        "explainer",
+        "chatstory",
+        "kitchen",
+        "checklist",
+        "neon",
+        "reaction"
+      ]
+    },
+    "faceless-data": {
+      "director": "faceless-data-director",
+      "recipe": "faceless-data.md",
+      "pipeline": "B",
+      "styles": [
+        "bigdigit",
+        "flash",
+        "gauge",
+        "pulse",
+        "ticker",
+        "scale",
+        "receipt",
+        "calendar",
+        "timelapse",
+        "splitscreen",
+        "flipcard"
+      ]
+    },
+    "faceless-explainer": {
+      "director": "faceless-explainer-director",
+      "recipe": "faceless-explainer.md",
+      "pipeline": "B",
+      "styles": [
+        "blueprint",
+        "faceless",
+        "isometric",
+        "journey",
+        "kinetic",
+        "orbit",
+        "paper",
+        "phoneapp",
+        "retro",
+        "whiteboard"
+      ]
+    },
+    "youtube-16x9": {
+      "director": "youtube-director",
+      "recipe": "youtube-16x9.md",
+      "pipeline": "B (16:9 long-form, YouTubeReel)",
+      "styles": [
+        "base",
+        "ytstudio",
+        "ytslides",
+        "ytdashboard",
+        "ytcinema",
+        "ytsidebar"
+      ]
+    },
+    "listing": {
+      "director": "listing-director",
+      "recipe": "listing.md",
+      "pipeline": "Global RE",
+      "styles": [
+        "ListingReel"
+      ]
+    }
+  }
+}

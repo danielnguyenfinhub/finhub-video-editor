@@ -67,6 +67,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `timeline.selftest.mjs` | Pins what `timeline.ts` does: cuts, pacing, chapter overlap, time maps | **test** |
 | `check-pacing.selftest.mjs`, `check-speech-cuts.selftest.mjs` | The two checks above, on synthetic data | **test** |
 | `check-scripts-index.mjs` | Every file in this folder is listed in this README | **test** |
+| `check-teams.mjs` | Every design is in exactly one style team (`config/style-teams.json`); team agents and skills exist and are wired | **test** |
 
 ## Tooling (rarely run)
 | Script | Does |

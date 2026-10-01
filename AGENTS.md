@@ -101,6 +101,19 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 
 **Trigger:** when Daniel asks to refactor, dedupe, audit or speed up this repo ("where are the tokens going", "run the refactor pipeline", "make rendering faster", "did the dedup work"), use the `refactor-team` skill. It runs `architecture-auditor`, `asset-refactorer`, `pipeline-optimizer` and `quality-reviewer` from `.claude/agents/`, measuring with the `repo-audit-tools` skill. A one-line fix needs no team.
 
+### Harness: repo and style teams
+
+**Trigger:** four teams built with the `harness` and OpenHarness method, all in `.claude/agents/` and `.claude/skills/`, ground rules in [team-ground-rules](docs/agents/team-ground-rules.md):
+
+| Daniel asks | Skill |
+|---|---|
+| build or add something to the repo from what exists ("add a design", "bring feature Y over") | `repo-build-team` (Team 1) |
+| keep the repo healthy ("check for bugs", "find gaps and improve it") | `repo-maintenance-team` (Team 2) |
+| work faster or cheaper ("why did that take so long", "save tokens") | `dev-efficiency-team` (Team 3) |
+| a video in a named style, or a batch ("make a kinetic video", "make these three") | `style-production-teams` (Team 4; routes by `config/style-teams.json`, then `video-production-team`) |
+
+`node scripts/check-teams.mjs` fails if a design is in no style team, or an agent a team names has no file.
+
 ## Conventions
 
 - Videos are bilingual, Vietnamese + English: see "Language" near the top of this file before writing any on-screen text or captions.
