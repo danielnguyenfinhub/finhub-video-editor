@@ -142,4 +142,4 @@ RG 234 scans all of it.
 
 1. **Write** `facts.json` and `script.json` and run `node scripts/voice-video.mjs <slug> --dry-run`. It checks RG 234 and the fact ledger, and prints the character count and the footage searches.
 2. **Send Daniel the script** as a readable list (Vietnamese, English, footage, post copy) with the character count. Wait for his approval.
-3. **Build.** Run `node scripts/voice-video.mjs <slug>`, then add the hook, chapters and stats to `edit.json` (`references/edit-json.md`). Check stills, then render with `python scripts/render-video.py <slug>`.
+3. **Build.** Run `node scripts/voice-video.mjs <slug>`, then add the hook, chapters and stats to `edit.json` (`references/edit-json.md`), and `"compliance": {"policyAsAt": "<oldest asAt in facts.json>"}` so the end card shows the policy date (preflight blocks the render without it). Check stills, then render with `python scripts/render-video.py <slug>`.

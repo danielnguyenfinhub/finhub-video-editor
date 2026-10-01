@@ -125,6 +125,9 @@ audio). Use one only where the picture makes the point clearer than Daniel's fac
 
 `compliance.taxNote` (added by the bootstrap): true whenever tax is discussed; adds
 "General information only, not tax advice" (VI + EN) to the compliance card.
+`compliance.policyAsAt` ("YYYY-MM-DD"): faceless videos built from a policy document; the oldest
+`asAt` in `facts.json`, printed on the card as "Information per policy document dated …" (VI + EN).
+`preflight` blocks the render if it is missing or differs from the ledger.
 
 `compliance`: `{illustrativeNumbers? (default true — adds "examples are illustrative" to the
 compliance card), conditionsNote? (adds the lender-criteria/fees note — use when a policy feature

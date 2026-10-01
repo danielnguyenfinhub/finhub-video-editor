@@ -249,6 +249,16 @@ export const CONDITIONS_NOTE_VI =
 export const TAX_NOTE =
   "Thông tin chung, không phải tư vấn thuế. Hãy hỏi kế toán hoặc đại lý thuế đã đăng ký. General information only, not tax advice.";
 
+/** "2026-09-15" -> "15/09/2026". */
+const dmy = (iso: string) => iso.split("-").reverse().join("/");
+
+/**
+ * End-card line for a video built from a policy document: the document's date, in both
+ * languages, so a stale video is visibly stale. Set from facts.json by preflight's check.
+ */
+export const policyAsAtLine = (iso: string) =>
+  `Thông tin theo tài liệu chính sách ngày ${dmy(iso)}. Information per policy document dated ${dmy(iso)}.`;
+
 /** The comparison-rate warning, Vietnamese, per the recommended disclaimer. */
 export const comparisonWarningVi = (ratesAsAt: string) =>
   `Lãi suất chính xác tại ngày ${ratesAsAt} và có thể thay đổi bất kỳ lúc nào. ` +

@@ -304,6 +304,9 @@ export const editSchema = z.strictObject({
       conditionsNote: z.boolean().optional(),
       // The video discusses tax: adds "not tax advice" (VI + EN) to the card.
       taxNote: z.boolean().optional(),
+      // Faceless video from a policy document: the oldest facts.json asAt (YYYY-MM-DD),
+      // printed on the end card; preflight checks it matches the ledger.
+      policyAsAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD").optional(),
       advertisedRate: z
         .strictObject({
           rateFigure: text,

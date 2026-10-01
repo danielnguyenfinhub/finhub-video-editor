@@ -36,6 +36,9 @@ const numbers = (text) =>
 
 const clip = (s) => (s.length > 60 ? `${s.slice(0, 57)}...` : s);
 
+/** The oldest source date in a ledger (YYYY-MM-DD sorts as text): the date a viewer should trust the video "as at". */
+export const oldestAsAt = (ledger) => ledger.map((f) => f.asAt).filter(Boolean).sort()[0];
+
 /** Reads public/videos/<slug>/facts.json; null when the slug has no ledger. Throws on bad JSON. */
 export function readLedger(dir) {
   const path = join(dir, "facts.json");
