@@ -49,5 +49,56 @@
       "cta": "white contact card + compliance card"
     },
     "reused": true
+  },
+  {
+    "slug": "rui-ro-ho-so-khong-trung-thuc",
+    "date": "2026-09-30",
+    "design": "cards",
+    "direction": "EXPLAINER (cards, quick mode vignette); template is Daniel's choice (override of selector top pick explainer); shares cover, captions, transitions, texture, cta with bao-dam-vay-duoc-nha-refinance (also cards, not yet logged) by Daniel's choice",
+    "axes": {
+      "cover": "title on a white info card, logo tile top-right, Daniel's rounded card below (frozen cover frame)",
+      "captions": "44 px bold lowercase as spoken, white on a dark translucent rounded box, keywords gold, 2-4 words a page",
+      "framing": "split: info stage on top, Daniel in a large rounded video card (quick mode: his room, vignette)",
+      "graphics": "points on a white card above him (3 rows); classic kinetic strike for not-X-but-Y; no figures",
+      "transitions": "cards rise in and lift out; his card slides down and back for big cues; spring punch on cuts; standard chapter transitions",
+      "texture": "airy cream gradient with a faint dot texture, white cards with thin borders and soft shadows, FinHub navy and gold",
+      "sound": "voice + serious-documentary bed, click per point",
+      "cta": "classic white contact card + compliance card"
+    },
+    "reused": false
+  },
+  {
+    "slug": "doi-nha-mua-truoc-ban-sau",
+    "date": "2026-09-30",
+    "design": "cards",
+    "direction": "EXPLAINER (steps; cards, quick mode vignette); template is Daniel's choice (override of selector top pick explainer); shares skin axes with rui-ro-ho-so-khong-trung-thuc and bao-dam-vay-duoc-nha-refinance (all cards) by Daniel's choice",
+    "axes": {
+      "cover": "title on a white info card, logo tile top-right, Daniel rounded card below (frozen cover frame 14000 ms)",
+      "captions": "44 px bold lowercase as spoken, white on a dark translucent rounded box, keywords gold, 2-4 words a page",
+      "framing": "split: info stage on top, Daniel in a large rounded video card (quick mode: his room, vignette) in the lower part; his card stays on screen for every cue",
+      "graphics": "white info cards on the stage above Daniel; points list for steps and for the area example; figure card for the illustrative example",
+      "transitions": "cards rise in and lift out; his card slides down and back for big cues; spring punch on cuts; standard chapter transitions",
+      "texture": "airy cream gradient with a faint dot texture, white cards with thin borders and soft shadows, FinHub navy and gold",
+      "sound": "voice + a whoosh as his card slides away, a click per point, a soft ding per figure; calm-morning-keys bed",
+      "cta": "classic white contact card + compliance card"
+    },
+    "reused": false
+  },
+  {
+    "slug": "bao-dam-vay-duoc-nha-refinance",
+    "date": "2026-09-30",
+    "design": "cards",
+    "direction": "EXPLAINER (steps + rate maths; cards, quick mode vignette); template is Daniel's choice (override of selector top pick explainer, confident=false); third cards video in a row, shares skin axes with rui-ro-ho-so-khong-trung-thuc and doi-nha-mua-truoc-ban-sau by Daniel's choice",
+    "axes": {
+      "cover": "title on a white info card, logo tile top-right, Daniel's rounded card below (frozen cover frame 24500 ms)",
+      "captions": "44 px bold lowercase as spoken, white on a dark translucent rounded box, keywords gold, 2-4 words a page",
+      "framing": "split: info stage on top, Daniel in a large rounded video card (quick mode: his room, vignette) in the lower part",
+      "graphics": "white figure cards (count-up) for 6-8 thang, ~1 nam, +3%; numbered points cards above Daniel for the refinance conditions and the switching-cost check",
+      "transitions": "cards rise in and lift out; chapter cards Buoc 1-3 (slide, pushCut, slide); spring punch on cuts",
+      "texture": "airy cream gradient with a faint dot texture, white cards, FinHub navy and gold",
+      "sound": "voice + hopeful-inspiring bed from 0 ms (ducked), whoosh, click per point, soft ding per figure",
+      "cta": "classic white contact card + compliance card"
+    },
+    "reused": false
   }
 ]
