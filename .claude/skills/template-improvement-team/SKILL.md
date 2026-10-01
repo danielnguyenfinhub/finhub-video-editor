@@ -41,11 +41,11 @@ One message: `golden-rules-auditor` and `design-critic` on the same scope. Show 
 
 ## Phase 2 — Concepts
 
-`creative-director` with both reports → `02_concepts.md`. Rule violations are fixes (no choice). Look changes are options.
+`creative-director` per group with both reports → `02_concepts_<group>.md`, every item in one class: **A** fix-provable from code and checks, **B** fix-needs-render, **C** option for Daniel, **D** ruling for Daniel.
 
 ## Phase 3 — Daniel's gate (the only one)
 
-Fixes go ahead without asking. For each look option Daniel picks by stills (or by description if no render is possible, and then the look is flagged unviewed). A pick that touches a golden rule is refused back to the creative director, not built. Nothing visible changes without a pick.
+A fixes go ahead without asking; B fixes go ahead only where a still can be rendered, else they wait flagged unviewed; D rulings are Daniel's questions, asked in plain words. For each look option Daniel picks by stills (or by description if no render is possible, and then the look is flagged unviewed). A pick that touches a golden rule is refused back to the creative director, not built. Nothing visible changes without a pick.
 
 ## Phase 4 — Build
 
@@ -53,7 +53,7 @@ Fixes go ahead without asking. For each look option Daniel picks by stills (or b
 
 ## Phase 5 — Independent re-check (parallel)
 
-One message: `golden-rules-auditor` (re-check; compare with `01_golden_audit.md`), `design-critic` (did each chosen option land, did anything regress) and `quality-reviewer` (phase `refactor`). Fan-in:
+One message: `golden-rules-auditor` (re-check; compare with each `01_golden_audit_<group>.md`), `design-critic` (did each chosen option land, did anything regress) and `quality-reviewer` (phase `refactor`). Fan-in:
 
 - Any rule violation left or introduced, or **FIX** → back to the improver in one combined round; re-check only what changed. At most 2 rounds, then show Daniel the open findings.
 - **BLOCK** → stop, plain words.
@@ -61,11 +61,11 @@ One message: `golden-rules-auditor` (re-check; compare with `01_golden_audit.md`
 
 ## Phase 6 — Deliver and learn
 
-Plain-words report: violations fixed (rule number), options built, designs now promotable, what is unviewed or unproven, the exact stills for Daniel to look at, and one next step. Logged lessons go to `corrections.md` and become checks where measurable. Add a line to the change log in `docs/agents/skills-and-harnesses.md` if a team file changed. Commit only if Daniel asked.
+Plain-words report: violations fixed (rule number), options built, designs now promotable, what is unviewed or unproven, the exact stills for Daniel to look at, and one next step. Logged lessons go to `corrections.md` and become checks where measurable. Add a line to the change log in `docs/agents/skills-and-harnesses.md` if a team file changed. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify). Commit only if Daniel asked.
 
 ## Files
 
-`out/teams/templates/` (git-ignored): `01_golden_audit.md` · `01_critique.md` · `02_concepts.md` · `03_improver_report.md` · `04_golden_recheck.md` · `04_critique_recheck.md` · `04_review.json`.
+`out/teams/templates/` (git-ignored), one file per group (`<group>` = the style-team family from Phase 0): `01_golden_audit_<group>.md` · `01_critique_<group>.md` · `02_concepts_<group>.md` · `03_improver_report_<group>.md` · `04_golden_recheck.md` · `04_critique_recheck.md` · `04_review.json`.
 
 ## Errors
 

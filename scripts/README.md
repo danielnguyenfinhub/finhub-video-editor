@@ -19,10 +19,10 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 ## Render and publish
 | Script | Does |
 |---|---|
-| `preflight.mjs` | Runs before every render (called by `render-video.py`): fonts, `edit.json` mistakes, pacing off, speech cuts. |
+| `preflight.mjs` | Runs before every render (called by `render-video.py`): fonts, `edit.json` mistakes, pacing off, then `check-schema`, speech cuts and pacing (a check that crashes blocks). |
 | `render-video.py` | Renders a MortgageReel video end to end: master, -14 LUFS mix, mobile copy, thumbnail, `.srt`, QC sweep, publish. |
 | `sweep-render.mjs` | Sweeps a finished render for every visual change so QC sees what `edit.json` produced. |
-| `publish-video.mjs` | Hands a render to Daniel: a copy named after its topic and a caption file in `2 - FINISHED VIDEOS`. |
+| `publish-video.mjs` | Hands a render to Daniel: a copy named after its topic and a caption file in `2 - FINISHED VIDEOS`; refuses a render older than its on-screen inputs (`<slug>.inputs` stamp from `render-video.py`) and another slug's same-title files. |
 | `export-srt.mjs` | Writes `out/videos/<slug>/<slug>.srt` using the same cuts as the render. |
 | `export-chapters.mjs` | Prints a YouTube/Facebook chapter list timed on the output. |
 | `promote-design.mjs` | Promotes a proven design to a reusable template (checks, then registers). |
@@ -55,22 +55,23 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-video-status.mjs` | `video-status.mjs` on synthetic runs | **test** |
 | `check-library.mjs` | `library.mjs` and library-first routing | **test** |
 | `preflight.mjs` (no slug) | The Vietnamese font-subset gate every render runs first | **test** |
-| `check-clips.py`, `check-reframe.py`, `check-migrate-assets.py` | `prep-video.py --clips`, `reframe.py` maths, `migrate-assets.py` (standard library only, but CI sets up no Python) | local |
+| `check-preflight.mjs` | `preflight.mjs <slug> --public-dir` on a fixture: pacing auto blocks, a schema-invalid `edit.json` blocks (check-pacing names the field; check-schema too when its browser runs), gaps only warn, a valid one passes. A browser that cannot run for `check-schema` (download refused, "Target closed" on GitHub's Windows runner) only WARNS in preflight (the render checks the same schema); stand-in scripts via `PREFLIGHT_CHECK_SCHEMA` prove each kind of failure is classified. Cases needing the real browser print SKIPPED and the run says INCOMPLETE (a GitHub warning annotation in CI, never `ok`) | **test** |
+| `check-clips.py`, `check-reframe.py`, `check-migrate-assets.py` | `prep-video.py --clips` and a prep resumed after a failed transcription (only for the same file and `--no-clean`, from `source.from.json`; another video with the same frame count is refused), `reframe.py` maths, `migrate-assets.py` (standard library only; run by the `checks` job in CI after `setup-python`, not by `npm test`; `research.py selftest` and `omnivoice-tts.py selftest` too) | ci |
 | `check-spoken-phrases.mjs <slug>` | Advisory, always exit 0: RG 234 watch phrases spoken in `words.json` (syllables joined and folded), with times, for the compliance reviewer's verify list | local |
 | `check-agents-split.mjs` | One-time WP9 `AGENTS.md` split (needs full git history) | local |
 | `check-captions.mjs`, `check-caption-fixes.mjs` | Shared caption layer; caption slip fixes in `timeline.ts` | **test** |
-| `check-contrast.mjs` | Text legibility of every design | **test** |
-| `check-text-size.mjs [id ...]` | Report only: `fontSize` literals under `MIN_TEXT_PX` (placeholder 30, Daniel to set) per design; never fails, promote-design prints it as a note | local |
+| `check-contrast.mjs --selftest` | Text legibility of every design, after its own ratio and chart-fill self-test | **test** |
+| `check-text-size.mjs [id ...]` | Ratchet: `fontSize` literals under `MIN_TEXT_PX` (30 px, about 11 pt on a phone) may not exceed `config/text-size-baseline.json` per design; `--update-baseline` lowers it (with design ids: only theirs); ternary (also in parentheses) and multi-line values are read, comments and `12 * scale` are not, a built-in fixture fails the run if the scanner finds nothing; sizes computed at run time are not seen; promote-design prints the count | **test** |
 | `check-selector.mjs` | `select-template.mjs` ranking; every design has a manifest; nothing fits = a stop, not `pick: null` | **test** |
 | `check-element-copy.mjs` | RG 234 scan of text in `src/elements/` | **test** |
-| `check-facts.mjs`, `check-visuals.mjs` | `facts.mjs`; the AI judge's pure parts | **test** |
+| `check-facts.mjs`, `check-visuals.mjs` | `facts.mjs`; the AI judge's pure parts, the stock relevance guard, the fal.ai call buying `aiStillsPerScene()` stills, `AI_CANDIDATES` parsing, and a `voice-video --dry-run` (from a temp copy with a fixture `.env.local`) whose `spend-estimate.json` counts scenes x stills | **test** |
 | `check-listing-compliance.mjs`, `check-listing-prep.mjs` | Listing compliance rules and the price-line floor ("$1.2 million", also in the copy and listing.txt); listing parsing; CLI slugs (`assertSlug`) against every real folder, and every slug entry point still calls it | **test** |
 | `check-numbers-kit.mjs` | Numbers-kit cues in `schema.ts`; RG 234 scan of NFD / odd-whitespace / zero-width copy and `captionFixes[].to` | **test** |
-| `check-promote.mjs`, `check-publish.mjs` | `promote-design.mjs` (nothing written when a check fails), `publish-video.mjs` and publish-listing's stale-language refusal on fixtures (a post-only edit publishes, an on-screen edit stops, `--stale-ok` overrides) | **test** |
+| `check-promote.mjs`, `check-publish.mjs` | `promote-design.mjs` (nothing written when a check fails), `publish-video.mjs` and publish-listing's stale-render refusal on fixtures (a post-only edit publishes, an on-screen edit stops, `--stale-ok` overrides), and publish-video never replacing another slug's same-title files (titles compared case- and NFC-folded; a broken `.publish-slugs.json` stops it; the record is written through a temp file before the copy; Windows reserved names) | **test** |
 | `timeline.selftest.mjs` | Pins what `timeline.ts` does: cuts, pacing, chapter overlap, time maps | **test** |
 | `check-pacing.selftest.mjs`, `check-speech-cuts.selftest.mjs` | The two checks above, on synthetic data | **test** |
 | `check-scripts-index.mjs` | Every file in this folder is listed in this README, and the **test** marks here match `npm test` | **test** |
-| `check-teams.mjs` | Every design is in exactly one style team (`config/style-teams.json`); team agents and skills exist and are wired | **test** |
+| `check-teams.mjs` | Every design is in exactly one style team (`config/style-teams.json`); team agents and skills exist and are wired; AGENTS.md read-list byte counts within 15% of the files | **test** |
 
 ## Tooling (rarely run)
 | Script | Does |

@@ -35,7 +35,15 @@ export const AI_MODEL = "fal-ai/flux/dev"; // ~US$0.03 per image (OpenMontage's 
 // Stills generated per AI scene; Gemini picks the best (ViMax's BestImageSelector,
 // wired in). 1 = no judging. Each one costs the price above. Read when called,
 // after voice-video.mjs has loaded .env.local.
-export const aiCandidates = () => Math.max(1, Number(process.env.AI_CANDIDATES ?? 3));
+// Unset, blank or non-numeric: the default 3. A number counts down to at least 1 (0 = no spares).
+export const aiCandidates = () => {
+  const v = (process.env.AI_CANDIDATES ?? "").trim(), n = Number(v);
+  return v === "" || !Number.isFinite(n) ? 3 : Math.max(1, Math.floor(n));
+};
+// fal.ai stills one AI scene pays for: the candidates when Gemini can judge
+// them, else 1 (no judge, no point paying for spares). The spend estimate and
+// the real call both use this.
+export const aiStillsPerScene = (candidates = aiCandidates()) => (process.env.GEMINI_API_KEY ? candidates : 1);
 export const judgeModel = () => process.env.GEMINI_JUDGE_MODEL ?? "gemini-2.5-flash";
 
 export const hash = (s) => createHash("sha1").update(s).digest("hex").slice(0, 12);
@@ -236,10 +244,10 @@ const judgeStills = async (files, prompt) => {
 // (synchronous POST to fal.run, images return in seconds) as temp files in
 // `dir`; with more than one, the judge picks and the rest are deleted.
 // Returns { file, meta }.
-const generateStill = async (prompt, seed, dir, { candidates = aiCandidates(), judge = judgeStills } = {}) => {
+export const generateStill = async (prompt, seed, dir, { candidates = aiCandidates(), judge = judgeStills } = {}) => {
   const key = process.env.FAL_KEY ?? process.env.FAL_AI_API_KEY;
   if (!key) throw new Error("A scene asks for an AI image but FAL_KEY is not set in .env.local.");
-  const n = process.env.GEMINI_API_KEY ? candidates : 1; // no judge, no point paying for spares
+  const n = aiStillsPerScene(candidates);
   const res = await fetch(`https://fal.run/${AI_MODEL}`, {
     method: "POST",
     headers: { Authorization: `Key ${key}`, "Content-Type": "application/json" },

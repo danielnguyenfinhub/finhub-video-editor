@@ -1,15 +1,19 @@
 // Checks run before every render (render-video.py calls this), so a known
 // failure stops the render instead of shipping. Errors block; warnings print.
 //
-//   node scripts/preflight.mjs [slug]     (npm run preflight -- <slug>)
+//   node scripts/preflight.mjs [slug] [--public-dir <dir>]     (npm run preflight -- <slug>)
+//
+// --public-dir: where the media lives (as the check-* scripts take it); edit.json is this
+// checkout's, or the one in <dir>/videos/<slug>/ when this checkout has none (a fixture).
 //
 // Fonts (what MortgageReel renders): Vietnamese captions need every font to carry the
 // Vietnamese subset, or the marks fall back to another font mid-word. Idea
 // from HyperFrames' deterministicFonts (fail closed instead of substituting).
-// The video (with a slug): the edit.json mistakes the RBA video hit once.
+// The video (with a slug): the edit.json mistakes the RBA video hit once, then
+// check-schema (the render's own validation), check-speech-cuts and check-pacing.
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -52,18 +56,21 @@ for (const file of RENDERED.filter(existsSync).flatMap(walk)) {
 }
 
 // --- The video --------------------------------------------------------------
-const slug = process.argv[2];
+const args = process.argv.slice(2);
+const slug = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--public-dir");
+const pub = resolve(args.includes("--public-dir") ? args[args.indexOf("--public-dir") + 1] : join(ROOT, "public"));
+const dir = [join(ROOT, "public"), pub].map((d) => join(d, "videos", slug ?? "")).find((d) => existsSync(join(d, "edit.json"))) ?? join(ROOT, "public", "videos", slug ?? "");
 if (slug) {
-  const dir = join(ROOT, "public", "videos", slug);
   // edit.json stays in the slug folder; words.json lives with the recording
   // (src/mortgage/recording.ts, imported through Node's type stripping like export-srt.mjs).
   const { recordingPath } = await import(pathToFileURL(join(ROOT, "src", "mortgage", "recording.ts")).href);
   const editPath = join(dir, "edit.json");
   const source = existsSync(editPath) ? JSON.parse(readFileSync(editPath, "utf8")).source : undefined;
-  const wordsPath = join(ROOT, "public", recordingPath(slug, source, "words.json"));
+  const wordsRel = recordingPath(slug, source, "words.json");
+  const wordsPath = [pub, join(ROOT, "public")].map((d) => join(d, wordsRel)).find(existsSync) ?? join(pub, wordsRel);
   const read = (p) => JSON.parse(readFileSync(p, "utf8"));
   if (!existsSync(editPath) || !existsSync(wordsPath))
-    errors.push(`public/videos/${slug}: edit.json or ${relative(ROOT, wordsPath).replace(/\\/g, "/")} is missing.`);
+    errors.push(`${relative(ROOT, dir).replace(/\\/g, "/")}: edit.json or ${relative(ROOT, wordsPath).replace(/\\/g, "/")} is missing.`);
   else {
     const edit = read(editPath);
     const words = read(wordsPath);
@@ -120,25 +127,48 @@ if (slug) {
   }
 }
 
-// --- Cuts and pacing (footage videos) -----------------------------------------
+// --- Schema, cuts and pacing ---------------------------------------------------
 // A render is the slow step, so anything the data can already show stops it first:
-// real speech the timeline drops or clips (blocks) and gaps with no visual change
-// (warns). Faceless videos (script.json) have no cuts in Daniel's speech.
-if (slug && !errors.length && !existsSync(join(ROOT, "public", "videos", slug, "script.json"))) {
-  const run = (script) => spawnSync(process.execPath, [join(ROOT, "scripts", script), slug], { encoding: "utf8", cwd: ROOT });
+// the schema, RG 234 and missing files as the render checks them (check-schema), real
+// speech the timeline drops or clips (blocks) and gaps with no visual change (warns).
+// Faceless videos (script.json) have no cuts in Daniel's speech. A check that crashes,
+// is killed or exits with a usage error is not a pass: the render waits.
+// PREFLIGHT_CHECK_SCHEMA (a script path) replaces check-schema.mjs: only scripts/check-preflight.mjs sets it, to prove how each kind of failure is classified.
+const run = (script, timeout) => spawnSync(process.execPath, ["--no-warnings", isAbsolute(script) ? script : join(ROOT, "scripts", script), slug, "--public-dir", pub], { encoding: "utf8", cwd: ROOT, timeout });
+const SCHEMA_ERROR = /✖|Invalid (input|option|literal|type)|expected .{1,40} received/i; // a zod message: the edit is wrong
+const BROWSER_FAILURE = /Target closed|Protocol error|Failed to launch|chrom(e|ium)|headless|while downloading|browser|ECONN|ENOTFOUND/i;
+const SCHEMA_TIMEOUT_S = 300; // a bundle and a browser start; a hung browser must not hold the render forever
+const lines = (r) => (r.stderr || r.stdout || "").trim().split("\n").filter((l) => l.trim() && !/^Node\.js v/.test(l) && !/^\s+at /.test(l));
+// A failed check's own words: from its "Error:" line if it has one, else its first lines.
+const detail = (r, n = 3) => {
+  const l = lines(r), k = l.findIndex((x) => /^\w*Error\b/.test(x));
+  return (r.error ? [r.error.message] : k >= 0 ? l.slice(k, k + n) : l.slice(0, Math.max(5, n))).join("\n    ") || `exit ${r.status}`;
+};
+const why = (r) => r.error?.message ?? lines(r).find((l) => /^\w*Error\b/.test(l)) ?? lines(r).at(-1) ?? (r.signal ? `killed (${r.signal})` : `exit ${r.status}`);
+const checked = slug && !errors.length; // each check below runs; every failure is listed
+if (checked) {
+  const schema = run(process.env.PREFLIGHT_CHECK_SCHEMA ?? "check-schema.mjs", SCHEMA_TIMEOUT_S * 1000);
+  // The browser itself failing (not starting, dropping mid-call, a refused download, a hang) says nothing about
+  // the edit, and the render runs the same schema and reports it: warn, do not block. Only a schema error blocks.
+  const text = lines(schema).join("\n");
+  const browserFailure = schema.error?.code === "ETIMEDOUT" || (!SCHEMA_ERROR.test(text) && BROWSER_FAILURE.test(text));
+  if (browserFailure)
+    warnings.push(`check-schema could not run (${schema.error?.code === "ETIMEDOUT" ? `no answer in ${SCHEMA_TIMEOUT_S} s` : why(schema).replace(/\.$/, "")}), so the composition schema is unchecked here; the render checks it again. node scripts/check-schema.mjs ${slug} shows it.`);
+  else if (schema.status !== 0)
+    errors.push(`check-schema failed, so the render would too:\n    ${detail(schema, 14)}\n  Fix it, then run node scripts/check-schema.mjs ${slug}.`);
+}
+if (checked && !existsSync(join(dir, "script.json"))) {
   const cuts = run("check-speech-cuts.mjs");
   const hits = cuts.status === 1 ? cuts.stdout.split("\n").filter((l) => l.startsWith("ERROR")) : [];
   if (hits.length) {
     for (const h of hits) errors.push(`speech cut: ${h.trim()}`);
     errors.push(`fix the ${hits.length} speech cut(s) above (node scripts/check-speech-cuts.mjs ${slug} shows the fix for each).`);
-  } else if (cuts.status !== 0) {
-    // A crash, kill or usage error is not a pass: the cuts were never checked, so the render waits.
-    const out = (cuts.stderr || cuts.stdout || "").trim().split("\n").filter((l) => l.trim() && !/^Node\.js v/.test(l));
-    const why = cuts.error?.message ?? out.find((l) => /^\w*Error\b/.test(l)) ?? out.at(-1) ?? (cuts.signal ? `killed (${cuts.signal})` : `exit ${cuts.status}`);
-    errors.push(`check-speech-cuts could not run, so the speech cuts are unchecked: ${why.replace(/\.$/, "")}. Fix it, then run node scripts/check-speech-cuts.mjs ${slug}.`);
-  }
+  } else if (cuts.status !== 0)
+    errors.push(`check-speech-cuts could not run, so the speech cuts are unchecked: ${why(cuts).replace(/\.$/, "")}. Fix it, then run node scripts/check-speech-cuts.mjs ${slug}.`);
   const pace = run("check-pacing.mjs");
   if (pace.status === 2) warnings.push(`pacing: gaps with no visual change; see node scripts/check-pacing.mjs ${slug}.`);
+  else if (pace.status !== 0)
+    errors.push(`check-pacing could not run, so the pacing is unchecked:\n    ${detail(pace)}\n  Fix it, then run node scripts/check-pacing.mjs ${slug}.`);
 }
 
 for (const w of warnings) console.log(`preflight warning: ${w}`);

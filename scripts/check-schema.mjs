@@ -31,7 +31,8 @@ const fail = (msg) => {
 const tmp = repoTmp("check-schema-");
 try {
   if (!slug) throw new Error("Usage: node scripts/check-schema.mjs <slug> [--public-dir <dir>]");
-  const editPath = join(ROOT, "public", "videos", slug, "edit.json");
+  // This checkout's edit.json; failing that, the --public-dir one (a fixture: scripts/check-preflight.mjs).
+  const editPath = [join(ROOT, "public"), pub].map((d) => join(d, "videos", slug, "edit.json")).find(existsSync) ?? join(ROOT, "public", "videos", slug, "edit.json");
   if (!existsSync(editPath)) throw new Error(`No edit.json for "${slug}" (${editPath}).`);
   const edit = JSON.parse(readFileSync(editPath, "utf8"));
   // What calculateMetadata fetches; a missing one stays missing so it reports it.

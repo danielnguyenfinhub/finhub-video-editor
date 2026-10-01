@@ -13,11 +13,11 @@ Build exactly what was approved, nothing else. You are the producer; `golden-rul
 
 ## How
 
-1. Read `docs/agents/team-ground-rules.md`, `src/designs/README.md` (contract, golden rules, "Rules of the build") and `docs/agents/code-changes.md`. Open only the approved ids from `out/teams/templates/02_concepts.md` and Daniel's choices, word for word.
+1. Read `docs/agents/team-ground-rules.md`, `src/designs/README.md` (contract, golden rules, "Rules of the build") and `docs/agents/code-changes.md`. Open only the approved ids from `out/teams/templates/02_concepts_<group>.md` and Daniel's choices, word for word.
 2. Edit inside `src/designs/<id>/` only. Never edit `src/mortgage/`, `src/brand/` or another design. Use the constants (`SAFE`, `FACE`, `READING`), `useCueRoom`, `// theme-exempt: <why>` only with a real reason, `useCurrentFrame()` for all animation, local fonts, Vietnamese with diacritics, strings in `copy`.
 3. After each design: `npx eslint src/designs/<id>`, `npx tsc --noEmit`, `node scripts/check-golden.mjs`, `node scripts/check-contrast.mjs`, `node scripts/check-text-size.mjs`, `node scripts/promote-design.mjs <id> --dry-run`. Stills at phone size (`--scale=0.5`) at the frames in the README when a render is possible; otherwise say the look is unviewed and list the frames Daniel should check. Keep command output short (`tail -n 5`).
 4. Update `template.json` only where the improvement changes a field (`maxChars`, `minHoldMs`, `grammar`, `skinAxes`, `cueRoom`, `renderCost`); re-run promotion only when the dry run passes, and let promotion write `promoted`. A lesson that repeats goes to `corrections.md`; where measurable, add or extend a check.
-5. Write `out/teams/templates/03_improver_report.md`: per design `change | files | command outputs (last lines) | stills (paths) | unproven`.
+5. Write `out/teams/templates/03_improver_report_<group>.md`: per design `change | files | command outputs (last lines) | stills (paths) | unproven`.
 
 ## Never
 

@@ -6,6 +6,7 @@
 // 700 ms of voiced sound before a kept start: an ERROR. A chapter transition
 // plays both sides' audio: over the 1 s pause it is silent (no finding); over a
 // 100 ms pause split by a pause-only remove, two "words" play at once: an ERROR.
+// A short clip at a loud edge and a long loss at a quiet edge are each an ERROR.
 import { execFileSync } from "node:child_process";
 import { rmSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
@@ -48,6 +49,12 @@ try {
     { ...edit, remove: [[1500, 1600]], chapters: [{ atMs: 1600, effect: "fade" }] },
     close,
   );
+  // One branch each of the ERROR rule: 100 ms clipped at a loud edge (CLIP_ERROR_MS alone),
+  // and 600 ms lost before an edge that sits in a 15 ms dip, so not loud (ERROR_VOICED_MS alone).
+  const short = findSpeechCuts([w("một", 500, 1500), w("hai", 2700, 3500), w("ba.", 4500, 5500)], edit, audio);
+  const dip = tone("dip.wav", [[0.5, 1.5], [2.5, 3.1], [3.115, 3.5], [4.5, 5.5]]);
+  const quiet = findSpeechCuts([w("một", 500, 1500), w("hai", 3200, 3500), w("ba.", 4500, 5500)], edit, dip);
+  const one = (r, voicedMs) => r.errors === 1 && r.findings.length === 1 && r.findings[0].voicedMs === voicedMs;
   const both = overlap.findings.find((f) => f.kind.includes("transition overlap"));
   const hit = bug.findings.find((f) => f.severity === "ERROR");
   const ok =
@@ -56,9 +63,10 @@ try {
     excused.errors === 0 &&
     nearRemove.errors === 0 && nearRemove.findings.some((f) => f.fix.startsWith("adjacent to a listed remove")) &&
     chapterClean.errors === 0 && chapterClean.warnings === 0 &&
-    both?.severity === "ERROR" && both.voicedMs >= 200 && overlap.errors === 1;
+    both?.severity === "ERROR" && both.voicedMs >= 200 && overlap.errors === 1 &&
+    one(short, 100) && one(quiet, 600);
   if (!ok) {
-    console.error("check-speech-cuts self-check failed", JSON.stringify({ clean, bug, excused, nearRemove, chapterClean, overlap }, null, 1));
+    console.error("check-speech-cuts self-check failed", JSON.stringify({ clean, bug, excused, nearRemove, chapterClean, overlap, short, quiet }, null, 1));
     process.exit(1);
   }
   console.log(`check-speech-cuts ok (clean: 0 findings; late word: ERROR ${hit.kind} ${hit.srcFromMs}-${hit.srcToMs} ms; remove span excuses it; next to a remove: WARN; transition over a pause: clean, over a 100 ms pause: ERROR ${both.voicedMs} ms together)`);

@@ -1,7 +1,7 @@
 // Checks the agent teams are wired: every design (src/designs, src/youtube/designs) and the
 // listing reel belongs to exactly one team in config/style-teams.json; each team's director
 // agent and recipe exist; every agent a team skill names exists; every agent file has the
-// frontmatter Claude Code needs. Run: node scripts/check-teams.mjs (exit 1 and the problems).
+// frontmatter Claude Code needs; the AGENTS.md read-list byte counts are within 15%. Run: node scripts/check-teams.mjs (exit 1 and the problems).
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -46,6 +46,41 @@ for (const skill of TEAM_SKILLS) {
   const named = [...table.matchAll(/^\| `([a-z0-9-]+)`/gm)].map((m) => m[1]);
   if (!named.length) problems.push(`${skill}: "The team" table names no agents`);
   for (const a of named) if (!agents.has(a)) problems.push(`${skill}: names agent ${a}, which has no file`);
+}
+
+// AGENTS.md "Read list per task" table: each row's Bytes must match the files it lists within 15%,
+// so the token budget an agent plans with stays honest. "+X = Y" is X over the row above, Y in total.
+const REFS = ".claude/skills/vietnamese-finance-video-editor/references/";
+const readBytes = (cell) => {
+  const files = [...cell.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]);
+  for (const [, t] of cell.matchAll(/`([^`]+)`/g)) {
+    if (t.startsWith("refs/")) files.push(REFS + t.slice(5));
+    else if (t.startsWith(".claude/")) files.push(t);
+    else if (t === "SKILL.md") files.push(".claude/skills/vietnamese-finance-video-editor/SKILL.md"); // "editor `SKILL.md`"
+    else if (t === "video-*") files.push(...agentFiles.filter((f) => f.startsWith("video-")).map((f) => `.claude/agents/${f}`));
+    else if (existsSync(at(".claude/skills", t, "SKILL.md"))) files.push(`.claude/skills/${t}/SKILL.md`);
+    else problems.push(`AGENTS.md read list: cannot resolve \`${t}\` to a file`);
+  }
+  let n = 0;
+  for (const f of files) existsSync(at(f)) ? (n += readFileSync(at(f)).length) : problems.push(`AGENTS.md read list: ${f} does not exist`);
+  if (cell.includes("remocn index")) n += Buffer.byteLength(readFileSync(at(".claude/elements/remocn/CATALOG.md"), "utf8").split("\n").slice(0, 22).join("\n") + "\n");
+  return n;
+};
+const agentsMd = readFileSync(at("AGENTS.md"), "utf8").replace(/\r\n/g, "\n");
+const rows = (agentsMd.split("| Task | Files | Bytes |\n")[1] ?? "").split("\n\n")[0].split("\n").filter((l) => /^\|[^-]/.test(l));
+if (!rows.length) problems.push('AGENTS.md: no "| Task | Files | Bytes |" read-list table');
+let prev = 0;
+for (const row of rows) {
+  const [, task, filesCell, bytesCell] = row.split("|").map((c) => c.trim());
+  const [stated, statedTotal] = (bytesCell.match(/\d[\d,]*/g) ?? []).map((x) => Number(x.replace(/,/g, "")));
+  const real = readBytes(filesCell);
+  const off = (want, got) => Math.abs(got - want) > 0.15 * got;
+  const fmt = (x) => x.toLocaleString("en-US");
+  if (bytesCell.startsWith("+")) {
+    if (off(stated, real) || off(statedTotal, prev + real))
+      problems.push(`AGENTS.md read list "${task}": says ${bytesCell}, files measure +${fmt(real)} = ${fmt(prev + real)}`);
+  } else if (off(stated, real)) problems.push(`AGENTS.md read list "${task}": says ${bytesCell}, files measure ${fmt(real)}`);
+  prev = real;
 }
 
 if (problems.length) {

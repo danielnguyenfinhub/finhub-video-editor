@@ -56,7 +56,7 @@ One message, two Agent calls: `quality-reviewer` (phase `refactor`, with the bui
 
 ## Phase 5 — Deliver
 
-Report in plain words: what was built, what was reused from where, files changed, commands that passed (quote the last lines), what is unproven (a design not yet promoted stays "unproven"), what Daniel must verify, and one next step. Commit only if Daniel asked.
+Report in plain words: what was built, what was reused from where, files changed, commands that passed (quote the last lines), what is unproven (a design not yet promoted stays "unproven"), what Daniel must verify, and one next step. Append a row to `docs/agents/team-runs.md` (date, team, scope, outcome, PR or `pending`, what Daniel must verify). Commit only if Daniel asked.
 
 ## Files
 

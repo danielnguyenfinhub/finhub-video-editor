@@ -35,3 +35,14 @@ jobs:
       # check-speech-cuts.selftest synthesizes a tone with ffmpeg (no footage needed).
       - run: choco install ffmpeg --no-progress -y
       - run: npm test
+      # Stdlib-only Python checks (no packages, no media). Kept out of `npm test` so that stays Node-only.
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: python checks
+        shell: bash
+        run: |
+          python scripts/check-clips.py
+          python scripts/check-migrate-assets.py
+          python scripts/check-reframe.py
+          python scripts/research.py selftest
+          python scripts/omnivoice-tts.py selftest

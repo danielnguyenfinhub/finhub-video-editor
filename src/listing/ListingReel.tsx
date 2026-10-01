@@ -44,7 +44,7 @@ import { PriceCard } from "./PriceCard";
 import { isPlan } from "./rooms";
 import { Teaser } from "./Teaser";
 import { TestWatermark } from "./TestWatermark";
-import { C, clamp, LangContext, SANS } from "./theme";
+import { C, clamp, LangContext, SANS, useSerifFont } from "./theme";
 import { TourBar } from "./TourBar";
 
 export const listingReelSchema = z.object({
@@ -193,6 +193,7 @@ export const ListingReel: React.FC<ListingReelProps> = ({
   data,
 }) => {
   useReelFont();
+  useSerifFont();
   if (!slug || !data)
     return (
       <AbsoluteFill

@@ -1,16 +1,18 @@
 // Global RE look for ListingReel: night navy + gold, cream cards, Be Vietnam
 // Pro for all text, Playfair Display (has a "vietnamese" subset) for display
 // headings only. Layout keeps text inside the 4:5 feed band.
-import { loadFont } from "@remotion/google-fonts/PlayfairDisplay";
-import { createContext, useContext } from "react";
+import { getInfo, loadFont } from "@remotion/google-fonts/PlayfairDisplay";
+import { createContext, useContext, useState } from "react";
 import { BUSINESS } from "./copy";
 
 export const C = BUSINESS.colors;
 export const SANS = '"Be Vietnam Pro", "Segoe UI", sans-serif';
-export const SERIF = loadFont("normal", {
-  weights: ["700"],
-  subsets: ["vietnamese", "latin"],
-}).fontFamily;
+export const SERIF = getInfo().fontFamily;
+// Fetches Playfair from fonts.gstatic.com, holding the frame (delayRender) until it
+// loads. Called by ListingReel, not at import: Root.tsx imports this file, so a
+// module-scope load made every composition fetch it (docs/findings.md, google-fonts).
+export const useSerifFont = () =>
+  useState(() => loadFont("normal", { weights: ["700"], subsets: ["vietnamese", "latin"] }))[0];
 
 export const W = 1080;
 export const H = 1920;

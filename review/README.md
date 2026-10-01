@@ -37,7 +37,14 @@ and RG 234 scan as the render: a change that would fail shows the error and
 cannot be saved. Wording (titles, captions, cue text) is not editable here on
 purpose; change it with Claude so it gets the full compliance review.
 
-The server (`server.ts`) listens on 127.0.0.1 only, serves `public/` with HTTP
-Range support, and runs one render at a time. `node review/check-shift.mjs`
-checks the timing logic and `node review/check-timeline.mjs` the zoom, snap,
-ruler, auto-scroll and undo maths (`review/timelineMath.ts`).
+The server (`server.ts`) listens on 127.0.0.1 only, answers only requests whose
+Host (and Origin, when sent) is `localhost:4100` or `127.0.0.1:4100` and that a
+browser does not mark `Sec-Fetch-Site: cross-site`, so another
+web page cannot save or render through it, serves `public/` with HTTP
+Range support (a bad range gets 416), and runs one render at a time. `node review/check-shift.mjs`
+checks the timing logic, `node review/check-timeline.mjs` the zoom, snap,
+ruler, auto-scroll and undo maths (`review/timelineMath.ts`), and
+`node review/check-server.mjs` the server's guards (`review/guard.ts`: Host/Origin/Sec-Fetch-Site,
+path containment, UTF-8 request body), directly and through the running server
+started on a temp `public/` (`REVIEW_PUBLIC`; bad Range headers, a sibling
+`public-x` path, a split Vietnamese save).

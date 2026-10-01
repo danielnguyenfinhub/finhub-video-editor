@@ -1,7 +1,8 @@
 """Check for prep-video.py --clips on two synthetic takes in a temp media root:
 the joined proxy's length, the merged words.json, the joined cut-out keeping its
-alpha, a missing take stopping with the prep command, and the single-recording
-prep unchanged. faster-whisper is replaced by a stub, so nothing is downloaded.
+alpha, a missing take stopping with the prep command, the single-recording
+prep unchanged, and a prep whose transcription failed resuming on a retry
+without touching its proxy or the video file. faster-whisper is replaced by a stub, so nothing is downloaded.
 
     python scripts/check-clips.py      (prints "clips ok"; exit 1 on failure)
 """
@@ -78,6 +79,46 @@ def main() -> None:
                 f"testsrc=d=5:s=320x240:r={FPS},format=yuva420p,"
                 "geq=lum='lum(X,Y)':cb='cb(X,Y)':cr='cr(X,Y)':a='if(lt(X,W/2),0,255)'",
                 "-c:v", "libvpx-vp9", "-pix_fmt", "yuva420p", str(rec / "foreground.webm")])
+        # A transcription that fails (faster-whisper missing) leaves source.mp4 and no
+        # words.json; the retry with the same file resumes (B3, maintenance run 3).
+        (root / "broken" / "faster_whisper").mkdir(parents=True)
+        (root / "broken" / "faster_whisper" / "__init__.py").write_text(
+            'raise ImportError("simulated")\n', encoding="utf-8")
+        src = root / "take-c.mp4"
+        sh(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", f"testsrc=d=2:s=320x240:r={FPS}",
+            "-f", "lavfi", "-i", "sine=d=2", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-shortest", str(src)])
+        rec = public / "recordings" / "take-c"
+        failed = sh([sys.executable, str(PREP), str(src), "take-c"],
+                    {**env, "PYTHONPATH": str(root / "broken")}, ok=False)
+        assert failed.returncode != 0 and "faster-whisper is not installed" in failed.stderr, failed
+        assert (rec / "source.mp4").exists() and not (rec / "words.json").exists()
+        assert not list(rec.glob("*.part*")), "the checked proxy is renamed, no .part left"
+        kept = {p: digest(p) for p in (src, rec / "source.mp4")}
+        hint = sh([sys.executable, str(PREP), "take-c", "--recording", "take-c"], env, ok=False)
+        assert hint.returncode != 0 and "the same file again finishes it" in hint.stderr, hint.stderr
+        other = sh([sys.executable, str(PREP), str(root / "take-a.mp4"), "take-c"], env, ok=False)
+        assert other.returncode != 0 and "Nothing was changed" in other.stderr, other.stderr
+        # Same frame count, another video; the same video with another --no-clean; a proxy
+        # with no source.from.json: all refused, nothing changed (R5, run 3 round 2).
+        same_len = root / "take-d.mp4"
+        sh(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", f"testsrc2=d=2:s=320x240:r={FPS}",
+            "-f", "lavfi", "-i", "sine=f=880:d=2", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-shortest", str(same_len)])
+        assert probe(same_len, "stream=nb_frames") == probe(src, "stream=nb_frames")
+        record, aside = rec / "source.from.json", root / "source.from.json"
+        for cmd, hide in (([str(same_len), "take-c"], False), ([str(src), "take-c", "--no-clean"], False),
+                          ([str(src), "take-c"], True)):
+            if hide:
+                record.replace(aside)
+            r = sh([sys.executable, str(PREP), *cmd], env, ok=False)
+            assert r.returncode != 0 and "Nothing was changed" in r.stderr, (cmd, hide, r.stdout, r.stderr)
+            assert not (rec / "words.json").exists() and kept == {p: digest(p) for p in kept}
+            if hide:
+                aside.replace(record)
+        out = sh([sys.executable, str(PREP), str(src), "take-c"], env).stdout
+        assert "Resuming" in out and (rec / "words.json").exists(), out
+        assert kept == {p: digest(p) for p in kept}, "the video file and the proxy are untouched"
         before = {p: digest(p) for p in (public / "recordings").rglob("*") if p.is_file()}
 
         # (c) a new edit of a prepared recording writes only the skeleton, as before.
