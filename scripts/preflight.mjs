@@ -13,7 +13,7 @@
 // check-schema (the render's own validation), check-speech-cuts and check-pacing.
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -133,7 +133,10 @@ if (slug) {
 // speech the timeline drops or clips (blocks) and gaps with no visual change (warns).
 // Faceless videos (script.json) have no cuts in Daniel's speech. A check that crashes,
 // is killed or exits with a usage error is not a pass: the render waits.
-const run = (script, timeout) => spawnSync(process.execPath, ["--no-warnings", join(ROOT, "scripts", script), slug, "--public-dir", pub], { encoding: "utf8", cwd: ROOT, timeout });
+// PREFLIGHT_CHECK_SCHEMA (a script path) replaces check-schema.mjs: only scripts/check-preflight.mjs sets it, to prove how each kind of failure is classified.
+const run = (script, timeout) => spawnSync(process.execPath, ["--no-warnings", isAbsolute(script) ? script : join(ROOT, "scripts", script), slug, "--public-dir", pub], { encoding: "utf8", cwd: ROOT, timeout });
+const SCHEMA_ERROR = /✖|Invalid (input|option|literal|type)|expected .{1,40} received/i; // a zod message: the edit is wrong
+const BROWSER_FAILURE = /Target closed|Protocol error|Failed to launch|chrom(e|ium)|headless|while downloading|browser|ECONN|ENOTFOUND/i;
 const SCHEMA_TIMEOUT_S = 300; // a bundle and a browser start; a hung browser must not hold the render forever
 const lines = (r) => (r.stderr || r.stdout || "").trim().split("\n").filter((l) => l.trim() && !/^Node\.js v/.test(l) && !/^\s+at /.test(l));
 // A failed check's own words: from its "Error:" line if it has one, else its first lines.
@@ -144,9 +147,13 @@ const detail = (r) => {
 const why = (r) => r.error?.message ?? lines(r).find((l) => /^\w*Error\b/.test(l)) ?? lines(r).at(-1) ?? (r.signal ? `killed (${r.signal})` : `exit ${r.status}`);
 const checked = slug && !errors.length; // each check below runs; every failure is listed
 if (checked) {
-  const schema = run("check-schema.mjs", SCHEMA_TIMEOUT_S * 1000);
-  if (schema.error?.code === "ETIMEDOUT")
-    errors.push(`check-schema did not finish in ${SCHEMA_TIMEOUT_S} s (its browser hung?) and was stopped, so the schema is unchecked.\n  Run node scripts/check-schema.mjs ${slug} to see where it stops.`);
+  const schema = run(process.env.PREFLIGHT_CHECK_SCHEMA ?? "check-schema.mjs", SCHEMA_TIMEOUT_S * 1000);
+  // The browser itself failing (not starting, dropping mid-call, a refused download, a hang) says nothing about
+  // the edit, and the render runs the same schema and reports it: warn, do not block. Only a schema error blocks.
+  const text = lines(schema).join("\n");
+  const browserFailure = schema.error?.code === "ETIMEDOUT" || (!SCHEMA_ERROR.test(text) && BROWSER_FAILURE.test(text));
+  if (browserFailure)
+    warnings.push(`check-schema could not run (${schema.error?.code === "ETIMEDOUT" ? `no answer in ${SCHEMA_TIMEOUT_S} s` : why(schema).replace(/\.$/, "")}), so the composition schema is unchecked here; the render checks it again. node scripts/check-schema.mjs ${slug} shows it.`);
   else if (schema.status !== 0)
     errors.push(`check-schema failed, so the render would too:\n    ${detail(schema)}\n  Fix it, then run node scripts/check-schema.mjs ${slug}.`);
 }
