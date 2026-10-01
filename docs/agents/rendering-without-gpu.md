@@ -29,6 +29,8 @@ node node_modules/@remotion/cli/remotion-cli.js still src/index.ts ElementCatalo
 
 `Rendered 1/1` means stills work (look at the PNG: a cream card reading "Lãi suất cố định" in Be Vietnam Pro). Any error means no still: audit from code and previews and mark every look claim "not viewed". A `MortgageReel` still also needs its recording (`words.json`, `source.mp4`): the `_test-*` slugs point at recordings that are not in a fresh clone, so they fail with HTTP 404 or a `source.mp4` delayRender timeout, which is not a sandbox limit. `ListingReel` still fails here: it fetches Playfair Display from `fonts.gstatic.com` (below).
 
+A faceless design needs no recording to be viewed: `node scripts/faceless-still.mjs <slug> <design> [--frame 150]` (for example `rba-sept-2026 kinetic`) renders it in the sandbox in about 15 s. It builds a scratch public folder in `out/.tmp` with `"background": "vignette"` (skips the matte) and a black VP9-in-MP4 `source.mp4` (the headless shell has no H.264, so a normal MP4 fails with "Cannot decode"). Checked 2026-10-02 on `kinetic`: text, stat card and Vietnamese diacritics all render. Talking-head designs need a real cut-out, so they still need Daniel's PC.
+
 ## check-schema and preflight with an installed browser
 
 `scripts/check-schema.mjs` (and `preflight.mjs`, `check-preflight.mjs` through it) normally downloads Remotion's browser, which this sandbox cannot. With an installed one they run for real:
