@@ -62,7 +62,9 @@ export const resolveColour = (value, tokens) => {
   if (tok) return tokens[tok] ?? null;
   // A gradient or a template string: its first known colour stands for it.
   const first = v.match(/brand\.(\w+)/)?.[1];
-  if (/gradient/i.test(v)) return first ? (tokens[first] ?? null) : lit ? hexOf(lit) : null;
+  // A translucent first colour (faint ruled lines) is not the surface: use the first solid one, else skip.
+  const solid = (v.match(COLOUR) ?? []).find((l) => alphaOf(l) >= 0.6);
+  if (/gradient/i.test(v)) return first ? (tokens[first] ?? null) : solid ? hexOf(solid) : null;
   return null;
 };
 
@@ -163,6 +165,7 @@ const c = { style: { color: INK, background: \`linear-gradient(180deg, \${brand.
 const d = { color: brand.text, background: "rgba(0, 0, 0, 0.3)" };
 const e = { color: brand.accent, background: brand.card }; // contrast-exempt: decorative
 const f = { color: brand.accent, background: brand.card };
+const g = { color: INK, background: \`repeating-linear-gradient(180deg, transparent 0 62px, rgba(0, 100, 168, 0.08) 62px 64px), #fff\` }; // faint lines are not the surface: skipped
 `;
   const got = contrastProblems(code, tokens);
   const want = [
@@ -170,8 +173,8 @@ const f = { color: brand.accent, background: brand.card };
     { line: 7, ratio: 2.04, level: "fail" }, // amber on white; line 6 is exempt
   ]; // line 4: INK on the gradient's first colour (card) passes; line 5: translucent, skipped
   const ok = got.length === want.length && want.every((w, i) => got[i].line === w.line && got[i].ratio === w.ratio && got[i].level === w.level);
-  const pairs = pairsIn(code).length; // a, b, c (inner), d, f; e is exempt
-  if (!ok || pairs !== 5) {
+  const pairs = pairsIn(code).length; // a, b, c (inner), d, f, g; e is exempt
+  if (!ok || pairs !== 6) {
     console.error(`contrast selftest failed: ${pairs} pairs, ${JSON.stringify(got)}`);
     process.exit(1);
   }
