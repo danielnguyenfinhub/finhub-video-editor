@@ -1,0 +1,286 @@
+{
+  "source": "doi-nha-mua-truoc-ban-sau",
+  "title": "Đổi nhà: mua trước hay bán trước?",
+  "pacing": {
+    "mode": "off"
+  },
+  "chapters": [
+    {
+      "atMs": 37000,
+      "title": "Hiểu mục tiêu của bạn",
+      "effect": "slide"
+    },
+    {
+      "atMs": 92640,
+      "title": "Mua trước khi bán được không?",
+      "effect": "wipe"
+    },
+    {
+      "atMs": 170800,
+      "title": "Dọn đi nơi khác",
+      "effect": "slide"
+    },
+    {
+      "atMs": 270800,
+      "title": "Nhu cầu cá nhân",
+      "effect": "fade"
+    },
+    {
+      "atMs": 372020,
+      "title": "Mua để ở hay đầu tư",
+      "effect": "wipe"
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 97400,
+      "durMs": 3500,
+      "big": "1 TRIỆU",
+      "label": "Ví dụ giả định: giá căn nhà mới"
+    },
+    {
+      "atMs": 107700,
+      "durMs": 3000,
+      "big": "1 TRIỆU",
+      "label": "Ví dụ: mua trước khi bán?"
+    }
+  ],
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 134120,
+      "toMs": 150400,
+      "title": "Ngân hàng có cho vay mua trước?",
+      "items": [
+        {
+          "text": "Có: mua trước, bán sau, bớt áp lực",
+          "atMs": 134120
+        },
+        {
+          "text": "Không: phải bán trước",
+          "atMs": 144660
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 150700,
+      "toMs": 170200,
+      "title": "Đổi nhà: hai bước",
+      "items": [
+        {
+          "text": "Mục tiêu và khả năng vay mua trước",
+          "atMs": 150700
+        },
+        {
+          "text": "Dọn đi nơi khác: bán hay giữ?",
+          "atMs": 162400
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 204240,
+      "toMs": 227000,
+      "title": "Dọn đi nơi khác: so hai điều",
+      "items": [
+        {
+          "text": "Tiền thuê hay tiền lãi vay?",
+          "atMs": 204240
+        },
+        {
+          "text": "Tăng trưởng giá trị giữa hai khu",
+          "atMs": 221560
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 239920,
+      "toMs": 258500,
+      "title": "Ví dụ: căn hộ gần city hay khu hiện tại?",
+      "items": [
+        {
+          "text": "Căn hộ gần city: thuê cao, tăng trưởng không cao",
+          "atMs": 239920
+        },
+        {
+          "text": "Khu nhà hiện tại: đang phát triển",
+          "atMs": 249580
+        },
+        {
+          "text": "Bán nhà cũ để dọn lên: có thiệt không?",
+          "atMs": 256040
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 323560,
+      "toMs": 333800,
+      "title": "Thông tin để bạn cân nhắc",
+      "items": [
+        {
+          "text": "Lợi ích",
+          "atMs": 323560
+        },
+        {
+          "text": "Rủi ro",
+          "atMs": 324300
+        }
+      ]
+    }
+  ],
+  "compliance": {
+    "illustrativeNumbers": true
+  },
+  "notes": [
+    "Tóm tắt: Daniel nói về đổi nhà: nên mua trước bán sau hay bán trước mua sau. Bước 1: tìm hiểu mục tiêu (giữ hay bán nhà cũ) và xem ngân hàng có cho vay để mua căn mới (ví dụ 1 triệu) trước khi bán không; mua được mà chưa cần bán thì bớt áp lực, không vay được thì bắt buộc bán trước. Bước 2: khi dọn đi nơi khác, so tiền thuê với tiền lãi vay, và so mức tăng trưởng giá trị giữa hai khu (ví dụ căn hộ gần city/ga xe lửa: tiền thuê cao nhưng ít tăng trưởng, trong khi khu nhà hiện tại đang phát triển). Nhu cầu cá nhân/cảm xúc là quyết định của khách. Kết: mua để ở là nhu cầu cá nhân, Daniel ít đưa ý kiến; đầu tư thì chia sẻ phương án để tham khảo, người chọn cuối cùng là khách.",
+    "Hook 12580: 'Đó là việc các bạn bây giờ muốn đổi nhà mới mà không biết bắt đầu từ đâu.' Câu hỏi chính nói rõ ở 150700 ('mua trước bán sau hay bán trước mua sau').",
+    "Disclaimer nói ở 17800-35000 (thông tin tham khảo, nói chuyện với chuyên gia): giữ nguyên.",
+    "Chuyển ý: 35100 trách nhiệm đầu tiên = hiểu mục tiêu khách; 62840 trường hợp giả thiết; 92640 ví dụ căn 1 triệu, mua trước khi bán; 150700 tóm bước 1; 162400 bước 2: dọn nơi khác, bán hay không; 204240 tiền thuê vs tiền lãi; 221560 tăng trưởng giữa hai khu; 227060 ví dụ căn hộ gần city; 270800 cảm xúc/nhu cầu cá nhân; 334200 giai thoại một khách mấy ngày trước (không tên, không số liệu); 372020 đầu tư vs mua để ở; 415220 kết.",
+    "Số: 97640 và 107800 'một triệu' = giá căn nhà giả định Daniel tự đặt ('mình nói dùng một số là một triệu đi'); không có phép tính. Không có số nào khác.",
+    "Watch-words: 10640 'chắc chắn' (bạn trẻ chắc chắn sẽ trải qua, không nói về duyệt vay); 85240 'những lời khuyên của mình' (chữ 'lời khuyên', không phải 'lời khuyên tài chính'); 348600 'chưa chắc là một chọn lựa tốt' (phủ định). 372020-419580 Daniel nói về 'đưa ý kiến' cho đầu tư để tham khảo: compliance xem có vượt sang tư vấn đầu tư không. Không có 'tốt nhất', 'rẻ nhất', 'miễn phí', 'đảm bảo'.",
+    "Thuế: không. Lãi suất: 214020 chỉ nhắc 'tiền lãi suất' chung, không có con số. Ngân hàng: chỉ nói chung 'ngân hàng', không tên.",
+    "Khách hàng: 62840 và 174240 nhắc 'người khách nói chuyện sáng nay', 334200 'một bạn mấy ngày trước' — không tên, không địa chỉ, không số liệu của khách; Daniel gọi là 'trường hợp giả thiết'.",
+    "Cắt: 35100-37000 câu mở bị bỏ dở ('Và hôm nay thì mình trở lại cái việc là,'); 234240-235700 nói vấp 'Gần gai tây sữa,' trước khi nói 'ga xe lửa'. Không cắt nội dung khác.",
+    "Chưa chắc (giữ nguyên): 76940 'she' (có thể Daniel nói tiếng Anh); 87280 'thứ sót'; 165180-165400 'dọn bằng nơi khác' ('bằng' có thể là 'sang'); 227060 'muốn gọi gần city' ('gọi' có thể là 'dọn'); 322860-323540 'Nhất là việc mình muốn ở nhà của mình thôi.' có vẻ bị nhận dạng lặp (6 chữ dài 0 ms); 339900 'cái mức rất khả năng trả thôi'; 400200 'tài liên'.",
+    "QC fix 1: cut.stutters=false. Tự động cắt lặp từ (stutter) ở 282,5 s đã bỏ chữ \"tôi\" trong \"nhà của tôi, tôi không muốn…\" (nói hai lần thật, không phải lặp). Đây là stutter duy nhất; \"thường thường\" (55,6 s, 83,2 s) là từ láy, không bị ảnh hưởng.",
+    "QC fix 2: remove 322860-323560 bỏ câu bỏ dở \"Nhất là việc\" và chữ \"mình\" không có trong âm thanh (conf 0,006) cùng 6 token 0 ms; câu tiếp \"Thí dụ như lợi ích và rủi ro.\" giữ nguyên từ 323560.",
+    "QC render fix 1 (gần ga xe lửa): sửa tay words.json (file do prep tạo lại; chạy prep lại thì phải sửa lại): ' gần.' 234020 endMs 234220 -> 234620; ' gai' (234240-235280) startMs 234240 -> 234900; ' gai' (235740-236060) startMs 235740 -> 235880. Đo RMS 10 ms: 'gần' kêu tới ~234,62 s, im lặng 234,70-234,91 s; mảnh 'gai' thừa 235,57-235,75 s, khoảng lặng 235,78-235,83 s, 'ga' bắt đầu 235,84 s. Giữ remove 234240-235700. Đoạn giữ lại nay kết thúc 234,767 s và bắt đầu lại 235,800 s.",
+    "QC render fix 2 (chữ 'Thì' đầu câu): cut.fillers=false. Cả 28 lần cắt tự động trong video này đều là 'Thì' (không có 'ờ', 'ừm'); Whisper đặt 'Thì' vào khoảng lặng trước nó nên cắt bỏ khoảng lặng, để lại hoặc cắt cụt chữ 'thì'. Nay giữ nguyên mọi chữ 'Thì'. Để hai chuyển cảnh chương 2 (92640) và 5 (372020) vẫn nằm đúng chỗ, remove 92640-92880 và 372020-372300 chỉ bỏ khoảng lặng trước 'Thì' (không bỏ tiếng nói), và sửa tay words.json: ' Thì' 92640 endMs 93000 -> 92880; ' Thì' 372020 endMs 372420 -> 372300 (đo RMS: 'thì' thật ở 92,91-93,07 s và 372,35-372,46 s). Phần nói dài thêm ~10,7 s.",
+    "QC stills vòng 3 (cắt khoảng lặng làm mất tiếng nói): sửa tay words.json (file do prep tạo; chạy prep lại thì phải sửa lại). Đã nghe lại bằng Whisper trên âm thanh gốc (không vad, không ngữ cảnh) và đo RMS 10 ms; mỗi chữ thêm vào đều có tiếng nói (-13 đến -24 dB). (1) 115,4-117,4 s mất 'Tại vì nếu như bây giờ việc là' (mất 'nếu như' biến câu điều kiện thành câu khẳng định): bỏ 2 token 0 ms ' Các'/' bạn' 117280-117280, thêm ' Tại' 115840-115960, ' vì' 115960-116040, ' nếu' 116040-116260, ' như' 116260-116360, ' bây' 116360-116560, ' giờ' 116560-116680, ' việc' 116680-116900, ' là' 116900-117060, ' các' 117060-117200, ' bạn' 117200-117360; ' đang' startMs 117280 -> 117360. (2) 86,5-87,3 s mất 'những cái điểm': thêm ' những' 86540-86700, ' cái' 86700-86840, ' điểm' 86840-87100; ' thứ' 87280-87280 -> 87100-87280. (3) 'emotion' bị cắt 200 ms ở giữa: ' emotion,' endMs 289760 -> 290240; ' cái' 290220-290480 -> 290480-290600; ' nhu' startMs 290480 -> 290600 (cái phải có độ dài > 0, nếu không timeline bỏ nó).",
+    "Quét toàn bộ các đoạn cắt (vòng 3), sửa thêm: (4) ' tới.' 322380 endMs 322580 -> 322800 (đuôi 'tới' kéo tới 322,80 s, trước bị cắt 70 ms). (5) ' Rồi' 327260 startMs -> 327040 (đầu chữ bị cắt 130 ms). (6) ' Còn' 415220 startMs -> 415060 (đầu chữ bị cắt 70 ms). (7) ' Rồi' 419580 startMs -> 419460 (đầu chữ bị cắt 40 ms). (8) chữ 'Thì' thật ở 408,50-408,76 s bị cắt trong khi phụ đề vẫn hiện 'Thì': ' Thì' 409160-409480 -> 408500-408760, ' không' 409480-409800 -> 409040-409460 (tiếng 'không' thật 409,04-409,46 s). Để nguyên, chỉ ghi lại (tiếng nói nằm trong đoạn cắt nhưng không đổi nghĩa): 34,44-34,92 s mảnh câu bỏ dở ngay trước remove 35100; 150,16-150,44 s 'dạ'/'thì' lặp trước 'Thì đó là bước'; 326,38-326,52 s 'dạ'; 345,12-345,78 s câu mở lại lần đầu trước 'Thì mình nghe thấy vậy'; 427,00-427,16 s tiếng sau 'Vậy thôi.'. Talk 390,93 s -> 393,60 s.",
+    "QC stills vòng 4 (04:54,7, mối nối 'tới. | Thí dụ'): sửa tay words.json ' Thí' startMs 323560 -> 323720 (endMs 323760 giữ nguyên). Đo RMS 10 ms trên âm thanh gốc: mảnh 'việc' thừa của câu bỏ dở 'Nhất là việc' kêu 323,49-323,61 s (-14 đến -18 dB), khoảng lặng 323,62-323,68 s (-33 đến -39 dB), hơi bật 'th' từ 323,69 s, 'thí' có thanh từ 323,72 s. Đoạn giữ lại nay bắt đầu 323,633 s (trong khoảng lặng, -37 dB) thay vì 323,500 s (giữa mảnh 'việc'); 'Thí' còn nguyên. Talk 11808 -> 11804 khung (393,60 s -> 393,47 s); chuyển cảnh chương 5 sớm hơn 4 khung.",
+    "30/09/2026 pacing set to off: auto pacing played segments at 0.9x-1.2x and shifted Daniel's pitch and tone (was {\"mode\":\"auto\"})."
+  ],
+  "remove": [
+    [
+      35100,
+      37000
+    ],
+    [
+      92640,
+      92880
+    ],
+    [
+      234240,
+      235700
+    ],
+    [
+      322860,
+      323560
+    ],
+    [
+      372020,
+      372300
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "rộng",
+      "to": "trọng",
+      "atMs": 58500
+    },
+    {
+      "from": "bụi",
+      "to": "rủi",
+      "atMs": 128700
+    },
+    {
+      "from": "sao",
+      "to": "sau",
+      "atMs": 157120
+    },
+    {
+      "from": "sao.",
+      "to": "sau.",
+      "atMs": 157920
+    },
+    {
+      "from": "đọc",
+      "to": "dọn",
+      "atMs": 165180
+    },
+    {
+      "from": "xuất",
+      "to": "suất",
+      "atMs": 214200
+    },
+    {
+      "from": "trăng",
+      "to": "tăng",
+      "atMs": 225320
+    },
+    {
+      "from": "gai",
+      "to": "ga",
+      "atMs": 235740
+    },
+    {
+      "from": "trăng",
+      "to": "tăng",
+      "atMs": 246740
+    },
+    {
+      "from": "trăng",
+      "to": "tăng",
+      "atMs": 248400
+    },
+    {
+      "from": "trăng",
+      "to": "tăng",
+      "atMs": 267760
+    },
+    {
+      "from": "lừa",
+      "to": "lựa",
+      "atMs": 349160
+    },
+    {
+      "from": "lừa.",
+      "to": "lựa.",
+      "atMs": 381760
+    }
+  ],
+  "design": "cards",
+  "background": "vignette",
+  "subtitle": "Daniel Nguyen · Finance Hub",
+  "coverFrameMs": 14000,
+  "hook": {
+    "big": "ĐỔI NHÀ MỚI?",
+    "sub": "Mua trước bán sau hay bán trước mua sau"
+  },
+  "music": {
+    "file": "music/calm-morning-keys.mp3",
+    "startMs": 0
+  },
+  "keywords": [
+    "mua trước",
+    "bán trước",
+    "tiền thuê",
+    "tiền lãi",
+    "tăng trưởng",
+    "mục tiêu"
+  ],
+  "cta": {
+    "question": "Bạn đang tính đổi nhà mới?"
+  },
+  "post": {
+    "title": "Đổi nhà mới - mua trước bán sau hay bán trước mua sau",
+    "caption": "Muốn đổi nhà mới nhưng không biết bắt đầu từ đâu? Daniel chia sẻ cách suy nghĩ theo hai bước: hiểu rõ mục tiêu của bạn và xem ngân hàng có thể cho vay mua căn mới trước khi bán không; rồi nếu dọn đi nơi khác, so tiền thuê với tiền lãi vay và mức tăng trưởng giá trị giữa hai khu. Thông tin chỉ mang tính tham khảo. Nhắn tin cho Daniel nếu bạn đang tính đổi nhà.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#doinha",
+      "#muanha",
+      "#bannha",
+      "#vaymuanha",
+      "#nhao"
+    ]
+  },
+  "cut": {
+    "stutters": false,
+    "fillers": false
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "source": "bao-dam-vay-duoc-nha-refinance",
+  "design": "cards",
+  "background": "vignette",
+  "title": "Vay đủ trước, xem lại lãi suất sau",
+  "pacing": {
+    "mode": "off"
+  },
+  "coverFrameMs": 24500,
+  "hook": {
+    "big": "LÃI CAO CÓ ĐÁNG?",
+    "sub": "Vay đủ tiền mua nhà trước, lãi suất tính sau"
+  },
+  "chapters": [
+    {
+      "atMs": 67800,
+      "title": "Bước 1: thương lượng",
+      "effect": "slide"
+    },
+    {
+      "atMs": 117220,
+      "title": "Bước 2: chuyển ngân hàng",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 194800,
+      "title": "Bước 3: tính chi phí",
+      "effect": "slide"
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 69280,
+      "durMs": 3000,
+      "big": "6–8 THÁNG",
+      "label": "rồi thương lượng với ngân hàng"
+    },
+    {
+      "atMs": 129840,
+      "durMs": 3000,
+      "big": "~1 NĂM",
+      "label": "chưa được thì tính refinance"
+    },
+    {
+      "atMs": 147540,
+      "durMs": 3500,
+      "big": "+3%",
+      "label": "hồ sơ mới: cộng thêm khi xét"
+    }
+  ],
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 168460,
+      "toMs": 194500,
+      "title": "Một số ngân hàng, khi chuyển đổi",
+      "items": [
+        {
+          "text": "Lãi suất chỗ mới thấp hơn",
+          "atMs": 168960
+        },
+        {
+          "text": "Không vay thêm",
+          "atMs": 171440
+        },
+        {
+          "text": "Xét hồ sơ: chỉ cộng 1%",
+          "atMs": 177420
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 214460,
+      "toMs": 231200,
+      "title": "Có nên chuyển?",
+      "items": [
+        {
+          "text": "Chuyển rồi còn lợi không?",
+          "atMs": 214960
+        },
+        {
+          "text": "Tính chi phí chuyển đổi",
+          "atMs": 227760
+        },
+        {
+          "text": "Không đáng thì không cần",
+          "atMs": 229420
+        }
+      ]
+    }
+  ],
+  "compliance": {
+    "illustrativeNumbers": true,
+    "conditionsNote": true
+  },
+  "music": {
+    "file": "music/hopeful-inspiring.mp3",
+    "startMs": 0
+  },
+  "keywords": [
+    "refinance",
+    "thương lượng",
+    "chi phí chuyển đổi",
+    "khả năng mượn"
+  ],
+  "cta": {
+    "question": "Bạn muốn xem lại lãi suất khoản vay?"
+  },
+  "notes": [
+    "SUMMARY: Problem: buyers put borrowing capacity first; Daniel prepares the highest borrowing amount possible, even if that means a higher rate than rate-focused buyers get. Question: is paying the higher rate worth it? Plan: (1) after about 6-8 months of repayments, negotiate with the current bank if it has retention pricing; (2) if not, after about a year refinance: new applications are assessed at the rate + 3% buffer, but many banks assess a like-for-like refinance (lower new rate, no extra borrowing) at only +1%, so borrowing capacity rises; (3) weigh switching costs before moving; also move if more borrowing is needed and the current bank won't lend. Conclusion: this is the ongoing care Daniel gives his clients while their loan is with him.",
+    "HOOK: 24000 'Nhưng bây giờ việc là nếu như mình trả lãi suất cao như vậy thì thật ra có đáng hay không?' (opener at 0 is long set-up; kept in order).",
+    "TOPICS: 0 borrowing capacity first | 31460 the plan when the rate is not the lowest | 67800 step 1: 6-8 months, negotiate with current bank | 117220 step 2: after one year, refinance policy (3% vs 1% buffer) | 194800 switching bank, switching costs | 239240 why ongoing review | 250240 moving for extra borrowing, not only rate | 263900 close.",
+    "NUMBERS: 69440 '6 tháng cho tới 8 tháng' timing only, no maths. 128620 and 194800 'sau một năm' timing only. 147760 'cộng 3%' serviceability buffer = +3 percentage points on the actual rate (e.g. 6,5% assessed at 9,5%): correct against the APRA buffer. 177800 and 189680 'chỉ tính 1%' reduced buffer for like-for-like refinance (e.g. 6,5% assessed at 7,5%): lender-specific policy, conditions spoken (new rate lower, no extra borrowing); any on-screen figure must say 'một số ngân hàng' and keep the conditions. Show buffers as 'điểm %' / '+3%' not as a rate.",
+    "WATCH-WORDS: 16800 'cao nhất có thể' (borrowing amount) | 37680 'tốt nhất' (negated: rate 'không phải là tốt nhất') | 55960 'chắc chắn' (priority, not approval) | 57780 'bảo đảm mua được căn nhà' (priority, not a guarantee) | 63600 'thấp nhất có thể' (goal to reduce rate) | 64780 'rất là đơn giản' | 111600-116280 'kết quả cũng rất là tốt, tỷ lệ ... rất là cao' (outcome claim, flagged) | 241540 'bảo đảm' + 248800 'giảm nhất, thấp nhất' (flagged). Never cut or reworded by the editor.",
+    "TITLE: edit.json title contains 'Bao dam vay duoc nha' - 'bảo đảm vay được' reads close to the tier-1 phrase 'bảo đảm được duyệt'; compliance must clear or reword any on-screen title/cover text.",
+    "TAX: none. BANKS: none named. CLIENT DATA: none (only generic 'khách hàng của mình').",
+    "CUTS: 108080-108960 false start 'khách hàng, khách ghi' -> reads 'thương lượng với ngân hàng'. 178360-187220 muddled restatement; the claim (1% buffer lifts borrowing capacity) is said cleanly at 187560. 205080-207980 repeated take; the fuller take follows at 208360.",
+    "CAPTION FIXES: 146500 dịch->xét (xét hồ sơ), 202100 thuân->thông (thông báo), 223160 xế->xê (xê xích); 221260 tiền lợi->tiền lời is built in. Unsure, left as spoken: 44340 'chiến sách' (chiến lược or chính sách?), 259500 'có tự lãi suất thấp'.",
+    "SPEECH-CUT FIX 30/09/2026 (scripts/check-speech-cuts.mjs: 3 ERRORs): hand-edited public/recordings/bao-dam-vay-duoc-nha-refinance/words.json (prep-generated; re-running prep overwrites these). Evidence: 10 ms RMS + voicing on source.mp4 and Whisper large-v3/medium (no VAD, no prior text; short windows hallucinated \"Hãy subscribe…\" and were discarded). (1) 58.7-59.2 s \"căn nhà đó đã\": \"đó đã\" was missing and the cut dropped it. \" nhà,\" 58720-58760 -> \" nhà\" 58720-58840; added \" đó\" 58840-58940 and \" đã,\" 58940-59220 (voiced -16 to -21 dB to 59.22 s, silence after). (2) 88.25-88.78 s: \" với\"/\" những\"/\" người\" were stacked at 88760 (0-20 ms), so \"cho những\" was cut. \" với\" 88760-88760 -> 88250-88420; \" những\" 88760-88760 -> 88500-88640; \" người\" startMs 88760 -> 88640. Every Whisper pass hears \"cho\", not \"với\": captionFix với->cho @88250. (3) \" Còn\" startMs 250240 -> 249900 (voiced from 249.93 s). (4) \" Thì\" 106320-106680 -> 105700-106260 (the spoken \"thì\" is 105.70-106.24 s; the old token sat on silence, so the caption showed a Thì the audio did not have). The \"à\" at 104.99-105.37 s stays cut as a hesitation. Claim span @106320 otherwise untouched. (5) \" thì\" 168240-168600 -> 167700-168060 and \" nếu\" startMs 168600 -> 168530 (the spoken \"thì\" is 167.71-168.05 s; old token on silence). (6) \" refinance.\" endMs 137260 -> 137480 (voiced to 137.48 s; the pad ended the run at 137433, 50 ms into the word tail). (7) \" mỗi\" startMs 243020 -> 242880 (voiced from 242.89 s; the run started 242933, 40 ms into the \"m\"). Coordinator-approved timing fix inside the spoken claim at 239240-249320; the words are unchanged.",
+    "FILLERS 30/09/2026: cut.fillers=false. All 17 automatic cuts were sentence-initial \"Thì\" (no ờ/ừm, no stutters); every one has voiced sound in its token and 9 cut inside voiced sound. Every \"Thì\" is now kept. Chapter joins (render QC fix, replaces the pause-only removes [67800,68130] and [194800,195070], which are deleted: a join built from a remove clamps the transition padding, and the 10-frame transition laid \"tăng lên\" over \"Thì nếu\" and \"nhiều.\" over \"Thì thường\"). Instead, words.json \" Thì\" 67800-68200 -> 68140-68200 and \" Thì\" 194800-195160 -> 195080-195160 (their original times; 10 ms RMS: breath 67.85-68.01 s, silence 68.03-68.13 s, thì from 68.14 s; silence 194.77-195.07 s, thì from 195.08 s). The token gaps are now 540 ms and 440 ms, so the runs split in the pause. Joins: ch1 slide 67867|67867, ch2 pushCut 116900|116933 (unchanged), ch3 slide 194867|194867. Measured overlap of sound on both sides of the transition: ch1 0 ms voiced (190 ms of breath under the tail of \"nhiều.\"), ch3 20 ms voiced / 70 ms sound (tail of \"lên.\" against the onset of \"thì\"). Both chapter-start \"Thì\" are now captioned. Talk 7148 frames (238.3 s).",
+    "30/09/2026 pacing set to off: auto pacing played segments at 0.9x-1.2x and shifted Daniel's pitch and tone (was {\"mode\":\"auto\"})."
+  ],
+  "remove": [
+    [
+      108080,
+      108960
+    ],
+    [
+      178360,
+      187220
+    ],
+    [
+      205080,
+      207980
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "với",
+      "to": "cho",
+      "atMs": 88250
+    },
+    {
+      "from": "dịch",
+      "to": "xét",
+      "atMs": 146500
+    },
+    {
+      "from": "thuân",
+      "to": "thông",
+      "atMs": 202100
+    },
+    {
+      "from": "xế",
+      "to": "xê",
+      "atMs": 223160
+    }
+  ],
+  "post": {
+    "title": "Vay đủ trước, xem lại lãi suất sau",
+    "caption": "Khi mua nhà, mình ưu tiên vay đủ số tiền bạn cần, dù lãi suất lúc đầu có thể cao hơn. Sau đó mới tính chuyện giảm lãi. Sau khoảng 6 đến 8 tháng, mình thương lượng với ngân hàng hiện tại. Nếu chưa được, sau khoảng một năm có thể tính chuyện refinance: một số ngân hàng có điều kiện riêng khi bạn chuyển sang lãi suất thấp hơn mà không vay thêm. Nhưng luôn phải tính chi phí chuyển đổi trước khi đi. Bạn muốn xem lại lãi suất khoản vay của mình? Nhắn tin cho mình.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#refinance",
+      "#laisuat",
+      "#vaymuanha",
+      "#nganhang",
+      "#muanha"
+    ]
+  },
+  "cut": {
+    "fillers": false
+  }
+}
