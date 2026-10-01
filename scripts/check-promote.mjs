@@ -4,7 +4,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { promote } from "./promote-design.mjs";
+import { hardCodedStrings, promote } from "./promote-design.mjs";
 import { loadManifests } from "./select-template.mjs";
 
 const dir = mkdtempSync(join(tmpdir(), "promote-"));
@@ -50,6 +50,8 @@ put("good/index.tsx", [
   "// A colour in a comment (#123456) is not code.",
   'const WORD = "PHẦN";',
   "const shake = (frame) => (frame > 40 && frame < 48 ? 1 : 0); // a comparison is not on-screen text",
+  'type T = A<"x"> | B<"y">; // a union of generics is not on-screen text (checklist ColumnCues.tsx)',
+  'type U = A<"x"> & B<"y">;',
   "export const good = {",
   '  id: "good",',
   "  copy: [WORD],",
@@ -88,7 +90,19 @@ check("partial: mistyped cueRoom named", partial.failures.some((f) => f.startsWi
 check("partial: registered", !partial.failures.some((f) => f.startsWith("registered")), partial.failures.join(" | "));
 check("partial: not promoted", !partial.promoted && readFileSync(join(dir, "partial", "template.json"), "utf8").includes('"uses": 5'));
 
+// The union exemption is narrow: text that starts with | or & but sits in JSX is still on screen.
+for (const [code, want] of [
+  ['<span>| Vay ngay</span>', ["| Vay ngay"]],
+  ['<b>& Partners</b>', ["& Partners"]],
+  ['type T = A<"x"> | B<"y">;', []],
+  ['type U = A<"x"> & B<"y">;', []],
+]) {
+  const got = hardCodedStrings(code);
+  check(`scan: ${code}`, got.length === want.length && want.every((w, i) => got[i] === w), JSON.stringify(got));
+}
+
 const good = await promote("good", opts);
+check("good: no copy failure from a type union", !good.failures.some((f) => f.startsWith("copy: ")), good.failures.join(" | "));
 check("good: promoted", good.promoted, good.failures.join(" | "));
 const saved = JSON.parse(readFileSync(join(dir, "good", "template.json"), "utf8"));
 check("good: uses 0, lastUsed null", saved.uses === 0 && saved.lastUsed === null, JSON.stringify(saved));

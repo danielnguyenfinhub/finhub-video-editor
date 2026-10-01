@@ -24,7 +24,7 @@ import type {
   OverlayProps,
   TalkProps,
 } from "../../mortgage/design";
-import { SAFE } from "../../mortgage/golden";
+import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
@@ -49,6 +49,7 @@ import {
   TAPE_LABEL,
   Tape,
   tapeItems,
+  useFontReady,
 } from "./Board";
 import { BoardCueTrack, VS, onBoard } from "./Cues";
 import {
@@ -72,12 +73,21 @@ const Cover: React.FC<CoverProps> = ({ title, subtitle, keywords }) => {
   const frame = useCurrentFrame();
   const words = title.split(/\s+/).filter(Boolean);
   const hit = emphasised(words, keywords);
-  const { fontSize } = fitText({
-    text: title,
-    withinWidth: SAFE.right - SAFE.left - 60,
-    fontFamily: FONT,
-    fontWeight: 900,
-  });
+  // Measure only once Be Vietnam Pro is in: fitText caches its measurement,
+  // so a fallback-font width taken on mount would stick for the whole render.
+  const ready = useFontReady("ticker cover: Be Vietnam Pro");
+  const fontSize = useMemo(
+    () =>
+      ready
+        ? fitText({
+            text: title,
+            withinWidth: SAFE.right - SAFE.left - 60,
+            fontFamily: FONT,
+            fontWeight: 900,
+          }).fontSize
+        : 104 / 1.6,
+    [ready, title],
+  );
   let offset = 0;
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
@@ -93,7 +103,7 @@ const Cover: React.FC<CoverProps> = ({ title, subtitle, keywords }) => {
           background: "#fff",
         }}
       >
-        <Img src={LOGO} style={{ height: 120, display: "block" }} />
+        <Img src={LOGO} style={{ height: LOGO_HEIGHT, display: "block" }} />
       </div>
       <div
         style={{

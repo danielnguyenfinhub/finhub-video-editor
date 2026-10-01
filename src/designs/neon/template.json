@@ -9,7 +9,7 @@
     "numbers"
   ],
   "grammar": {
-    "numbers": "gauge ring halo behind the head",
+    "numbers": "number above the head; gauge ring only for percentages",
     "comparisons": "classic compare/bars cue cards (MotionTrack)",
     "steps": "ring chapter card + star-wipe",
     "eligibility": "classic verdict cue ✓/✗ (MotionTrack)",
@@ -17,7 +17,7 @@
   },
   "skinAxes": {
     "cover": "countdown-ring cover",
-    "captions": "one big glowing word",
+    "captions": "2–4 word phrase on a navy pill, spoken word amber",
     "framing": "cut-out with a glowing audio ring",
     "transitions": "star-wipe",
     "texture": "neon starburst + amber sparks",
@@ -35,7 +35,7 @@
     "vi": 24,
     "en": 0
   },
-  "minHoldMs": 1000,
+  "minHoldMs": 1500,
   "facePolicy": "face-required",
   "cueRoom": true,
   "renderCost": "high",

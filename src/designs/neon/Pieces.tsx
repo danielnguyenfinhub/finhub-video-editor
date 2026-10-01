@@ -17,7 +17,7 @@ import { brand } from "../../brand/theme";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { FONT, LOGO, clamp } from "../../mortgage/style";
-import { SAFE } from "../../mortgage/golden";
+import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
 import { NeonTitle } from "./NeonTitle";
 
 const RIGHT_MARGIN = 1080 - SAFE.right;
@@ -36,7 +36,7 @@ export const LogoTile: React.FC = () => (
       boxShadow: `0 0 20px ${brand.highlight}55`,
     }}
   >
-    <Img src={LOGO} style={{ height: 120, display: "block" }} />
+    <Img src={LOGO} style={{ height: LOGO_HEIGHT, display: "block" }} />
   </div>
 );
 

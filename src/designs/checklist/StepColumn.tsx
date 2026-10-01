@@ -352,7 +352,8 @@ export const StepColumn: React.FC<{
       );
     }
   }
-  if (chapters.length === 0) return null;
+  // No chapters: ownerOf is -1 for every frame, so each figure and mention
+  // shows as a loose card (rules 1 and 2) and there is no track (0/0).
   const starts = chapters.map((c) => c.startFrame);
   const ownerOf = (f: number) => {
     let owner = -1;
@@ -400,10 +401,12 @@ export const StepColumn: React.FC<{
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: CARD_GAP }}>
-        <ProgressTrack
-          filled={doneCount / chapters.length}
-          label={`${doneCount}/${chapters.length}`}
-        />
+        {chapters.length > 0 ? (
+          <ProgressTrack
+            filled={doneCount / chapters.length}
+            label={`${doneCount}/${chapters.length}`}
+          />
+        ) : null}
         {looseFigure ? <LooseFigureCard figure={looseFigure} /> : null}
         {looseMention ? <LoosePolaroidCard mention={looseMention} /> : null}
         {/* A step shows once Daniel reaches it: the agenda never gives away

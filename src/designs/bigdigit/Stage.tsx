@@ -31,6 +31,7 @@ import {
   Caps,
   HAIR,
   INK,
+  PUSH,
   STAGE,
   W,
   ease,
@@ -74,7 +75,8 @@ const Frame: React.FC<{ frames: number; children: React.ReactNode }> = ({
   );
 };
 
-// The giant number, pushed in slowly while it holds.
+// The giant number, pushed in slowly while it holds. Callers fit it to
+// W / PUSH so the full push still ends inside SAFE.
 const Giant: React.FC<{
   text: string;
   size: number;
@@ -88,7 +90,7 @@ const Giant: React.FC<{
         position: "absolute",
         left: 0,
         top: NUM_TOP,
-        transform: `scale(${interpolate(frame, [0, frames], [1, 1.035])})`,
+        transform: `scale(${interpolate(frame, [0, frames], [1, PUSH])})`,
         transformOrigin: "0% 100%",
       }}
     >
@@ -100,7 +102,7 @@ const Giant: React.FC<{
 const HookStage: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   hook,
 }) => {
-  const size = giantSize([hook.big], W, 300);
+  const size = giantSize([hook.big], W / PUSH, 300);
   return (
     <Frame frames={HOOK_FRAMES}>
       <Kicker text={HOOK_KICKER} />
@@ -116,7 +118,7 @@ const FigureStage: React.FC<{ figure: Figure; frames: number }> = ({
   frames,
 }) => {
   const max = figure.source === "stat" ? 300 : 150;
-  const size = giantSize([figure.big], W, max);
+  const size = giantSize([figure.big], W / PUSH, max);
   return (
     <Frame frames={frames}>
       <Kicker text={FIGURE_KICKER} />

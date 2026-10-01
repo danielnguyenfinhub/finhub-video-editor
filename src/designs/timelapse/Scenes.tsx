@@ -841,7 +841,7 @@ export const PointsScene: React.FC<{
   s: Extract<Scene, { kind: "points" }>;
   show: number;
 }> = ({ t, s, show }) => {
-  const { fps } = useVideoConfig();
+  const { fps, width } = useVideoConfig();
   const n = s.items.length;
   const step = Math.min(114, (CARDS_BOTTOM - CARDS_TOP) / n);
   const said = s.items.filter((it) => t >= it.at).length;
@@ -881,8 +881,8 @@ export const PointsScene: React.FC<{
             key={it.at}
             style={{
               position: "absolute",
-              left: TRACK.x0 - 64,
-              right: 1080 - 960,
+              left: SAFE.left,
+              right: width - SAFE.right,
               top: CARDS_TOP + i * step,
               height: step - 18,
               display: "flex",

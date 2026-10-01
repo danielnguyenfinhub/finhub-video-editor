@@ -18,8 +18,8 @@ type Rel = (srcMs: number) => number;
 // first/last 10 s of the talk, so it sits under the logo instead of behind it
 // (golden rule: y >= SAFE.top + 170).
 const COL = {
-  a: { left: 60, width: 440, top: SAFE.top },
-  b: { left: 580, width: 380, top: SAFE.top + 170 },
+  a: { left: SAFE.left + 6, width: 440, top: SAFE.top },
+  b: { left: SAFE.right - 380, width: 380, top: SAFE.top + 170 },
 } as const;
 const COL_HEIGHT = 340;
 
@@ -149,8 +149,8 @@ export const ScenarioCompare: React.FC<{ cue: CompareCue; rel: Rel }> = ({
         <div
           style={{
             position: "absolute",
-            left: 60,
-            right: 120,
+            left: SAFE.left + 6,
+            right: 1080 - SAFE.right,
             top: COL.b.top + COL_HEIGHT + 30,
             textAlign: "center",
             fontFamily: FONT,

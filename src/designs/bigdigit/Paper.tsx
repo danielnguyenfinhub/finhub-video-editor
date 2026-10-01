@@ -39,6 +39,11 @@ export const HEADER_W = W - 270;
 export const CHIP = { right: SAFE.right, bottom: STAGE.bottom, w: 300 };
 export const LABEL_W = W - CHIP.w - 30;
 
+// The slow push-in on a held giant number: it ends at this scale, anchored
+// bottom-left. Fit a pushed number to `width / PUSH` so its right edge stays
+// on or inside SAFE.right at full push.
+export const PUSH = 1.035;
+
 // A number line's height: the glyph box plus room for a comma's tail.
 export const LINE = 1.18;
 

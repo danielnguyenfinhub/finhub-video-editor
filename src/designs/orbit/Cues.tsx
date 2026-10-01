@@ -14,6 +14,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
+import { SAFE } from "../../mortgage/golden";
 import { outFrameOf, type Cue, type Reel } from "../../mortgage/schema";
 import { FONT, clamp, pop, toneColor } from "../../mortgage/style";
 import type { CueOf, Rel } from "../classic/Infographics";
@@ -68,7 +69,7 @@ const PointsOrbit: React.FC<{
         style={{
           position: "absolute",
           left: TEXT_LEFT,
-          right: 1080 - 960,
+          right: 1080 - SAFE.right,
           top: DOCK.y - 32,
           fontSize: 46,
           fontWeight: 900,
@@ -133,7 +134,7 @@ const PointsOrbit: React.FC<{
                 ...GLASS,
                 position: "absolute",
                 left: TEXT_LEFT,
-                maxWidth: 960 - TEXT_LEFT,
+                maxWidth: SAFE.right - TEXT_LEFT,
                 top: ys[i],
                 padding: "14px 26px",
                 borderRadius: 22,
