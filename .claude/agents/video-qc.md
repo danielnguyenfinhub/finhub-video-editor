@@ -34,8 +34,10 @@ let the owner decide rather than guessing.
 Check every `rule` and `checked` entry in the editor skill's `references/corrections.md`
 whose scope matches this video; a broken one is a FIX.
 
-Read the artefacts (`edit.json`, `words.json`, `script.json`, `facts.json`, the stills, the
-mp4), not the builder's summary. Re-run every check yourself. Look at every still you make.
+Read the artefacts (`edit.json`, `script.json`, `facts.json`, the stills, the mp4), not the
+builder's summary. `words.json` through `jq` and the check scripts, never whole (up to 74,000
+tokens): text `jq -r '[.[].text] | join("")'`, a window `jq -r '.[] | select(.startMs >= <a> and
+.startMs <= <b>) | "\(.startMs) \(.text)"'`. Re-run every check yourself. Look at every still you make.
 If a file can't be opened or a command can't run, the verdict is BLOCK, not PASS.
 
 **Write your report early** (a draft verdict after the main checks, then refine; keep

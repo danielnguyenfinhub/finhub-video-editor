@@ -29,6 +29,16 @@ node node_modules/@remotion/cli/remotion-cli.js still src/index.ts ElementCatalo
 
 `Rendered 1/1` means stills work (look at the PNG: a cream card reading "Lãi suất cố định" in Be Vietnam Pro). Any error means no still: audit from code and previews and mark every look claim "not viewed". A `MortgageReel` still also needs its recording (`words.json`, `source.mp4`): the `_test-*` slugs point at recordings that are not in a fresh clone, so they fail with HTTP 404 or a `source.mp4` delayRender timeout, which is not a sandbox limit. `ListingReel` still fails here: it fetches Playfair Display from `fonts.gstatic.com` (below).
 
+## check-schema and preflight with an installed browser
+
+`scripts/check-schema.mjs` (and `preflight.mjs`, `check-preflight.mjs` through it) normally downloads Remotion's browser, which this sandbox cannot. With an installed one they run for real:
+
+```sh
+FINHUB_BROWSER=$(ls -d /opt/pw-browsers/chromium_headless_shell-*/*/headless_shell | head -n 1) FINHUB_GL=swangle node scripts/check-schema.mjs _test-schema-probe --public-dir scripts/fixtures/schema-probe
+```
+
+Valid fixture: `MortgageReel _test-schema-probe: 418 frames`; with `design: 42`: `Invalid input: expected string, received number → at design`. Remotion asks for headless shell 149; the installed 141 worked in the 2026-10-02 run. `node scripts/sandbox-facts.mjs` (add `--probe` to render a still) prints what a session can do before it plans.
+
 ## What this sandbox can't do
 
 Each was confirmed with a real render. The details, and how the showcase works around each one, are in `docs/findings.md`.

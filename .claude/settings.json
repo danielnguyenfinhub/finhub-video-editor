@@ -18,6 +18,7 @@
       "Read(public/emoji/*.json)",
       "Read(public/rubik-bold-typeface.json)",
       "Read(.claude/skills/remotion-maps/techniques/maptiler/assets/sample-data/country-meta.json)",
+      "Read(.claude/skills/**/country-meta.json)",
       "Read(.claude/elements/remocn/components/remocn/templates/brand-guidelines/assets.ts)",
       "Read(.claude/elements/remocn/components/remocn/templates/launch-anything/assets.ts)"
     ]

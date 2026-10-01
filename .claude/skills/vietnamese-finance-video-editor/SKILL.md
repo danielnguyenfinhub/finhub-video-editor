@@ -38,7 +38,9 @@ References (read the one you need, when you need it):
 - `references/toolkit.md` — every installed Remotion package, plus the element
   libraries in `.claude/elements/`: when each earns its place, how to adapt an element
 - `references/edit-json.md` — every edit.json field
-- `references/editing-principles.md` — craft: hooks, pacing, keyword highlighting
+- `references/editing-principles.md` — craft: the Craft rules section only (grep ^## Craft rules:
+  `sed -n '/^## Craft rules/,/^# /p'`); grep a numbered section when a step needs it (3.1
+  keyword list, 6 hook and pacing checklist)
 - `references/landmines.md` — failures already hit once; read before Step 1
 - `references/faceless-script.md` — document → script.json (voice, footage, post copy) for a faceless video
 
@@ -96,7 +98,7 @@ miễn phí, đảm bảo …) in the verify list — never silently cut them.
   change, the conclusion). Decoration that covers Daniel's face for > ~3 s is a defect.
 - **Reuse before building**: remix an existing design in `src/designs/`; pick a ready
   element from `.claude/elements/CATALOG.md` (Remotion Elements) or
-  `.claude/elements/remocn/CATALOG.md` (300+ remocn animations, transitions, shaders,
+  `.claude/elements/remocn/CATALOG.md` (`head -n 22`, then grep; 300+ remocn animations, transitions, shaders,
   kinetic text, icons, templates) and adapt it (toolkit.md → "Element libraries"); or lift a scene
   idea from the starter projects (`my-three`, `my-skia`, `my-audiogram`, `my-code-hike`,
   `my-tiktok`, `my-prompt-to-motion-graphics`, `my-music-visualization`, `my-overlay`)

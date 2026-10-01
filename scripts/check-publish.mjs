@@ -184,12 +184,18 @@ const preloadIn = (dir, name, code) => {
   writeFileSync(file, `import fs from "node:fs";\nimport { syncBuiltinESMExports } from "node:module";\n${code}\nsyncBuiltinESMExports();\n`);
   return ["--import", pathToFileURL(file).href];
 };
-// 1.5 s between a read of the owner record and what follows, so two publishes' read-modify-writes overlap.
-const SLOW_READ = `const r = fs.readFileSync;
+// Two publishes certainly overlap: one that finds .publish-slugs.lock taken leaves `mark`, and a read of
+// the owner record waits for it (5 s cap, then the read throws, so the publish fails: no overlap, no pass).
+const SLOW_READ = (mark) => `const { openSync: o, readFileSync: r } = fs, mark = ${JSON.stringify(mark)};
+fs.openSync = (p, ...a) => {
+  try { return o(p, ...a); } catch (e) { if (e.code === "EEXIST" && String(p).endsWith(".publish-slugs.lock")) fs.writeFileSync(mark, ""); throw e; }
+};
 fs.readFileSync = (p, ...a) => {
-  const text = r(p, ...a);
-  if (String(p).endsWith(".publish-slugs.json")) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
-  return text;
+  if (String(p).endsWith(".publish-slugs.json"))
+    for (const end = Date.now() + 5000; !fs.existsSync(mark);)
+      if (Date.now() > end) throw new Error("check-publish: the other publish never found the lock taken (no overlap)");
+      else Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
+  return r(p, ...a);
 };`;
 // Runs each [node args] as a child at once; resolves to [{code, err}].
 const together = (runs) => Promise.all(runs.map((argv) => new Promise((done) => {
@@ -250,20 +256,22 @@ fs.writeFileSync = (p, ...a) => { if (String(p).endsWith(".tmp")) throw Object.a
   assert.equal(publish("_test-a", "Cùng một chủ đề").status, 0);
   const leftovers = () => readdirSync(out).filter((f) => f.endsWith(".tmp") || f.endsWith(".lock"));
   assert.deepEqual(leftovers(), [], "no temp file or lock left behind (also after a failed run)");
-  // (f) CR2 of run 4: two publishes at once (1.5 s between each one's read of the record and its
-  // write, so their read-modify-writes overlap) keep both owners and both finish.
-  const slowRead = preload("slow-read.mjs", SLOW_READ);
+  // (f) CR2 of run 4: two publishes at once (the lock holder reads the record only once the other
+  // waits for the lock, so their read-modify-writes overlap) keep both owners and both finish.
+  const slowRead = preload("slow-read.mjs", SLOW_READ(join(tmp, "cr2.mark")));
   const both = await together([["_test-x", "Chủ đề X"], ["_test-y", "Chủ đề Y"]].map(([slug, title]) => [...slowRead, ...args(slug, title, [])]));
   for (const { code, err } of both) assert.equal(code, 0, `concurrent publish failed: ${err}`);
   const owners = JSON.parse(readFileSync(sidecar, "utf8"));
   assert.equal(owners["chủ đề x"], "_test-x", "a concurrent publish must not lose the other's owner entry");
   assert.equal(owners["chủ đề y"], "_test-y", "a concurrent publish must not lose the other's owner entry");
   // F1 of round 3: two videos, one new title, at once: which files exist is read inside the lock, so
-  // exactly one publishes and the other stops; the file is the recorded owner's. Raced 3 times.
-  for (const n of [1, 2, 3]) {
+  // exactly one publishes and the other stops; the file is the recorded owner's. Raced once: a
+  // folder read before the lock (the pre-F1 code) fails the first race.
+  for (const n of [1]) {
     const title = `Chủ đề chung ${n}`, slugs = [`_test-r${n}a`, `_test-r${n}b`];
     for (const slug of slugs) writeFileSync(join(tmp, `${slug}.mp4`), slug);
-    const runs = await together(slugs.map((slug) => [...slowRead, ...args(slug, title, []).map((a) => (a === v ? join(tmp, `${slug}.mp4`) : a))]));
+    const raceRead = preload(`slow-read-${n}.mjs`, SLOW_READ(join(tmp, `race-${n}.mark`)));
+    const runs = await together(slugs.map((slug) => [...raceRead,...args(slug, title, []).map((a) => (a === v ? join(tmp, `${slug}.mp4`) : a))]));
     const codes = runs.map(({ code }) => code);
     assert.ok(codes.filter((c) => c === 0).length === 1 && codes.filter((c) => c === 1).length === 1,
       `race ${n}: two videos with one title must not both publish: exits ${codes}; ${runs.map(({ err }) => err).join(" | ")}`);
@@ -375,7 +383,7 @@ fs.writeFileSync = (p, ...a) => { if (String(p).endsWith(".tmp")) throw Object.a
   assert.equal(readFileSync(mp4, "utf8"), "_test-l");
   assert.deepEqual(readdirSync(out).filter((f) => /\.(tmp|lock)$/.test(f)), []);
   // CR2: two listings published at once keep both owners.
-  const slowRead = preloadIn(tmp, "slow-read.mjs", SLOW_READ);
+  const slowRead = preloadIn(tmp, "slow-read.mjs", SLOW_READ(join(tmp, "listing.mark")));
   const both = await together(["_test-n", "_test-o"].map((slug) => [...slowRead, ...args(slug, `Nhà ${slug}`, [])]));
   for (const { code, err } of both) assert.equal(code, 0, `concurrent listing publish failed: ${err}`);
   const owners = JSON.parse(readFileSync(sidecar, "utf8"));

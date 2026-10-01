@@ -13,7 +13,7 @@ Find real defects before Daniel's next render does. Evidence over volume: ten co
 
 ## How
 
-1. Read `docs/agents/team-ground-rules.md`, then the previous run in `out/teams/maintain_prev/` (`01_bugs.md`, `03_fixes_A.md` / `03_fixes_B.md`): its fixed ids are closed; do not re-find them.
+1. Read `docs/agents/team-ground-rules.md`, then the previous run in `out/teams/maintain_prev/` by section, not whole (about 15,500 tokens): its fixed and decided ids are in your prompt and are closed; do not re-find them. For the carried-over list, its ids `grep -oE '^[A-Z]+[0-9]+ \|' out/teams/maintain_prev/01_bugs.md`, what it left open `awk '/^#+ .*([Uu]nfixed|[Nn]ot fixed|[Cc]arried over)/{p=1;print FILENAME": "$0;next} /^#/{p=0} p' out/teams/maintain_prev/0[13]_*.md`, and the last maintenance row of `docs/agents/team-runs.md`. Grep a report for one id only when you need its detail.
 2. Run the free checks first and keep their last lines: `npm run lint`, `npm test`, `node scripts/check-teams.mjs`, `node scripts/video-status.mjs --check`. A failure here is already a finding.
 3. Static hunt by area, the cheapest tool that can see it:
    - silent failures and swallowed errors in `scripts/` and `src/mortgage/`: grep `catch\s*\(\w*\)\s*\{\s*\}`, `|| true`, `2>/dev/null`, `except Exception: pass`, unchecked `execFileSync`;

@@ -33,7 +33,7 @@ A subagent sees neither this chat nor `AGENTS.md`. Every prompt carries: the rep
 
 ## Phase 0 — Scope
 
-Design ids from Daniel's words; "the templates" or no id → all, grouped by style team so each agent gets one family at a time (≤ 10 designs per agent; a dozen designs in one prompt dilutes the audit). `git status`; tell Daniel about uncommitted work. `out/teams/templates/`: none → new run; present and Daniel changes one part → partial re-run from the phase that owns it; fresh request → move to `templates_prev/`. Note whether stills can be rendered here (Chrome and `source.mp4`); if not, the run still audits and critiques from code and previews and says the look is unviewed.
+Design ids from Daniel's words; "the templates" or no id → all, grouped by style team so each agent gets one family at a time (≤ 10 designs per agent; a dozen designs in one prompt dilutes the audit). `git status`; tell Daniel about uncommitted work. `out/teams/templates/`: none → new run; present and Daniel changes one part → partial re-run from the phase that owns it; fresh request → move to `templates_prev/`. Note whether stills can be rendered here (Chrome and `source.mp4`); if not, the run still audits and critiques from code and previews and says the look is unviewed. Run `node scripts/sandbox-facts.mjs` once at the start and pass its short table (`out/teams/sandbox-facts.md`, about 300 tokens) in every subagent prompt (not a re-explanation); agents probe only what it says is unprobed (ground rule 5).
 
 ## Phase 1 — Audit and critique (parallel)
 

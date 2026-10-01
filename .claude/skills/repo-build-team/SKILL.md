@@ -32,7 +32,7 @@ A subagent sees neither this chat nor `AGENTS.md`. Every prompt carries: the rep
 
 ## Phase 0 — Context
 
-`git status`; tell Daniel about uncommitted work before touching anything. Check `out/teams/build/`: none → new run; present and Daniel asks to change one part → partial re-run from the phase that owns it; fresh request → move the folder to `out/teams/build_prev/`.
+`git status`; tell Daniel about uncommitted work before touching anything. Check `out/teams/build/`: none → new run; present and Daniel asks to change one part → partial re-run from the phase that owns it; fresh request → move the folder to `out/teams/build_prev/`. Run `node scripts/sandbox-facts.mjs` once at the start and pass its short table (`out/teams/sandbox-facts.md`, about 300 tokens) in every subagent prompt (not a re-explanation); agents probe only what it says is unprobed (ground rule 5).
 
 ## Phase 1 — Scout (read-only)
 

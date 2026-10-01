@@ -35,7 +35,7 @@ Prompts carry the repo root, `out/teams/maintain/`, the scope (whole repo / last
 
 ## Phase 0 — Scope
 
-Ask nothing if Daniel gave a scope; default is the whole repo. `git status` first. Check `out/teams/maintain/` as the other teams do (new, partial re-run, fresh run → move to `maintain_prev/`). Then read the previous run (`out/teams/maintain_prev/` and the last maintenance rows of `docs/agents/team-runs.md`): ids it fixed or Daniel decided are closed, and every prompt carries that list so nothing is re-found.
+Ask nothing if Daniel gave a scope; default is the whole repo. `git status` first. Run `node scripts/sandbox-facts.mjs` once at the start and pass its short table (`out/teams/sandbox-facts.md`, about 300 tokens) in every subagent prompt (not a re-explanation); agents probe only what it says is unprobed (ground rule 5). Check `out/teams/maintain/` as the other teams do (new, partial re-run, fresh run → move to `maintain_prev/`). Then take the previous run by section, not whole (its reports are 15,000 to 25,000 tokens): the last maintenance row of `docs/agents/team-runs.md` and the "Unfixed" / "Not fixed" / "Carried over" sections of `out/teams/maintain_prev/0[13]_*.md` (`awk '/^#+ .*([Uu]nfixed|[Nn]ot fixed|[Cc]arried over)/{p=1;print FILENAME": "$0;next} /^#/{p=0} p'`; the fixed ids are the fix reports' id rows, `grep -oE '^[A-Z]+[0-9]+ \|' out/teams/maintain_prev/03_fixes*.md`, minus the ids those sections list). Ids it fixed or Daniel decided are closed, and every prompt carries that list so nothing is re-found; `bug-hunter` and `gap-analyst` read the same sections, not the whole reports.
 
 ## Phase 1 — Find (parallel)
 

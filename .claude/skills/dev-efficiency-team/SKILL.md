@@ -32,7 +32,9 @@ Prompts carry the repo root, media root, `out/teams/efficiency/`, the slug to ti
 
 ## Phase 0 — Context
 
-`git status`. Media root: the cwd's `public/` if it holds a recording, else the main checkout's. Check `out/teams/efficiency/` (new / partial re-run / fresh → `efficiency_prev/`). If there are no run records under `out/videos/` and no recording to time, say so and run only the token side.
+`git status`. Media root: the cwd's `public/` if it holds a recording, else the main checkout's. Check `out/teams/efficiency/` (new / partial re-run / fresh → `efficiency_prev/`). If there are no run records under `out/videos/` and no recording to time, say so and run only the token side. Run `node scripts/sandbox-facts.mjs` once at the start and pass its short table (`out/teams/sandbox-facts.md`, about 300 tokens) in every subagent prompt (not a re-explanation); agents probe only what it says is unprobed (ground rule 5).
+
+Stills DO render in the Linux sandbox (run 1: the "Probe first" still in `docs/agents/rendering-without-gpu.md` gave `Rendered 1/1`, 16.7 s). Only `check-schema` (at run 1 it had no option to use the installed headless shell, so its browser download was refused) and `MortgageReel` stills (they need the recording's `source.mp4`) need a browser or media this machine lacks; say which, do not write "no render here".
 
 ## Phase 1 — Measure (parallel, read-only)
 
@@ -44,7 +46,7 @@ One message: `workflow-analyst` and `architecture-auditor` (it writes under `out
 
 ## Phase 3 — Review
 
-`quality-reviewer` (phase `speed` for render changes, `refactor` otherwise) with both reports. FIX → one round back to the owner; BLOCK → stop.
+`quality-reviewer` (phase `speed` for render changes, `refactor` otherwise) with both reports. FIX → one round back to the owner (each builder fixes its own ids), then a second, lighter review of that round's delta only (the findings' `clears_when`, plus lint and tests); BLOCK → stop.
 
 ## Phase 4 — Deliver
 
@@ -61,6 +63,7 @@ Before → after for each kept cut (minutes, tokens, or "unmeasured" with the re
 | No baseline obtainable | Report `blocked` with what to run first; never estimate |
 | A cut worsens a number | Revert it; list it as tried |
 | A cut touches compliance or QC | Refuse |
+| A test sleeps to force a race (run 1: check-publish's 1.5 s reads cost 16.8 s of every `npm test`) | Prefer a handshake: the slow side waits for a file or signal the other side writes, with a timeout and an assertion; a sleep costs seconds on every run and still is not proof of overlap |
 | Saving cannot be measured here (no GPU, no key) | Say "unmeasured"; do not keep the change on theory alone unless the reviewer confirms it is a pure removal of repeated work |
 
 ## Test scenarios

@@ -99,7 +99,7 @@ outside the build; copy what you use into `src/designs/<id>/` (or `src/elements/
 - **Remotion Elements** — `.claude/elements/CATALOG.md`: 41 blocks (captions, audio
   visuals, backgrounds, data, lower thirds, maps, overlays). Copy the `.tsx` and
   `initial-props.ts` if present.
-- **remocn** — `.claude/elements/remocn/CATALOG.md`: 300+ items, each with a "use when"
+- **remocn** — `.claude/elements/remocn/CATALOG.md` (`head -n 22`, then grep; never whole): 300+ items, each with a "use when"
   line: kinetic text (rolling numbers, number wheel, marker highlight, typewriter),
   transitions (whip pan, zoom blur, page turn), 23 shader backgrounds, effects (confetti,
   grain, VHS), charts, 100 icons (dollar, house, wallet, trending) and 5 full templates.

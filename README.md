@@ -289,7 +289,7 @@ This project is set up for all three Claude surfaces:
 node scripts/build-chat-skill.mjs
 ```
 
-Chat can then write complete composition files for this project. Preview and render them in Claude Code, Cowork or a terminal. The script keeps the zip within claude.ai's limits (at most 200 entries, one `SKILL.md`).
+Chat can then write complete composition files for this project. Preview and render them in Claude Code, Cowork or a terminal. The script bundles the `remotion-best-practices` router, which holds a copy of every Remotion guide, and keeps the zip within claude.ai's limits (at most 200 entries, one `SKILL.md`).
 
 The Remotion skills in `.claude/skills/` are vendored by `node scripts/vendor-skills.mjs`. Re-run it after `npx remotion upgrade`, then rebuild the bundle.
 

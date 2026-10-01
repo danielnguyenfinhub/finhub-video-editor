@@ -45,6 +45,14 @@ put("out/videos/q/team/03_editor_report.json", { status: "success" });
 put("out/videos/q/team/04_qc_stills.json", { verdict: "PASS" });
 assert.equal(next("q").stage, "render (video-editor A7.1 / B5.4)");
 
+// C8: no "source" (like bank-test): the cut-out and recording are the slug's own, public/videos/<slug>/ (recordingPath).
+put("public/videos/n/edit.json", {});
+for (const [f, body] of [["00_intake.md", "A"], ["01_story_edit.json", { status: "ok", flags: [] }], ["03_editor_report.json", { status: "success" }], ["04_qc_stills.json", { verdict: "PASS" }]])
+  put(`out/videos/n/team/${f}`, body);
+assert.match(next("n").halt.gate, /public[\\/]videos[\\/]n[\\/]foreground\.webm/);
+put("public/videos/n/foreground.webm", "x");
+assert.equal(next("n").stage, "render (video-editor A7.1 / B5.4)");
+
 // Pipeline B: the loop never passes the script lock on its own
 put("public/videos/b/script.json", {});
 put("out/videos/b/team/00_intake.md", "B");
@@ -85,6 +93,9 @@ const pre = readinessOf(root, "q").items.find((i) => i.problem.startsWith("prefl
 assert.equal(pre?.level, "blocked");
 assert.match(pre.problem, /^preflight: check-speech-cuts could not run/);
 assert.doesNotMatch(pre.problem, /edit\.json|nothing was rendered/);
+const missing = (slug) => readinessOf(root, slug).items.find((i) => i.problem.startsWith("the prepared recording"))?.problem;
+assert.match(missing("n"), /\(public[\\/]videos[\\/]n[\\/]source\.mp4\)/, "C8: no source: the slug's own folder");
+assert.match(missing("a"), /\(public[\\/]recordings[\\/]rec-1[\\/]source\.mp4\)/, "source: the shared recording");
 
 // W3 (run 4): readiness waits longer than preflight lets check-schema run, or a valid slow video reads "blocked: ETIMEDOUT".
 const schemaS = Number(/^const SCHEMA_TIMEOUT_S = (\d+);/m.exec(readFileSync(join(import.meta.dirname, "preflight.mjs"), "utf8"))[1]);

@@ -2,7 +2,7 @@
 
 remocn (https://remocn.dev) is a registry of ~240 copy-paste Remotion components installed with the
 `shadcn` CLI into `components/remocn/`. The full library is vendored in this folder (see CATALOG.md); these are
-Daniel's saved usage examples (2026-09-25). The `remocn` skill in `.agents/skills/remocn/` explains
+Daniel's saved usage examples (2026-09-25). The `remocn` skill in `.claude/skills/remocn/` explains
 the catalog (start at https://remocn.dev/llms-components.txt). Installing a component downloads its
 code from remocn.dev — ask Daniel first, check its licence, then adapt it like any Element
 (Be Vietnam Pro, brand tokens from `src/brand/theme.ts`, no own `<Audio>`).
