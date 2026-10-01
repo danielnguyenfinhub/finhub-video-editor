@@ -6,7 +6,8 @@
 // download refused, or it drops mid-call as on GitHub's Windows runner: "Target closed") preflight
 // WARNS and goes on, because the render checks the same schema; the cases that need check-schema's
 // own schema text print SKIPPED and are not counted as passed, and the run says INCOMPLETE. Under
-// CI that adds a GitHub warning annotation but does not fail the job.
+// CI that adds a GitHub warning annotation but does not fail the job. FINHUB_BROWSER (an installed
+// browser; check-schema.mjs) passes through, so where the download is refused those cases still run.
 //   node scripts/check-preflight.mjs -> "preflight checks ok", exit 1 on failure.
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -69,37 +70,28 @@ try {
   assert.match(r.stderr, /RangeError: Maximum call stack/, `a non-TypeError must surface as itself:\n${r.stderr}`);
   assert.doesNotMatch(r.stderr, /not in the shape the render reads/, "a non-TypeError must not be reported as a misshapen edit.json");
 
-  // CR5 (run 4, round 2): an invalid FINHUB_GL / FINHUB_SCHEMA_LOG is one line and the default, not a failure
+  // CR5 (run 4, round 2): an invalid FINHUB_GL / FINHUB_SCHEMA_LOG / FINHUB_CHROME_MODE / FINHUB_BROWSER is one line and the default, not a failure
   // after the bundle (the run below stops early at the missing edit.json, so no bundle or browser).
   r = spawnSync(process.execPath, ["--no-warnings", join(import.meta.dirname, "check-schema.mjs"), "_test-no-such-slug"],
-    { encoding: "utf8", env: { ...process.env, FINHUB_GL: "bogus", FINHUB_SCHEMA_LOG: "loud" } });
+    { encoding: "utf8", env: { ...process.env, FINHUB_GL: "bogus", FINHUB_SCHEMA_LOG: "loud", FINHUB_CHROME_MODE: "x", FINHUB_BROWSER: join(pub, "no-such-browser") } });
   assert.match(r.stderr, /^check-schema: FINHUB_GL="bogus" is not one of swangle, .*; using the default\.$/m, r.stderr);
   assert.match(r.stderr, /^check-schema: FINHUB_SCHEMA_LOG="loud" is not one of trace, verbose, info, warn, error; using the default\.$/m, r.stderr);
+  assert.match(r.stderr, /^check-schema: FINHUB_CHROME_MODE="x" is not one of headless-shell, chrome-for-testing; using the default\.$/m, r.stderr);
+  assert.match(r.stderr, /^check-schema: FINHUB_BROWSER=".*no-such-browser" does not exist; using the default\.$/m, r.stderr);
   assert.match(r.stderr, /No edit\.json for "_test-no-such-slug"/, "an invalid env value must not stop the check");
   r = spawnSync(process.execPath, ["--no-warnings", join(import.meta.dirname, "check-schema.mjs"), "_test-no-such-slug"],
-    { encoding: "utf8", env: { ...process.env, FINHUB_GL: "swangle", FINHUB_SCHEMA_LOG: "verbose" } });
+    { encoding: "utf8", env: { ...process.env, FINHUB_GL: "swangle", FINHUB_SCHEMA_LOG: "verbose", FINHUB_CHROME_MODE: "headless-shell", FINHUB_BROWSER: process.execPath } });
   assert.doesNotMatch(r.stderr, /using the default/, "valid values pass through");
-  // The two lists are copies of the installed @remotion/renderer's: an upgrade that changes one fails here.
+  // The three lists are copies of the installed @remotion/renderer's: an upgrade that changes one fails here.
   const renderer = dirname(createRequire(import.meta.url).resolve("@remotion/renderer"));
   const schemaSrc = readFileSync(join(import.meta.dirname, "check-schema.mjs"), "utf8");
-  for (const [name, file, key] of [["FINHUB_GL", "options/gl.js", "validOpenGlRenderers"], ["FINHUB_SCHEMA_LOG", "log-level.js", "logLevels"]]) {
+  for (const [name, file, key] of [["FINHUB_GL", "options/gl.js", "validOpenGlRenderers"], ["FINHUB_SCHEMA_LOG", "log-level.js", "logLevels"],
+    ["FINHUB_CHROME_MODE", "options/chrome-mode.js", "validChromeModeOptions"]]) {
     const ours = JSON.parse(schemaSrc.match(new RegExp(`envOption\\("${name}", (\\[[^\\]]*\\])`))[1]);
     assert.deepEqual(ours, createRequire(import.meta.url)(join(renderer, file))[key],
       `check-schema's ${name} list must equal @remotion/renderer dist/${file} ${key} (Remotion upgraded? update check-schema.mjs)`);
   }
 
-  // Valid, but a long talk with no visuals: check-pacing exits 2, a warning, not a crash.
-  writeFileSync(join(dir, "words.json"), JSON.stringify(Array.from({ length: 30 }, (_, i) => (
-    { text: ` từ${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(97 + Math.floor(i / 26))}`, startMs: i * 300, endMs: i * 300 + 250, timestampMs: null, confidence: 1 }))));
-  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "color=c=black:s=108x192:r=30:d=10",
-    "-f", "lavfi", "-i", "anullsrc=r=16000:cl=mono", "-t", "10", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-    "-c:a", "aac", join(dir, "source.mp4")]);
-  r = preflight({ pacing: { mode: "off" } });
-  assert.match(r.stdout, /preflight warning: pacing: gaps/, `gaps must warn:\n${r.stdout}${r.stderr}`);
-  assert.doesNotMatch(r.stderr, /check-pacing could not run|speech cut/);
-  // How each kind of check-schema failure is classified, with stand-in scripts (so it holds without a browser):
-  // a browser that drops mid-call (GitHub's Windows runner: "Target closed") or cannot be downloaded only
-  // warns and the render goes on; a zod error blocks and says why; a clean run is plain OK.
   const stub = (name, body) => {
     const path = join(pub, `${name}.mjs`);
     writeFileSync(path, body);
@@ -114,6 +106,19 @@ try {
     }
   };
   const ok = { pacing: { mode: "off" } };
+  // Valid, but a long talk with no visuals: check-pacing exits 2, a warning, not a crash. Only check-pacing's
+  // warning is asserted, so check-schema is the clean stand-in (its real run is the design: 42 case above).
+  writeFileSync(join(dir, "words.json"), JSON.stringify(Array.from({ length: 30 }, (_, i) => (
+    { text: ` từ${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(97 + Math.floor(i / 26))}`, startMs: i * 300, endMs: i * 300 + 250, timestampMs: null, confidence: 1 }))));
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "color=c=black:s=108x192:r=30:d=10",
+    "-f", "lavfi", "-i", "anullsrc=r=16000:cl=mono", "-t", "10", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+    "-c:a", "aac", join(dir, "source.mp4")]);
+  r = withStub(stub("clean", 'console.log("MortgageReel x: 90 frames");'), ok);
+  assert.match(r.stdout, /preflight warning: pacing: gaps/, `gaps must warn:\n${r.stdout}${r.stderr}`);
+  assert.doesNotMatch(r.stderr, /check-pacing could not run|speech cut/);
+  // How each kind of check-schema failure is classified, with stand-in scripts (so it holds without a browser):
+  // a browser that drops mid-call (GitHub's Windows runner: "Target closed") or cannot be downloaded only
+  // warns and the render goes on; a zod error blocks and says why; a clean run is plain OK.
   r = withStub(stub("closed", 'console.error("Error: ProtocolError: Protocol error (Target.closeTarget): Target closed.");process.exit(1);'), ok);
   assert.equal(r.status, 0, `a dropped browser must not block a valid video:\n${r.stdout}${r.stderr}`);
   assert.match(r.stdout, /preflight warning: check-schema could not run \(.*Target closed/, "and it must say so");

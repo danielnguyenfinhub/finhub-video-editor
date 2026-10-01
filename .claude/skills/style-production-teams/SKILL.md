@@ -42,6 +42,8 @@ A subagent sees neither this chat nor `AGENTS.md`: put the slug, pipeline, team,
 
 ## Phase 0 — Route
 
+Run `node scripts/sandbox-facts.mjs` once at the start and pass its short table (`out/teams/sandbox-facts.md`, about 300 tokens) in every subagent prompt (not a re-explanation); agents probe only what it says is unprobed (ground rule 5).
+
 1. A style Daniel named → look it up in `config/style-teams.json` (`styles` arrays). No style named → run `node scripts/brief.mjs <slug>` then `node scripts/select-template.mjs <slug>`, and take the top pick's team. A YouTube request or a Global RE listing folder routes by the request, not the selector (the selector reads `src/designs` only).
 2. Several videos → group by team; run each group's directors in one message (one Agent call per video), then the crew per video using `video-production-team`'s own sequencing. Never run two renders at once.
 3. `npm run video-status` for where each run stands; a run already past the design step skips to the phase that owns Daniel's follow-up.

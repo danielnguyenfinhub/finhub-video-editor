@@ -13,7 +13,11 @@
 // FINHUB_GL sets the browser's chromiumOptions.gl (e.g. "swangle": --use-gl=angle
 // --use-angle=swiftshader, open-browser.js in @remotion/renderer); unset, Chrome chooses.
 // FINHUB_SCHEMA_LOG sets the logLevel ("verbose" prints the browser's own stderr); unset, "error".
-// An invalid value of either prints one line and the default is used (not a schema failure).
+// FINHUB_BROWSER: path to an installed Chrome or headless shell, used instead of the one
+// Remotion downloads (browserExecutable); unset, Remotion's own. FINHUB_CHROME_MODE:
+// headless-shell (the default) or chrome-for-testing (chromeMode). @remotion/renderer 4.0.527
+// dist/select-composition.d.ts:55, :60.
+// An invalid value of any of them prints one line and the default is used (not a schema failure).
 import { bundle } from "@remotion/bundler";
 import { selectComposition } from "@remotion/renderer";
 import { copyFileSync, existsSync, linkSync, mkdirSync, readFileSync, rmSync } from "node:fs";
@@ -27,7 +31,8 @@ const args = process.argv.slice(2);
 const dirAt = args.indexOf("--public-dir");
 const slug = args.find((a, i) => !a.startsWith("--") && (dirAt < 0 || i !== dirAt + 1));
 const pub = resolve(dirAt >= 0 ? args[dirAt + 1] : join(ROOT, "public"));
-// @remotion/renderer 4.0.527: dist/options/gl.js validOpenGlRenderers; dist/log-level.js logLevels.
+// @remotion/renderer 4.0.527: dist/options/gl.js validOpenGlRenderers; dist/log-level.js logLevels;
+// dist/options/chrome-mode.js validChromeModeOptions.
 const envOption = (name, valid) => {
   const v = process.env[name];
   if (!v || valid.includes(v)) return v || undefined;
@@ -36,6 +41,10 @@ const envOption = (name, valid) => {
 };
 const gl = envOption("FINHUB_GL", ["swangle", "angle", "egl", "swiftshader", "vulkan", "angle-egl"]);
 const logLevel = envOption("FINHUB_SCHEMA_LOG", ["trace", "verbose", "info", "warn", "error"]) ?? "error";
+const chromeMode = envOption("FINHUB_CHROME_MODE", ["headless-shell", "chrome-for-testing"]);
+const browserExecutable = process.env.FINHUB_BROWSER && existsSync(process.env.FINHUB_BROWSER) ? process.env.FINHUB_BROWSER : undefined;
+if (process.env.FINHUB_BROWSER && !browserExecutable)
+  console.error(`check-schema: FINHUB_BROWSER="${process.env.FINHUB_BROWSER}" does not exist; using the default.`);
 const fail = (msg) => {
   console.error(String(msg).split("\n").slice(0, 5).join("\n"));
   process.exitCode = 1;
@@ -77,7 +86,7 @@ try {
   });
   const c = await selectComposition({
     serveUrl, id: "MortgageReel", inputProps: { slug }, logLevel,
-    ...(gl ? { chromiumOptions: { gl } } : {}),
+    ...(gl ? { chromiumOptions: { gl } } : {}), browserExecutable, chromeMode,
   });
   console.log(`MortgageReel ${slug}: ${c.durationInFrames} frames (${(c.durationInFrames / c.fps).toFixed(1)} s)`);
 } catch (err) {

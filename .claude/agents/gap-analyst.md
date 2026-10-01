@@ -13,9 +13,9 @@ Find the improvements that make the next video better or faster to edit, the rep
 
 ## How
 
-1. Read `docs/agents/team-ground-rules.md`, then the previous run: `out/teams/maintain_prev/` (`02_gaps.md`, `03_fixes_A.md` / `03_fixes_B.md`, review JSON) and the maintenance rows of `docs/agents/team-runs.md`. Do not re-propose what it fixed or Daniel decided; an item it left open is named only with new evidence.
+1. Read `docs/agents/team-ground-rules.md`, then the previous run, by section, not whole (its reports are about 23,000 tokens): the fixed and decided ids are in your prompt; its gap titles `grep -n '^### ' out/teams/maintain_prev/02_gaps.md`; what it left open `awk '/^#+ .*([Uu]nfixed|[Nn]ot fixed|[Cc]arried over)/{p=1;print FILENAME": "$0;next} /^#/{p=0} p' out/teams/maintain_prev/0[13]_*.md`; and the last maintenance row of `docs/agents/team-runs.md`. Grep a report for one id or gap only when you need its detail. Do not re-propose what it fixed or Daniel decided; an item it left open is named only with new evidence.
 2. Mine these sources, newest first:
-   - `docs/agents/open-decisions.md` and the D rulings in `docs/audit/templates-*/02_concepts_*.md` (A = provable from code, B = needs a render, C = option, D = Daniel's ruling): a gap that waits on a ruling names the decision id, it does not re-argue it;
+   - `docs/agents/open-decisions.md`, which already merges the D rulings of `docs/audit/templates-*/02_concepts_*.md` (A = provable from code, B = needs a render, C = option, D = Daniel's ruling); for a ruling's source text grep its row (`grep -n -E '^\| D[0-9]+ \|' docs/audit/templates-*/02_concepts_*.md`), do not read those reports whole (27,000 tokens): a gap that waits on a ruling names the decision id, it does not re-argue it;
    - `.claude/skills/vietnamese-finance-video-editor/references/corrections.md`: entries marked `noted` or `open` (no home yet), and any lesson that appears twice without being `checked`;
    - the `ponytail-debt` skill: shortcuts whose "when to upgrade" has arrived;
    - `docs/audit/wiring-gaps.md` and `sibling-repos-review.md`: items not yet marked implemented;

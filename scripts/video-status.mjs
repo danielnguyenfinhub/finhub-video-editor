@@ -11,6 +11,10 @@ import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { assertSlug } from "./listing-prep.mjs";
 
+// The shared recording resolver. Not loaded for --check (no slug): that hook must print nothing when
+// ready, and Node warns on importing a .ts file from this package.
+const { recordingPath } = process.argv[2] === "--check" ? {} : await import("../src/mortgage/recording.ts");
+
 const readJson = (p) => {
   try {
     return JSON.parse(readFileSync(p, "utf8"));
@@ -58,7 +62,7 @@ export const stagesFor = (root, slug) => {
       ...ends,
     ] };
   }
-  const matte = join(root, "public/recordings", edit.source ?? slug, "foreground.webm");
+  const matte = join(root, "public", recordingPath(slug, edit.source, "foreground.webm"));
   return { pipeline, stages: [
     intake,
     { id: "paper edit (video-story-editor)", done: () => {
@@ -116,7 +120,7 @@ export const readinessOf = (root, slug) => {
   const edit = readJson(join(root, "public/videos", slug, "edit.json"));
   const pipeline = existsSync(join(root, "public/videos", slug, "script.json")) ? "B" : "A";
   if (pipeline === "A" && edit) {
-    const src = join(root, "public/recordings", edit.source ?? slug, "source.mp4");
+    const src = join(root, "public", recordingPath(slug, edit.source, "source.mp4"));
     if (!existsSync(src)) add("blocked", `the prepared recording is missing (${relative(root, src)})`, "prepare the recording again (runbook A1.1)");
   }
   // Preflight bundles the project for check-schema: longer than the 30 s the probes get.
