@@ -51,7 +51,7 @@ export const PanelPlace = createContext<{
 // How far the panel's right edge moves in at full clearance: from its normal
 // edge (layer width - the right margin) to LOGO_CLEAR on screen (in a layer
 // scaled from SAFE.left), never outward.
-export const logoInset = (width = 1080, scale = 1): number =>
+const logoInset = (width = 1080, scale = 1): number =>
   Math.max(
     0,
     width -
@@ -64,7 +64,7 @@ export const logoInset = (width = 1080, scale = 1): number =>
 // once per cue, so the panel never changes width (and its text never rewraps)
 // while it is read (review 557b020): a cue that touches a window is narrow
 // for its whole life.
-export const logoClear = (
+const logoClear = (
   offset: number,
   from: number,
   frames: number,
@@ -77,8 +77,10 @@ export const logoClear = (
   return 0;
 };
 
-// The panel's right inset at frame `frame` of its cue: the same at every
-// frame (exported for check-design-figures, which evaluates it per frame).
+// The panel's right inset at frame `frame` of its cue. `frame` is deliberately
+// unused: the inset is decided once per cue; it stays a parameter so
+// check-design-figures can evaluate it at every frame and fail if a change ever
+// makes it depend on the frame (a mid-cue rewrap).
 export const panelInset = (
   place: React.ContextType<typeof PanelPlace>,
   frame: number,

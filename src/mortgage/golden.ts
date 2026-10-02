@@ -213,55 +213,62 @@ export const hookCount = (to: number, t: number): number => {
   return k >= 1 ? to : whole + (to - whole) * k;
 };
 
-// The hook's text at count progress t, the one formatter every design prints.
-// It counts the number inside `big` and keeps everything around it as written
-// (a "$" before it, "%" glued, " TỶ ĐÔ" after a space) and its own separators
-// ("4,35", "750.000", "4.1"), so at t = 1 it is exactly `big` (review 557b020).
-// The value is hookCount's; a year or a date is never counted (rule 1).
+// The hook's text at count progress t, the one formatter every design prints
+// (review 40bdcff). It returns `big` unchanged unless `big` holds exactly one
+// number token whose value, read with the token's own marks and sign, equals
+// countTo; then, before the count ends, it replaces only that token with
+// hookCount's value written the token's way (its decimals, its thousands and
+// decimal marks, its sign). Everything else in `big` stays as written; suffix
+// and decimals never rebuild the text. A year or a date is never counted.
 export const hookText = (
+  // decimals and suffix are accepted (every Hook has them) and ignored.
   hook: { big: string; countTo?: number; decimals?: number; suffix?: string },
   t: number,
 ): string => {
-  if (hook.countTo === undefined || asSaid(hook.big)) return hook.big;
-  const v = hookCount(hook.countTo, t);
-  const m = hook.big.match(/\d(?:[\d.,]*\d)?/);
-  if (!m || m.index === undefined)
-    return `${formatLike("", v, hook.decimals ?? 0)}${hookSuffix(hook.suffix)}`;
-  const tail = hook.big.slice(m.index + m[0].length);
-  const unit = (hook.suffix ?? "").trim();
-  return `${hook.big.slice(0, m.index)}${formatLike(m[0], v, hook.decimals)}${
-    unit && !tail.includes(unit) ? hookSuffix(unit) : ""
-  }${tail}`;
+  const { big, countTo } = hook;
+  if (countTo === undefined || t >= 1 || asSaid(big)) return big;
+  const tokens = [...big.matchAll(NUMBER_TOKEN)];
+  if (tokens.length !== 1 || tokens[0].index === undefined) return big;
+  const token = tokens[0][0];
+  const style = readToken(token, countTo);
+  if (!style) return big;
+  const at = tokens[0].index;
+  return `${big.slice(0, at)}${writeToken(hookCount(countTo, t), style)}${big.slice(at + token.length)}`;
 };
-// The suffix as it follows the number: a sign glued, a word after a space.
-const hookSuffix = (suffix: string | undefined): string => {
-  const s = (suffix ?? "").trim();
-  return /^\p{L}/u.test(s) ? ` ${s}` : s;
+// A number as written: an optional sign, digits with ".", "," or (narrow)
+// spaces between them. "3–4" is two tokens; "-0,25" one.
+const NUMBER_TOKEN = /[-\u2212]?\d(?:[.,\u00a0\u202f ]?\d)*/g;
+type TokenStyle = {
+  sign: string;
+  dec: string;
+  group: string;
+  decimals: number;
 };
-// `v` written like the number `token`: its decimal mark (the last "," or "."
-// not followed by exactly three digits), its thousands mark if it has one,
-// and `decimals` (else the token's own) digits.
-const formatLike = (token: string, v: number, decimals?: number): string => {
-  const marks = [...token.matchAll(/[.,]/g)];
-  const last = marks.at(-1);
-  const after = last ? token.length - last.index! - 1 : 0;
-  const dec =
-    last && after !== 3
-      ? last[0]
-      : token.includes(".")
-        ? ","
-        : token.includes(",")
-          ? "."
-          : ",";
-  const group = marks.some((x) => x[0] !== dec)
-    ? dec === ","
-      ? "."
-      : ","
-    : "";
-  const d = decimals ?? (last && last[0] === dec && after !== 3 ? after : 0);
-  const [int, frac] = v.toFixed(d).split(".");
-  const grouped = group ? int.replace(/\B(?=(\d{3})+(?!\d))/g, group) : int;
-  return frac ? `${grouped}${dec}${frac}` : grouped;
+// The reading of `token` (decimal mark "," or ".", or none) that is a valid
+// number equal to `value`, with its marks; null when none is.
+const readToken = (token: string, value: number): TokenStyle | null => {
+  const sign = /^[-\u2212]/.test(token) ? token[0] : "";
+  const body = sign ? token.slice(1) : token;
+  for (const dec of [",", ".", ""]) {
+    const [int, frac, extra] = dec ? body.split(dec) : [body];
+    if (extra !== undefined || (frac !== undefined && !/^\d+$/.test(frac)))
+      continue;
+    const groups = int.split(/[.,\u00a0\u202f ]/);
+    const marks: string[] = int.match(/[.,\u00a0\u202f ]/g) ?? [];
+    if (new Set(marks).size > 1 || marks.includes(dec)) continue;
+    if (groups.slice(1).some((g) => g.length !== 3) || groups[0].length === 0)
+      continue;
+    const v =
+      Number(`${groups.join("")}${frac ? `.${frac}` : ""}`) * (sign ? -1 : 1);
+    if (Math.abs(v - value) < 1e-9)
+      return { sign, dec, group: marks[0] ?? "", decimals: frac?.length ?? 0 };
+  }
+  return null;
+};
+const writeToken = (v: number, s: TokenStyle): string => {
+  const [int, frac] = Math.abs(v).toFixed(s.decimals).split(".");
+  const grouped = s.group ? int.replace(/\B(?=(\d{3})+(?!\d))/g, s.group) : int;
+  return `${v < 0 ? s.sign || "-" : ""}${grouped}${frac ? `${s.dec}${frac}` : ""}`;
 };
 
 const AUTO_MS = 2600;

@@ -230,7 +230,18 @@ const HOOK_UNIT = { big: "4,1 TỶ ĐÔ", countTo: 4.1, decimals: 1, suffix: "T�
 const HOOK_INT = { big: "10%", countTo: 10, suffix: "%" };
 const HOOK_YEAR = { big: "2026", countTo: 2026 };
 // Every hook ends exactly as written (review 557b020): thousands, a "$", a word unit.
-const HOOK_ENDS = [HOOK_RATE, HOOK_UNIT, HOOK_INT, { big: "750.000 ĐÔ", countTo: 750000, suffix: "ĐÔ" }, { big: "$4.1B", countTo: 4.1, decimals: 1, suffix: "B" }, { big: "3 TIÊU CHÍ", countTo: 3, suffix: "TIÊU CHÍ" }];
+const HOOK_ENDS = [HOOK_RATE, HOOK_UNIT, HOOK_INT, { big: "750.000 ĐÔ", countTo: 750000, suffix: "ĐÔ" }, { big: "$4.1B", countTo: 4.1, decimals: 1, suffix: "B" }, { big: "3 TIÊU CHÍ", countTo: 3, suffix: "TIÊU CHÍ" },
+  // review 40bdcff: schema-valid inputs that came out wrong; suffix/decimals must never rebuild the text.
+  { big: "-0,25%", countTo: -0.25, decimals: 2, suffix: "%" }, { big: "-1,5%", countTo: -1.5, decimals: 1, suffix: "%" },
+  { big: "4,35%", countTo: 4.35, decimals: 1, suffix: "%" }, { big: "750 000 ĐÔ", countTo: 750000, suffix: "ĐÔ" },
+  { big: "6 TRIỆU", countTo: 6000000, suffix: "TRIỆU" }, { big: "3–4", countTo: 4 }, { big: "600 NGHÌN", countTo: 600, suffix: "nghìn" },
+  { big: "4,1 TỶ", countTo: 4.1, decimals: 1, suffix: "TỶ ĐÔ" }, { big: "4,350%", countTo: 4.35, decimals: 3, suffix: "%" },
+  { big: "", countTo: 1 }, { big: "—", countTo: 1 }, { big: "1,5–2,5%", countTo: 1.5 }, { big: "$600,000", countTo: 600000 }, { big: "1.234,5 k", countTo: 1234.5, decimals: 1, suffix: "k" }];
+// Mid-count the text keeps big's exact shape (every digit read as 9): its prefix, suffix and units,
+// sign, thousands and decimal marks and decimals; only digits of the counted fraction change.
+const shape = (x) => String(x).replace(/\d/g, "9");
+// A big with more than one number (a range) is ambiguous: it never counts.
+const numbers = (x) => (String(x).match(/[-−]?\d(?:[.,   ]?\d)*/g) ?? []).length;
 for (const [name, text] of Object.entries(hookTexts)) {
   const seen = [0, 0.5, 1].map((t) => text(HOOK_RATE, t));
   check(`${name}: hook never counts from 0, exact by half its count`, num(seen[0]) >= 0.9 * 4.35 - 0.006 && seen.slice(1).every((x) => num(x) === 4.35), seen.join(" | "));
@@ -241,6 +252,9 @@ for (const [name, text] of Object.entries(hookTexts)) {
   check(`${name}: a whole number never shows a wrong value ("10%")`, int.every((x) => x === "10%"), int.join(" | "));
   const year = ts.map((t) => text(HOOK_YEAR, t));
   check(`${name}: a year-like hook is never counted`, year.every((x) => x === "2026"), year.join(" | "));
+  const odd = HOOK_ENDS.flatMap((h) => [0, 0.25, 0.5, 0.75, 1].map((t) => [h.big, t, text(h, t)]))
+    .filter(([big, , out]) => (out.includes("--") && !big.includes("--")) || shape(out) !== shape(big) || (numbers(big) > 1 && out !== big));
+  check(`${name}: mid-count keeps big's exact shape (no "--", no doubled unit, same marks and decimals)`, odd.length === 0, odd.slice(0, 4).map(([b, t, o]) => `${b}@${t} -> ${o}`).join(", ") || `${HOOK_ENDS.length} hooks`);
   const ends = HOOK_ENDS.map((h) => [h.big, text(h, 1)]);
   check(`${name}: every hook ends as written ("750.000 ĐÔ", "$4.1B", …)`, ends.every(([a, b]) => a === b), ends.filter(([a, b]) => a !== b).map(([a, b]) => `${a} -> ${b}`).join(", ") || "all equal");
 }
@@ -363,7 +377,16 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     buildSync({ stdin: { contents: `${src}\nexport const __offsets = [${exprs.join(", ")}];`, loader: f.endsWith("x") ? "tsx" : "ts", resolveDir: join(ROOT, "src", "designs", f, "..") },
       bundle: true, format: "esm", platform: "node", jsx: "automatic", packages: "external", logLevel: "error", outfile });
     const offs = (await import(pathToFileURL(outfile).href)).__offsets;
-    return found.map((h, i) => ({ offset: offs[i], logo: h.logo, width: h.column ? columnWidth : 1080, scale: h.scaled ? offs.at(-1) : 1 }));
+    // The scale the layer is really drawn at: POINTS_SCALE only if the rendered transform applies
+    // it from (SAFE.left, PANEL_TOP); otherwise 1 (and the offset only if it translates by it).
+    const drawn = code(f).js.replace(/\s/g, "");
+    const scaled = /transform:`translateY\(\$\{POINTS_OFFSET\}px\)scale\(\$\{POINTS_SCALE\}\)`,transformOrigin:`\$\{SAFE\.left\}px\$\{PANEL_TOP\}px`/.test(drawn);
+    const moved = /transform:`translateY\(\$\{POINTS_OFFSET\}px\)/.test(drawn);
+    const told = /PanelPlace\.Provider,\{value:\{[^}]*scale:POINTS_SCALE/.test(drawn); // the scale Panel is told
+    return found.map((h, i) => ({
+      offset: h.scaled && !moved ? 0 : offs[i], logo: h.logo, width: h.column ? columnWidth : 1080,
+      scale: h.scaled && scaled ? offs.at(-1) : 1, toldScale: h.scaled && told ? offs.at(-1) : 1,
+    }));
   };
   // checklist's ColumnCueTrack layer width, from its own module.
   const colOut = join(out, "column-width.mjs");
@@ -390,7 +413,7 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     const dir = join(ROOT, "src", "designs", f.split("/")[0]);
     return readdirSync(dir).some((x) => /\.tsx$/.test(x) && /<LogoMark\b/.test(readFileSync(join(dir, x), "utf8")));
   };
-  for (const [f, { offset, width, logo: logoOn, scale }] of hosts) {
+  for (const [f, { offset, width, logo: logoOn, scale, toldScale }] of hosts) {
     const rest = info.PANEL_TOP + offset;
     const frames = [...Array(31).keys(), ...Array.from({ length: 11 }, (_, i) => dur - 10 + i)];
     const tops = frames.map((fr) => {
@@ -406,7 +429,7 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     if (rest < logo.bottom && hasLogo) {
       // Sample cues starting every 10 frames, short and long: the panel's right edge is the same
       // at every frame of a cue (no rewrap while read) and left of the logo whenever it shows.
-      const place = { offset, talkFrames: talk, width, logo: logoOn, scale };
+      const place = { offset, talkFrames: talk, width, logo: logoOn, scale: toldScale };
       const bad = [];
       for (let from = 0; from < talk && bad.length < 3; from += 10)
         for (const dur of [40, 200]) {
@@ -459,6 +482,13 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     const shown = (await design("orbit/Stage.tsx")).stageFigures(rba, FPS);
     check("rba-sept-2026: 2027 shows at 705, held its floor over the compare drop-in", shown.some((f) => f.big === "2027" && f.fromFrame === 705 && f.frames === hold), spans(shown));
   }
+  // How a chip is drawn (source): blueprint's small FigureChip under the stage, never the full
+  // FigureSheet; orbit's moon, never the hero on the core. FigureChip is smaller than any sheet number.
+  const bp = code("blueprint/Stage.tsx").js.replace(/\s/g, "");
+  check("blueprint (source): a chip figure is drawn as the small FigureChip, others as FigureSheet",
+    /children:f\.chip\?jsx\(FigureChip,\{figure:f\}\):jsx\(FigureSheet,\{figure:f\}\)/.test(bp) && /constFigureChip=[\s\S]*?fontSize:48,/.test(bp));
+  check("orbit (source): a chip figure is drawn as the moon, never on the core",
+    /children:moons\.has\(f\)\|\|f\.chip\?jsx\(FigureMoon,\{figure:f\}\):jsx\(FigureHero,\{figure:f\}\)/.test(code("orbit/Stage.tsx").js.replace(/\s/g, "")));
   const { yieldToCompare } = await bundle("src/elements/yieldToCompare.ts");
   const f = (fromFrame, frames) => ({ fromFrame, frames });
   const r = yieldToCompare([f(0, 90), f(100, 90), f(300, 60), f(500, 60), f(600, 90)], [[60, 120], [320, 400], [640, 700]], [[60, 120], [320, 400], [400, 430], [640, 700]], 45);

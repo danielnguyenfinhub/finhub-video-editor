@@ -159,10 +159,12 @@ screen ("the rate card"), never whose.
   check-design-figures (h) · `checked`
 - 02/10/2026 · all designs · view7 stills and review c849a4c (rings/road bars on years, "CON SỐ 2026",
   hooks from 0 via `countTo * t` or `[0, hook.countTo]`, "4,1TỶ ĐÔ", "9%" for 10%) → a year or date
-  never gets a ring, road or count; every hook prints through the core `hookText`, which counts inside
-  `big` and ends exactly as written ("$4.1B", "750.000 ĐÔ") → check-design-figures (d)(f), evaluated;
-  any other `countTo` read in a design fails (source) · `checked`
+  never gets a ring, road or count; every hook prints through the core `hookText`: `big` unchanged
+  unless its one number token equals countTo, then only that token counts, written its own way
+  ("-0,25%", "$4.1B", "750 000 ĐÔ"), suffix/decimals never rebuild it → check-design-figures (d)(f),
+  evaluated on 19 hooks; any other `countTo` read in a design fails (source) · `checked`
 - 02/10/2026 · blueprint, orbit, phoneapp · a figure under a compare cue; "0/2" bar half full → the cue
   wins, but a figure is never dropped (rule 1, review 557b020): cut after its floor, held over the
   cue's drop-in when short by ≤ 10 frames, else shown after the cue (a chip when another cue holds
-  the stage); the bar is said / n → check-design-figures (i), every fixture · `checked`
+  the stage); the bar is said / n → check-design-figures (i), every fixture · `checked`; how a chip is
+  drawn (blueprint FigureChip, orbit moon) by source only, no fixture reaches it · `rule`
