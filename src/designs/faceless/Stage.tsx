@@ -21,6 +21,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  hookCount,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -308,7 +309,7 @@ const HookHero: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   const big =
     hook.countTo === undefined
       ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
+      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
           minimumFractionDigits: hook.decimals ?? 0,
           maximumFractionDigits: hook.decimals ?? 0,
         })}${hook.suffix ? ` ${hook.suffix}` : ""}`;

@@ -19,6 +19,7 @@ import {
   lenderMentionsOf,
   type Figure,
   asSaid,
+  hookCount,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -154,7 +155,7 @@ const HookSheet: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   const big =
     hook.countTo === undefined
       ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
+      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
           minimumFractionDigits: hook.decimals ?? 0,
           maximumFractionDigits: hook.decimals ?? 0,
         })}${hook.suffix ?? ""}`;
@@ -506,12 +507,9 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
         </Sequence>
       ) : null}
       {figures.map((f, i) => {
-        // The hook owns the stage for its first HOOK_FRAMES: a figure said
-        // under it waits until it ends, held its minimum read, and gives
-        // way to the next figure.
-        const from = reel.edit.hook
-          ? Math.max(f.fromFrame, HOOK_FRAMES)
-          : f.fromFrame;
+        // figuresOf starts every figure after the hook (golden rule 1); each
+        // is held its minimum read and gives way to the next figure.
+        const from = f.fromFrame;
         const next = figures[i + 1]?.fromFrame ?? Infinity;
         const frames = Math.max(
           Math.min(f.fromFrame + f.frames, next) - from,

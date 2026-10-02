@@ -86,7 +86,14 @@ const Chip: React.FC<{ item: Item; lane: 0 | 1; dur: number }> = ({
             >
               {counted(item.figure.big, t)}
             </div>
-            <Ring size={60} fill={ringFill(item.figure.big)} t={t} width={10} />
+            {ringFill(item.figure.big) === null ? null : (
+              <Ring
+                size={60}
+                fill={ringFill(item.figure.big) ?? 1}
+                t={t}
+                width={10}
+              />
+            )}
           </div>
           {item.figure.source === "stat" && item.figure.label ? (
             <div

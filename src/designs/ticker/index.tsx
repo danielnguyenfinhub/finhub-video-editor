@@ -37,6 +37,7 @@ import {
   AMBER,
   BoardBackdrop,
   CHAPTER_WORD,
+  EN_BAND,
   FlipText,
   INK,
   Led,
@@ -45,7 +46,6 @@ import {
   STATUS_LABEL,
   STRIP_BOTTOM,
   StatusBar,
-  TAPE,
   TAPE_LABEL,
   Tape,
   tapeItems,
@@ -303,8 +303,42 @@ const Captions: React.FC<{
 
 // ------------------------------------------------------------------ english
 
-// Under the tape, on SAFE.bottom; small enough that three lines stay below it.
-const EnglishLine: React.FC<{ reel: Reel }> = ({ reel }) => {
+// Right under the Vietnamese caption, wherever it is (big on the board or the
+// strip): its band starts 12 px below the caption, three lines fit above the tape.
+const englishTop = (low: number) =>
+  interpolate(low, [0, 1], [IDLE_BOTTOM, STRIP_BOTTOM]) + 12;
+const EnglishText: React.FC<{ text: string; from: number; level: number[] }> = ({
+  text,
+  from,
+  level,
+}) => {
+  const frame = useCurrentFrame();
+  const top = englishTop(level[from + frame] ?? 0);
+  return (
+    <CaptionZone bottom={top + EN_BAND}>
+      <div
+        style={{
+          fontFamily: FONT,
+          fontSize: 28,
+          lineHeight: 1.3,
+          fontWeight: 600,
+          color: SKY,
+          textAlign: "center",
+          padding: "6px 18px",
+          height: EN_BAND,
+          overflow: "hidden",
+        }}
+      >
+        {text}
+      </div>
+    </CaptionZone>
+  );
+};
+
+const EnglishLine: React.FC<{ reel: Reel; level: number[] }> = ({
+  reel,
+  level,
+}) => {
   const { fps } = useVideoConfig();
   const at = outFrameOf(reel.timeline, fps);
   return (
@@ -318,22 +352,7 @@ const EnglishLine: React.FC<{ reel: Reel }> = ({ reel }) => {
             durationInFrames={Math.max(1, at(s.toMs) - from)}
             layout="none"
           >
-            <CaptionZone>
-              <div
-                style={{
-                  fontFamily: FONT,
-                  fontSize: 28,
-                  lineHeight: 1.3,
-                  fontWeight: 600,
-                  color: SKY,
-                  textAlign: "center",
-                  padding: "6px 18px",
-                  maxHeight: SAFE.bottom - (TAPE.top + TAPE.height) - 8,
-                }}
-              >
-                {s.text}
-              </div>
-            </CaptionZone>
+            <EnglishText text={s.text} from={from} level={level} />
           </Sequence>
         );
       })}
@@ -374,7 +393,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
       <Sequence from={reel.edit.hook ? HOOK_FRAMES : 0} layout="none">
         <Tape items={items} />
       </Sequence>
-      <EnglishLine reel={reel} />
+      <EnglishLine reel={reel} level={level} />
       <LogoMark talkFrames={talkFrames} />
     </>
   );

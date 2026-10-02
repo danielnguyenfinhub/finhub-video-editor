@@ -21,6 +21,7 @@ import {
   lenderMentionsOf,
   type Figure,
   asSaid,
+  hookCount,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -65,8 +66,10 @@ export const counted = (big: string, t: number): string => {
 };
 
 // How far the arc closes: a percentage on a 10 % scale below 10 % (rates),
-// else 100 %; a date, count or amount has no scale, so the orbit closes.
-const arcFill = (big: string): number => {
+// else 100 %; a count or amount has no scale, so the orbit closes. A year or
+// a date has no ring at all (null): it is shown as said (golden rule 1).
+export const arcFill = (big: string): number | null => {
+  if (asSaid(big)) return null;
   const m = big.match(/\d[\d.,]*/);
   if (!m || !big.includes("%")) return 1;
   const v = parseFloat(m[0].replace(",", "."));
@@ -201,7 +204,7 @@ const HookHero: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   const big =
     hook.countTo === undefined
       ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
+      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
           minimumFractionDigits: hook.decimals ?? 0,
           maximumFractionDigits: hook.decimals ?? 0,
         })}${hook.suffix ?? ""}`;
@@ -211,13 +214,15 @@ const HookHero: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
     <div
       style={{ position: "absolute", inset: 0, fontFamily: FONT, opacity: out }}
     >
-      <Gauge
-        cx={HOME.x}
-        cy={HOME.y}
-        R={GAUGE_R}
-        fill={arcFill(hook.big)}
-        t={t}
-      />
+      {arcFill(hook.big) === null ? null : (
+        <Gauge
+          cx={HOME.x}
+          cy={HOME.y}
+          R={GAUGE_R}
+          fill={arcFill(hook.big) ?? 1}
+          t={t}
+        />
+      )}
       <div
         style={{
           opacity: p,
@@ -254,13 +259,15 @@ const FigureHero: React.FC<{ figure: Figure }> = ({ figure }) => {
         opacity: Math.min(p, fadeOut(frame, figure.frames)),
       }}
     >
-      <Gauge
-        cx={HOME.x}
-        cy={HOME.y}
-        R={GAUGE_R}
-        fill={arcFill(figure.big)}
-        t={t}
-      />
+      {arcFill(figure.big) === null ? null : (
+        <Gauge
+          cx={HOME.x}
+          cy={HOME.y}
+          R={GAUGE_R}
+          fill={arcFill(figure.big) ?? 1}
+          t={t}
+        />
+      )}
       <CoreNumber
         text={counted(figure.big, t)}
         size={numberSize(figure.big)}
@@ -364,14 +371,16 @@ const FigureMoon: React.FC<{ figure: Figure }> = ({ figure }) => {
       >
         {counted(figure.big, t)}
       </div>
-      <Gauge
-        cx={MOON.x}
-        cy={MOON.y}
-        R={MOON.r + 12}
-        fill={arcFill(figure.big)}
-        t={t}
-        width={6}
-      />
+      {arcFill(figure.big) === null ? null : (
+        <Gauge
+          cx={MOON.x}
+          cy={MOON.y}
+          R={MOON.r + 12}
+          fill={arcFill(figure.big) ?? 1}
+          t={t}
+          width={6}
+        />
+      )}
     </div>
   );
 };

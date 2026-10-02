@@ -57,8 +57,10 @@ export const counted = (big: string, t: number): string => {
 };
 
 // How far along the road a value is: a percentage on a 10 % scale below 10 %
-// (rates), else 100 %; a date, count or amount has no scale: the whole road.
-const roadFill = (big: string): number => {
+// (rates), else 100 %; a count or amount has no scale: the whole road. A year
+// or a date has no road at all (null): it is shown as said (golden rule 1).
+export const roadFill = (big: string): number | null => {
+  if (asSaid(big)) return null;
   const m = big.match(/\d[\d.,]*/);
   if (!m || !big.includes("%")) return 1;
   const v = parseFloat(m[0].replace(",", "."));
@@ -225,7 +227,13 @@ const Signpost: React.FC<{ figure: Figure; from: number }> = ({
         >
           {counted(figure.big, t)}
         </div>
-        <MiniRoute fill={roadFill(figure.big)} t={t} width={BOARD_W - 110} />
+        {roadFill(figure.big) === null ? null : (
+          <MiniRoute
+            fill={roadFill(figure.big) ?? 1}
+            t={t}
+            width={BOARD_W - 110}
+          />
+        )}
         {/* An auto figure's words are already in the captions; a stat's label
             is written copy. */}
         {figure.source === "stat" && figure.label ? (

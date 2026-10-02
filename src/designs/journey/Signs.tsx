@@ -11,7 +11,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { HOOK_FRAMES, SAFE } from "../../mortgage/golden";
+import { HOOK_FRAMES, SAFE, hookCount } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
@@ -49,7 +49,7 @@ export const HookCartouche: React.FC<{
   const big =
     hook.countTo === undefined
       ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
+      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
           minimumFractionDigits: hook.decimals ?? 0,
           maximumFractionDigits: hook.decimals ?? 0,
         })}${hook.suffix ?? ""}`;

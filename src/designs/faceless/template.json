@@ -44,9 +44,8 @@
   "minHoldMs": 1500,
   "facePolicy": "faceless",
   "renderCost": "med",
-  "preview": null,
-  "uses": 1,
-  "lastUsed": "2026-09-26",
-  "promoted": "2026-09-27",
-  "promotedNote": "grandfathered: in use before the gate"
+  "preview": "src/designs/faceless/preview.png",
+  "uses": 0,
+  "lastUsed": null,
+  "promoted": "2026-10-02"
 }

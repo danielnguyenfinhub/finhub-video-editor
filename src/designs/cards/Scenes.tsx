@@ -6,7 +6,7 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
-import type { Figure } from "../../mortgage/golden";
+import { hookCount, type Figure } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { FONT, clamp, toneColor } from "../../mortgage/style";
@@ -67,7 +67,7 @@ export const HookScene: React.FC<{ hook: Hook; box: Box }> = ({
   const big =
     hook.countTo === undefined
       ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
+      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
           minimumFractionDigits: hook.decimals ?? 0,
           maximumFractionDigits: hook.decimals ?? 0,
         })}${hook.suffix ? ` ${hook.suffix}` : ""}`;

@@ -92,38 +92,43 @@ export const NotifyHead: React.FC = () => (
   </div>
 );
 
-// Big number and its ring, side by side.
+// Big number and its ring, side by side (a year or a date: no ring).
 const NumberRow: React.FC<{ big: string; shown: string; t: number }> = ({
   big,
   shown,
   t,
-}) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-    <div
-      style={{
-        width: NUM_W,
-        fontSize: numberSize(big, NUM_W, 150),
-        fontWeight: 900,
-        lineHeight: 1.15,
-        color: INK,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {shown}
-    </div>
-    <Ring size={150} fill={ringFill(big)} t={t} width={18}>
+}) => {
+  const fill = ringFill(big);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
       <div
         style={{
-          width: 26,
-          height: 26,
-          borderRadius: "50%",
-          background: GOLD,
-          transform: `scale(${0.6 + 0.4 * t})`,
+          width: NUM_W,
+          fontSize: numberSize(big, NUM_W, 150),
+          fontWeight: 900,
+          lineHeight: 1.15,
+          color: INK,
+          whiteSpace: "nowrap",
         }}
-      />
-    </Ring>
-  </div>
-);
+      >
+        {shown}
+      </div>
+      {fill === null ? null : (
+        <Ring size={150} fill={fill} t={t} width={18}>
+          <div
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              background: GOLD,
+              transform: `scale(${0.6 + 0.4 * t})`,
+            }}
+          />
+        </Ring>
+      )}
+    </div>
+  );
+};
 
 // A card that drops in as a push notification under the status bar, is
 // tapped, and opens into a widget: big number, ring, the line under it. The

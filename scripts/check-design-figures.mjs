@@ -15,9 +15,13 @@
 //   (e) every design whose said caption word grows keeps a non-zero `saidRoom` margin, in use
 //       ("ThángHai"); kinetic fits its lines to FIT_W, narrower than SAFE_W;
 //   (f) evaluated: no meter, bar, ring or needle for a year (flash, ticker, kinetic, faceless,
-//       gauge), a neutral kicker not "CON SỐ" for a year or date, a level scale beam for a lone
+//       gauge, orbit, phoneapp, journey), every hook count through hookCount (source), a neutral kicker not "CON SỐ" for a year or date, a level scale beam for a lone
 //       hook value and plaques off the pillar, no "TỔNG" on a rate, the calendar title page torn
-//       before a points notepad, headline units kept together (keepUnits).
+//       before a points notepad, headline units kept together (keepUnits);
+//   (g) classic cue panels (MotionTrack) clipped at their rest top: evaluated over every frame of
+//       the drop-in and fly-out, gauge and pulse stay inside SAFE and under the LogoMark;
+//   (h) replay of every public/videos fixture with words: with a hook, no figure before
+//       HOOK_FRAMES (the hook-time branches deleted from six designs stay unreachable).
 // Source checks (marked "source" below) read comment-stripped, whitespace-free code, so a
 // commented-out use does not pass; they cannot see a render, so what they guard is a `rule`
 // in corrections.md, not `checked`.
@@ -248,10 +252,19 @@ for (const [name, fill, gate] of fills) {
   const js = code(fillFiles[name]).js;
   check(`${name} (source): the meter is drawn only when its fill is not null`, gate.test(js) && js.split(/fill(?:To)?===null\?null:/).length === 2);
 }
+// A ring, orbit or road meter is drawn only for a non-null fill (the prop types make a null
+// fill a tsc error, so every call site has to gate it).
+for (const [name, file, fn] of [["orbit", "orbit/Stage.tsx", "arcFill"], ["phoneapp", "phoneapp/Phone.tsx", "ringFill"], ["journey", "journey/Stage.tsx", "roadFill"]]) {
+  const fill = (await design(file))[fn];
+  check(`${name}: no ring or road meter for a year or a date`, SAID.every((b) => fill(b) === null) && fill("4,35%") > 0, SAID.map(fill).join(","));
+}
+const fromZero = readdirSync(join(ROOT, "src", "designs"), { recursive: true })
+  .filter((f) => /\.tsx?$/.test(f) && /countTo\s*\*/.test(code(f).js.replace(/\s/g, "")));
+check("every design's hook count goes through hookCount (source: no countTo * t)", fromZero.length === 0, fromZero.join(", "));
 const yearView = gaugeMod.figureView({ big: "2026", label: "", source: "auto", fromFrame: 0, frames: 45 }, 20, FPS);
 const rateView = gaugeMod.figureView({ big: "4,35%", label: "", source: "auto", fromFrame: 0, frames: 45 }, 20, FPS);
 check("gauge: a year is a plain readout (dial dimmed, no lit arc), a rate keeps its needle", yearView.plain === true && !yearView.lit && yearView.readout.text === "2026" && !rateView.plain && Boolean(rateView.lit));
-const kickers = [["ticker", "ticker/Stage.tsx"], ["receipt", "receipt/Figures.tsx"], ["splitscreen", "splitscreen/Chip.tsx"], ["bigdigit", "bigdigit/Stage.tsx"], ["flash", "flash/Figures.tsx"]];
+const kickers = [["ticker", "ticker/Stage.tsx"], ["receipt", "receipt/Figures.tsx"], ["splitscreen", "splitscreen/Chip.tsx"], ["bigdigit", "bigdigit/Stage.tsx"], ["flash", "flash/Figures.tsx"], ["retro", "retro/Stage.tsx"]];
 for (const [name, file] of kickers) {
   const { kickerOf } = await design(file);
   const k = ["2026", "29/9", "4,35%"].map(kickerOf);
@@ -275,6 +288,66 @@ check("keepUnits: a number keeps its word, two-word units stay whole", kept === 
 for (const file of ["receipt/Stage.tsx", "timelapse/Scenes.tsx"])
   check(`${file} (source): headline wrapped through keepUnits`, /keepUnits\((hook\.sub|s\.title)\)/.test(code(file).js));
 check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.edit\.hook\?HOOK_FRAMES:0,[^}]*children:jsx\(Tape\b/.test(code("ticker/index.tsx").js));
+
+// (g) classic cue panels (MotionTrack, classic/Cues.tsx): at every frame of the drop-in and the
+// fly-out, the visible panel top is evaluated from Panel's own motion (Infographics.tsx) and the
+// layer's clip; it never reaches above SAFE.top, and for gauge and pulse never into the LogoMark.
+{
+  const { pop } = await bundle("src/mortgage/style.ts");
+  const panel = code("classic/Infographics.tsx").js;
+  const motion = panel.match(/const Panel=[\s\S]*?top:(\d+),[\s\S]*?translateY\(\$\{interpolate\(inP,\[0,1\],\[(-?\d+),0\]\)-exit\*(\d+)\}px\)/);
+  const cues = code("classic/Cues.tsx");
+  const clipped = /transform:panelOffset\?`translateY\(\$\{panelOffset\}px\)`:void 0,clipPath:`inset\(\$\{PANEL_TOP\}px 0 0 0\)`/.test(cues.js);
+  check("classic Panel: its rest top and motion are read (Infographics.tsx)", Boolean(motion) && Number(motion?.[1]) === cues.env.PANEL_TOP, motion ? `top ${motion[1]}, from ${motion[2]}, out ${motion[3]}, PANEL_TOP ${cues.env.PANEL_TOP}` : "Panel not found");
+  check("classic/Cues.tsx (source): the panel layer is clipped at PANEL_TOP", clipped);
+  const logo = code("../mortgage/LogoMark.tsx").js.match(/padding:"(\d+)px \d+px"/);
+  const logoBottom = golden.SAFE.top + golden.LOGO_HEIGHT + 2 * Number(logo?.[1] ?? NaN);
+  const visibleTops = (offset, dur = 120) => {
+    const [, top, from, out] = (motion ?? [0, NaN, NaN, NaN]).map(Number);
+    const rest = top + offset;
+    const frames = [...Array(31).keys(), ...Array.from({ length: 11 }, (_, i) => dur - 10 + i)];
+    return frames.map((f) => {
+      const inP = pop(f, FPS, 0);
+      const exit = Math.min(1, Math.max(0, (f - (dur - 10)) / 10));
+      const raw = rest + from * (1 - inP) - exit * out; // interpolate(inP, [0, 1], [from, 0]), unclamped like Panel
+      return clipped ? Math.max(raw, cues.env.PANEL_TOP + offset) : raw;
+    });
+  };
+  const offsets = {
+    gauge: code("gauge/index.tsx").env.PANEL_OFFSET,
+    pulse: code("pulse/Cues.tsx", { HEADER: code("pulse/Scope.tsx").env.HEADER }).env.PANEL_OFFSET,
+  };
+  for (const [name, offset] of Object.entries(offsets)) {
+    const tops = visibleTops(offset);
+    const min = Math.min(...tops);
+    check(`${name}: cue panel inside SAFE and under the LogoMark at every entry/exit frame`, Number.isFinite(min) && min >= golden.SAFE.top && min >= logoBottom,
+      `offset ${offset}, highest visible top ${Math.round(min)}, SAFE.top ${golden.SAFE.top}, logo bottom ${logoBottom}`);
+  }
+}
+
+// (h) the hook-time branches deleted from kinetic, whiteboard, retro, receipt, paper and blueprint
+// stay unreachable: on every fixture in public/videos with words (its reading-time floor applied,
+// as a render does), a reel with a hook has no figure before HOOK_FRAMES. A reel without a hook
+// never took them (each needed a hook).
+{
+  const { recordingPath } = await bundle("src/mortgage/recording.ts");
+  const vids = join(ROOT, "public", "videos");
+  let replayed = 0;
+  for (const slug of readdirSync(vids).sort()) {
+    const editPath = join(vids, slug, "edit.json");
+    if (!existsSync(editPath)) continue;
+    const edit = JSON.parse(readFileSync(editPath, "utf8"));
+    const wordsPath = join(ROOT, "public", recordingPath(slug, edit.source, "words.json"));
+    if (!existsSync(wordsPath)) continue;
+    const raw = reelOf(JSON.parse(readFileSync(wordsPath, "utf8")), edit);
+    const reel = { ...raw, edit: golden.readingFloor(raw, FPS).edit };
+    replayed++;
+    if (!reel.edit.hook) continue;
+    const early = figuresOf(reel, FPS).filter((f) => f.fromFrame < HOOK);
+    check(`replay ${slug}: no figure before the hook ends`, early.length === 0, spans(early));
+  }
+  check("replay: fixtures with words found", replayed >= 10, `${replayed} replayed`);
+}
 
 console.log(failed ? "design figures: FAILED" : "design figures ok");
 process.exit(failed ? 1 : 0);

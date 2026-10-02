@@ -366,6 +366,13 @@ const sfxFor = (reel: Reel): Sfx[] => [
   }),
 ];
 
+// Every cue panel rests at top 110 of this layer (Panel, Infographics.tsx) and drops in
+// from above it, then flies back up. The layer is clipped at that rest top, so the panel
+// unrolls from its own top edge: at no frame of its entry or exit does it reach above the
+// place it rests (inside SAFE, under the LogoMark where the design rests it there).
+// check-design-figures evaluates it.
+export const PANEL_TOP = 110;
+
 // `panelOffset` moves only the cue panels (they sit at top 110 in classic);
 // the film grain and light leaks stay full-frame. Designs built to the 4:5
 // safe band pass SAFE.top - 110. `numbers` is the design's NumbersLook.
@@ -386,6 +393,7 @@ export const MotionTrack: React.FC<{
           position: "absolute",
           inset: 0,
           transform: panelOffset ? `translateY(${panelOffset}px)` : undefined,
+          clipPath: `inset(${PANEL_TOP}px 0 0 0)`,
         }}
       >
         {(reel.edit.cues ?? []).map((c) => {

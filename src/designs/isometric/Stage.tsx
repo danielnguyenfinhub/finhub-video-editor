@@ -14,7 +14,13 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { HOOK_FRAMES, SAFE, type Figure, asSaid } from "../../mortgage/golden";
+import {
+  HOOK_FRAMES,
+  SAFE,
+  type Figure,
+  asSaid,
+  hookCount,
+} from "../../mortgage/golden";
 import type { EditJson } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
 import {
@@ -252,7 +258,7 @@ export const HookCity: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   const big =
     hook.countTo === undefined
       ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
+      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
           minimumFractionDigits: hook.decimals ?? 0,
           maximumFractionDigits: hook.decimals ?? 0,
         })}${hook.suffix ?? ""}`;

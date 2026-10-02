@@ -137,3 +137,28 @@ screen ("the rate card"), never whose.
 - 02/10/2026 · design:receipt, timelapse · recheck 09: "sau 3 / lần tăng", "cơ / bản" → a headline
   never splits a number from its word or a two-word finance unit (`keepUnits`, no-break spaces;
   src/elements/keepUnits.ts) → evaluated in `check-design-figures`, its use by source · `checked`
+- 02/10/2026 · designs using classic `MotionTrack` (gauge, pulse and 32 others) · "Fix all these" (critique
+  08/09: the gauge/pulse step panel drops in from above SAFE.top across the LogoMark) → a cue panel never
+  reaches above the place it rests: the MotionTrack layer is clipped at the panel's rest top
+  (`PANEL_TOP`, classic/Cues.tsx), so it unrolls from there → `check-design-figures` (g) evaluates the
+  visible top at every drop-in and fly-out frame for gauge and pulse (inside SAFE, under the logo) ·
+  `checked`; designs that rest their panels at SAFE.top (classic, newsroom, studio…) still share the
+  logo's band when a cue is up in the first or last 10 s: not changed · `rule`
+- 02/10/2026 · design:ticker · "Fix all these" (tape between the Vietnamese caption and its English
+  line) → bilingual lines are one block: the English line sits right under the Vietnamese caption (on
+  the board or in the strip) and the tape moves to SAFE.bottom · `rule` (needs a render)
+- 02/10/2026 · promote-design · "Fix all these" (promotion blocked in the sandbox) → `promoted` is an
+  attestation: a check that cannot run for real (talking-head fixture without its recording and matte)
+  is INCOMPLETE, a failure, never "ok"; the faceless fixture may use the placeholders voice-video
+  itself writes (navy source, transparent cut-out), never quick mode → `check-promote` (fixture
+  media) · `checked`
+- 02/10/2026 · designs kinetic, whiteboard, retro, receipt, paper, blueprint · "Fix all these" (dead
+  hook-share branches after `figuresOf` made hook-time figures wait) → a design does not re-handle what
+  the core guarantees; delete the branch once a replay proves it unreachable → `check-design-figures`
+  (h) replays every fixture with words · `checked`
+- 02/10/2026 · design:orbit, phoneapp, journey, retro (+ hook count in orbit, retro, isometric, paper,
+  kinetic, cards, faceless, journey, blueprint) · "Fix all these" (view7 stills: a ring round "2026"
+  and "29/9", a road bar under a year, "CON SỐ 2026", hooks at "3,81%" / "4,30%") → the year rule
+  holds in every design with a meter (ring, orbit, road: null fill, not drawn), retro's kicker is
+  "NĂM" / "NGÀY", and every hook count-up goes through `hookCount` → `check-design-figures` (f)
+  evaluates the fills and kickers; no `countTo * t` in any design (source) · `checked`
