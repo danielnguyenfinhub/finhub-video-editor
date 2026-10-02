@@ -204,10 +204,72 @@ export const asSaid = (big: string): boolean => saidKind(big) !== null;
 
 // The hook's count-up (viewed critique 08, V2/S1): never from 0, which shows
 // rates that never existed. `t` is the design's own 0 -> 1 count progress;
-// the value counts only its last tenth and is exact from half way, so the
-// true number is up by the hook's peak.
-export const hookCount = (to: number, t: number): number =>
-  to * (0.9 + 0.1 * Math.min(1, Math.max(0, t) * 2));
+// only the fractional part counts, from 90 % of it, so a whole number never
+// shows a wrong value ("10%" never "9%") and the value is exact from half way,
+// up by the hook's peak (review c849a4c).
+export const hookCount = (to: number, t: number): number => {
+  const k = 0.9 + 0.1 * Math.min(1, Math.max(0, t) * 2);
+  const whole = Math.trunc(to);
+  return k >= 1 ? to : whole + (to - whole) * k;
+};
+
+// The hook's text at count progress t, the one formatter every design prints
+// (review 40bdcff). It returns `big` unchanged unless `big` holds exactly one
+// number token whose value, read with the token's own marks and sign, equals
+// countTo; then, before the count ends, it replaces only that token with
+// hookCount's value written the token's way (its decimals, its thousands and
+// decimal marks, its sign). Everything else in `big` stays as written; suffix
+// and decimals never rebuild the text. A year or a date is never counted.
+export const hookText = (
+  // decimals and suffix are accepted (every Hook has them) and ignored.
+  hook: { big: string; countTo?: number; decimals?: number; suffix?: string },
+  t: number,
+): string => {
+  const { big, countTo } = hook;
+  if (countTo === undefined || t >= 1 || asSaid(big)) return big;
+  const tokens = [...big.matchAll(NUMBER_TOKEN)];
+  if (tokens.length !== 1 || tokens[0].index === undefined) return big;
+  const token = tokens[0][0];
+  const style = readToken(token, countTo);
+  if (!style) return big;
+  const at = tokens[0].index;
+  return `${big.slice(0, at)}${writeToken(hookCount(countTo, t), style)}${big.slice(at + token.length)}`;
+};
+// A number as written: an optional sign, digits with ".", "," or (narrow)
+// spaces between them. "3–4" is two tokens; "-0,25" one.
+const NUMBER_TOKEN = /[-\u2212]?\d(?:[.,\u00a0\u202f ]?\d)*/g;
+type TokenStyle = {
+  sign: string;
+  dec: string;
+  group: string;
+  decimals: number;
+};
+// The reading of `token` (decimal mark "," or ".", or none) that is a valid
+// number equal to `value`, with its marks; null when none is.
+const readToken = (token: string, value: number): TokenStyle | null => {
+  const sign = /^[-\u2212]/.test(token) ? token[0] : "";
+  const body = sign ? token.slice(1) : token;
+  for (const dec of [",", ".", ""]) {
+    const [int, frac, extra] = dec ? body.split(dec) : [body];
+    if (extra !== undefined || (frac !== undefined && !/^\d+$/.test(frac)))
+      continue;
+    const groups = int.split(/[.,\u00a0\u202f ]/);
+    const marks: string[] = int.match(/[.,\u00a0\u202f ]/g) ?? [];
+    if (new Set(marks).size > 1 || marks.includes(dec)) continue;
+    if (groups.slice(1).some((g) => g.length !== 3) || groups[0].length === 0)
+      continue;
+    const v =
+      Number(`${groups.join("")}${frac ? `.${frac}` : ""}`) * (sign ? -1 : 1);
+    if (Math.abs(v - value) < 1e-9)
+      return { sign, dec, group: marks[0] ?? "", decimals: frac?.length ?? 0 };
+  }
+  return null;
+};
+const writeToken = (v: number, s: TokenStyle): string => {
+  const [int, frac] = Math.abs(v).toFixed(s.decimals).split(".");
+  const grouped = s.group ? int.replace(/\B(?=(\d{3})+(?!\d))/g, s.group) : int;
+  return `${v < 0 ? s.sign || "-" : ""}${grouped}${frac ? `${s.dec}${frac}` : ""}`;
+};
 
 const AUTO_MS = 2600;
 const AUTO_GAP_MS = 4000;
@@ -262,7 +324,10 @@ const spokenNumbers = (reel: Reel) => {
     if (!bare) {
       // "phần trăm" is already the "%" on the number.
       const after = caps
-        .slice(j + 1 + (percent ? 2 : 0), j + 1 + (percent ? 2 : 0) + LABEL_WORDS)
+        .slice(
+          j + 1 + (percent ? 2 : 0),
+          j + 1 + (percent ? 2 : 0) + LABEL_WORDS,
+        )
         .map((c) => c.text)
         .join("")
         .trim()

@@ -18,6 +18,8 @@ import {
   lenderMentionsOf,
   type Figure,
   asSaid,
+  saidKind,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -196,6 +198,12 @@ const FigureLabel: React.FC<{ text: string; size: number; delay: number }> = ({
   );
 };
 
+// The badge's kicker: a neutral word for a year or a date, never "CON SỐ".
+export const kickerOf = (big: string): string => {
+  const kind = saidKind(big);
+  return kind === "year" ? "NĂM" : kind === "date" ? "NGÀY" : "CON SỐ";
+};
+
 // Stat or automatic figure: the number inside a big starburst badge.
 const BadgeFigure: React.FC<{ figure: Figure; r: number }> = ({
   figure,
@@ -209,7 +217,7 @@ const BadgeFigure: React.FC<{ figure: Figure; r: number }> = ({
   return (
     <StageBox>
       <StarBadge r={r}>
-        <Kicker text="CON SỐ" size={r * 0.13} />
+        <Kicker text={kickerOf(figure.big)} size={r * 0.13} />
         <div style={numberStyle(size)}>{text}</div>
       </StarBadge>
       {share === null ? null : <HalftoneBar share={share} width={r * 2.4} />}
@@ -220,57 +228,20 @@ const BadgeFigure: React.FC<{ figure: Figure; r: number }> = ({
   );
 };
 
-// A figure said during the hook: a small secondary sticker, bottom right.
-const ChipFigure: React.FC<{ figure: Figure }> = ({ figure }) => {
-  const t = useCount(4, 26);
-  const r = 84;
-  return (
-    <div
-      style={{
-        position: "absolute",
-        right: 1080 - SAFE.right,
-        // Under the hook's ribbon, above the low caption band.
-        top: STAGE.bottom + 30 - (2 * r + 32),
-        fontFamily: FONT,
-      }}
-    >
-      <StarBadge r={r} fill={CREAM} spin={0.8} points={16}>
-        <div
-          style={numberStyle(
-            Math.min(40, (r * 1.2) / (0.7 * figure.big.length)),
-          )}
-        >
-          {counted(figure.big, t)}
-        </div>
-      </StarBadge>
-    </div>
-  );
-};
-
 // ------------------------------------------------------------- hook
 
 const HookPoster: React.FC<{
   hook: NonNullable<EditJson["hook"]>;
-  shared: boolean;
-}> = ({ hook, shared }) => {
+}> = ({ hook }) => {
   const frame = useCurrentFrame();
   const t = useCount(4, 34);
   const s = useStamp(0);
   const out = interpolate(frame, [HOOK_FRAMES - 8, HOOK_FRAMES], [1, 0], clamp);
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
-  const size = Math.min(
-    shared ? 190 : 230,
-    (STAGE_W - 80) / (0.64 * hook.big.length),
-  );
+  const big = hookText(hook, t);
+  const size = Math.min(230, (STAGE_W - 80) / (0.64 * hook.big.length));
   const sub = interpolate(frame, [10, 20], [0, 1], clamp);
   return (
-    <StageBox place={shared ? "top" : "center"}>
+    <StageBox>
       <div
         style={{
           opacity: out,
@@ -375,14 +346,13 @@ const LenderCoupon: React.FC<{ lender: Lender }> = ({ lender }) => {
 
 export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
+  // figuresOf starts every figure after the hook (golden rule 1).
   const figures = figuresOf(reel, fps);
-  const duringHook = (f: Figure) =>
-    reel.edit.hook !== undefined && f.fromFrame < HOOK_FRAMES;
   return (
     <>
       {reel.edit.hook ? (
         <Sequence durationInFrames={HOOK_FRAMES} layout="none">
-          <HookPoster hook={reel.edit.hook} shared={figures.some(duringHook)} />
+          <HookPoster hook={reel.edit.hook} />
         </Sequence>
       ) : null}
       {figures.map((f) => (
@@ -392,11 +362,7 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
           durationInFrames={f.frames}
           layout="none"
         >
-          {duringHook(f) ? (
-            <ChipFigure figure={f} />
-          ) : (
-            <BadgeFigure figure={f} r={f.source === "stat" ? 175 : 150} />
-          )}
+          <BadgeFigure figure={f} r={f.source === "stat" ? 175 : 150} />
         </Sequence>
       ))}
       {lenderMentionsOf(reel).map((m) => {

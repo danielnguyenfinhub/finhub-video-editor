@@ -137,3 +137,34 @@ screen ("the rate card"), never whose.
 - 02/10/2026 · design:receipt, timelapse · recheck 09: "sau 3 / lần tăng", "cơ / bản" → a headline
   never splits a number from its word or a two-word finance unit (`keepUnits`, no-break spaces;
   src/elements/keepUnits.ts) → evaluated in `check-design-figures`, its use by source · `checked`
+- 02/10/2026 · classic `Panel` (every host) · "Fix all these", review c849a4c (step panel dropped in over
+  the logo and above SAFE; checklist unclipped; LogoMark on the panel's corner; explainer points at y 110)
+  → `Panel` is clipped at its rest top only while above it (no shadow then), so it never reaches above
+  where it rests; while the logo shows a panel resting above its bottom keeps its right edge at
+  `LOGO_CLEAR`, decided once per cue (a cue touching a logo window ±8 frames is narrow for its whole
+  life: it never rewraps while read, at the cost of a long cue staying narrow after the logo leaves);
+  every host sets `PanelPlace` (explainer's points at 0.8 from SAFE.top) → check-design-figures (g),
+  all hosts, one width per cue · `checked`; a narrowed trend graph prints its values under 32 px;
+  youtube/Kit narrows on the vertical logo windows, not LogoMark16's (from frame 0), and rests at
+  y 62 above YT_SAFE (older) · `rule` (known risks)
+- 02/10/2026 · design:ticker · VI and EN lines split by the tape; a 4th EN line clipped → bilingual lines
+  are one block (EN right under the caption, tape on SAFE.bottom); EN shrinks to fit its band · `rule`
+- 02/10/2026 · promote-design · "Fix all these", review c849a4c → `promoted` attests: a check that cannot
+  run (talking-head fixture without recording and matte) is INCOMPLETE, never "ok"; the faceless
+  fixture's sandbox placeholder is navy, NOT its stock footage, so a sandbox pass proves the render, not
+  the look over footage (logged "SANDBOX PICTURE"; faceless itself promotes on Daniel's PC) →
+  check-promote (fixture media) · `checked`; the look over footage · `rule`
+- 02/10/2026 · kinetic, whiteboard, retro, receipt, paper, blueprint · dead hook-share branches → a design
+  does not re-handle what the core guarantees; delete once a fixture replay proves it unreachable →
+  check-design-figures (h) · `checked`
+- 02/10/2026 · all designs · view7 stills and review c849a4c (rings/road bars on years, "CON SỐ 2026",
+  hooks from 0 via `countTo * t` or `[0, hook.countTo]`, "4,1TỶ ĐÔ", "9%" for 10%) → a year or date
+  never gets a ring, road or count; every hook prints through the core `hookText`: `big` unchanged
+  unless its one number token equals countTo, then only that token counts, written its own way
+  ("-0,25%", "$4.1B", "750 000 ĐÔ"), suffix/decimals never rebuild it → check-design-figures (d)(f),
+  evaluated on 19 hooks; any other `countTo` read in a design fails (source) · `checked`
+- 02/10/2026 · blueprint, orbit, phoneapp · a figure under a compare cue; "0/2" bar half full → the cue
+  wins, but a figure is never dropped (rule 1, review 557b020): cut after its floor, held over the
+  cue's drop-in when short by ≤ 10 frames, else shown after the cue (a chip when another cue holds
+  the stage); the bar is said / n → check-design-figures (i), every fixture · `checked`; how a chip is
+  drawn (blueprint FigureChip, orbit moon) by source only, no fixture reaches it · `rule`

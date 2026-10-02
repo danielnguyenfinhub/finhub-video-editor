@@ -12,6 +12,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  asSaid,
 } from "../../mortgage/golden";
 import type { Lender } from "../../mortgage/lenders";
 import {
@@ -186,7 +187,7 @@ export const hookScene = (hook: Hook): ScaleScene => ({
       height: STACK_MAX * 0.85,
       big: true,
       count:
-        hook.countTo === undefined
+        hook.countTo === undefined || asSaid(hook.big)
           ? undefined
           : {
               to: hook.countTo,

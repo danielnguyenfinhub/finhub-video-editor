@@ -188,43 +188,12 @@ const barFill = (big: string): number | null => {
 };
 
 // Short automatic figure: the number boxed in marker, a doodle beside it, a
-// hatched bar for a percentage. `chip`: said during the hook, so it is a small
-// circled note in the stage's top-left corner instead.
-const AutoFigure: React.FC<{ figure: Figure; chip: boolean }> = ({
-  figure,
-  chip,
-}) => {
+// hatched bar for a percentage.
+const AutoFigure: React.FC<{ figure: Figure }> = ({ figure }) => {
   const frame = useCurrentFrame();
   const e = useErase(6);
   const icon = useDraw(8, 20);
   const fill = barFill(figure.big);
-  if (chip)
-    return (
-      <div
-        style={{
-          position: "absolute",
-          left: SAFE.left + 50,
-          top: STAGE.top - 20,
-          fontFamily: FONT,
-          ...erased(e),
-        }}
-      >
-        <Circle
-          progress={interpolate(frame, [8, 22], [0, 1], clamp)}
-          color={BLUE}
-          strokeWidth={5}
-          iterations={1}
-          seed={5}
-          padding={{ left: 16, right: 16, top: 8, bottom: 8 }}
-        >
-          <Written frames={10}>
-            <span style={{ fontSize: 54, fontWeight: 900, color: BLUE }}>
-              {figure.big}
-            </span>
-          </Written>
-        </Circle>
-      </div>
-    );
   const size = figure.big.length > 7 ? 120 : 160;
   return (
     <StageBox>
@@ -318,12 +287,10 @@ const SketchBar: React.FC<{ fill: number }> = ({ fill }) => {
 // ------------------------------------------------------------- hook
 
 // The headline written across the board, underlined twice; the sub line
-// written under it. `shared`: a figure said during the hook sits as a chip in
-// the stage's top-left corner, so the headline moves down a little.
+// written under it.
 const HookBoard: React.FC<{
   hook: NonNullable<EditJson["hook"]>;
-  shared: boolean;
-}> = ({ hook, shared }) => {
+}> = ({ hook }) => {
   const e = useErase(10);
   const sub = useDraw(30, 14);
   return (
@@ -331,7 +298,6 @@ const HookBoard: React.FC<{
       <div
         style={{
           ...erased(e),
-          marginTop: shared ? 90 : 0,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -452,14 +418,13 @@ const LenderCard: React.FC<{ lender: Lender }> = ({ lender }) => {
 
 export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
+  // figuresOf starts every figure after the hook (golden rule 1).
   const figures = figuresOf(reel, fps);
-  const duringHook = (f: Figure) =>
-    reel.edit.hook !== undefined && f.fromFrame < HOOK_FRAMES;
   return (
     <>
       {reel.edit.hook ? (
         <Sequence durationInFrames={HOOK_FRAMES} layout="none">
-          <HookBoard hook={reel.edit.hook} shared={figures.some(duringHook)} />
+          <HookBoard hook={reel.edit.hook} />
         </Sequence>
       ) : null}
       {figures.map((f) => (
@@ -472,7 +437,7 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
           {f.source === "stat" ? (
             <StatFigure figure={f} />
           ) : (
-            <AutoFigure figure={f} chip={duringHook(f)} />
+            <AutoFigure figure={f} />
           )}
         </Sequence>
       ))}

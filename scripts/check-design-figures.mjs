@@ -15,9 +15,16 @@
 //   (e) every design whose said caption word grows keeps a non-zero `saidRoom` margin, in use
 //       ("ThángHai"); kinetic fits its lines to FIT_W, narrower than SAFE_W;
 //   (f) evaluated: no meter, bar, ring or needle for a year (flash, ticker, kinetic, faceless,
-//       gauge), a neutral kicker not "CON SỐ" for a year or date, a level scale beam for a lone
+//       gauge, orbit, phoneapp, journey), every hook count through hookCount (source), a neutral kicker not "CON SỐ" for a year or date, a level scale beam for a lone
 //       hook value and plaques off the pillar, no "TỔNG" on a rate, the calendar title page torn
-//       before a points notepad, headline units kept together (keepUnits).
+//       before a points notepad, headline units kept together (keepUnits);
+//   (g) classic cue panels (Panel) in every design that places one: clipped at their rest top,
+//       inside SAFE at every drop-in / fly-out frame, right edge clear of the measured LogoMark
+//       tile while it shows;
+//   (h) replay of every public/videos fixture with words: with a hook, no figure before
+//       HOOK_FRAMES (the hook-time branches deleted from six designs stay unreachable).
+//   (i) blueprint and orbit, every fixture: every figure on the stage, yielding to a compare cue; phoneapp's
+//       checklist bar is said / n; (d) also runs every hook text on "4,1 TỶ ĐÔ", "10%", "2026".
 // Source checks (marked "source" below) read comment-stripped, whitespace-free code, so a
 // commented-out use does not pass; they cannot see a render, so what they guard is a `rule`
 // in corrections.md, not `checked`.
@@ -201,19 +208,63 @@ const await_calendar = await design("calendar/Page.tsx");
 const await_timelapse = await design("timelapse/Plan.ts");
 const await_split = await design("splitscreen/Scenes.tsx");
 const await_flip = await design("flipcard/Stage.tsx");
-const hookTexts = {
-  gauge: (t) => gaugeMod.hookView(HOOK_RATE, 6 + 32 * (1 - Math.cbrt(1 - t)), FPS).readout.text, // lf for eased t
-  pulse: (t) => await_pulse.hookText(HOOK_RATE, t),
-  scale: (t) => scaleStage.counted(lone.pans[1], landAt + 26 * (1 - Math.cbrt(1 - t))),
-  receipt: (t) => await_receipt.hookValue(HOOK_RATE, t),
-  calendar: (t) => await_calendar.countAt(HOOK_RATE, t),
-  timelapse: (t) => await_timelapse.hookScrub(HOOK_RATE)(t),
-  splitscreen: (t) => await_split.hookText(HOOK_RATE, t),
-  flipcard: (t) => await_flip.hookText(HOOK_RATE, t),
+// Each design's own hook text for a hook and a count progress t.
+const scaleText = (hook, t) => {
+  const pan = scalePlan.hookScene(hook).pans[1];
+  return scaleStage.counted(pan, pan.dropAt + scalePlan.FALL + 26 * (1 - Math.cbrt(1 - t)));
 };
+const hookTexts = {
+  gauge: (hook, t) => gaugeMod.hookView(hook, 6 + 32 * (1 - Math.cbrt(1 - t)), FPS).readout.text, // lf for eased t
+  pulse: (hook, t) => await_pulse.hookText(hook, t),
+  scale: scaleText,
+  receipt: (hook, t) => await_receipt.hookValue(hook, t),
+  calendar: (hook, t) => await_calendar.countAt(hook, t),
+  timelapse: (hook, t) => await_timelapse.hookScrub(hook)?.(t) ?? hook.big,
+  splitscreen: (hook, t) => await_split.hookText(hook, t),
+  flipcard: (hook, t) => await_flip.hookText(hook, t),
+  core: (hook, t) => golden.hookText(hook, t), // every other design prints through it (source check below)
+};
+// The auditor's edge cases (review c849a4c): a word unit keeps its space, a whole number never
+// starts on a wrong value, a year-like hook is never counted.
+const HOOK_UNIT = { big: "4,1 TỶ ĐÔ", countTo: 4.1, decimals: 1, suffix: "TỶ ĐÔ" };
+const HOOK_INT = { big: "10%", countTo: 10, suffix: "%" };
+const HOOK_YEAR = { big: "2026", countTo: 2026 };
+// Every hook ends exactly as written (review 557b020): thousands, a "$", a word unit.
+const HOOK_ENDS = [HOOK_RATE, HOOK_UNIT, HOOK_INT, { big: "750.000 ĐÔ", countTo: 750000, suffix: "ĐÔ" }, { big: "$4.1B", countTo: 4.1, decimals: 1, suffix: "B" }, { big: "3 TIÊU CHÍ", countTo: 3, suffix: "TIÊU CHÍ" },
+  // review 40bdcff: schema-valid inputs that came out wrong; suffix/decimals must never rebuild the text.
+  { big: "-0,25%", countTo: -0.25, decimals: 2, suffix: "%" }, { big: "-1,5%", countTo: -1.5, decimals: 1, suffix: "%" },
+  { big: "4,35%", countTo: 4.35, decimals: 1, suffix: "%" }, { big: "750 000 ĐÔ", countTo: 750000, suffix: "ĐÔ" },
+  { big: "6 TRIỆU", countTo: 6000000, suffix: "TRIỆU" }, { big: "3–4", countTo: 4 }, { big: "600 NGHÌN", countTo: 600, suffix: "nghìn" },
+  { big: "4,1 TỶ", countTo: 4.1, decimals: 1, suffix: "TỶ ĐÔ" }, { big: "4,350%", countTo: 4.35, decimals: 3, suffix: "%" },
+  { big: "", countTo: 1 }, { big: "—", countTo: 1 }, { big: "1,5–2,5%", countTo: 1.5 }, { big: "$600,000", countTo: 600000 }, { big: "1.234,5 k", countTo: 1234.5, decimals: 1, suffix: "k" }];
+// Mid-count the text keeps big's exact shape (every digit read as 9): its prefix, suffix and units,
+// sign, thousands and decimal marks and decimals; only digits of the counted fraction change.
+const shape = (x) => String(x).replace(/\d/g, "9");
+// A big with more than one number (a range) is ambiguous: it never counts.
+const numbers = (x) => (String(x).match(/[-−]?\d(?:[.,   ]?\d)*/g) ?? []).length;
 for (const [name, text] of Object.entries(hookTexts)) {
-  const seen = [0, 0.5, 1].map(text);
+  const seen = [0, 0.5, 1].map((t) => text(HOOK_RATE, t));
   check(`${name}: hook never counts from 0, exact by half its count`, num(seen[0]) >= 0.9 * 4.35 - 0.006 && seen.slice(1).every((x) => num(x) === 4.35), seen.join(" | "));
+  const ts = [0, 0.1, 0.3, 0.5, 1];
+  const unit = ts.map((t) => text(HOOK_UNIT, t));
+  check(`${name}: a word unit keeps its space ("4,1 TỶ ĐÔ")`, unit.every((x) => /^\d[\d.,]* TỶ ĐÔ$/.test(x)) && unit.at(-1) === "4,1 TỶ ĐÔ", unit.join(" | "));
+  const int = ts.map((t) => text(HOOK_INT, t));
+  check(`${name}: a whole number never shows a wrong value ("10%")`, int.every((x) => x === "10%"), int.join(" | "));
+  const year = ts.map((t) => text(HOOK_YEAR, t));
+  check(`${name}: a year-like hook is never counted`, year.every((x) => x === "2026"), year.join(" | "));
+  const odd = HOOK_ENDS.flatMap((h) => [0, 0.25, 0.5, 0.75, 1].map((t) => [h.big, t, text(h, t)]))
+    .filter(([big, , out]) => (out.includes("--") && !big.includes("--")) || shape(out) !== shape(big) || (numbers(big) > 1 && out !== big));
+  check(`${name}: mid-count keeps big's exact shape (no "--", no doubled unit, same marks and decimals)`, odd.length === 0, odd.slice(0, 4).map(([b, t, o]) => `${b}@${t} -> ${o}`).join(", ") || `${HOOK_ENDS.length} hooks`);
+  const ends = HOOK_ENDS.map((h) => [h.big, text(h, 1)]);
+  check(`${name}: every hook ends as written ("750.000 ĐÔ", "$4.1B", …)`, ends.every(([a, b]) => a === b), ends.filter(([a, b]) => a !== b).map(([a, b]) => `${a} -> ${b}`).join(", ") || "all equal");
+}
+// Every fixture hook with a count ends exactly as written.
+{
+  const vids = join(ROOT, "public", "videos");
+  const hooks = readdirSync(vids).filter((d) => existsSync(join(vids, d, "edit.json")))
+    .map((d) => [d, JSON.parse(readFileSync(join(vids, d, "edit.json"), "utf8")).hook]).filter(([, h]) => h?.countTo !== undefined);
+  const bad = hooks.filter(([, h]) => golden.hookText(h, 1) !== h.big).map(([d, h]) => `${d}: ${h.big} -> ${golden.hookText(h, 1)}`);
+  check("hookText(hook, 1) === hook.big for every fixture hook that counts", hooks.length >= 2 && bad.length === 0, bad.join("; ") || `${hooks.length} hooks`);
 }
 
 // (e) said-word scale keeps the word space; kinetic fits to the narrower width.
@@ -248,10 +299,25 @@ for (const [name, fill, gate] of fills) {
   const js = code(fillFiles[name]).js;
   check(`${name} (source): the meter is drawn only when its fill is not null`, gate.test(js) && js.split(/fill(?:To)?===null\?null:/).length === 2);
 }
+// A ring, orbit or road meter is drawn only for a non-null fill (the prop types make a null
+// fill a tsc error, so every call site has to gate it).
+for (const [name, file, fn] of [["orbit", "orbit/Stage.tsx", "arcFill"], ["phoneapp", "phoneapp/Phone.tsx", "ringFill"], ["journey", "journey/Stage.tsx", "roadFill"]]) {
+  const fill = (await design(file))[fn];
+  check(`${name}: no ring or road meter for a year or a date`, SAID.every((b) => fill(b) === null) && fill("4,35%") > 0, SAID.map(fill).join(","));
+}
+// Comment-stripped, whitespace-free: outside the files whose hook text (d) evaluates, a design
+// may only test `countTo` against undefined; any other read (arithmetic, `?? 0`, interpolate,
+// formatting) fails, so every other hook prints through the core hookText.
+const EVALUATED = ["gauge/Scenes.tsx", "scale/Plan.ts", "pulse/Beats.tsx", "receipt/Stage.tsx", "calendar/Page.tsx", "timelapse/Plan.ts", "splitscreen/Scenes.tsx", "flipcard/Stage.tsx"];
+const fromZero = readdirSync(join(ROOT, "src", "designs"), { recursive: true })
+  .map((f) => f.replace(/\\/g, "/"))
+  .filter((f) => /\.tsx?$/.test(f) && !EVALUATED.includes(f))
+  .filter((f) => /\.countTo(?![!=]==(?:void0|undefined))/.test(code(f).js.replace(/\s/g, "")));
+check("every design's hook text goes through the core hookText (source: no countTo read but an undefined test)", fromZero.length === 0, fromZero.join(", "));
 const yearView = gaugeMod.figureView({ big: "2026", label: "", source: "auto", fromFrame: 0, frames: 45 }, 20, FPS);
 const rateView = gaugeMod.figureView({ big: "4,35%", label: "", source: "auto", fromFrame: 0, frames: 45 }, 20, FPS);
 check("gauge: a year is a plain readout (dial dimmed, no lit arc), a rate keeps its needle", yearView.plain === true && !yearView.lit && yearView.readout.text === "2026" && !rateView.plain && Boolean(rateView.lit));
-const kickers = [["ticker", "ticker/Stage.tsx"], ["receipt", "receipt/Figures.tsx"], ["splitscreen", "splitscreen/Chip.tsx"], ["bigdigit", "bigdigit/Stage.tsx"], ["flash", "flash/Figures.tsx"]];
+const kickers = [["ticker", "ticker/Stage.tsx"], ["receipt", "receipt/Figures.tsx"], ["splitscreen", "splitscreen/Chip.tsx"], ["bigdigit", "bigdigit/Stage.tsx"], ["flash", "flash/Figures.tsx"], ["retro", "retro/Stage.tsx"]];
 for (const [name, file] of kickers) {
   const { kickerOf } = await design(file);
   const k = ["2026", "29/9", "4,35%"].map(kickerOf);
@@ -275,6 +341,192 @@ check("keepUnits: a number keeps its word, two-word units stay whole", kept === 
 for (const file of ["receipt/Stage.tsx", "timelapse/Scenes.tsx"])
   check(`${file} (source): headline wrapped through keepUnits`, /keepUnits\((hook\.sub|s\.title)\)/.test(code(file).js));
 check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.edit\.hook\?HOOK_FRAMES:0,[^}]*children:jsx\(Tape\b/.test(code("ticker/index.tsx").js));
+
+// (g) classic cue panels (Panel, classic/Infographics.tsx), in every design that places one: each
+// panel host's real offset (bundled from its source), Panel's own motion and clip, and the
+// LogoMark's measured tile. At every drop-in and fly-out frame the visible top stays inside SAFE
+// and no higher than the rest top; while the logo shows, a panel resting in its band keeps its
+// right edge left of the logo.
+{
+  const { spring } = await import("remotion");
+  const { pop } = await bundle("src/mortgage/style.ts");
+  const info = await design("classic/Infographics.tsx");
+  const panel = code("classic/Infographics.tsx").js;
+  const motion = panel.match(/const Panel=[\s\S]*?const y=interpolate\(inP,\[0,1\],\[(-?\d+),0\]\)-exit\*(\d+);const moving=y<-1;[\s\S]*?clipPath:moving\?`inset\(\$\{PANEL_TOP\}px 0 0 0\)`:void 0[\s\S]*?top:PANEL_TOP,[\s\S]*?right:1080-SAFE\.right\+clear,[\s\S]*?boxShadow:moving\?"none":[\s\S]*?translateY\(\$\{y\}px\)/);
+  check("classic Panel (source): clipped at PANEL_TOP, rests at PANEL_TOP, right edge clears the logo, motion read", Boolean(motion), motion ? `from ${motion[1]}, out ${motion[2]}` : "Panel's clip, top, right or motion not found");
+  // Panel hosts: every file that passes a panelOffset or provides PanelPlace, and every file that
+  // mounts a classic panel (Panel, Points or the classic CueView) must set PanelPlace.
+  const files = readdirSync(join(ROOT, "src", "designs"), { recursive: true }).map((f) => f.replace(/\\/g, "/")).filter((f) => /\.tsx?$/.test(f));
+  const mounts = files.filter((f) => f !== "classic/Infographics.tsx" && /import\{[^}]*\b(Panel|Points)\b[^}]*\}from"(?:\.\.\/classic|\.)\/Infographics"/.test(code(f).js.replace(/\s/g, "")));
+  const unplaced = mounts.filter((f) => !/PanelPlace\.Provider/.test(code(f).js));
+  check("every file that mounts a classic Panel sets its PanelPlace", mounts.length >= 2 && unplaced.length === 0, `mounts: ${mounts.join(", ")}${unplaced.length ? `; unplaced: ${unplaced.join(", ")}` : ""}`);
+  // Real offsets: the file bundled with its panelOffset / POINTS_OFFSET expressions exported.
+  // Each host: its offset, its layer width (MotionTrack and explainer full width, checklist's
+  // ColumnCueTrack HOST_WIDTH, bundled too) and whether it passes logo={false}.
+  const offsetsOf = async (f) => {
+    const src = readFileSync(join(ROOT, "src", "designs", f), "utf8");
+    const found = [...src.matchAll(/panelOffset=\{([^}]+)\}/g)].map((m) => {
+      const open = Math.max(src.lastIndexOf("<MotionTrack", m.index), src.lastIndexOf("<ColumnCueTrack", m.index));
+      const tag = src.slice(open, src.indexOf("/>", m.index));
+      return { expr: m[1], column: tag.startsWith("<ColumnCueTrack"), logo: !/logo=\{false\}/.test(tag) };
+    });
+    if (/const POINTS_OFFSET\b/.test(src)) found.push({ expr: "POINTS_OFFSET", column: false, logo: true, scaled: true });
+    if (!found.length) return [];
+    const exprs = found.map((h) => h.expr).concat(found.some((h) => h.scaled) ? ["POINTS_SCALE"] : []);
+    const outfile = join(out, `${f.replace(/\W/g, "_")}-offsets.mjs`);
+    buildSync({ stdin: { contents: `${src}\nexport const __offsets = [${exprs.join(", ")}];`, loader: f.endsWith("x") ? "tsx" : "ts", resolveDir: join(ROOT, "src", "designs", f, "..") },
+      bundle: true, format: "esm", platform: "node", jsx: "automatic", packages: "external", logLevel: "error", outfile });
+    const offs = (await import(pathToFileURL(outfile).href)).__offsets;
+    // The scale the layer is really drawn at: POINTS_SCALE only if the rendered transform applies
+    // it from (SAFE.left, PANEL_TOP); otherwise 1 (and the offset only if it translates by it).
+    const drawn = code(f).js.replace(/\s/g, "");
+    const scaled = /transform:`translateY\(\$\{POINTS_OFFSET\}px\)scale\(\$\{POINTS_SCALE\}\)`,transformOrigin:`\$\{SAFE\.left\}px\$\{PANEL_TOP\}px`/.test(drawn);
+    const moved = /transform:`translateY\(\$\{POINTS_OFFSET\}px\)/.test(drawn);
+    const told = /PanelPlace\.Provider,\{value:\{[^}]*scale:POINTS_SCALE/.test(drawn); // the scale Panel is told
+    return found.map((h, i) => ({
+      offset: h.scaled && !moved ? 0 : offs[i], logo: h.logo, width: h.column ? columnWidth : 1080,
+      scale: h.scaled && scaled ? offs.at(-1) : 1, toldScale: h.scaled && told ? offs.at(-1) : 1,
+    }));
+  };
+  // checklist's ColumnCueTrack layer width, from its own module.
+  const colOut = join(out, "column-width.mjs");
+  buildSync({ stdin: { contents: `${readFileSync(join(ROOT, "src", "designs", "checklist", "ColumnCues.tsx"), "utf8")}\nexport const __w = HOST_WIDTH;`, loader: "tsx", resolveDir: join(ROOT, "src", "designs", "checklist") },
+    bundle: true, format: "esm", platform: "node", jsx: "automatic", packages: "external", logLevel: "error", outfile: colOut });
+  const columnWidth = (await import(pathToFileURL(colOut).href)).__w;
+  const hosts = [];
+  for (const f of files.filter((f) => /panelOffset=\{|const POINTS_OFFSET\b/.test(readFileSync(join(ROOT, "src", "designs", f), "utf8"))))
+    for (const h of await offsetsOf(f)) hosts.push([f, h]);
+  // The LogoMark tile: the logo file's size, LOGO_HEIGHT, LogoMark's padding and its pop-in spring.
+  const png = readFileSync(join(ROOT, "public", "brand", "finhub-logo.png"));
+  const [pw, ph] = [png.readUInt32BE(16), png.readUInt32BE(20)];
+  const logoJs = code("../mortgage/LogoMark.tsx").js;
+  const pad = logoJs.match(/padding:"(\d+)px (\d+)px"/)?.slice(1).map(Number) ?? [NaN, NaN];
+  const cfg = logoJs.match(/damping:(\d+),stiffness:(\d+)/)?.slice(1).map(Number) ?? [NaN, NaN];
+  const grow = Math.max(...[...Array(60).keys()].map((f) => 0.6 + 0.4 * spring({ frame: f, fps: FPS, config: { damping: cfg[0], stiffness: cfg[1] } })));
+  const logo = { left: golden.SAFE.right - (golden.LOGO_HEIGHT * pw / ph + 2 * pad[1]) * grow, bottom: golden.SAFE.top + (golden.LOGO_HEIGHT + 2 * pad[0]) * grow };
+  check("Panel's logo constants hold the measured LogoMark tile", info.LOGO_CLEAR < logo.left && info.LOGO_BOTTOM >= logo.bottom, `tile left ${logo.left.toFixed(1)}, bottom ${logo.bottom.toFixed(1)} (pop ${grow.toFixed(3)}); LOGO_CLEAR ${info.LOGO_CLEAR}, LOGO_BOTTOM ${info.LOGO_BOTTOM}`);
+  const [from, outBy] = motion ? [Number(motion[1]), Number(motion[2])] : [NaN, NaN];
+  const dur = 120;
+  const talk = 1500;
+  check("checklist/ColumnCues.tsx (source): its PanelPlace carries the column's width", /PanelPlace\.Provider,\{value:\{[^}]*width:HOST_WIDTH/.test(code("checklist/ColumnCues.tsx").js.replace(/\s/g, "")));
+  const drawsLogo = (f) => {
+    const dir = join(ROOT, "src", "designs", f.split("/")[0]);
+    return readdirSync(dir).some((x) => /\.tsx$/.test(x) && /<LogoMark\b/.test(readFileSync(join(dir, x), "utf8")));
+  };
+  for (const [f, { offset, width, logo: logoOn, scale, toldScale }] of hosts) {
+    const rest = info.PANEL_TOP + offset;
+    const frames = [...Array(31).keys(), ...Array.from({ length: 11 }, (_, i) => dur - 10 + i)];
+    const tops = frames.map((fr) => {
+      const exit = Math.min(1, Math.max(0, (fr - (dur - 10)) / 10));
+      const y = from * (1 - pop(fr, FPS, 0)) - exit * outBy;
+      return motion && y < -1 ? Math.max(rest + y, rest) : rest + y; // clipped only while above the line
+    });
+    const high = Math.min(...tops);
+    const name = `${f.split("/")[0]} (${f}, rest ${rest})`;
+    check(`${name}: panel inside SAFE, never above its rest top`, Number.isFinite(high) && high >= golden.SAFE.top - 1 && high >= rest - 1, `highest visible top ${Math.round(high)}`);
+    const hasLogo = drawsLogo(f);
+    if (!logoOn) check(`${name}: logo={false} only in a design without a LogoMark`, !hasLogo);
+    if (rest < logo.bottom && hasLogo) {
+      // Sample cues starting every 10 frames, short and long: the panel's right edge is the same
+      // at every frame of a cue (no rewrap while read) and left of the logo whenever it shows.
+      const place = { offset, talkFrames: talk, width, logo: logoOn, scale: toldScale };
+      const bad = [];
+      for (let from = 0; from < talk && bad.length < 3; from += 10)
+        for (const dur of [40, 200]) {
+          // On screen: a scaled host shrinks from SAFE.left.
+          const edges = [...Array(dur).keys()].map((fr) => golden.SAFE.left + (width - (1080 - golden.SAFE.right) - info.panelInset({ ...place, from }, fr, dur, FPS) - golden.SAFE.left) * scale);
+          if (new Set(edges).size !== 1) bad.push(`cue ${from}+${dur}: width changes`);
+          const hit = edges.findIndex((e, fr) => golden.logoVisible(from + fr, talk, FPS) && !(e < logo.left));
+          if (hit >= 0) bad.push(`cue ${from}+${dur}: frame ${from + hit} under the logo`);
+        }
+      check(`${name}: one width per cue, clear of the LogoMark whenever it shows`, bad.length === 0, bad.join("; ") || `layer ${width}`);
+    }
+  }
+  check("panel hosts found", hosts.length >= 30, `${hosts.length}`);
+}
+
+// (i) blueprint and orbit, every fixture with words: every core figure is on the stage (rule 1,
+// never dropped); none shares it with a compare cue except a hold over the cue's drop-in (at most
+// 10 frames, to reach the reading floor); a figure moved after the cue is a chip whenever another
+// cue holds the stage then (rba-sept-2026: 2027 at 705 holds 45 frames, 1 over compare 749).
+{
+  const { outFrameOf } = await bundle("src/mortgage/schema.ts");
+  const { recordingPath } = await bundle("src/mortgage/recording.ts");
+  const vids = join(ROOT, "public", "videos");
+  const stages = await Promise.all(["blueprint", "orbit"].map(async (n) => [n, (await design(`${n}/Stage.tsx`)).stageFigures]));
+  let replayed = 0;
+  for (const slug of readdirSync(vids).sort()) {
+    const editPath = join(vids, slug, "edit.json");
+    if (!existsSync(editPath)) continue;
+    const edit = JSON.parse(readFileSync(editPath, "utf8"));
+    const wordsPath = join(ROOT, "public", recordingPath(slug, edit.source, "words.json"));
+    if (!existsSync(wordsPath)) continue;
+    const raw = reelOf(JSON.parse(readFileSync(wordsPath, "utf8")), edit);
+    const reel = { ...raw, edit: golden.readingFloor(raw, FPS).edit };
+    const at = outFrameOf(reel.timeline, FPS);
+    const cues = (reel.edit.cues ?? []).filter((c) => c.kind !== "emoji").map((c) => [at(c.fromMs), at(c.toMs), c.kind]);
+    const core = figuresOf(reel, FPS);
+    replayed++;
+    for (const [name, stageFigures] of stages) {
+      const shown = stageFigures(reel, FPS);
+      const missing = core.filter((f) => !shown.some((g) => g.saidFrame === f.saidFrame)).map((f) => f.big);
+      const onCompare = shown.filter((f) => cues.some(([a, b, k]) => k === "compare" && f.fromFrame < b && a < f.fromFrame + f.frames && !(f.fromFrame < a && f.fromFrame + f.frames - a <= 10)));
+      const onCue = shown.filter((f) => !f.chip && !core.some((g) => g.saidFrame === f.saidFrame && g.fromFrame === f.fromFrame) && cues.some(([a, b]) => f.fromFrame < b && a < f.fromFrame + f.frames));
+      check(`${name} ${slug}: every figure on the stage, none on a compare cue, a moved one a chip on a busy stage`,
+        missing.length === 0 && onCompare.length === 0 && onCue.length === 0 && shown.every((f) => f.frames >= hold),
+        `${spans(shown)}${missing.length ? `; missing ${missing}` : ""}${onCompare.length ? `; on compare ${spans(onCompare)}` : ""}${onCue.length ? `; on a cue ${spans(onCue)}` : ""}`);
+    }
+  }
+  check("blueprint/orbit replay: fixtures found", replayed >= 10, `${replayed}`);
+  if (rba) {
+    const shown = (await design("orbit/Stage.tsx")).stageFigures(rba, FPS);
+    check("rba-sept-2026: 2027 shows at 705, held its floor over the compare drop-in", shown.some((f) => f.big === "2027" && f.fromFrame === 705 && f.frames === hold), spans(shown));
+  }
+  // How a chip is drawn (source): blueprint's small FigureChip under the stage, never the full
+  // FigureSheet; orbit's moon, never the hero on the core. FigureChip is smaller than any sheet number.
+  const bp = code("blueprint/Stage.tsx").js.replace(/\s/g, "");
+  check("blueprint (source): a chip figure is drawn as the small FigureChip, others as FigureSheet",
+    /children:f\.chip\?jsx\(FigureChip,\{figure:f\}\):jsx\(FigureSheet,\{figure:f\}\)/.test(bp) && /constFigureChip=[\s\S]*?fontSize:48,/.test(bp));
+  check("orbit (source): a chip figure is drawn as the moon, never on the core",
+    /children:moons\.has\(f\)\|\|f\.chip\?jsx\(FigureMoon,\{figure:f\}\):jsx\(FigureHero,\{figure:f\}\)/.test(code("orbit/Stage.tsx").js.replace(/\s/g, "")));
+  const { yieldToCompare } = await bundle("src/elements/yieldToCompare.ts");
+  const f = (fromFrame, frames) => ({ fromFrame, frames });
+  const r = yieldToCompare([f(0, 90), f(100, 90), f(300, 60), f(500, 60), f(600, 90)], [[60, 120], [320, 400], [640, 700]], [[60, 120], [320, 400], [400, 430], [640, 700]], 45);
+  const want = [f(0, 60), { ...f(120, 90), chip: false }, { ...f(400, 60), chip: true }, f(500, 60), f(600, 45)];
+  check("yieldToCompare: cut after its floor, held over a short drop-in, moved after the cue (a chip on a busy stage), never dropped", JSON.stringify(r) === JSON.stringify(want), JSON.stringify(r));
+}
+
+// phoneapp's checklist bar: said / n, empty before the first item ("0/2" was half full).
+{
+  const { checklistProgress } = await design("phoneapp/Cues.tsx");
+  const starts = [40, 100];
+  const seen = [0, 39, 45, 70, 105, 130].map((f) => checklistProgress(f, starts));
+  check("phoneapp: the checklist bar shows what has been said (0, then 1/2, then 2/2)", seen[0] === 0 && seen[1] === 0 && seen[2] === 0 && seen[3] === 0.5 && seen[4] === 0.5 && seen[5] === 1, seen.join(" | "));
+}
+
+// (h) the hook-time branches deleted from kinetic, whiteboard, retro, receipt, paper and blueprint
+// stay unreachable: on every fixture in public/videos with words (its reading-time floor applied,
+// as a render does), a reel with a hook has no figure before HOOK_FRAMES. A reel without a hook
+// never took them (each needed a hook).
+{
+  const { recordingPath } = await bundle("src/mortgage/recording.ts");
+  const vids = join(ROOT, "public", "videos");
+  let replayed = 0;
+  for (const slug of readdirSync(vids).sort()) {
+    const editPath = join(vids, slug, "edit.json");
+    if (!existsSync(editPath)) continue;
+    const edit = JSON.parse(readFileSync(editPath, "utf8"));
+    const wordsPath = join(ROOT, "public", recordingPath(slug, edit.source, "words.json"));
+    if (!existsSync(wordsPath)) continue;
+    const raw = reelOf(JSON.parse(readFileSync(wordsPath, "utf8")), edit);
+    const reel = { ...raw, edit: golden.readingFloor(raw, FPS).edit };
+    replayed++;
+    if (!reel.edit.hook) continue;
+    const early = figuresOf(reel, FPS).filter((f) => f.fromFrame < HOOK);
+    check(`replay ${slug}: no figure before the hook ends`, early.length === 0, spans(early));
+  }
+  check("replay: fixtures with words found", replayed >= 10, `${replayed} replayed`);
+}
 
 console.log(failed ? "design figures: FAILED" : "design figures ok");
 process.exit(failed ? 1 : 0);

@@ -4,7 +4,7 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
-import { hardCodedStrings, promote } from "./promote-design.mjs";
+import { hardCodedStrings, missingMedia, promote } from "./promote-design.mjs";
 import { loadManifests } from "./select-template.mjs";
 import { driftLine, parseLog, shallowBoundary } from "./report-promotion-drift.mjs";
 
@@ -142,6 +142,22 @@ check("drift: shallow boundary is no history", /no history \(shallow clone/.test
   rmSync(dir, { recursive: true });
 }
 check("drift: no anchor is no history", /no history/.test(driftLine({ id: "x", promoted: "d", anchor: null, commits: [] })));
+{
+  // Fixture media: a talking-head fixture lacks its recording and matte (Mode A is then
+  // INCOMPLETE, never rendered), a quick-mode one needs no matte, present files are not missing.
+  const pub = repoTmp("promote-media-");
+  const put2 = (rel, text) => {
+    mkdirSync(join(pub, rel, ".."), { recursive: true });
+    writeFileSync(join(pub, rel), text);
+  };
+  put2("videos/th/edit.json", JSON.stringify({ source: "rec" }));
+  put2("videos/quick/edit.json", JSON.stringify({ source: "rec", background: "vignette" }));
+  put2("videos/fl/edit.json", "{}");
+  put2("videos/fl/source.mp4", "x");
+  check("media: talking-head fixture lacks source and cut-out", missingMedia(pub, "th").join() === "recordings/rec/source.mp4,recordings/rec/foreground.webm", missingMedia(pub, "th").join());
+  check("media: quick mode needs no cut-out", missingMedia(pub, "quick").join() === "recordings/rec/source.mp4", missingMedia(pub, "quick").join());
+  check("media: a faceless fixture's own files", missingMedia(pub, "fl").join() === "videos/fl/foreground.webm", missingMedia(pub, "fl").join());
+}
 
 if (failed) process.exit(1);
 console.log("promote ok");

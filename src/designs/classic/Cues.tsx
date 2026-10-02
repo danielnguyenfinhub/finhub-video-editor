@@ -6,6 +6,7 @@
 import { fitText } from "@remotion/layout-utils";
 import { Audio } from "@remotion/media";
 import type React from "react";
+import { useContext } from "react";
 import {
   AbsoluteFill,
   Sequence,
@@ -26,7 +27,9 @@ import {
   Compare,
   Kinetic,
   Panel,
+  PanelPlace,
   Points,
+  panelInset,
   useExit,
   type CueOf,
   type Rel,
@@ -272,24 +275,35 @@ const Change: React.FC<{
   </Panel>
 );
 
+// The trend graph is TREND_W wide at zoom 1: never wider than its panel, so
+// it narrows with the panel while the logo shows (values then print under
+// 32 px; review 557b020).
+const TREND_W = 920;
 const Trend: React.FC<{ cue: CueOf<"trend">; look: NumbersLook }> = ({
   cue,
   look,
-}) => (
-  <Panel style={{ ...BARE, textAlign: "center" }}>
-    <div style={{ display: "inline-block", textAlign: "left" }}>
-      <TrendCard
-        kicker={cue.kicker}
-        title={cue.title}
-        unit={cue.unit}
-        decimals={cue.decimals}
-        points={cue.points}
-        zoom={look.trendZoom}
-        height={look.trendHeight}
-      />
-    </div>
-  </Panel>
-);
+}) => {
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+  const place = useContext(PanelPlace);
+  const room =
+    SAFE.right - SAFE.left - panelInset(place, frame, durationInFrames, fps);
+  return (
+    <Panel style={{ ...BARE, textAlign: "center" }}>
+      <div style={{ display: "inline-block", textAlign: "left" }}>
+        <TrendCard
+          kicker={cue.kicker}
+          title={cue.title}
+          unit={cue.unit}
+          decimals={cue.decimals}
+          points={cue.points}
+          zoom={Math.min(look.trendZoom, room / TREND_W)}
+          height={look.trendHeight}
+        />
+      </div>
+    </Panel>
+  );
+};
 
 const CueView: React.FC<{ cue: Cue; rel: Rel; look: NumbersLook }> = ({
   cue,
@@ -375,7 +389,15 @@ export const MotionTrack: React.FC<{
   numbers?: NumbersLook;
   // The WebGL light leak on each chapter cut; a calm design turns it off.
   leak?: boolean;
-}> = ({ reel, panelOffset = 0, numbers = CLASSIC_NUMBERS, leak = true }) => {
+  // false: the design draws no LogoMark (classic), so panels keep full width.
+  logo?: boolean;
+}> = ({
+  reel,
+  panelOffset = 0,
+  numbers = CLASSIC_NUMBERS,
+  leak = true,
+  logo = true,
+}) => {
   const { fps } = useVideoConfig();
   const outFrame = outFrameOf(reel.timeline, fps);
   return (
@@ -397,11 +419,20 @@ export const MotionTrack: React.FC<{
               durationInFrames={Math.max(1, outFrame(c.toMs) - from)}
               layout="none"
             >
-              <CueView
-                cue={c}
-                rel={(ms) => outFrame(ms) - from}
-                look={numbers}
-              />
+              <PanelPlace.Provider
+                value={{
+                  offset: panelOffset,
+                  from,
+                  talkFrames: reel.timeline.talkFrames,
+                  logo,
+                }}
+              >
+                <CueView
+                  cue={c}
+                  rel={(ms) => outFrame(ms) - from}
+                  look={numbers}
+                />
+              </PanelPlace.Provider>
             </Sequence>
           );
         })}

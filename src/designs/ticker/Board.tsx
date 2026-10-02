@@ -26,12 +26,15 @@ export const SKY = "#7FC4FF"; // theme-exempt: the board's restrained second acc
 export const INK = brand.navy;
 export const SKY_DIM = "rgba(127,196,255,0.18)"; // theme-exempt: SKY at 18 % (done board rows)
 
-// Layout (y): status bar under SAFE.top, the stage, the caption strip, the
-// tape, and the English line on SAFE.bottom. Each has its own band.
+// Layout (y): status bar under SAFE.top, the stage, the caption strip with its
+// English line right under it (one bilingual block), and the tape on SAFE.bottom.
+// Each has its own band.
 export const STATUS_H = 118;
 export const STAGE = { top: SAFE.top + 162, bottom: 1080 };
-export const TAPE = { top: 1256, height: 84 };
-export const STRIP_BOTTOM = TAPE.top - 12;
+export const TAPE = { top: SAFE.bottom - 84, height: 84 };
+// The English line's band under the caption: three 28 px lines.
+export const EN_BAND = 125;
+export const STRIP_BOTTOM = TAPE.top - 8 - EN_BAND - 12;
 
 // ------------------------------------------------------------------ backdrop
 

@@ -17,7 +17,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -123,18 +123,9 @@ const idleSpans = (blocks: Span[], talkFrames: number): Span[] => {
   return out;
 };
 
-// The hook number at count progress t (0 -> 1): through hookCount, never
-// from 0 (exported for check-design-figures).
-export const hookText = (
-  hook: NonNullable<EditJson["hook"]>,
-  t: number,
-): string =>
-  hook.countTo === undefined
-    ? hook.big
-    : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-        minimumFractionDigits: hook.decimals ?? 0,
-        maximumFractionDigits: hook.decimals ?? 0,
-      })}${hook.suffix ?? ""}`;
+// The hook number at count progress t: the core formatter (exported for
+// check-design-figures).
+export { hookText };
 
 // "4,35%" counts 0 → 4,35 keeping its decimals; a year or a date is shown as said.
 export const counted = (big: string, k: number): string => {

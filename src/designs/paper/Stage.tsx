@@ -19,6 +19,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -58,13 +59,7 @@ export const busyFrames = (reel: Reel, fps: number): [number, number][] => {
   ];
 };
 
-// `place`: where in the stage (the hook and a figure said during it share it).
-type Place = "center" | "top" | "bottom";
-const JUSTIFY = { center: "center", top: "flex-start", bottom: "flex-end" };
-const StageBox: React.FC<{ children: React.ReactNode; place?: Place }> = ({
-  children,
-  place = "center",
-}) => (
+const StageBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div
     style={{
       position: "absolute",
@@ -75,7 +70,7 @@ const StageBox: React.FC<{ children: React.ReactNode; place?: Place }> = ({
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: JUSTIFY[place],
+      justifyContent: "center",
       fontFamily: FONT,
     }}
   >
@@ -252,18 +247,15 @@ const StatFigure: React.FC<{ figure: Figure }> = ({ figure }) => {
 // Short automatic figure: the number on a navy tag and a bar built from three
 // paper strips laid one after another. A year or date has no scale: no bar.
 const STRIPS = [GOLD_PAPER, brand.card, mix(brand.primary, brand.card, 0.35)];
-const AutoFigure: React.FC<{ figure: Figure; compact: boolean }> = ({
-  figure,
-  compact,
-}) => {
+const AutoFigure: React.FC<{ figure: Figure }> = ({ figure }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = useCount(4, 30);
   const fill = ringFill(figure.big);
-  const W = compact ? 440 : 560;
-  const bar = compact ? 34 : 54;
+  const W = 560;
+  const bar = 54;
   return (
-    <StageBox place={compact ? "bottom" : "center"}>
+    <StageBox>
       <PaperCard background={NAVY_PAPER} rotate={-1.5}>
         <Tape
           width={140}
@@ -273,14 +265,13 @@ const AutoFigure: React.FC<{ figure: Figure; compact: boolean }> = ({
         />
         <div
           style={{
-            padding: compact ? "18px 40px 26px" : "30px 48px 40px",
-            width: W + (compact ? 80 : 96),
+            padding: "30px 48px 40px",
+            width: W + 96,
           }}
         >
           <div
             style={{
-              fontSize:
-                (figure.big.length > 7 ? 110 : 150) * (compact ? 0.6 : 1),
+              fontSize: figure.big.length > 7 ? 110 : 150,
               fontWeight: 900,
               color: CREAM,
               textAlign: "center",
@@ -293,7 +284,7 @@ const AutoFigure: React.FC<{ figure: Figure; compact: boolean }> = ({
             style={{
               display: asSaid(figure.big) ? "none" : undefined,
               position: "relative",
-              marginTop: compact ? 12 : 22,
+              marginTop: 22,
               height: bar,
               borderRadius: 6,
               background: alpha(brand.card, 0.1),
@@ -332,18 +323,11 @@ const AutoFigure: React.FC<{ figure: Figure; compact: boolean }> = ({
 
 const HookCard: React.FC<{
   hook: NonNullable<EditJson["hook"]>;
-  shared: boolean; // a figure lands during the hook: take the top half
-}> = ({ hook, shared }) => {
+}> = ({ hook }) => {
   const t = useCount(4, 34);
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   return (
-    <StageBox place={shared ? "top" : "center"}>
+    <StageBox>
       <PaperCard rotate={-2.5} exitFrames={10}>
         <Tape
           width={200}
@@ -353,11 +337,11 @@ const HookCard: React.FC<{
         />
         <div
           style={{
-            padding: shared ? "40px 64px 30px" : "54px 70px 40px",
+            padding: "54px 70px 40px",
             minWidth: 620,
             maxWidth: STAGE_W - 40,
             textAlign: "center",
-            fontSize: (big.length > 10 ? 110 : 168) * (shared ? 0.82 : 1),
+            fontSize: big.length > 10 ? 110 : 168,
             fontWeight: 900,
             lineHeight: 1.05,
             color: INK,
@@ -453,15 +437,13 @@ const LenderTag: React.FC<{ lender: Lender }> = ({ lender }) => {
 
 export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
+  // figuresOf starts every figure after the hook (golden rule 1).
   const figures = figuresOf(reel, fps);
-  // A figure said during the hook shares the stage: hook on top, figure below.
-  const duringHook = (f: Figure) =>
-    reel.edit.hook !== undefined && f.fromFrame < HOOK_FRAMES;
   return (
     <>
       {reel.edit.hook ? (
         <Sequence durationInFrames={HOOK_FRAMES} layout="none">
-          <HookCard hook={reel.edit.hook} shared={figures.some(duringHook)} />
+          <HookCard hook={reel.edit.hook} />
         </Sequence>
       ) : null}
       {figures.map((f) => (
@@ -474,7 +456,7 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
           {f.source === "stat" ? (
             <StatFigure figure={f} />
           ) : (
-            <AutoFigure figure={f} compact={duringHook(f)} />
+            <AutoFigure figure={f} />
           )}
         </Sequence>
       ))}

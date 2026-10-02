@@ -1,6 +1,7 @@
 // The fixed frame around every MortgageReel: cover card, hook, chrome (progress
 // bar + logo), film finish and light leaks. The closing cards are in EndCards.tsx.
 import { lightLeak } from "@remotion/effects/light-leak";
+import { hookText } from "../../mortgage/golden";
 import { starburst } from "@remotion/effects/starburst";
 import { Audio } from "@remotion/media";
 import type React from "react";
@@ -18,13 +19,7 @@ import {
 import { brand } from "../../brand/theme";
 import { CoverCutOut } from "../../mortgage/PacedVideo";
 import type { EditJson } from "../../mortgage/schema";
-import {
-  FONT,
-  LOGO,
-  clamp,
-  emphasised,
-  enter,
-} from "../../mortgage/style";
+import { FONT, LOGO, clamp, emphasised, enter } from "../../mortgage/style";
 
 // ---------------------------------------------------------------- cover
 
@@ -156,21 +151,7 @@ export const HookTitle: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
     [1, 0],
     { extrapolateLeft: "clamp" },
   );
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : [
-          interpolate(frame, [4, 40], [0, hook.countTo], clamp).toLocaleString(
-            "vi-VN",
-            {
-              minimumFractionDigits: hook.decimals ?? 0,
-              maximumFractionDigits: hook.decimals ?? 0,
-            },
-          ),
-          hook.suffix ?? "",
-        ]
-          .join(" ")
-          .trim();
+  const big = hookText(hook, interpolate(frame, [4, 40], [0, 1], clamp));
   const shake = frame > 40 && frame < 48 ? Math.sin(frame * 3) * 6 : 0;
   const sub = enter(frame, fps, 12);
   return (

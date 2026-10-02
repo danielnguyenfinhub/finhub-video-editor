@@ -405,6 +405,8 @@ export const retro: Design = {
   chapterTransition,
   copy: [
     "CON SỐ",
+    "NĂM",
+    "NGÀY",
     "ĐANG NHẮC TỚI",
     "PHẦN",
     "VS",

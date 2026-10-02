@@ -3,6 +3,7 @@
 // and the hook both read as something told across a kitchen table, not
 // broadcast. A tail bottom-left, a typing-dots bubble for the hook's lead-in.
 import type React from "react";
+import { hookText } from "../../mortgage/golden";
 import {
   AbsoluteFill,
   interpolate,
@@ -130,26 +131,13 @@ export const KitchenHook: React.FC<{
       extrapolateRight: "clamp",
     },
   );
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : [
-          interpolate(
-            frame,
-            [TYPING_FRAMES, TYPING_FRAMES + 60],
-            [0, hook.countTo],
-            {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            },
-          ).toLocaleString("vi-VN", {
-            minimumFractionDigits: hook.decimals ?? 0,
-            maximumFractionDigits: hook.decimals ?? 0,
-          }),
-          hook.suffix ?? "",
-        ]
-          .join(" ")
-          .trim();
+  const big = hookText(
+    hook,
+    interpolate(frame, [TYPING_FRAMES, TYPING_FRAMES + 60], [0, 1], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }),
+  );
   return (
     <AbsoluteFill style={{ opacity: outP }}>
       {frame < TYPING_FRAMES ? (

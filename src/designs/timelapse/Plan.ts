@@ -9,7 +9,8 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
-  hookCount,
+  asSaid,
+  hookText,
 } from "../../mortgage/golden";
 import type { Lender } from "../../mortgage/lenders";
 import {
@@ -285,10 +286,7 @@ export const diffOf = (
 };
 
 // A hook with countTo counts up; anything else is shown as said.
-export const hookScrub = (hook: NonNullable<Reel["edit"]["hook"]>) => {
-  const target = hook.countTo;
-  return target === undefined
+export const hookScrub = (hook: NonNullable<Reel["edit"]["hook"]>) =>
+  hook.countTo === undefined || asSaid(hook.big)
     ? null
-    : (p: number) =>
-        `${format(hookCount(target, p), hook.decimals ?? 0, false)}${hook.suffix ?? ""}`;
-};
+    : (p: number) => hookText(hook, p);

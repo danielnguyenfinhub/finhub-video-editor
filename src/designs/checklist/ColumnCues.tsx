@@ -31,7 +31,12 @@ import {
   toneColor,
 } from "../../mortgage/style";
 import type { Segment } from "../../mortgage/timeline";
-import { Panel, type CueOf, type Rel } from "../classic/Infographics";
+import {
+  Panel,
+  PanelPlace,
+  type CueOf,
+  type Rel,
+} from "../classic/Infographics";
 
 // Right edge of the left column (cue panels AND step cards). Daniel's head,
 // from the real matte of chon-ngan-hang (framing x = 526 + 0.6 * x_src), comes
@@ -452,7 +457,16 @@ export const ColumnCueTrack: React.FC<{ reel: Reel; panelOffset: number }> = ({
               durationInFrames={Math.max(1, outFrame(c.toMs) - from)}
               layout="none"
             >
-              <View cue={c} rel={(ms) => outFrame(ms) - from} />
+              <PanelPlace.Provider
+                value={{
+                  offset: panelOffset,
+                  from,
+                  talkFrames: reel.timeline.talkFrames,
+                  width: HOST_WIDTH,
+                }}
+              >
+                <View cue={c} rel={(ms) => outFrame(ms) - from} />
+              </PanelPlace.Provider>
             </Sequence>
           );
         })}

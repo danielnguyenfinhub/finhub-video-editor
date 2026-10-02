@@ -9,7 +9,7 @@ import { brand } from "../../brand/theme";
 import { ProgressBar } from "../../elements/ProgressBar";
 import type { EditJson } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, hookText } from "../../mortgage/golden";
 
 // LogoMark's tile sits top-right inside SAFE for the same first-10s window
 // the hook shows in, so the hook box stops short of it instead of running
@@ -23,21 +23,13 @@ export const HookCounter: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const inP = enter(frame, fps);
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : [
-          interpolate(frame, [0, 60], [0, hook.countTo], {
-            ...clamp,
-            easing: Easing.out(Easing.exp),
-          }).toLocaleString("vi-VN", {
-            minimumFractionDigits: hook.decimals ?? 0,
-            maximumFractionDigits: hook.decimals ?? 0,
-          }),
-          hook.suffix ?? "",
-        ]
-          .join(" ")
-          .trim();
+  const big = hookText(
+    hook,
+    interpolate(frame, [0, 60], [0, 1], {
+      ...clamp,
+      easing: Easing.out(Easing.exp),
+    }),
+  );
   const sub = enter(frame, fps, 12);
   const bigSize = Math.min(
     180,

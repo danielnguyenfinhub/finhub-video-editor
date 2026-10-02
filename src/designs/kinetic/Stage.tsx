@@ -19,6 +19,7 @@ import {
   lenderMentionsOf,
   type Figure,
   asSaid,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -287,10 +288,7 @@ export const Stack: React.FC<{
 const HookStack: React.FC<{
   hook: NonNullable<EditJson["hook"]>;
   blocks: Blocks;
-  // Figures said while the hook holds the stage: boxed chips on top of it,
-  // each from its own frame (golden rule 1 without two things in one place).
-  chips: Figure[];
-}> = ({ hook, blocks, chips }) => {
+}> = ({ hook, blocks }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const s = blockAt(blocks.beats, frame).text;
@@ -298,18 +296,12 @@ const HookStack: React.FC<{
     ...clamp,
     easing: (x) => 1 - (1 - x) ** 3,
   });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const final = hook.countTo === undefined ? hook.big : counted(hook.big, 1);
   const size = useMemo(
     () =>
       Math.min(
-        chips.length ? 250 : 300,
+        300,
         fitText({
           text: final,
           withinWidth: SAFE_W - 60,
@@ -318,39 +310,13 @@ const HookStack: React.FC<{
           fontVariantNumeric: "tabular-nums",
         }).fontSize,
       ),
-    [final, chips.length],
+    [final],
   );
   const lines = useMemo(() => stackLines(hook.sub ?? "", 16), [hook.sub]);
   const slam = slamOf(frame, fps);
   return (
     // The LogoMark waits for the hook to end, so the hook may use SAFE.top.
     <StageBox top={SAFE.top + 20}>
-      {chips.length ? (
-        <div
-          style={{ display: "flex", gap: 20, marginBottom: 36, height: 100 }}
-        >
-          {chips.map((c) => {
-            const cp = slamOf(frame, fps, c.fromFrame);
-            return frame < c.fromFrame ? null : (
-              <div
-                key={c.fromFrame}
-                style={{
-                  fontSize: 84,
-                  fontWeight: 900,
-                  lineHeight: 1.15,
-                  padding: "0 0.2em",
-                  color: s.ink,
-                  outline: `6px solid ${s.accent}`,
-                  outlineOffset: -6,
-                  transform: `scale(${interpolate(cp, [0, 1], [2, 1])}) rotate(3deg)`,
-                }}
-              >
-                {c.big}
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
       <div
         style={{
           fontSize: size,
@@ -498,31 +464,25 @@ export const StageLayer: React.FC<{
   const at = outFrameOf(reel.timeline, fps);
   const figures = figuresOf(reel, fps);
   const hook = reel.edit.hook;
-  const inHook = (f: Figure) => Boolean(hook) && f.fromFrame < HOOK_FRAMES;
   if (!ready) return null;
   return (
     <>
       {hook ? (
         <Sequence durationInFrames={HOOK_FRAMES} layout="none">
-          <HookStack
-            hook={hook}
-            blocks={blocks}
-            chips={figures.filter(inHook)}
-          />
+          <HookStack hook={hook} blocks={blocks} />
         </Sequence>
       ) : null}
-      {figures
-        .filter((f) => !inHook(f))
-        .map((f) => (
-          <Sequence
-            key={`${f.source}${f.fromFrame}`}
-            from={f.fromFrame}
-            durationInFrames={f.frames}
-            layout="none"
-          >
-            <GiantNumber figure={f} from={f.fromFrame} blocks={blocks} />
-          </Sequence>
-        ))}
+      {/* figuresOf starts every figure after the hook (golden rule 1). */}
+      {figures.map((f) => (
+        <Sequence
+          key={`${f.source}${f.fromFrame}`}
+          from={f.fromFrame}
+          durationInFrames={f.frames}
+          layout="none"
+        >
+          <GiantNumber figure={f} from={f.fromFrame} blocks={blocks} />
+        </Sequence>
+      ))}
       {lenderMentionsOf(reel).map((m) => {
         const from = Math.round((m.startMs / 1000) * fps);
         const to = Math.round((m.endMs / 1000) * fps);

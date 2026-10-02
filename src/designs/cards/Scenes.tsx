@@ -6,7 +6,7 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
-import type { Figure } from "../../mortgage/golden";
+import { type Figure, hookText } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { FONT, clamp, toneColor } from "../../mortgage/style";
@@ -64,21 +64,9 @@ export const HookScene: React.FC<{ hook: Hook; box: Box }> = ({
 }) => {
   const frame = useCurrentFrame();
   const t = grow(frame, 4, 40);
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ? ` ${hook.suffix}` : ""}`;
+  const big = hookText(hook, t);
   // Sized on the final text so the count-up never reflows.
-  const final =
-    hook.countTo === undefined
-      ? hook.big
-      : `${hook.countTo.toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ? ` ${hook.suffix}` : ""}`;
+  const final = hookText(hook, 1);
   const size = fit(final, box.width - 2 * PAD, 150);
   return (
     <Panel style={{ ...box, padding: PAD }}>

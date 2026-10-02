@@ -9,8 +9,17 @@
 // Only when all pass: template.json gets "promoted": "<YYYY-MM-DD>", uses 0,
 // lastUsed null (and the preview path), and the selector's pool is re-read to
 // confirm the design is in it. The selector ranks promoted designs first.
-//   node scripts/promote-design.mjs <id> [--public-dir <dir>] [--designs-dir <dir>] [--skip-lint] [--dry-run]
-// --dry-run runs every check and writes nothing. --public-dir is read only (the stills read edit.json there; the design is forced
+//   node scripts/promote-design.mjs <id> [--public-dir <dir>] [--designs-dir <dir>] [--browser <path>] [--skip-lint] [--dry-run]
+// --dry-run runs every check and writes nothing. --browser (or FINHUB_BROWSER): an installed
+// Chrome or headless shell renders the stills (with --gl=swangle) instead of the one Remotion
+// downloads. Fixture media: the faceless fixture (B) without source.mp4/foreground.webm gets the
+// voice-video.mjs placeholders for a video with no footage (navy frame, transparent cut-out;
+// VP9, in a scratch public dir, scripts/scratch-public.mjs): the same render path, NOT the same
+// picture. faceless-test has stock footage on scenes 1 and 3 (both still frames land there), which
+// is not reproduced, so a sandbox pass proves the render, copy, colours and contrast, not the look
+// over footage; the log says "SANDBOX PICTURE". The
+// talking-head fixture (A) has no stand-in: without its recording and matte, Mode A is
+// INCOMPLETE, a failure, so nothing is promoted. --public-dir is read only (the stills read edit.json there; the design is forced
 // with the `design` prop, so nothing is written into it). --designs-dir and
 // --skip-lint exist for scripts/check-promote.mjs; renders need the real registry,
 // so they are skipped under --designs-dir.
@@ -21,6 +30,8 @@ import { pathToFileURL } from "node:url";
 import { COLOUR, checkDesign, describe as describeContrast, hexOf } from "./check-contrast.mjs";
 import { MANIFEST_FIELDS, OPTIONAL_FIELDS, loadManifests } from "./select-template.mjs";
 import { MIN_TEXT_PX, smallText } from "./check-text-size.mjs";
+import { browserArgs, scratchPublic } from "./scratch-public.mjs";
+import { recordingPath } from "../src/mortgage/recording.ts";
 
 const root = join(import.meta.dirname, "..");
 const REPO_DESIGNS = join(root, "src", "designs");
@@ -122,12 +133,19 @@ const isRegistered = (designsDir, id) => {
   );
 };
 
-const still = (id, slug, frame, out, publicDir) =>
+const still = (id, slug, frame, out, publicDir, browser = []) =>
   execFileSync(process.execPath, [
     join(root, "node_modules", "@remotion", "cli", "remotion-cli.js"), "still", "src/index.ts", "MortgageReel", out,
-    `--props=${JSON.stringify({ slug, design: id })}`, `--frame=${frame}`, "--scale=0.5", "--gl=angle",
-    `--public-dir=${publicDir}`,
+    `--props=${JSON.stringify({ slug, design: id })}`, `--frame=${frame}`, "--scale=0.5",
+    ...(browser.length ? browser : ["--gl=angle"]), `--public-dir=${publicDir}`,
   ], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
+
+// The recording files a fixture's still needs that publicDir lacks (the cut-out only when edit.json wants it).
+export const missingMedia = (publicDir, slug) => {
+  const edit = JSON.parse(readFileSync(join(publicDir, "videos", slug, "edit.json"), "utf8"));
+  const files = ["source.mp4", ...(edit.background === "vignette" || edit.background === "room" ? [] : ["foreground.webm"])];
+  return files.map((f) => recordingPath(slug, edit.source, f)).filter((rel) => !existsSync(join(publicDir, rel)));
+};
 
 /** Runs every check; returns { failures, notes, promoted }. */
 export async function promote(id, opts = {}) {
@@ -181,6 +199,13 @@ export async function promote(id, opts = {}) {
   } else {
     const outDir = join(root, "out", "promote");
     mkdirSync(outDir, { recursive: true });
+    let browser = [];
+    try {
+      browser = browserArgs(opts.browser, { search: false });
+      if (browser.length) notes.push(`stills rendered with ${browser.at(-1).split("=")[1]} (--gl=swangle)`);
+    } catch (e) {
+      fail("stills", e.message);
+    }
     for (const m of ["A", "B"]) {
       const slug = FIXTURES[m];
       if (!modes.includes(m)) {
@@ -191,9 +216,23 @@ export async function promote(id, opts = {}) {
         fail(`still ${m}`, `fixture ${slug} has no edit.json in ${publicDir}/videos`);
         continue;
       }
+      let pub = publicDir;
+      const missing = missingMedia(publicDir, slug);
+      if (missing.length && m === "B") {
+        try {
+          pub = scratchPublic(slug, { publicDir, vignette: false });
+          notes.push(`Mode B (${slug}): ${missing.join(", ")} not here; SANDBOX PICTURE: navy placeholder source.mp4 and transparent foreground.webm (VP9); the fixture's stock footage is NOT reproduced, so these stills prove the render, not the look over footage`);
+        } catch (e) {
+          fail(`still ${m}`, `INCOMPLETE: ${slug} placeholders could not be made (${e.message}); not rendered`);
+          continue;
+        }
+      } else if (missing.length) {
+        fail(`still ${m}`, `INCOMPLETE: ${slug} needs ${missing.join(", ")} (the recording and its matte; no stand-in); not rendered`);
+        continue;
+      }
       const out = join(outDir, `${id}-${m}.png`);
       try {
-        still(id, slug, MODE_FRAME, out, publicDir);
+        still(id, slug, MODE_FRAME, out, pub, browser);
         notes.push(`Mode ${m} still: ${relative(root, out)}`);
       } catch (e) {
         fail(`still ${m}`, `${slug} frame ${MODE_FRAME} did not render: ${tail(e.stderr) || tail(e.stdout)}`);
@@ -201,7 +240,7 @@ export async function promote(id, opts = {}) {
       if (!t.preview && !renderedPreview) {
         const pv = join(outDir, `${id}-preview.png`);
         try {
-          still(id, slug, PREVIEW_FRAME, pv, publicDir);
+          still(id, slug, PREVIEW_FRAME, pv, pub, browser);
           renderedPreview = pv;
           notes.push(`preview rendered: ${relative(root, pv)} (kept in the design folder only if promoted)`);
         } catch (e) {
@@ -289,12 +328,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   };
   const id = args[0];
   if (!id || id.startsWith("--")) {
-    console.error("Usage: node scripts/promote-design.mjs <id> [--public-dir <dir>] [--designs-dir <dir>] [--skip-lint] [--dry-run]");
+    console.error("Usage: node scripts/promote-design.mjs <id> [--public-dir <dir>] [--designs-dir <dir>] [--browser <path>] [--skip-lint] [--dry-run]");
     process.exit(1);
   }
   const { failures, notes } = await promote(id, {
     publicDir: flag("--public-dir"),
     designsDir: flag("--designs-dir"),
+    browser: flag("--browser"),
     skipLint: args.includes("--skip-lint"),
     dryRun: args.includes("--dry-run"),
   });

@@ -1,9 +1,8 @@
 // Who holds the stage when, and what it shows: the hook as a receipt whose
 // TOTAL line is the hook number; figures and banks (Figures.tsx). A figure
 // or bank that starts while the stage is taken waits up to WAIT frames, or
-// becomes a small chip in the top band (a figure said early in the hook is
-// a mini stub beside the hook receipt). The chapter tag shares the top band
-// and yields to chips.
+// becomes a small chip in the top band (figuresOf starts every figure after
+// the hook). The chapter tag shares the top band and yields to chips.
 import type React from "react";
 import {
   Sequence,
@@ -18,7 +17,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
@@ -31,17 +30,14 @@ import {
   LenderChip,
   LenderSlip,
   StageStub,
-  Stub,
 } from "./Figures";
 import {
   GOLD,
   INK,
   PAPER,
   PrintedReceipt,
-  SLOT_Y,
   TABULAR,
   TOP_BAND,
-  counted,
   fit,
   inOrder,
   type Line,
@@ -54,11 +50,11 @@ export const CHAPTER_WORD = "PHẦN";
 // A rate is not a sum (viewed critique 08): "TỔNG" only on an amount.
 export const totalWordOf = (hook: NonNullable<EditJson["hook"]>): string =>
   /%/.test(hook.big + (hook.suffix ?? "")) ? "" : TOTAL_WORD;
-// The hook total at count progress t: through hookCount, never from 0.
+// The hook total at count progress t: the core formatter, never from 0.
 export const hookValue = (
   hook: NonNullable<EditJson["hook"]>,
   t: number,
-): string => counted(hook.big, hookCount(1, Math.max(0, Math.min(1, t))));
+): string => hookText(hook, t);
 
 const MIN_HOLD = 45; // READING.minNumberHoldMs at 30 fps
 const WAIT = 15;
@@ -69,7 +65,7 @@ type Span = [number, number];
 type Item =
   | { kind: "figure"; figure: Figure; from: number; frames: number }
   | { kind: "lender"; lender: Lender; from: number; frames: number };
-export type Placed = Item & { where: "stage" | "chip" | "mini" };
+export type Placed = Item & { where: "stage" | "chip" };
 export type Plan = { placed: Placed[]; busy: Span[]; chips: Span[] };
 
 export const planOf = (reel: Reel, fps: number): Plan => {
@@ -115,10 +111,6 @@ export const planOf = (reel: Reel, fps: number): Plan => {
   const placed: Placed[] = [];
   for (const it of items) {
     const end = it.from + it.frames;
-    if (hook && it.kind === "figure" && it.from < HOOK_FRAMES - MIN_HOLD) {
-      placed.push({ ...it, where: "mini" });
-      continue;
-    }
     const free = freeAt(it.from);
     if (free - it.from <= WAIT) {
       const frames = Math.max(MIN_HOLD, end - free);
@@ -143,16 +135,12 @@ export const planOf = (reel: Reel, fps: number): Plan => {
 // ------------------------------------------------------------- hook
 
 const HW = 740;
-const HW_MINI = 590;
-const MINI_X = SAFE.left + HW_MINI + 26;
 
 const HookReceipt: React.FC<{
   hook: NonNullable<EditJson["hook"]>;
-  minis: Figure[];
-}> = ({ hook, minis }) => {
+}> = ({ hook }) => {
   const frame = useCurrentFrame();
-  const mini = minis.filter((f) => f.fromFrame <= frame).pop();
-  const width = minis.length ? HW_MINI : HW;
+  const width = HW;
   const inner = width - 60;
   const lines: Line[] = [{ key: "head", at: 0, h: HEAD_H, node: <HeadLine /> }];
   if (hook.sub) {
@@ -188,32 +176,14 @@ const HookReceipt: React.FC<{
     },
   ];
   return (
-    <>
-      <PrintedReceipt
-        x={minis.length ? SAFE.left : 540 - width / 2}
-        width={width}
-        lines={all}
-        tearAt={totalAt + COUNT + 10}
-        seed="hook"
-        pad={30}
-      />
-      {mini ? (
-        <Sequence from={mini.fromFrame} layout="none">
-          <div
-            style={{ position: "absolute", left: MINI_X, top: SLOT_Y - 330 }}
-          >
-            <Stub
-              big={mini.big}
-              label=""
-              width={SAFE.right - MINI_X}
-              height={160}
-              bigMax={70}
-              kickerSize={18}
-            />
-          </div>
-        </Sequence>
-      ) : null}
-    </>
+    <PrintedReceipt
+      x={540 - width / 2}
+      width={width}
+      lines={all}
+      tearAt={totalAt + COUNT + 10}
+      seed="hook"
+      pad={30}
+    />
   );
 };
 
@@ -224,38 +194,33 @@ export const StageLayer: React.FC<{ reel: Reel; plan: Plan }> = ({
   plan,
 }) => {
   const hook = reel.edit.hook;
-  const minis = plan.placed.flatMap((p) =>
-    p.where === "mini" && p.kind === "figure" ? [p.figure] : [],
-  );
   return (
     <>
       {hook ? (
         <Sequence durationInFrames={HOOK_FRAMES} layout="none">
-          <HookReceipt hook={hook} minis={minis} />
+          <HookReceipt hook={hook} />
         </Sequence>
       ) : null}
-      {plan.placed
-        .filter((p) => p.where !== "mini")
-        .map((p) => (
-          <Sequence
-            key={`${p.kind}${p.from}`}
-            from={p.from}
-            durationInFrames={Math.max(1, p.frames)}
-            layout="none"
-          >
-            {p.kind === "figure" ? (
-              p.where === "stage" ? (
-                <StageStub figure={p.figure} />
-              ) : (
-                <FigureChip figure={p.figure} />
-              )
-            ) : p.where === "stage" ? (
-              <LenderSlip lender={p.lender} />
+      {plan.placed.map((p) => (
+        <Sequence
+          key={`${p.kind}${p.from}`}
+          from={p.from}
+          durationInFrames={Math.max(1, p.frames)}
+          layout="none"
+        >
+          {p.kind === "figure" ? (
+            p.where === "stage" ? (
+              <StageStub figure={p.figure} />
             ) : (
-              <LenderChip lender={p.lender} />
-            )}
-          </Sequence>
-        ))}
+              <FigureChip figure={p.figure} />
+            )
+          ) : p.where === "stage" ? (
+            <LenderSlip lender={p.lender} />
+          ) : (
+            <LenderChip lender={p.lender} />
+          )}
+        </Sequence>
+      ))}
     </>
   );
 };

@@ -15,7 +15,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { HOOK_FRAMES, type Figure, hookCount } from "../../mortgage/golden";
+import { HOOK_FRAMES, type Figure, hookText } from "../../mortgage/golden";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
 import { clamp, toneColor } from "../../mortgage/style";
 import type { CueOf } from "../classic/Infographics";
@@ -116,17 +116,14 @@ const Header: React.FC<{ kicker?: string; text?: string }> = ({
 // ------------------------------------------------------------------ pages
 
 // Count a percentage or amount up; a date or a year is never counted.
-// `countAt`: the value at count progress p, through hookCount (exported for
+// `countAt`: the value at count progress p, through hookText (exported for
 // check-design-figures).
 export const countAt = (
   hook: NonNullable<Reel["edit"]["hook"]>,
   p: number,
 ): string => {
-  if (hook.countTo === undefined || isDate(hook.big) || isYear(hook.big))
-    return hook.big;
-  const v = hookCount(hook.countTo, p);
-  const d = hook.decimals ?? 0;
-  return `${v.toFixed(d).replace(".", ",")}${hook.suffix ?? ""}`;
+  if (isDate(hook.big) || isYear(hook.big)) return hook.big;
+  return hookText(hook, p);
 };
 const useCount = (hook: NonNullable<Reel["edit"]["hook"]>): string =>
   countAt(

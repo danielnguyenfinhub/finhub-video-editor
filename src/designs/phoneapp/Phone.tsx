@@ -98,8 +98,10 @@ export const counted = (big: string, t: number): string => {
 };
 
 // How far a ring fills: a rate below 10 % on a 10 % scale, another
-// percentage on 100 %; anything without a scale closes the ring.
-export const ringFill = (big: string): number => {
+// percentage on 100 %; anything without a scale closes the ring. A year or a
+// date has no ring at all (null): it is shown as said (golden rule 1).
+export const ringFill = (big: string): number | null => {
+  if (asSaid(big)) return null;
   const m = big.match(/\d[\d.,]*/);
   if (!m || !big.includes("%")) return 1;
   const v = parseFloat(m[0].replace(",", "."));

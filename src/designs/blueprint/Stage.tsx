@@ -19,10 +19,12 @@ import {
   lenderMentionsOf,
   type Figure,
   asSaid,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
-import type { EditJson, Reel } from "../../mortgage/schema";
+import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
+import { yieldToCompare } from "../../elements/yieldToCompare";
 import { FONT, clamp } from "../../mortgage/style";
 import {
   Arrow,
@@ -151,13 +153,7 @@ const HookSheet: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
     ...clamp,
     easing: (x) => 1 - (1 - x) ** 3,
   });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const box = draw(frame, 0, 22);
   const dim = draw(frame, 10, 30);
   const { x, y, w, h } = HOOK_BOX;
@@ -409,6 +405,27 @@ const FigureSheet: React.FC<{ figure: Figure }> = ({ figure }) =>
     <DimensionFigure figure={figure} />
   );
 
+// A figure shown while another cue holds the stage: the number as said,
+// plain, right-aligned in the strip under the stage (above the captions).
+const FigureChip: React.FC<{ figure: Figure }> = ({ figure }) => (
+  <StageSheet lines={null}>
+    <Txt
+      top={STAGE_H + 14}
+      left={SAFE.right - 420}
+      width={420}
+      style={{
+        fontSize: 48,
+        fontWeight: 900,
+        lineHeight: 1.2,
+        textAlign: "right",
+        color: brand.highlight,
+      }}
+    >
+      {figure.big}
+    </Txt>
+  </StageSheet>
+);
+
 // ---------------------------------------------------------------- lender
 
 // Detail callout: a circle drawn round the logo, a leader line out to a
@@ -495,9 +512,31 @@ const LenderSheet: React.FC<{ lender: Lender }> = ({ lender }) => {
 
 // ---------------------------------------------------------------- layer
 
+// The core figures, each yielding to a compare cue on the same stage
+// (yieldToCompare: cut, held over its drop-in, or moved after it, as a chip
+// under the stage when another cue holds it then; exported for
+// check-design-figures).
+export const stageFigures = (
+  reel: Reel,
+  fps: number,
+): (Figure & { chip?: boolean })[] => {
+  const at = outFrameOf(reel.timeline, fps);
+  const span = (c: { fromMs: number; toMs: number }): [number, number] => [
+    at(c.fromMs),
+    at(c.toMs),
+  ];
+  const cues = (reel.edit.cues ?? []).filter((c) => c.kind !== "emoji");
+  return yieldToCompare(
+    figuresOf(reel, fps),
+    cues.filter((c) => c.kind === "compare").map(span),
+    cues.map(span),
+    Math.round((READING.minNumberHoldMs / 1000) * fps),
+  );
+};
+
 export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
-  const figures = figuresOf(reel, fps);
+  const figures = stageFigures(reel, fps);
   return (
     <>
       {reel.edit.hook ? (
@@ -506,12 +545,9 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
         </Sequence>
       ) : null}
       {figures.map((f, i) => {
-        // The hook owns the stage for its first HOOK_FRAMES: a figure said
-        // under it waits until it ends, held its minimum read, and gives
-        // way to the next figure.
-        const from = reel.edit.hook
-          ? Math.max(f.fromFrame, HOOK_FRAMES)
-          : f.fromFrame;
+        // figuresOf starts every figure after the hook (golden rule 1); each
+        // is held its minimum read and gives way to the next figure.
+        const from = f.fromFrame;
         const next = figures[i + 1]?.fromFrame ?? Infinity;
         const frames = Math.max(
           Math.min(f.fromFrame + f.frames, next) - from,
@@ -524,7 +560,7 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
             durationInFrames={frames}
             layout="none"
           >
-            <FigureSheet figure={f} />
+            {f.chip ? <FigureChip figure={f} /> : <FigureSheet figure={f} />}
           </Sequence>
         );
       })}
