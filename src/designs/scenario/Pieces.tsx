@@ -11,7 +11,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, hookText } from "../../mortgage/golden";
 import type { Figure } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -32,21 +32,7 @@ export const ScenarioHook: React.FC<{
     [1, 0],
     clamp,
   );
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : [
-          interpolate(frame, [4, 40], [0, hook.countTo], clamp).toLocaleString(
-            "vi-VN",
-            {
-              minimumFractionDigits: hook.decimals ?? 0,
-              maximumFractionDigits: hook.decimals ?? 0,
-            },
-          ),
-          hook.suffix ?? "",
-        ]
-          .join(" ")
-          .trim();
+  const big = hookText(hook, interpolate(frame, [4, 40], [0, 1], clamp));
   const sub = enter(frame, fps, 12);
   return (
     <AbsoluteFill

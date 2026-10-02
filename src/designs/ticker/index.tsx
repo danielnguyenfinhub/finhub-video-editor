@@ -5,7 +5,7 @@
 // Captions sit big on the board when the stage is free and drop to an LED
 // strip above the tape while the hook, a figure, a bank or a cue holds it.
 import type { TikTokPage } from "@remotion/captions";
-import { fitText } from "@remotion/layout-utils";
+import { fitText, fitTextOnNLines } from "@remotion/layout-utils";
 import type React from "react";
 import { useMemo } from "react";
 import {
@@ -305,28 +305,44 @@ const Captions: React.FC<{
 
 // Right under the Vietnamese caption, wherever it is (big on the board or the
 // strip): its band starts 12 px below the caption, three lines fit above the tape.
+const EN_LINES = 3; // of 28 px at 1.3 in EN_BAND (125 px with its padding)
 const englishTop = (low: number) =>
   interpolate(low, [0, 1], [IDLE_BOTTOM, STRIP_BOTTOM]) + 12;
-const EnglishText: React.FC<{ text: string; from: number; level: number[] }> = ({
-  text,
-  from,
-  level,
-}) => {
+const EnglishText: React.FC<{
+  text: string;
+  from: number;
+  level: number[];
+}> = ({ text, from, level }) => {
   const frame = useCurrentFrame();
   const top = englishTop(level[from + frame] ?? 0);
+  // Three lines fit the band; a longer line shrinks to fit, never clipped.
+  const ready = useFontReady("ticker English line: Be Vietnam Pro");
+  const size = useMemo(
+    () =>
+      ready
+        ? fitTextOnNLines({
+            text,
+            maxLines: EN_LINES,
+            maxBoxWidth: SAFE.right - SAFE.left - 36,
+            fontFamily: FONT,
+            fontWeight: 600,
+            maxFontSize: 28,
+          }).fontSize
+        : 28,
+    [ready, text],
+  );
   return (
     <CaptionZone bottom={top + EN_BAND}>
       <div
         style={{
           fontFamily: FONT,
-          fontSize: 28,
+          fontSize: size,
           lineHeight: 1.3,
           fontWeight: 600,
           color: SKY,
           textAlign: "center",
           padding: "6px 18px",
           height: EN_BAND,
-          overflow: "hidden",
         }}
       >
         {text}

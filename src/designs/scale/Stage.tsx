@@ -19,7 +19,7 @@ import {
   type Tag,
 } from "./Plan";
 import { BRASS, CX, GOLD, ScaleRig, panAt, type PanDraw } from "./Scale";
-import { hookCount } from "../../mortgage/golden";
+import { hookText } from "../../mortgage/golden";
 
 const FADE = 8;
 const DROP_FROM = 320; // px above the pan a weight starts its fall
@@ -146,10 +146,15 @@ export const counted = (load: PanLoad, t: number): string => {
       easing: (x) => 1 - (1 - x) ** 3,
     },
   );
-  return `${hookCount(load.count.to, p).toLocaleString("vi-VN", {
-    minimumFractionDigits: load.count.decimals,
-    maximumFractionDigits: load.count.decimals,
-  })}${load.count.suffix}`;
+  return hookText(
+    {
+      big: load.value,
+      countTo: load.count.to,
+      decimals: load.count.decimals,
+      suffix: load.count.suffix,
+    },
+    p,
+  );
 };
 
 const valueSize = (text: string, width: number, max: number) =>

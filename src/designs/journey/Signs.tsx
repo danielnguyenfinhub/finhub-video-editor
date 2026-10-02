@@ -11,7 +11,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { HOOK_FRAMES, SAFE, hookCount } from "../../mortgage/golden";
+import { HOOK_FRAMES, SAFE, hookText } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
@@ -46,13 +46,7 @@ export const HookCartouche: React.FC<{
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = interpolate(frame, [8, 42], [0, 1], { ...clamp, easing: ease });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const size = Math.min(
     150,
     fitText({

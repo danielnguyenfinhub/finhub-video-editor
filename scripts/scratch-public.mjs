@@ -8,8 +8,9 @@
 //   vignette: true  -> edit.json "background": "vignette" and a black source.mp4 (no matte);
 //                      quick mode, NOT the path a faceless render takes.
 //   vignette: false -> the two files scripts/voice-video.mjs writes for a faceless video with
-//                      no footage: source.mp4 a plain navy frame (+ silent audio) and a fully
-//                      transparent foreground.webm, so the render takes the production path.
+//                      NO footage: source.mp4 a plain navy frame (+ silent audio) and a fully
+//                      transparent foreground.webm. The render takes the production path, but a
+//                      video whose script has stock footage shows navy where that footage would be.
 // Only a video without edit.json "source" (its media live in videos/<slug>): a recordings/
 // entry is a link into the repo and is never written to. Needs ffmpeg. Symlinks: not on Windows.
 import { spawnSync } from "node:child_process";

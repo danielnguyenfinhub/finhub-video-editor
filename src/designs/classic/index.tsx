@@ -102,7 +102,7 @@ const Talk: React.FC<TalkProps> = ({
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => (
   <>
     {/* Panels in the safe band; Talk makes room under them (cueRoom). */}
-    <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
+    <MotionTrack reel={reel} panelOffset={SAFE.top - 110} logo={false} />
     <Chrome talkFrames={talkFrames} />
     <StatCards reel={reel} />
     <Chapters reel={reel} />

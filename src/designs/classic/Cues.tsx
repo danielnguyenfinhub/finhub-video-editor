@@ -26,6 +26,7 @@ import {
   Compare,
   Kinetic,
   Panel,
+  PanelPlace,
   Points,
   useExit,
   type CueOf,
@@ -366,13 +367,6 @@ const sfxFor = (reel: Reel): Sfx[] => [
   }),
 ];
 
-// Every cue panel rests at top 110 of this layer (Panel, Infographics.tsx) and drops in
-// from above it, then flies back up. The layer is clipped at that rest top, so the panel
-// unrolls from its own top edge: at no frame of its entry or exit does it reach above the
-// place it rests (inside SAFE, under the LogoMark where the design rests it there).
-// check-design-figures evaluates it.
-export const PANEL_TOP = 110;
-
 // `panelOffset` moves only the cue panels (they sit at top 110 in classic);
 // the film grain and light leaks stay full-frame. Designs built to the 4:5
 // safe band pass SAFE.top - 110. `numbers` is the design's NumbersLook.
@@ -382,7 +376,15 @@ export const MotionTrack: React.FC<{
   numbers?: NumbersLook;
   // The WebGL light leak on each chapter cut; a calm design turns it off.
   leak?: boolean;
-}> = ({ reel, panelOffset = 0, numbers = CLASSIC_NUMBERS, leak = true }) => {
+  // false: the design draws no LogoMark (classic), so panels keep full width.
+  logo?: boolean;
+}> = ({
+  reel,
+  panelOffset = 0,
+  numbers = CLASSIC_NUMBERS,
+  leak = true,
+  logo = true,
+}) => {
   const { fps } = useVideoConfig();
   const outFrame = outFrameOf(reel.timeline, fps);
   return (
@@ -393,7 +395,6 @@ export const MotionTrack: React.FC<{
           position: "absolute",
           inset: 0,
           transform: panelOffset ? `translateY(${panelOffset}px)` : undefined,
-          clipPath: `inset(${PANEL_TOP}px 0 0 0)`,
         }}
       >
         {(reel.edit.cues ?? []).map((c) => {
@@ -405,11 +406,20 @@ export const MotionTrack: React.FC<{
               durationInFrames={Math.max(1, outFrame(c.toMs) - from)}
               layout="none"
             >
-              <CueView
-                cue={c}
-                rel={(ms) => outFrame(ms) - from}
-                look={numbers}
-              />
+              <PanelPlace.Provider
+                value={{
+                  offset: panelOffset,
+                  from,
+                  talkFrames: reel.timeline.talkFrames,
+                  logo,
+                }}
+              >
+                <CueView
+                  cue={c}
+                  rel={(ms) => outFrame(ms) - from}
+                  look={numbers}
+                />
+              </PanelPlace.Provider>
             </Sequence>
           );
         })}

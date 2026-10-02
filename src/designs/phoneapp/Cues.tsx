@@ -34,6 +34,22 @@ import { NavBar, Page } from "./Page";
 
 // ------------------------------------------------------------- points
 
+// The bar grows smoothly to the items ticked so far: said / n, 0 before the
+// first (it showed (n - 1) / n, "0/2" half full; exported for
+// check-design-figures).
+export const checklistProgress = (frame: number, starts: number[]): number => {
+  const n = starts.length;
+  let prog = 0;
+  starts.forEach((s, i) => {
+    if (frame >= s + 6)
+      prog = Math.max(
+        prog,
+        interpolate(frame, [s + 6, s + 16], [i / n, (i + 1) / n], clamp),
+      );
+  });
+  return prog;
+};
+
 const Checklist: React.FC<{ cue: CueOf<"points">; rel: Rel; dur: number }> = ({
   cue,
   rel,
@@ -44,14 +60,7 @@ const Checklist: React.FC<{ cue: CueOf<"points">; rel: Rel; dur: number }> = ({
   const n = cue.items.length;
   const starts = cue.items.map((it) => rel(it.atMs));
   const said = starts.filter((s) => frame >= s).length;
-  // The bar grows smoothly to the items ticked so far.
-  let prog = 0;
-  starts.forEach((s, i) => {
-    prog = Math.max(
-      prog,
-      interpolate(frame, [s + 6, s + 16], [i / n, (i + 1) / n], clamp),
-    );
-  });
+  const prog = checklistProgress(frame, starts);
   const size = n >= 4 ? 34 : 38;
   return (
     <Page dur={dur}>

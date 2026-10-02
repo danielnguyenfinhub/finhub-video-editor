@@ -17,7 +17,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
@@ -38,7 +38,6 @@ import {
   PrintedReceipt,
   TABULAR,
   TOP_BAND,
-  counted,
   fit,
   inOrder,
   type Line,
@@ -51,11 +50,11 @@ export const CHAPTER_WORD = "PHẦN";
 // A rate is not a sum (viewed critique 08): "TỔNG" only on an amount.
 export const totalWordOf = (hook: NonNullable<EditJson["hook"]>): string =>
   /%/.test(hook.big + (hook.suffix ?? "")) ? "" : TOTAL_WORD;
-// The hook total at count progress t: through hookCount, never from 0.
+// The hook total at count progress t: the core formatter, never from 0.
 export const hookValue = (
   hook: NonNullable<EditJson["hook"]>,
   t: number,
-): string => counted(hook.big, hookCount(1, Math.max(0, Math.min(1, t))));
+): string => hookText(hook, t);
 
 const MIN_HOLD = 45; // READING.minNumberHoldMs at 30 fps
 const WAIT = 15;

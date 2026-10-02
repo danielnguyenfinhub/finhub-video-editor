@@ -13,7 +13,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { LOGO_HEIGHT, SAFE } from "../../mortgage/golden";
+import { LOGO_HEIGHT, SAFE, hookText } from "../../mortgage/golden";
 import type { EditJson } from "../../mortgage/schema";
 import { FONT, clamp } from "../../mortgage/style";
 
@@ -189,21 +189,7 @@ export const HookBubbles: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
     [0, 1],
     clampOpt,
   );
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : [
-          interpolate(frame, [4, 40], [0, hook.countTo], clamp).toLocaleString(
-            "vi-VN",
-            {
-              minimumFractionDigits: hook.decimals ?? 0,
-              maximumFractionDigits: hook.decimals ?? 0,
-            },
-          ),
-          hook.suffix ?? "",
-        ]
-          .join(" ")
-          .trim();
+  const big = hookText(hook, interpolate(frame, [4, 40], [0, 1], clamp));
   return (
     <div
       style={{

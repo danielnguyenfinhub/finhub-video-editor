@@ -6,7 +6,7 @@
 import { fitText, fitTextOnNLines } from "@remotion/layout-utils";
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import type { Figure } from "../../mortgage/golden";
+import { hookText, type Figure } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
@@ -35,7 +35,6 @@ import {
   StageBox,
   W,
 } from "./Slider";
-import { hookCount } from "../../mortgage/golden";
 
 const FADE = 8;
 const LEFT_PARK = 40;
@@ -43,15 +42,9 @@ const ease = (x: number) => 1 - (1 - x) ** 3;
 
 // ------------------------------------------------------------- hook
 
-// The hook number at count progress t (0 -> 1): through hookCount, never
-// from 0 (exported for check-design-figures).
-export const hookText = (hook: Hook, t: number): string =>
-  hook.countTo === undefined
-    ? hook.big
-    : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-        minimumFractionDigits: hook.decimals ?? 0,
-        maximumFractionDigits: hook.decimals ?? 0,
-      })}${hook.suffix ?? ""}`;
+// The hook number at count progress t: the core formatter (exported for
+// check-design-figures).
+export { hookText };
 
 const hookLayers = (hook: Hook, lf: number, fps: number, x: number): Layers => {
   const t = interpolate(lf, [6, 40], [0, 1], { ...clamp, easing: ease });

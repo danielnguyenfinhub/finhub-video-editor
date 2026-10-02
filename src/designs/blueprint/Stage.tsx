@@ -19,11 +19,12 @@ import {
   lenderMentionsOf,
   type Figure,
   asSaid,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
-import type { EditJson, Reel } from "../../mortgage/schema";
+import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
+import { yieldToCompare } from "../../elements/yieldToCompare";
 import { FONT, clamp } from "../../mortgage/style";
 import {
   Arrow,
@@ -152,13 +153,7 @@ const HookSheet: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
     ...clamp,
     easing: (x) => 1 - (1 - x) ** 3,
   });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const box = draw(frame, 0, 22);
   const dim = draw(frame, 10, 30);
   const { x, y, w, h } = HOOK_BOX;
@@ -496,9 +491,27 @@ const LenderSheet: React.FC<{ lender: Lender }> = ({ lender }) => {
 
 // ---------------------------------------------------------------- layer
 
+// The core figures, each yielding to a compare cue on the same stage
+// (yieldToCompare: cut, moved after it, or dropped from this stage; exported
+// for check-design-figures).
+export const stageFigures = (reel: Reel, fps: number): Figure[] => {
+  const at = outFrameOf(reel.timeline, fps);
+  const span = (c: { fromMs: number; toMs: number }): [number, number] => [
+    at(c.fromMs),
+    at(c.toMs),
+  ];
+  const cues = (reel.edit.cues ?? []).filter((c) => c.kind !== "emoji");
+  return yieldToCompare(
+    figuresOf(reel, fps),
+    cues.filter((c) => c.kind === "compare").map(span),
+    cues.map(span),
+    Math.round((READING.minNumberHoldMs / 1000) * fps),
+  );
+};
+
 export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
-  const figures = figuresOf(reel, fps);
+  const figures = stageFigures(reel, fps);
   return (
     <>
       {reel.edit.hook ? (

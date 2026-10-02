@@ -13,8 +13,11 @@
 // --dry-run runs every check and writes nothing. --browser (or FINHUB_BROWSER): an installed
 // Chrome or headless shell renders the stills (with --gl=swangle) instead of the one Remotion
 // downloads. Fixture media: the faceless fixture (B) without source.mp4/foreground.webm gets the
-// placeholders scripts/voice-video.mjs would write (navy frame, transparent cut-out; VP9, in a
-// scratch public dir, scripts/scratch-public.mjs): the same render path and picture. The
+// voice-video.mjs placeholders for a video with no footage (navy frame, transparent cut-out;
+// VP9, in a scratch public dir, scripts/scratch-public.mjs): the same render path, NOT the same
+// picture. faceless-test has stock footage on scenes 1 and 3 (both still frames land there), which
+// is not reproduced, so a sandbox pass proves the render, copy, colours and contrast, not the look
+// over footage; the log says "SANDBOX PICTURE". The
 // talking-head fixture (A) has no stand-in: without its recording and matte, Mode A is
 // INCOMPLETE, a failure, so nothing is promoted. --public-dir is read only (the stills read edit.json there; the design is forced
 // with the `design` prop, so nothing is written into it). --designs-dir and
@@ -218,7 +221,7 @@ export async function promote(id, opts = {}) {
       if (missing.length && m === "B") {
         try {
           pub = scratchPublic(slug, { publicDir, vignette: false });
-          notes.push(`Mode B (${slug}): ${missing.join(", ")} not here; placeholders as voice-video.mjs writes them (navy source.mp4, transparent foreground.webm, VP9)`);
+          notes.push(`Mode B (${slug}): ${missing.join(", ")} not here; SANDBOX PICTURE: navy placeholder source.mp4 and transparent foreground.webm (VP9); the fixture's stock footage is NOT reproduced, so these stills prove the render, not the look over footage`);
         } catch (e) {
           fail(`still ${m}`, `INCOMPLETE: ${slug} placeholders could not be made (${e.message}); not rendered`);
           continue;

@@ -17,7 +17,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { OverlayProps } from "../../mortgage/design";
-import { lenderMentionsOf, SAFE } from "../../mortgage/golden";
+import { lenderMentionsOf, SAFE, hookText } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
@@ -135,21 +135,7 @@ const Hook: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({ hook }) => {
     clamp,
   );
   const sub = enter(frame, fps, 20);
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : [
-          interpolate(frame, [4, 40], [0, hook.countTo], clamp).toLocaleString(
-            "vi-VN",
-            {
-              minimumFractionDigits: hook.decimals ?? 0,
-              maximumFractionDigits: hook.decimals ?? 0,
-            },
-          ),
-          hook.suffix ?? "",
-        ]
-          .join(" ")
-          .trim();
+  const big = hookText(hook, interpolate(frame, [4, 40], [0, 1], clamp));
   // Cap so big + sub together stay inside the 420-580 above-head band
   // (~152px tall including margins); fitText shrinks long hooks further.
   const bigSize = Math.min(

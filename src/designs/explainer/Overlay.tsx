@@ -19,7 +19,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { OverlayProps } from "../../mortgage/design";
-import { HOOK_FRAMES, SAFE } from "../../mortgage/golden";
+import { HOOK_FRAMES, SAFE, hookText } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import type { EditJson, Reel } from "../../mortgage/schema";
 import { FONT, clamp, emphasised, enter } from "../../mortgage/style";
@@ -315,35 +315,10 @@ const HookNote: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
     [0, 1],
     clamp,
   );
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : [
-          interpolate(frame, [4, 40], [0, hook.countTo], clamp).toLocaleString(
-            "vi-VN",
-            {
-              minimumFractionDigits: hook.decimals ?? 0,
-              maximumFractionDigits: hook.decimals ?? 0,
-            },
-          ),
-          hook.suffix ?? "",
-        ]
-          .join(" ")
-          .trim();
+  const big = hookText(hook, interpolate(frame, [4, 40], [0, 1], clamp));
   // Sized once from the string shown when the count-up ends (number + suffix),
   // so the text doesn't jitter or outgrow the note mid-count.
-  const finalText =
-    hook.countTo === undefined
-      ? hook.big
-      : [
-          hook.countTo.toLocaleString("vi-VN", {
-            minimumFractionDigits: hook.decimals ?? 0,
-            maximumFractionDigits: hook.decimals ?? 0,
-          }),
-          hook.suffix ?? "",
-        ]
-          .join(" ")
-          .trim();
+  const finalText = hookText(hook, 1);
   const size = Math.min(
     120,
     fitText({

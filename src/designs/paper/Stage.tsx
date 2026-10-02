@@ -19,7 +19,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -325,13 +325,7 @@ const HookCard: React.FC<{
   hook: NonNullable<EditJson["hook"]>;
 }> = ({ hook }) => {
   const t = useCount(4, 34);
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   return (
     <StageBox>
       <PaperCard rotate={-2.5} exitFrames={10}>

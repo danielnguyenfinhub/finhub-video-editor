@@ -3,9 +3,10 @@
 // from the cue start, so beats stay locked to the speech after cuts and pacing.
 import { StrikeThrough } from "@remotion/rough-notation";
 import type React from "react";
+import { createContext, useContext } from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, logoVisible } from "../../mortgage/golden";
 import type { Cue } from "../../mortgage/schema";
 import { DIM, FONT, clamp, pop, toneColor } from "../../mortgage/style";
 
@@ -24,7 +25,55 @@ export const useExit = (frames = 10) => {
   );
 };
 
+// Every Panel rests at PANEL_TOP of its layer; the track that mounts it moves
+// that layer down by `offset` (MotionTrack's panelOffset), so on screen it
+// rests at PANEL_TOP + offset.
+export const PANEL_TOP = 110;
+// The LogoMark tile at its pop-in overshoot (LogoMark.tsx; measured by
+// check-design-figures): a panel resting above LOGO_BOTTOM keeps its right
+// edge at LOGO_CLEAR while the logo shows (rule 3b: their own places).
+export const LOGO_BOTTOM = 590;
+export const LOGO_CLEAR = 680;
+const LOGO_RAMP = 8; // frames the edge takes to move in before / out after the logo
+
+// Set by the track that mounts the panels: the layer's offset and width, the
+// cue's first talk frame and the talk's length (for the logo windows), and
+// whether the design draws the LogoMark at all (classic has its own logo).
+export const PanelPlace = createContext<{
+  offset: number;
+  from: number;
+  talkFrames: number;
+  width?: number;
+  logo?: boolean;
+} | null>(null);
+
+// How far the panel's right edge moves in at full clearance: from its normal
+// edge (layer width - the right margin) to LOGO_CLEAR, never outward.
+export const logoInset = (width = 1080): number =>
+  Math.max(0, width - (1080 - SAFE.right) - LOGO_CLEAR);
+
+// 1 while the LogoMark shows (and LOGO_RAMP frames either side), 0 when the
+// panel rests below the logo or the logo is away.
+export const logoClear = (
+  offset: number,
+  frame: number,
+  talkFrames: number,
+  fps: number,
+): number => {
+  if (PANEL_TOP + offset >= LOGO_BOTTOM) return 0;
+  for (let d = 0; d <= LOGO_RAMP; d++)
+    if (
+      logoVisible(frame - d, talkFrames, fps) ||
+      logoVisible(frame + d, talkFrames, fps)
+    )
+      return 1 - d / (LOGO_RAMP + 1);
+  return 0;
+};
+
 // Navy glass card that drops in from the top and flies back out at the end.
+// While it is above its rest line it is clipped there, so it unrolls from
+// there and never reaches above where it rests (SAFE, the logo), and has no
+// shadow, so the clip line never cuts one; landed, it is drawn as before.
 export const Panel: React.FC<{
   children: React.ReactNode;
   style?: React.CSSProperties;
@@ -33,27 +82,45 @@ export const Panel: React.FC<{
   const { fps } = useVideoConfig();
   const exit = useExit();
   const inP = pop(frame, fps, 0);
+  const place = useContext(PanelPlace);
+  const clear =
+    place && place.logo !== false
+      ? logoClear(place.offset, place.from + frame, place.talkFrames, fps) *
+        logoInset(place.width)
+      : 0;
+  const y = interpolate(inP, [0, 1], [-700, 0]) - exit * 800;
+  // Above its rest line (dropping in, flying out): clipped there, no shadow.
+  // Landed: neither, so the resting panel is drawn exactly as before.
+  const moving = y < -1;
   return (
     <div
       style={{
         position: "absolute",
-        top: 110,
-        // Inside SAFE across (the Reels buttons sit right of SAFE.right).
-        left: SAFE.left,
-        right: 1080 - SAFE.right,
-        padding: "34px 36px",
-        borderRadius: 34,
-        background:
-          "linear-gradient(160deg, rgba(0,100,168,0.96), rgba(11,31,61,0.96))",
-        border: `3px solid ${brand.accent}`,
-        boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
-        fontFamily: FONT,
-        color: "#fff",
-        transform: `translateY(${interpolate(inP, [0, 1], [-700, 0]) - exit * 800}px)`,
-        ...style,
+        inset: 0,
+        clipPath: moving ? `inset(${PANEL_TOP}px 0 0 0)` : undefined,
       }}
     >
-      {children}
+      <div
+        style={{
+          position: "absolute",
+          top: PANEL_TOP,
+          // Inside SAFE across (the Reels buttons sit right of SAFE.right).
+          left: SAFE.left,
+          right: 1080 - SAFE.right + clear,
+          padding: "34px 36px",
+          borderRadius: 34,
+          background:
+            "linear-gradient(160deg, rgba(0,100,168,0.96), rgba(11,31,61,0.96))",
+          border: `3px solid ${brand.accent}`,
+          boxShadow: moving ? "none" : "0 30px 80px rgba(0,0,0,0.5)",
+          fontFamily: FONT,
+          color: "#fff",
+          transform: `translateY(${y}px)`,
+          ...style,
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 };
@@ -217,8 +284,7 @@ export const Compare: React.FC<{ cue: CueOf<"compare">; rel: Rel }> = ({
         {cue.cards.map((card, i) => {
           const p = pop(frame, fps, rel(card.atMs));
           const lit =
-            card.highlightAtMs !== undefined &&
-            frame > rel(card.highlightAtMs);
+            card.highlightAtMs !== undefined && frame > rel(card.highlightAtMs);
           return (
             <div
               key={card.title}
@@ -433,7 +499,10 @@ const Stamp: React.FC<{ at: number; text: string; color: string }> = ({
   );
 };
 
-export const Bars: React.FC<{ cue: CueOf<"bars">; rel: Rel }> = ({ cue, rel }) => {
+export const Bars: React.FC<{ cue: CueOf<"bars">; rel: Rel }> = ({
+  cue,
+  rel,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const title = pop(frame, fps, 0);
@@ -467,7 +536,12 @@ export const Bars: React.FC<{ cue: CueOf<"bars">; rel: Rel }> = ({ cue, rel }) =
         }}
       >
         {cue.bars.map((b) => (
-          <Bar key={b.label} bar={b} at={rel(b.atMs)} width={n > 2 ? 260 : 300} />
+          <Bar
+            key={b.label}
+            bar={b}
+            at={rel(b.atMs)}
+            width={n > 2 ? 260 : 300}
+          />
         ))}
       </div>
       {cue.stamp ? (
@@ -505,7 +579,9 @@ export const Points: React.FC<{ cue: CueOf<"points">; rel: Rel }> = ({
       </div>
       {cue.items.map((it, i) => {
         const p = pop(frame, fps, starts[i]);
-        const current = frame >= starts[i] && (i === starts.length - 1 || frame < starts[i + 1]);
+        const current =
+          frame >= starts[i] &&
+          (i === starts.length - 1 || frame < starts[i + 1]);
         return (
           <div
             key={it.atMs}
@@ -524,7 +600,9 @@ export const Points: React.FC<{ cue: CueOf<"points">; rel: Rel }> = ({
                 flex: "0 0 64px",
                 height: 64,
                 borderRadius: "50%",
-                background: current ? brand.highlight : "rgba(255,255,255,0.14)",
+                background: current
+                  ? brand.highlight
+                  : "rgba(255,255,255,0.14)",
                 color: current ? brand.primary : "#fff",
                 fontSize: 36,
                 fontWeight: 900,

@@ -19,7 +19,7 @@ import {
   lenderMentionsOf,
   type Figure,
   asSaid,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -296,13 +296,7 @@ const HookStack: React.FC<{
     ...clamp,
     easing: (x) => 1 - (1 - x) ** 3,
   });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const final = hook.countTo === undefined ? hook.big : counted(hook.big, 1);
   const size = useMemo(
     () =>

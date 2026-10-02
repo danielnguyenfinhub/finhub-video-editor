@@ -14,6 +14,7 @@ import {
   lenderMentionsOf,
   type Figure,
   hookCount,
+  hookSuffix,
   asSaid,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
@@ -192,20 +193,22 @@ const valueView = (
 
 export const hookView = (hook: Hook, lf: number, fps: number): View => {
   const p: Parsed | null =
-    hook.countTo !== undefined
+    hook.countTo !== undefined && !asSaid(hook.big)
       ? {
           value: hook.countTo,
           decimals: hook.decimals ?? 0,
           grouped: false,
           before: "",
-          after: hook.suffix ?? "",
+          after: hookSuffix(hook.suffix),
         }
       : parseValue(hook.big);
   const base =
     p && p.value > 0
       ? valueView(
           p,
-          hook.countTo !== undefined ? show(p, p.value) : hook.big,
+          hook.countTo !== undefined && !asSaid(hook.big)
+            ? show(p, p.value)
+            : hook.big,
           lf,
           fps,
           undefined,

@@ -204,10 +204,35 @@ export const asSaid = (big: string): boolean => saidKind(big) !== null;
 
 // The hook's count-up (viewed critique 08, V2/S1): never from 0, which shows
 // rates that never existed. `t` is the design's own 0 -> 1 count progress;
-// the value counts only its last tenth and is exact from half way, so the
-// true number is up by the hook's peak.
-export const hookCount = (to: number, t: number): number =>
-  to * (0.9 + 0.1 * Math.min(1, Math.max(0, t) * 2));
+// only the fractional part counts, from 90 % of it, so a whole number never
+// shows a wrong value ("10%" never "9%") and the value is exact from half way,
+// up by the hook's peak (review c849a4c).
+export const hookCount = (to: number, t: number): number => {
+  const k = 0.9 + 0.1 * Math.min(1, Math.max(0, t) * 2);
+  const whole = Math.trunc(to);
+  return k >= 1 ? to : whole + (to - whole) * k;
+};
+
+// The hook's text at count progress t, the one formatter every design prints:
+// the number as hookCount shows it, then the suffix, a sign glued ("4,35%"), a
+// word after a space ("4,1 TỶ ĐÔ"). A year or a date is never counted (rule 1).
+export const hookText = (
+  hook: { big: string; countTo?: number; decimals?: number; suffix?: string },
+  t: number,
+): string => {
+  if (hook.countTo === undefined || asSaid(hook.big)) return hook.big;
+  const d = hook.decimals ?? 0;
+  const n = hookCount(hook.countTo, t).toLocaleString("vi-VN", {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d,
+  });
+  return `${n}${hookSuffix(hook.suffix)}`;
+};
+// The suffix as it follows the number: a sign glued, a word after a space.
+export const hookSuffix = (suffix: string | undefined): string => {
+  const s = (suffix ?? "").trim();
+  return /^\p{L}/u.test(s) ? ` ${s}` : s;
+};
 
 const AUTO_MS = 2600;
 const AUTO_GAP_MS = 4000;
@@ -262,7 +287,10 @@ const spokenNumbers = (reel: Reel) => {
     if (!bare) {
       // "phần trăm" is already the "%" on the number.
       const after = caps
-        .slice(j + 1 + (percent ? 2 : 0), j + 1 + (percent ? 2 : 0) + LABEL_WORDS)
+        .slice(
+          j + 1 + (percent ? 2 : 0),
+          j + 1 + (percent ? 2 : 0) + LABEL_WORDS,
+        )
         .map((c) => c.text)
         .join("")
         .trim()

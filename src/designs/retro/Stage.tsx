@@ -19,7 +19,7 @@ import {
   type Figure,
   asSaid,
   saidKind,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -237,13 +237,7 @@ const HookPoster: React.FC<{
   const t = useCount(4, 34);
   const s = useStamp(0);
   const out = interpolate(frame, [HOOK_FRAMES - 8, HOOK_FRAMES], [1, 0], clamp);
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const size = Math.min(230, (STAGE_W - 80) / (0.64 * hook.big.length));
   const sub = interpolate(frame, [10, 20], [0, 1], clamp);
   return (

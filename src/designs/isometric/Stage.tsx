@@ -19,7 +19,7 @@ import {
   SAFE,
   type Figure,
   asSaid,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import type { EditJson } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
@@ -255,13 +255,7 @@ export const HookCity: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
     };
   });
   const t = interpolate(frame, [8, 42], [0, 1], { ...clamp, easing: ease });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const p = enter(frame, fps, 6);
   const bob = Math.sin(frame / 11) * 5;
   const out = fadeOut(frame, HOOK_FRAMES);

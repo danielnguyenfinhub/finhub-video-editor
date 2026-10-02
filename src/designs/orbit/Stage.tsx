@@ -16,17 +16,19 @@ import { brand } from "../../brand/theme";
 import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
 import {
   HOOK_FRAMES,
+  READING,
   SAFE,
   figuresOf,
   lenderMentionsOf,
   type Figure,
   asSaid,
-  hookCount,
+  hookText,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
 import { FONT, clamp, emphasised, enter } from "../../mortgage/style";
+import { yieldToCompare } from "../../elements/yieldToCompare";
 import { BIG_R, GAUGE_R, GLASS, HOME, SKY, useFontReady } from "./Space";
 
 // Captions: bottom edge above the English line; the English line sits on
@@ -201,13 +203,7 @@ const HookHero: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = interpolate(frame, [6, 40], [0, 1], { ...clamp, easing: ease });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const big = hookText(hook, t);
   const out = fadeOut(frame, HOOK_FRAMES);
   const p = enter(frame, fps, 4);
   return (
@@ -385,6 +381,24 @@ const FigureMoon: React.FC<{ figure: Figure }> = ({ figure }) => {
   );
 };
 
+// The core figures, each yielding to a compare cue on the same stage
+// (yieldToCompare: cut, moved after it, or dropped from this stage; exported
+// for check-design-figures).
+export const stageFigures = (reel: Reel, fps: number): Figure[] => {
+  const at = outFrameOf(reel.timeline, fps);
+  const span = (c: { fromMs: number; toMs: number }): [number, number] => [
+    at(c.fromMs),
+    at(c.toMs),
+  ];
+  const cues = (reel.edit.cues ?? []).filter((c) => c.kind !== "emoji");
+  return yieldToCompare(
+    figuresOf(reel, fps),
+    cues.filter((c) => c.kind === "compare").map(span),
+    cues.map(span),
+    Math.round((READING.minNumberHoldMs / 1000) * fps),
+  );
+};
+
 // Figures that start while the core is taken (hook or an earlier figure).
 const moonsOf = (figures: Figure[], hook: boolean): Set<Figure> => {
   const moons = new Set<Figure>();
@@ -399,7 +413,7 @@ const moonsOf = (figures: Figure[], hook: boolean): Set<Figure> => {
 export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
   const ready = useFontReady();
-  const figures = figuresOf(reel, fps);
+  const figures = stageFigures(reel, fps);
   const moons = moonsOf(figures, Boolean(reel.edit.hook));
   if (!ready) return null;
   return (
