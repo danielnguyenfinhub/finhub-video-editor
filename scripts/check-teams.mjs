@@ -63,7 +63,7 @@ const readBytes = (cell) => {
     else problems.push(`AGENTS.md read list: cannot resolve \`${t}\` to a file`);
   }
   let n = 0;
-  for (const f of files) existsSync(at(f)) ? (n += readFileSync(at(f)).length) : problems.push(`AGENTS.md read list: ${f} does not exist`);
+  for (const f of files) existsSync(at(f)) ? (n += readFileSync(at(f)).toString("latin1").replace(/\r\n/g, "\n").length) : problems.push(`AGENTS.md read list: ${f} does not exist`);
   if (cell.includes("remocn index")) n += Buffer.byteLength(readFileSync(at(".claude/elements/remocn/CATALOG.md"), "utf8").split("\n").slice(0, 22).join("\n") + "\n");
   return n;
 };

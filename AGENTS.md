@@ -72,8 +72,8 @@ Read list per task, on top of this file. `refs/` is `.claude/skills/vietnamese-f
 
 | Task | Files | Bytes |
 |---|---|---|
-| Mode A edit (existing design, re-edit) | editor `SKILL.md`, `refs/landmines.md`, `refs/edit-json.md`, `refs/corrections.md` | 43,789 |
-| New design (each new talking-head video): Mode A plus | `refs/design-space.md`, `refs/design-architecture.md`, `refs/toolkit.md`, `.claude/elements/CATALOG.md`, remocn index, Craft rules section only (grep ^## Craft rules) | +31,443 = 75,232 |
+| Mode A edit (existing design, re-edit) | editor `SKILL.md`, `refs/landmines.md`, `refs/edit-json.md`, `refs/corrections.md` | 51,486 |
+| New design (each new talking-head video): Mode A plus | `refs/design-space.md`, `refs/design-architecture.md`, `refs/toolkit.md`, `.claude/elements/CATALOG.md`, remocn index, Craft rules section only (grep ^## Craft rules) | +31,443 = 82,929 |
 | Mode B faceless | `refs/faceless-script.md`, `refs/corrections.md`, `video-production-team` and `video-compliance-review` SKILL.md, the five `video-*` agents | 69,060 |
 | Repo or tooling change | [code-changes](docs/agents/code-changes.md), [project-structure](docs/agents/project-structure.md), [mortgage-reel](docs/agents/mortgage-reel.md) | 8,669 |
 
