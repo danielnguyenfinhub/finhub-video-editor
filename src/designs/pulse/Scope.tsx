@@ -12,7 +12,7 @@ import {
   useDelayRender,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, asSaid } from "../../mortgage/golden";
 import { clamp, reelFontReady } from "../../mortgage/style";
 
 // ------------------------------------------------------------- layout
@@ -71,14 +71,14 @@ export const numberOf = (s: string): number | null => {
   return Number.isFinite(v) ? v : null;
 };
 
-// A date ("29/9") or a year ("2026"): shown as said, never counted.
+// A date ("29/9") or a year ("2026"): drawn as a marker (counting uses the core asSaid).
 export const isDateLike = (big: string) =>
   /\d\/\d/.test(big) || /^(19|20)\d\d$/.test(big.trim());
 
 // "4,35%" counts 0 → 4,35 with the same decimals; text around it kept.
 export const counted = (big: string, t: number): string => {
   const m = big.match(/\d[\d.,]*/);
-  if (!m || m.index === undefined || isDateLike(big)) return big;
+  if (!m || m.index === undefined || asSaid(big)) return big;
   const target = numberOf(m[0]);
   if (target === null) return big;
   const decimals = m[0].includes(",") ? m[0].split(",")[1].length : 0;

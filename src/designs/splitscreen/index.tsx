@@ -40,7 +40,13 @@ import { FONT, LOGO, emphasised } from "../../mortgage/style";
 import { chapterTransition } from "../../mortgage/transitions";
 import { MotionTrack, type NumbersLook } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
-import { ChipLayer, FIGURE_WORD, LENDER_WORD } from "./Chip";
+import {
+  ChipLayer,
+  FIGURE_WORD,
+  LENDER_WORD,
+  YEAR_KICKER,
+  DATE_KICKER,
+} from "./Chip";
 import { POINTS_UNIT } from "./numbers";
 import { isOwn, usePlan } from "./Plan";
 import { StageLayer } from "./Scenes";
@@ -352,6 +358,8 @@ export const splitscreen: Design = {
     BEFORE_TAG,
     AFTER_TAG,
     FIGURE_WORD,
+    YEAR_KICKER,
+    DATE_KICKER,
     LENDER_WORD,
     CHAPTER_WORD,
     POINTS_UNIT,

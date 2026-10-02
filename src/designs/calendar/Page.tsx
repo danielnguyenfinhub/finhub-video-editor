@@ -15,8 +15,8 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { HOOK_FRAMES, type Figure } from "../../mortgage/golden";
-import { type Reel } from "../../mortgage/schema";
+import { HOOK_FRAMES, type Figure, hookCount } from "../../mortgage/golden";
+import { outFrameOf, type Reel } from "../../mortgage/schema";
 import { clamp, toneColor } from "../../mortgage/style";
 import type { CueOf } from "../classic/Infographics";
 import { useFontReady } from "../ticker/Board";
@@ -46,6 +46,7 @@ import {
   isDate,
   isYear,
   type Plan,
+  type Span,
 } from "./Plan";
 
 export const BRAND_KICKER = "FINANCE HUB";
@@ -115,19 +116,26 @@ const Header: React.FC<{ kicker?: string; text?: string }> = ({
 // ------------------------------------------------------------------ pages
 
 // Count a percentage or amount up; a date or a year is never counted.
-const useCount = (hook: NonNullable<Reel["edit"]["hook"]>): string => {
-  const frame = useCurrentFrame();
+// `countAt`: the value at count progress p, through hookCount (exported for
+// check-design-figures).
+export const countAt = (
+  hook: NonNullable<Reel["edit"]["hook"]>,
+  p: number,
+): string => {
   if (hook.countTo === undefined || isDate(hook.big) || isYear(hook.big))
     return hook.big;
-  const v =
-    hook.countTo *
-    interpolate(frame, [4, 30], [0, 1], {
-      ...clamp,
-      easing: (x) => 1 - (1 - x) ** 3,
-    });
+  const v = hookCount(hook.countTo, p);
   const d = hook.decimals ?? 0;
   return `${v.toFixed(d).replace(".", ",")}${hook.suffix ?? ""}`;
 };
+const useCount = (hook: NonNullable<Reel["edit"]["hook"]>): string =>
+  countAt(
+    hook,
+    interpolate(useCurrentFrame(), [4, 30], [0, 1], {
+      ...clamp,
+      easing: (x) => 1 - (1 - x) ** 3,
+    }),
+  );
 
 // A page's last TEAR frames: it is torn off the pad, showing the one under it.
 const Leave: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -271,8 +279,11 @@ const DatePage: React.FC<{ figure: Figure }> = ({ figure }) => {
 };
 
 // Between claims: the video's topic, written on the page.
-const IdlePage: React.FC<{ title: string }> = ({ title }) => (
-  <Sheet>
+const IdlePage: React.FC<{ title: string; style?: React.CSSProperties }> = ({
+  title,
+  style,
+}) => (
+  <Sheet style={style}>
     <div
       style={{
         maxWidth: INNER,
@@ -290,12 +301,37 @@ const IdlePage: React.FC<{ title: string }> = ({ title }) => (
 
 // ------------------------------------------------------------------ calendar
 
+// A points notepad lies over the page: the title page is torn off before the
+// notepad comes in (viewed critique 08: its text showed through the pad's),
+// and a fresh one settles back once the notepad has left.
+export const titleStyle = (
+  frame: number,
+  spans: Span[],
+): React.CSSProperties | undefined => {
+  for (const [a, b] of spans) {
+    if (frame >= a - TEAR && frame < b)
+      return tearStyle(
+        interpolate(frame, [a - TEAR, a], [0, 1], {
+          ...clamp,
+          easing: (x) => x * x,
+        }),
+      );
+    if (frame >= b && frame < b + 10)
+      return { opacity: interpolate(frame, [b, b + 10], [0, 1], clamp) };
+  }
+  return undefined;
+};
+
 export const Calendar: React.FC<{ reel: Reel; plan: Plan }> = ({
   reel,
   plan,
 }) => {
   const frame = useCurrentFrame();
   const ready = useFontReady("calendar page: Be Vietnam Pro");
+  const at = outFrameOf(reel.timeline, useVideoConfig().fps);
+  const pads: Span[] = (reel.edit.cues ?? []).flatMap((c) =>
+    c.kind === "points" ? [[at(c.fromMs), at(c.toMs)] as Span] : [],
+  );
   const hide = plan.hidden.reduce(
     (m, [a, b]) =>
       Math.max(
@@ -331,7 +367,10 @@ export const Calendar: React.FC<{ reel: Reel; plan: Plan }> = ({
       }}
     >
       <CalendarShell opacity={1 - hide} header={base}>
-        {reel.edit.title ? <IdlePage title={reel.edit.title} /> : <Sheet />}
+        <Sheet />
+        {reel.edit.title ? (
+          <IdlePage title={reel.edit.title} style={titleStyle(frame, pads)} />
+        ) : null}
         {plan.changes.map((c) => (
           <Sequence
             key={c.cue.fromMs}

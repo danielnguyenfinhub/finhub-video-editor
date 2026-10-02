@@ -5,7 +5,7 @@
 // on the stage, or a white tag in the top band. Neutral labels only.
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { SAFE, type Figure } from "../../mortgage/golden";
+import { SAFE, type Figure, saidKind } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { FONT, clamp } from "../../mortgage/style";
@@ -28,6 +28,18 @@ import {
 import { HEAD_H, HeadLine, TextLine, stubClip } from "./Rows";
 
 export const FIGURE_KICKER = "CON SỐ";
+export const YEAR_KICKER = "NĂM";
+export const DATE_KICKER = "NGÀY";
+// A year or a date is not "the number" of anything (recheck 09): its own
+// neutral word, shown as said (golden rule 1).
+export const kickerOf = (big: string): string => {
+  const kind = saidKind(big);
+  return kind === "year"
+    ? YEAR_KICKER
+    : kind === "date"
+      ? DATE_KICKER
+      : FIGURE_KICKER;
+};
 export const LENDER_KICKER = "ĐANG NHẮC TỚI";
 export const LENDER_SUB = "Ngân hàng";
 
@@ -107,7 +119,7 @@ export const Stub: React.FC<{
             color: INK,
           }}
         >
-          {FIGURE_KICKER}
+          {kickerOf(big)}
         </span>
       </div>
       <div

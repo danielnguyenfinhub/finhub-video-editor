@@ -81,7 +81,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     check("LOGO_HEIGHT is 120", LOGO_HEIGHT === 120, `${LOGO_HEIGHT}; ${locked}`);
     // The README text, matched with any dash (en, em, hyphen) and any spacing or line wrap.
     const norm = (t) => t.replace(/\s*[–—-]\s*/g, "-").replace(/\s+/g, " ");
-    for (const [rule, text] of [["3", "y 420–1473, x 54–960"], ["3b", "x 250–830, y 480–1250"], ["3c", "120 px high"]]) {
+    for (const [rule, text] of [["1", "a year or a date is shown as said"], ["1", "A figure said during the hook waits for it"], ["1", "unless an earlier waiting figure is still held"],
+      ["3", "y 420–1473, x 54–960"], ["3b", "x 250–830, y 480–1250"], ["3c", "120 px high"]]) {
       const ok = norm(readme).includes(norm(text));
       check(`src/designs/README.md rule ${rule} has "${text}"`, ok, ok ? "" : `src/designs/README.md no longer contains "${text}" (rule ${rule}); ` +
         "the README and golden.ts must change together, and a change is Daniel's decision");
@@ -119,6 +120,32 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   );
   check("stat covers 4.1", !covered.some((f) => f.source === "auto" && f.big === "4.1"));
   check("stat present", covered.some((f) => f.source === "stat"));
+
+  // Rule 1 exception (Daniel, 02/10/2026): a year or a date is shown as said, still a figure;
+  // a figure said during the hook waits for HOOK_FRAMES, the next waits for its hold, a stat
+  // keeps its reading time; with no hook, or said after the hook, a figure keeps its time.
+  {
+    const { asSaid, HOOK_FRAMES } = await import(url(bundle));
+    check("asSaid: years and dates", ["2026", "1999", "năm 2026", "29/9"].every(asSaid), "");
+    check("asSaid: not a rate, an amount, a ratio or 2.026", !["4,35%", "600.000", "2.026", "3,6", "2000 đô", "20/80", "1999 người", "32/1", "5/13"].some(asSaid));
+    check("asSaid: a date inside a stat, 1/12/2026", asSaid("Thứ Ba 29/9") && asSaid("1/12/2026"));
+    const auto = figuresOf(reelOf(words("từ đầu năm 2026 lãi suất cơ bản đã tăng nhiều lần rồi đó")), FPS);
+    check("an automatic year gets no label (not \"lãi suất cơ bản\")", auto[0]?.big === "2026" && auto[0].label === "", JSON.stringify(auto[0]));
+    const yr = words("từ đầu năm 2026 lãi suất đã tăng từ 3,6 lên 4,35 phần trăm rồi mình xem tiếp nhé các bạn ơi");
+    const stat = [{ atMs: 2000, durMs: 2000, big: "4,35%", label: "Lãi suất cơ bản" }];
+    const hooked = figuresOf(reelOf(yr, { hook: { big: "4,35%" }, stats: stat }), FPS);
+    const free = figuresOf(reelOf(yr, { stats: stat }), FPS);
+    const at = (fs) => fs.map((f) => `${f.big}@${f.fromFrame}+${f.frames}`).join(", ");
+    check("year said in the hook is still a figure, as said", hooked.length === 2 && hooked.some((f) => f.big === "2026"), at(hooked));
+    check("hook: no figure before HOOK_FRAMES", hooked.every((f) => f.fromFrame >= HOOK_FRAMES), at(hooked));
+    check("hook: waiting figures never overlap", hooked.every((f, i) => !i || f.fromFrame >= hooked[i - 1].fromFrame + hooked[i - 1].frames), at(hooked));
+    check("hook: each held >= the number hold", hooked.every((f) => f.frames >= Math.round((READING.minNumberHoldMs / 1000) * FPS)), at(hooked));
+    check("hook: saidFrame keeps when it was said", hooked.map((f) => f.saidFrame).join() === free.map((f) => f.fromFrame).join(), `${at(hooked)} vs ${at(free)}`);
+    check("no hook: figures keep their time", free.every((f) => f.fromFrame === f.saidFrame), at(free));
+    const late = figuresOf(reelOf(w, { hook: { big: "4,35%" } }), FPS);
+    // "4,1" is said in the hook (1.2 s) and waits; "5" and "100.000%" come later, untouched.
+    check("hook: figures said after it are untouched", late[0].fromFrame === HOOK_FRAMES && at(late.slice(1)) === at(figs.slice(1)), `${at(late)} vs ${at(figs)}`);
+  }
 
   // Banks: aliases, multi-word, a repeat inside the 2.5 s window merges, a
   // later repeat (4 s on) is its own mention.

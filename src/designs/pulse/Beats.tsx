@@ -11,7 +11,12 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../brand/theme";
-import { HOOK_FRAMES, SAFE, type Figure } from "../../mortgage/golden";
+import {
+  HOOK_FRAMES,
+  SAFE,
+  type Figure,
+  hookCount,
+} from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import type { EditJson } from "../../mortgage/schema";
@@ -171,19 +176,26 @@ const Spike: React.FC<{
   );
 };
 
+// The hook number at count progress t (0 -> 1): through hookCount, never
+// from 0 (exported for check-design-figures).
+export const hookText = (
+  hook: NonNullable<EditJson["hook"]>,
+  t: number,
+): string =>
+  hook.countTo === undefined
+    ? hook.big
+    : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
+        minimumFractionDigits: hook.decimals ?? 0,
+        maximumFractionDigits: hook.decimals ?? 0,
+      })}${hook.suffix ?? ""}`;
+
 const HookSpike: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   hook,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = interpolate(frame, [14, 40], [0, 1], { ...clamp, easing: ease });
-  const shown =
-    hook.countTo === undefined
-      ? hook.big
-      : `${(hook.countTo * t).toLocaleString("vi-VN", {
-          minimumFractionDigits: hook.decimals ?? 0,
-          maximumFractionDigits: hook.decimals ?? 0,
-        })}${hook.suffix ?? ""}`;
+  const shown = hookText(hook, t);
   return (
     <Spike
       big={hook.big}

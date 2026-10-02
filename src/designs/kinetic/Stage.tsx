@@ -18,6 +18,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  asSaid,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -76,6 +77,7 @@ const StageBox: React.FC<{
 
 // "4,35" -> counts 0 → 4,35 keeping the decimals and the text around it.
 export const counted = (big: string, t: number): string => {
+  if (asSaid(big)) return big; // a year or a date: as said (golden rule 1)
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;
   // "29/9", "1.600": a date or a grouped count isn't counted up, it slams.
@@ -93,8 +95,9 @@ export const counted = (big: string, t: number): string => {
 };
 
 // How far the bar fills: a percentage on a 10 % scale below 10 % (rates),
-// else 100 %; anything else fills.
-const barFill = (big: string): number => {
+// else 100 %; anything else fills. A year or a date has no bar (null).
+export const barFill = (big: string): number | null => {
+  if (asSaid(big)) return null;
   const m = big.match(/\d[\d.,]*/);
   if (!m || !big.includes("%")) return 1;
   const v = parseFloat(m[0].replace(",", "."));
@@ -147,7 +150,8 @@ const GiantNumber: React.FC<{
     easing: (x) => 1 - (1 - x) ** 3,
   });
   const slam = slamOf(frame, fps);
-  const fill = barFill(figure.big) * interpolate(frame, [6, 36], [0, 1], clamp);
+  const fillTo = barFill(figure.big);
+  const fill = (fillTo ?? 0) * interpolate(frame, [6, 36], [0, 1], clamp);
   return (
     <StageBox>
       <div
@@ -164,27 +168,29 @@ const GiantNumber: React.FC<{
       >
         {counted(figure.big, t)}
       </div>
-      <div
-        style={{
-          width: SAFE_W,
-          height: BAR_H,
-          marginTop: 30,
-          background: s.ink,
-          opacity: 0.9,
-          position: "relative",
-          transform: `scaleX(${interpolate(frame, [0, 8], [0, 1], clamp)})`,
-          transformOrigin: "left",
-        }}
-      >
+      {fillTo === null ? null : (
         <div
           style={{
-            position: "absolute",
-            inset: 6,
-            right: 6 + (SAFE_W - 12) * (1 - fill),
-            background: s.accent,
+            width: SAFE_W,
+            height: BAR_H,
+            marginTop: 30,
+            background: s.ink,
+            opacity: 0.9,
+            position: "relative",
+            transform: `scaleX(${interpolate(frame, [0, 8], [0, 1], clamp)})`,
+            transformOrigin: "left",
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 6,
+              right: 6 + (SAFE_W - 12) * (1 - fill),
+              background: s.accent,
+            }}
+          />
+        </div>
+      )}
       {label ? (
         <div
           style={{

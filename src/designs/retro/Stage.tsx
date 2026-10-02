@@ -17,6 +17,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  asSaid,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -69,6 +70,7 @@ export const StageBox: React.FC<{
 // "4,1 tỷ" counts 0 → 4,1 with the same decimals. A date ("29/9") or a year
 // ("2026") is shown as said: counting it would flash wrong dates.
 export const counted = (big: string, t: number): string => {
+  if (asSaid(big)) return big; // a year or a date: as said (golden rule 1)
   if (/\d\s*\/\s*\d/.test(big) || /\b(19|20)\d\d\b/.test(big)) return big;
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;

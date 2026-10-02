@@ -5,7 +5,7 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
-import type { Figure } from "../../mortgage/golden";
+import { asSaid, type Figure, saidKind } from "../../mortgage/golden";
 import { FONT, clamp } from "../../mortgage/style";
 import {
   FlashCard,
@@ -20,13 +20,27 @@ import {
 } from "./Frame";
 
 export const FIGURE_TAG = "CON SỐ";
+export const YEAR_KICKER = "NĂM";
+export const DATE_KICKER = "NGÀY";
+// A year or a date is not "the number" of anything (recheck 09): its own
+// neutral word, shown as said (golden rule 1).
+export const kickerOf = (big: string): string => {
+  const kind = saidKind(big);
+  return kind === "year"
+    ? YEAR_KICKER
+    : kind === "date"
+      ? DATE_KICKER
+      : FIGURE_TAG;
+};
 const CW = W - 60;
 
 const DATE = /^\d{1,2}\/\d{1,2}(\/\d{2,4})?$/;
 
 // How far the meter fills: a rate below 10 % on a 10 % scale, another
 // percentage on 100 %; anything else has no scale, so it fills.
-const meterFill = (big: string): number => {
+// A year or a date has no meter (null): shown as said.
+export const meterFill = (big: string): number | null => {
+  if (asSaid(big)) return null;
   const m = big.match(/\d[\d.,]*/);
   if (!m || !big.includes("%")) return 1;
   const v = parseFloat(m[0].replace(",", "."));
@@ -151,8 +165,9 @@ const NumberCard: React.FC<{ figure: Figure }> = ({ figure }) => {
         }).fontSize,
       )
     : 190;
+  const fillTo = meterFill(figure.big);
   const fill =
-    meterFill(figure.big) *
+    (fillTo ?? 0) *
     interpolate(frame, [8, 26], [0, 1], {
       ...clamp,
       easing: (x) => 1 - (1 - x) ** 3,
@@ -171,7 +186,7 @@ const NumberCard: React.FC<{ figure: Figure }> = ({ figure }) => {
           opacity: ready ? 1 : 0,
         }}
       >
-        <Tag text={FIGURE_TAG} />
+        <Tag text={kickerOf(figure.big)} />
         <Glint first={12} every={48}>
           <div
             style={{
@@ -188,24 +203,26 @@ const NumberCard: React.FC<{ figure: Figure }> = ({ figure }) => {
             {figure.big}
           </div>
         </Glint>
-        <div
-          style={{
-            width: Math.min(CW - 80, 700),
-            height: 18,
-            borderRadius: 9,
-            background: "rgba(255,255,255,0.12)",
-            overflow: "hidden",
-          }}
-        >
+        {fillTo === null ? null : (
           <div
             style={{
-              width: `${fill * 100}%`,
-              height: "100%",
-              background: STRIPES(GOLD, brand.accent, 12),
-              backgroundPosition: `${(frame * 3) % 34}px 0`,
+              width: Math.min(CW - 80, 700),
+              height: 18,
+              borderRadius: 9,
+              background: "rgba(255,255,255,0.12)",
+              overflow: "hidden",
             }}
-          />
-        </div>
+          >
+            <div
+              style={{
+                width: `${fill * 100}%`,
+                height: "100%",
+                background: STRIPES(GOLD, brand.accent, 12),
+                backgroundPosition: `${(frame * 3) % 34}px 0`,
+              }}
+            />
+          </div>
+        )}
         {label ? (
           <div
             style={{

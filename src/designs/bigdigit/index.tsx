@@ -57,6 +57,8 @@ import {
   LENDER_KICKER,
   LENDER_SUB,
   StageTrack,
+  YEAR_KICKER,
+  DATE_KICKER,
 } from "./Stage";
 import { busySpans, planOf } from "./Plan";
 
@@ -409,6 +411,8 @@ export const bigdigit: Design = {
     CHAPTER_WORD,
     HOOK_KICKER,
     FIGURE_KICKER,
+    YEAR_KICKER,
+    DATE_KICKER,
     LENDER_KICKER,
     LENDER_SUB,
     BEFORE,

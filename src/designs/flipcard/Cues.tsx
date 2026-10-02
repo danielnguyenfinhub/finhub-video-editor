@@ -15,7 +15,7 @@ import {
 } from "remotion";
 import { HOOK_FRAMES } from "../../mortgage/golden";
 import { outFrameOf, type Cue, type Reel } from "../../mortgage/schema";
-import { clamp, pop, toneColor } from "../../mortgage/style";
+import { FONT, clamp, pop, toneColor } from "../../mortgage/style";
 import type { CueOf, Rel } from "../classic/Infographics";
 import { changeDiff } from "../flash/diff";
 import {
@@ -557,8 +557,9 @@ export const FlipCueTrack: React.FC<{ reel: Reel }> = ({ reel }) => {
   const spans = cueSpans(reel, fps).filter(
     (s): s is { cue: OwnCue; from: number; to: number } => isOwnCue(s.cue),
   );
+  // The overlay sets no font: every cue text inherits Be Vietnam Pro here.
   return (
-    <>
+    <div style={{ display: "contents", fontFamily: FONT }}>
       {(ready ? spans : []).map(({ cue: c, from, to }) => {
         const rel: Rel = (ms) => at(ms) - from;
         const dur = Math.max(1, to - from);
@@ -594,6 +595,6 @@ export const FlipCueTrack: React.FC<{ reel: Reel }> = ({ reel }) => {
             />
           </Sequence>
         ))}
-    </>
+    </div>
   );
 };

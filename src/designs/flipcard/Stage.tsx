@@ -17,6 +17,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  hookCount,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -122,6 +123,19 @@ const idleSpans = (blocks: Span[], talkFrames: number): Span[] => {
   return out;
 };
 
+// The hook number at count progress t (0 -> 1): through hookCount, never
+// from 0 (exported for check-design-figures).
+export const hookText = (
+  hook: NonNullable<EditJson["hook"]>,
+  t: number,
+): string =>
+  hook.countTo === undefined
+    ? hook.big
+    : `${hookCount(hook.countTo, t).toLocaleString("vi-VN", {
+        minimumFractionDigits: hook.decimals ?? 0,
+        maximumFractionDigits: hook.decimals ?? 0,
+      })}${hook.suffix ?? ""}`;
+
 // "4,35%" counts 0 → 4,35 keeping its decimals; a year or a date is shown as said.
 export const counted = (big: string, k: number): string => {
   const m = big.match(/\d[\d.,]*/);
@@ -192,19 +206,13 @@ const HookCard: React.FC<{
   const d = deal(frame, fps);
   const out = useExitOut();
   const mid = 24;
-  const k = interpolate(frame, [mid + 4, mid + 34], [0, 1], {
+  // Counts while the card is still turning in, so its face reads the true
+  // rate (hookCount: exact from half way) by the time it faces the viewer.
+  const k = interpolate(frame, [4, 34], [0, 1], {
     ...clamp,
     easing: (x) => 1 - (1 - x) ** 3,
   });
-  const big =
-    hook.countTo === undefined
-      ? hook.big
-      : k >= 1
-        ? hook.big
-        : `${(hook.countTo * k).toLocaleString("vi-VN", {
-            minimumFractionDigits: hook.decimals ?? 0,
-            maximumFractionDigits: hook.decimals ?? 0,
-          })}${hook.suffix ?? ""}`;
+  const big = k >= 1 ? hook.big : hookText(hook, k);
   const lead = hook.sub ?? title;
   const front = (
     <Face kind="navy">

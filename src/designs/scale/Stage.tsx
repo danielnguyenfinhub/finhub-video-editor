@@ -19,10 +19,18 @@ import {
   type Tag,
 } from "./Plan";
 import { BRASS, CX, GOLD, ScaleRig, panAt, type PanDraw } from "./Scale";
+import { hookCount } from "../../mortgage/golden";
 
 const FADE = 8;
 const DROP_FROM = 320; // px above the pan a weight starts its fall
 const PLAQUE_GAP = 30; // pan rim to plaque
+// A plaque never covers the pillar (viewed critique 08): this far from CX,
+// clear of the pillar's 44 px collars.
+const PILLAR_CLEAR = 46;
+export const plaqueLeft = (side: Side, x: number, width: number): number =>
+  side === 1
+    ? Math.max(x - width / 2, CX + PILLAR_CLEAR)
+    : Math.min(x - width / 2, CX - PILLAR_CLEAR - width);
 export const HEADING_BOTTOM = 546;
 const HEADING_WIDTH = 400;
 const RAMP = 10;
@@ -127,7 +135,7 @@ const panDraw = (
 
 // ------------------------------------------------------------- plaques
 
-const counted = (load: PanLoad, t: number): string => {
+export const counted = (load: PanLoad, t: number): string => {
   if (!load.count || !load.value) return load.value ?? "";
   const p = interpolate(
     t,
@@ -138,7 +146,7 @@ const counted = (load: PanLoad, t: number): string => {
       easing: (x) => 1 - (1 - x) ** 3,
     },
   );
-  return `${(load.count.to * p).toLocaleString("vi-VN", {
+  return `${hookCount(load.count.to, p).toLocaleString("vi-VN", {
     minimumFractionDigits: load.count.decimals,
     maximumFractionDigits: load.count.decimals,
   })}${load.count.suffix}`;
@@ -229,7 +237,7 @@ const Plaque: React.FC<{
     <div
       style={{
         position: "absolute",
-        left: x - width / 2,
+        left: plaqueLeft(side, x, width),
         top: y + PLAQUE_GAP,
         width,
         display: "flex",

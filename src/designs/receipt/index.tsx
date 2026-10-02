@@ -39,7 +39,13 @@ import { Outro } from "../classic/Outro";
 import { Captions, EnglishLine } from "./Captions";
 import { DIFF_KICKER } from "./Compare";
 import { AFTER_WORD, BEFORE_WORD, ReceiptCueTrack, isOwnCue } from "./Cues";
-import { FIGURE_KICKER, LENDER_KICKER, LENDER_SUB } from "./Figures";
+import {
+  FIGURE_KICKER,
+  LENDER_KICKER,
+  LENDER_SUB,
+  YEAR_KICKER,
+  DATE_KICKER,
+} from "./Figures";
 import {
   Counter,
   FADED,
@@ -372,6 +378,8 @@ export const receipt: Design = {
     BEFORE_WORD,
     AFTER_WORD,
     FIGURE_KICKER,
+    YEAR_KICKER,
+    DATE_KICKER,
     LENDER_KICKER,
     LENDER_SUB,
     CHAPTER_WORD,

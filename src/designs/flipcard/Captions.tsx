@@ -17,6 +17,13 @@ import { CAPTION_BOTTOM, DIM, GOLD, INK } from "./Look";
 // Two lines at most between the ribbon and CAPTION_BOTTOM.
 const sizeFor = (chars: number) => (chars > 64 ? 42 : chars > 44 ? 48 : 54);
 
+// The said word's gold card is padded PAD px a side and ate the word space
+// ("ThángHai", viewed critique 08). Every word keeps a fixed side margin of
+// half that; the said word's card grows into its own margin only, so the
+// space stays as wide as said and the line never reflows.
+const PAD = 8;
+const saidRoom = (now: boolean) => (now ? -PAD / 2 : PAD / 2);
+
 const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   page,
   keywords,
@@ -67,8 +74,8 @@ const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
                   color: now ? INK : hit.has(i) ? GOLD : "#ffffff",
                   background: now ? GOLD : undefined,
                   borderRadius: 10,
-                  padding: now ? "0 8px" : undefined,
-                  margin: now ? "0 -8px" : undefined,
+                  padding: now ? `0 ${PAD}px` : undefined,
+                  margin: `0 ${saidRoom(now)}px`,
                   opacity: spoken ? 1 : 0.42,
                   transform: now ? "translateY(-3px) rotate(-2deg)" : undefined,
                   boxShadow: now ? "0 8px 18px rgba(0,0,0,0.4)" : undefined,

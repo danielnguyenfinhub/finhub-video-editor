@@ -18,6 +18,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  asSaid,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -105,7 +106,8 @@ export const Txt: React.FC<{
 );
 
 // "4,1 tỷ" -> counts 0 → 4,1 with the same decimals; text around it kept.
-const counted = (big: string, t: number): string => {
+export const counted = (big: string, t: number): string => {
+  if (asSaid(big)) return big; // a year or a date: as said (golden rule 1)
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;
   const target = parseFloat(m[0].replace(/\./g, "").replace(",", "."));

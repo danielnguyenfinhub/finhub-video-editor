@@ -13,6 +13,8 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  hookCount,
+  asSaid,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -147,6 +149,7 @@ type View = {
   logo?: Lender;
   label?: string;
   flash?: number; // frames since the swap
+  plain?: boolean; // a year or a date: the readout alone, the dial dimmed
 };
 
 const ease = (x: number) => 1 - (1 - x) ** 3;
@@ -167,6 +170,7 @@ const valueView = (
   lf: number,
   fps: number,
   kicker?: string,
+  count = (t: number) => p.value * t,
 ): View => {
   const s = niceScale(0, Math.max(p.value * 1.35, 1e-3));
   const a = angleOf(p.value, s);
@@ -179,14 +183,14 @@ const valueView = (
     lit: { a: -SWEEP, b: Math.max(-SWEEP, angle), color: SKY },
     readout: {
       kicker,
-      text: t >= 1 ? exact : show(p, p.value * t),
+      text: t >= 1 ? exact : show(p, count(t)),
       widest: exact,
       color: t >= 1 ? GOLD : "#ffffff",
     },
   };
 };
 
-const hookView = (hook: Hook, lf: number, fps: number): View => {
+export const hookView = (hook: Hook, lf: number, fps: number): View => {
   const p: Parsed | null =
     hook.countTo !== undefined
       ? {
@@ -204,6 +208,8 @@ const hookView = (hook: Hook, lf: number, fps: number): View => {
           hook.countTo !== undefined ? show(p, p.value) : hook.big,
           lf,
           fps,
+          undefined,
+          (t) => hookCount(p.value, t),
         )
       : idleWith(hook.big, lf);
   return { ...base, label: hook.sub };
@@ -304,7 +310,15 @@ const dateView = (big: string, lf: number, fps: number): View | null => {
   };
 };
 
-const figureView = (f: Figure, lf: number, fps: number): View => {
+export const figureView = (f: Figure, lf: number, fps: number): View => {
+  // A year is shown as said (golden rule 1): no needle on a scale. A date
+  // keeps its month dial (dateView), unchanged.
+  if (asSaid(f.big) && !dateView(f.big, lf, fps))
+    return {
+      ...idleWith(f.big, lf),
+      plain: true,
+      label: f.source === "stat" ? f.label : undefined,
+    };
   const p = parseValue(f.big);
   const base =
     (p && p.value > 0 ? valueView(p, f.big, lf, fps) : null) ??
@@ -373,7 +387,11 @@ export const DialLayer: React.FC<{ plan: Plan }> = ({ plan }) => {
       <svg
         width={1080}
         height={1920}
-        style={{ position: "absolute", inset: 0 }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: v?.plain ? 1 - 0.85 * w : 1,
+        }}
       >
         <DialBody t={t} lamp={lamp} />
         <Ticks n={IDLE_TICKS} opacity={1 - w} />

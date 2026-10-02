@@ -17,7 +17,7 @@ import {
 import { fitTextOnNLines } from "@remotion/layout-utils";
 import { brand } from "../../brand/theme";
 import { NewsTicker } from "../../elements/NewsTicker";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, asSaid } from "../../mortgage/golden";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
 import { FONT, clamp, reelFontReady } from "../../mortgage/style";
 
@@ -82,13 +82,14 @@ export const BoardBackdrop: React.FC = () => {
 // ------------------------------------------------------------------ flips
 
 const DIGITS = "0123456789";
-const LETTERS = "ABCDEFGHKLMNPRSTUVXY";
-// The glyph a flap shows while it spins: same class as the final character.
-const spinGlyph = (ch: string, seed: string): string => {
-  const set = /\d/.test(ch) ? DIGITS : /\p{L}/u.test(ch) ? LETTERS : null;
-  if (!set) return ch;
-  return set[Math.floor(random(seed) * set.length)];
-};
+// The glyph a flap shows while it spins. Only a digit spins through other
+// digits; a letter flaps on its own letter (viewed critique 08: random
+// capitals made the Vietnamese unreadable, "CVSB R"), and a year or a date
+// never spins (golden rule 1: shown as said, "5 2 4" was never said).
+export const spinGlyph = (ch: string, seed: string, text: string): string =>
+  /\d/.test(ch) && !asSaid(text)
+    ? DIGITS[Math.floor(random(seed) * DIGITS.length)]
+    : ch;
 
 // Split-flap text: each character spins from `start + i * stagger` for
 // `spin` frames, then lands. Before its start a character is blank.
@@ -108,7 +109,7 @@ export const useFlaps = (
         ch:
           ch === " "
             ? " "
-            : spinGlyph(ch, `${text}${i}${Math.floor(frame / 2)}`),
+            : spinGlyph(ch, `${text}${i}${Math.floor(frame / 2)}`, text),
         landed: false,
         age: frame - s,
       };

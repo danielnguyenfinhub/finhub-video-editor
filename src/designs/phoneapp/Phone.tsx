@@ -7,7 +7,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { AbsoluteFill, interpolate, useDelayRender } from "remotion";
 import { brand } from "../../brand/theme";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, asSaid } from "../../mortgage/golden";
 import { FONT, clamp, reelFontReady } from "../../mortgage/style";
 
 // A brand colour at an alpha, without a colour literal.
@@ -82,6 +82,7 @@ export const useFontReady = (): boolean => {
 // "4,35%" -> counts 0 → 4,35 with the same decimals. A year or a date
 // ("2026", "29/9") is shown as said; thousands dots only if said with them.
 export const counted = (big: string, t: number): string => {
+  if (asSaid(big)) return big; // a year or a date: as said (golden rule 1)
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;
   if (/^(19|20)\d\d$/.test(m[0]) || /\d\/\d/.test(big)) return big;

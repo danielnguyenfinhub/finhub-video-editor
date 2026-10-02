@@ -20,6 +20,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
+  asSaid,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
@@ -47,7 +48,8 @@ const fadeOut = (frame: number, dur: number) =>
 
 // "4,35%" -> counts 0 → 4,35 with the same decimals; text around it kept.
 // A year or a date ("2026", "29/9") is shown as said, not counted.
-const counted = (big: string, t: number): string => {
+export const counted = (big: string, t: number): string => {
+  if (asSaid(big)) return big; // a year or a date: as said (golden rule 1)
   const m = big.match(/\d[\d.,]*/);
   if (!m || m.index === undefined) return big;
   if (/^(19|20)\d\d$/.test(m[0]) || /\d\/\d/.test(big)) return big;
