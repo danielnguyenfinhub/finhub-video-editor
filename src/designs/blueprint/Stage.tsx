@@ -405,6 +405,27 @@ const FigureSheet: React.FC<{ figure: Figure }> = ({ figure }) =>
     <DimensionFigure figure={figure} />
   );
 
+// A figure shown while another cue holds the stage: the number as said,
+// plain, right-aligned in the strip under the stage (above the captions).
+const FigureChip: React.FC<{ figure: Figure }> = ({ figure }) => (
+  <StageSheet lines={null}>
+    <Txt
+      top={STAGE_H + 14}
+      left={SAFE.right - 420}
+      width={420}
+      style={{
+        fontSize: 48,
+        fontWeight: 900,
+        lineHeight: 1.2,
+        textAlign: "right",
+        color: brand.highlight,
+      }}
+    >
+      {figure.big}
+    </Txt>
+  </StageSheet>
+);
+
 // ---------------------------------------------------------------- lender
 
 // Detail callout: a circle drawn round the logo, a leader line out to a
@@ -492,9 +513,13 @@ const LenderSheet: React.FC<{ lender: Lender }> = ({ lender }) => {
 // ---------------------------------------------------------------- layer
 
 // The core figures, each yielding to a compare cue on the same stage
-// (yieldToCompare: cut, moved after it, or dropped from this stage; exported
-// for check-design-figures).
-export const stageFigures = (reel: Reel, fps: number): Figure[] => {
+// (yieldToCompare: cut, held over its drop-in, or moved after it, as a chip
+// under the stage when another cue holds it then; exported for
+// check-design-figures).
+export const stageFigures = (
+  reel: Reel,
+  fps: number,
+): (Figure & { chip?: boolean })[] => {
   const at = outFrameOf(reel.timeline, fps);
   const span = (c: { fromMs: number; toMs: number }): [number, number] => [
     at(c.fromMs),
@@ -535,7 +560,7 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
             durationInFrames={frames}
             layout="none"
           >
-            <FigureSheet figure={f} />
+            {f.chip ? <FigureChip figure={f} /> : <FigureSheet figure={f} />}
           </Sequence>
         );
       })}

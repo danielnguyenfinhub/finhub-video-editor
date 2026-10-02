@@ -213,25 +213,55 @@ export const hookCount = (to: number, t: number): number => {
   return k >= 1 ? to : whole + (to - whole) * k;
 };
 
-// The hook's text at count progress t, the one formatter every design prints:
-// the number as hookCount shows it, then the suffix, a sign glued ("4,35%"), a
-// word after a space ("4,1 TỶ ĐÔ"). A year or a date is never counted (rule 1).
+// The hook's text at count progress t, the one formatter every design prints.
+// It counts the number inside `big` and keeps everything around it as written
+// (a "$" before it, "%" glued, " TỶ ĐÔ" after a space) and its own separators
+// ("4,35", "750.000", "4.1"), so at t = 1 it is exactly `big` (review 557b020).
+// The value is hookCount's; a year or a date is never counted (rule 1).
 export const hookText = (
   hook: { big: string; countTo?: number; decimals?: number; suffix?: string },
   t: number,
 ): string => {
   if (hook.countTo === undefined || asSaid(hook.big)) return hook.big;
-  const d = hook.decimals ?? 0;
-  const n = hookCount(hook.countTo, t).toLocaleString("vi-VN", {
-    minimumFractionDigits: d,
-    maximumFractionDigits: d,
-  });
-  return `${n}${hookSuffix(hook.suffix)}`;
+  const v = hookCount(hook.countTo, t);
+  const m = hook.big.match(/\d(?:[\d.,]*\d)?/);
+  if (!m || m.index === undefined)
+    return `${formatLike("", v, hook.decimals ?? 0)}${hookSuffix(hook.suffix)}`;
+  const tail = hook.big.slice(m.index + m[0].length);
+  const unit = (hook.suffix ?? "").trim();
+  return `${hook.big.slice(0, m.index)}${formatLike(m[0], v, hook.decimals)}${
+    unit && !tail.includes(unit) ? hookSuffix(unit) : ""
+  }${tail}`;
 };
 // The suffix as it follows the number: a sign glued, a word after a space.
-export const hookSuffix = (suffix: string | undefined): string => {
+const hookSuffix = (suffix: string | undefined): string => {
   const s = (suffix ?? "").trim();
   return /^\p{L}/u.test(s) ? ` ${s}` : s;
+};
+// `v` written like the number `token`: its decimal mark (the last "," or "."
+// not followed by exactly three digits), its thousands mark if it has one,
+// and `decimals` (else the token's own) digits.
+const formatLike = (token: string, v: number, decimals?: number): string => {
+  const marks = [...token.matchAll(/[.,]/g)];
+  const last = marks.at(-1);
+  const after = last ? token.length - last.index! - 1 : 0;
+  const dec =
+    last && after !== 3
+      ? last[0]
+      : token.includes(".")
+        ? ","
+        : token.includes(",")
+          ? "."
+          : ",";
+  const group = marks.some((x) => x[0] !== dec)
+    ? dec === ","
+      ? "."
+      : ","
+    : "";
+  const d = decimals ?? (last && last[0] === dec && after !== 3 ? after : 0);
+  const [int, frac] = v.toFixed(d).split(".");
+  const grouped = group ? int.replace(/\B(?=(\d{3})+(?!\d))/g, group) : int;
+  return frac ? `${grouped}${dec}${frac}` : grouped;
 };
 
 const AUTO_MS = 2600;

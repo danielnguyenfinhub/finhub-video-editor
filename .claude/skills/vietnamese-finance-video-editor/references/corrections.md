@@ -141,8 +141,12 @@ screen ("the rate card"), never whose.
   the logo and above SAFE; checklist unclipped; LogoMark on the panel's corner; explainer points at y 110)
   → `Panel` is clipped at its rest top only while above it (no shadow then), so it never reaches above
   where it rests; while the logo shows a panel resting above its bottom keeps its right edge at
-  `LOGO_CLEAR`; every host sets `PanelPlace` → check-design-figures (g), all hosts · `checked`; a trend
-  card (fixed width) does not narrow · `rule`
+  `LOGO_CLEAR`, decided once per cue (a cue touching a logo window ±8 frames is narrow for its whole
+  life: it never rewraps while read, at the cost of a long cue staying narrow after the logo leaves);
+  every host sets `PanelPlace` (explainer's points at 0.8 from SAFE.top) → check-design-figures (g),
+  all hosts, one width per cue · `checked`; a narrowed trend graph prints its values under 32 px;
+  youtube/Kit narrows on the vertical logo windows, not LogoMark16's (from frame 0), and rests at
+  y 62 above YT_SAFE (older) · `rule` (known risks)
 - 02/10/2026 · design:ticker · VI and EN lines split by the tape; a 4th EN line clipped → bilingual lines
   are one block (EN right under the caption, tape on SAFE.bottom); EN shrinks to fit its band · `rule`
 - 02/10/2026 · promote-design · "Fix all these", review c849a4c → `promoted` attests: a check that cannot
@@ -155,9 +159,10 @@ screen ("the rate card"), never whose.
   check-design-figures (h) · `checked`
 - 02/10/2026 · all designs · view7 stills and review c849a4c (rings/road bars on years, "CON SỐ 2026",
   hooks from 0 via `countTo * t` or `[0, hook.countTo]`, "4,1TỶ ĐÔ", "9%" for 10%) → a year or date
-  never gets a ring, road or count; every hook prints through the core `hookText` (only the fraction
-  counts, a word unit after a space) → check-design-figures (d)(f), evaluated plus a source ban ·
-  `checked`
+  never gets a ring, road or count; every hook prints through the core `hookText`, which counts inside
+  `big` and ends exactly as written ("$4.1B", "750.000 ĐÔ") → check-design-figures (d)(f), evaluated;
+  any other `countTo` read in a design fails (source) · `checked`
 - 02/10/2026 · blueprint, orbit, phoneapp · a figure under a compare cue; "0/2" bar half full → the cue
-  wins (`yieldToCompare`: cut after the floor, else moved to a free stage, else dropped from that stage
-  only); the bar is said / n → check-design-figures (i) · `checked`
+  wins, but a figure is never dropped (rule 1, review 557b020): cut after its floor, held over the
+  cue's drop-in when short by ≤ 10 frames, else shown after the cue (a chip when another cue holds
+  the stage); the bar is said / n → check-design-figures (i), every fixture · `checked`

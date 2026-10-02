@@ -787,6 +787,7 @@ const sfxFor = (cues: Cue[]): Sfx[] =>
   });
 
 const POINTS_OFFSET = SAFE.top - PANEL_TOP;
+const POINTS_SCALE = 0.8;
 
 export const CueTrack: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
@@ -809,17 +810,21 @@ export const CueTrack: React.FC<{ reel: Reel }> = ({ reel }) => {
             >
               {c.kind === "points" ? (
                 // The classic panel: rested at SAFE.top like classic's
-                // MotionTrack (it sat at y 110, above SAFE and the logo).
+                // MotionTrack (it sat at y 110, above SAFE and the logo), at
+                // 0.8 from its top-left like every explainer note (NoteBand
+                // MAX_SCALE), so 4 points end near y 825, above his eyes.
                 <div
                   style={{
                     position: "absolute",
                     inset: 0,
-                    transform: `translateY(${POINTS_OFFSET}px)`,
+                    transform: `translateY(${POINTS_OFFSET}px) scale(${POINTS_SCALE})`,
+                    transformOrigin: `${SAFE.left}px ${PANEL_TOP}px`,
                   }}
                 >
                   <PanelPlace.Provider
                     value={{
                       offset: POINTS_OFFSET,
+                      scale: POINTS_SCALE,
                       from,
                       talkFrames: reel.timeline.talkFrames,
                     }}

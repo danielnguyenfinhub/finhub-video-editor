@@ -382,9 +382,12 @@ const FigureMoon: React.FC<{ figure: Figure }> = ({ figure }) => {
 };
 
 // The core figures, each yielding to a compare cue on the same stage
-// (yieldToCompare: cut, moved after it, or dropped from this stage; exported
-// for check-design-figures).
-export const stageFigures = (reel: Reel, fps: number): Figure[] => {
+// (yieldToCompare: cut, held over its drop-in, or moved after it, as a moon
+// when another cue holds the core then; exported for check-design-figures).
+export const stageFigures = (
+  reel: Reel,
+  fps: number,
+): (Figure & { chip?: boolean })[] => {
   const at = outFrameOf(reel.timeline, fps);
   const span = (c: { fromMs: number; toMs: number }): [number, number] => [
     at(c.fromMs),
@@ -430,7 +433,11 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
           durationInFrames={f.frames}
           layout="none"
         >
-          {moons.has(f) ? <FigureMoon figure={f} /> : <FigureHero figure={f} />}
+          {moons.has(f) || f.chip ? (
+            <FigureMoon figure={f} />
+          ) : (
+            <FigureHero figure={f} />
+          )}
         </Sequence>
       ))}
       {lenderMentionsOf(reel).map((m) => {

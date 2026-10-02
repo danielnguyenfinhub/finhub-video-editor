@@ -13,8 +13,7 @@ import {
   figuresOf,
   lenderMentionsOf,
   type Figure,
-  hookCount,
-  hookSuffix,
+  hookText,
   asSaid,
 } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
@@ -171,7 +170,7 @@ const valueView = (
   lf: number,
   fps: number,
   kicker?: string,
-  count = (t: number) => p.value * t,
+  textAt = (t: number) => show(p, p.value * t),
 ): View => {
   const s = niceScale(0, Math.max(p.value * 1.35, 1e-3));
   const a = angleOf(p.value, s);
@@ -184,7 +183,7 @@ const valueView = (
     lit: { a: -SWEEP, b: Math.max(-SWEEP, angle), color: SKY },
     readout: {
       kicker,
-      text: t >= 1 ? exact : show(p, count(t)),
+      text: t >= 1 ? exact : textAt(t),
       widest: exact,
       color: t >= 1 ? GOLD : "#ffffff",
     },
@@ -192,28 +191,22 @@ const valueView = (
 };
 
 export const hookView = (hook: Hook, lf: number, fps: number): View => {
-  const p: Parsed | null =
-    hook.countTo !== undefined && !asSaid(hook.big)
-      ? {
-          value: hook.countTo,
-          decimals: hook.decimals ?? 0,
+  // The needle reads the value; the readout prints through the core hookText.
+  const counts = hook.countTo !== undefined && !asSaid(hook.big);
+  const p: Parsed | null = counts
+    ? {
+        ...(parseValue(hook.big) ?? {
+          decimals: 0,
           grouped: false,
           before: "",
-          after: hookSuffix(hook.suffix),
-        }
-      : parseValue(hook.big);
+          after: "",
+        }),
+        value: hook.countTo ?? 0,
+      }
+    : parseValue(hook.big);
   const base =
     p && p.value > 0
-      ? valueView(
-          p,
-          hook.countTo !== undefined && !asSaid(hook.big)
-            ? show(p, p.value)
-            : hook.big,
-          lf,
-          fps,
-          undefined,
-          (t) => hookCount(p.value, t),
-        )
+      ? valueView(p, hook.big, lf, fps, undefined, (t) => hookText(hook, t))
       : idleWith(hook.big, lf);
   return { ...base, label: hook.sub };
 };

@@ -34,7 +34,7 @@ export const PANEL_TOP = 110;
 // edge at LOGO_CLEAR while the logo shows (rule 3b: their own places).
 export const LOGO_BOTTOM = 590;
 export const LOGO_CLEAR = 680;
-const LOGO_RAMP = 8; // frames the edge takes to move in before / out after the logo
+const LOGO_MARGIN = 8; // frames either side of a logo window that count as in it
 
 // Set by the track that mounts the panels: the layer's offset and width, the
 // cue's first talk frame and the talk's length (for the logo windows), and
@@ -45,30 +45,50 @@ export const PanelPlace = createContext<{
   talkFrames: number;
   width?: number;
   logo?: boolean;
+  scale?: number; // the host layer's scale from (SAFE.left, PANEL_TOP), as explainer's 0.8
 } | null>(null);
 
 // How far the panel's right edge moves in at full clearance: from its normal
-// edge (layer width - the right margin) to LOGO_CLEAR, never outward.
-export const logoInset = (width = 1080): number =>
-  Math.max(0, width - (1080 - SAFE.right) - LOGO_CLEAR);
+// edge (layer width - the right margin) to LOGO_CLEAR on screen (in a layer
+// scaled from SAFE.left), never outward.
+export const logoInset = (width = 1080, scale = 1): number =>
+  Math.max(
+    0,
+    width -
+      (1080 - SAFE.right) -
+      (SAFE.left + (LOGO_CLEAR - SAFE.left) / scale),
+  );
 
-// 1 while the LogoMark shows (and LOGO_RAMP frames either side), 0 when the
-// panel rests below the logo or the logo is away.
+// 1 when any frame of the cue (from, frames) is within LOGO_MARGIN of a
+// LogoMark window and the panel rests above the logo's bottom, else 0. Decided
+// once per cue, so the panel never changes width (and its text never rewraps)
+// while it is read (review 557b020): a cue that touches a window is narrow
+// for its whole life.
 export const logoClear = (
   offset: number,
-  frame: number,
+  from: number,
+  frames: number,
   talkFrames: number,
   fps: number,
 ): number => {
   if (PANEL_TOP + offset >= LOGO_BOTTOM) return 0;
-  for (let d = 0; d <= LOGO_RAMP; d++)
-    if (
-      logoVisible(frame - d, talkFrames, fps) ||
-      logoVisible(frame + d, talkFrames, fps)
-    )
-      return 1 - d / (LOGO_RAMP + 1);
+  for (let f = from - LOGO_MARGIN; f < from + frames + LOGO_MARGIN; f++)
+    if (logoVisible(f, talkFrames, fps)) return 1;
   return 0;
 };
+
+// The panel's right inset at frame `frame` of its cue: the same at every
+// frame (exported for check-design-figures, which evaluates it per frame).
+export const panelInset = (
+  place: React.ContextType<typeof PanelPlace>,
+  frame: number,
+  frames: number,
+  fps: number,
+): number =>
+  place && place.logo !== false
+    ? logoClear(place.offset, place.from, frames, place.talkFrames, fps) *
+      logoInset(place.width, place.scale)
+    : 0;
 
 // Navy glass card that drops in from the top and flies back out at the end.
 // While it is above its rest line it is clipped there, so it unrolls from
@@ -79,15 +99,11 @@ export const Panel: React.FC<{
   style?: React.CSSProperties;
 }> = ({ children, style }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, durationInFrames } = useVideoConfig();
   const exit = useExit();
   const inP = pop(frame, fps, 0);
   const place = useContext(PanelPlace);
-  const clear =
-    place && place.logo !== false
-      ? logoClear(place.offset, place.from + frame, place.talkFrames, fps) *
-        logoInset(place.width)
-      : 0;
+  const clear = panelInset(place, frame, durationInFrames, fps);
   const y = interpolate(inP, [0, 1], [-700, 0]) - exit * 800;
   // Above its rest line (dropping in, flying out): clipped there, no shadow.
   // Landed: neither, so the resting panel is drawn exactly as before.
