@@ -347,18 +347,16 @@ const spokenNumbers = (reel: Reel) => {
       // The token alone is "2000" or "1/3": a year or a date only when the
       // words around it allow it ("năm 2000", "2026 lãi suất"; not "2000
       // đô", "1/3 thu nhập").
-      const word = (k: number) =>
-        clean(caps[k]?.text ?? "").normalize("NFC");
-      const nx = next.normalize("NFC");
+      const word = (k: number) => clean(caps[k]?.text ?? "");
       const saidBefore =
         SAID_BEFORE.test(word(i - 1)) &&
         !(/^năm$/iu.test(word(i - 1)) && PER.test(word(i - 2)));
       const amount =
         !saidBefore &&
         (percent ||
-          UNIT.test(nx) ||
-          MONEY_NEXT.test(nx) ||
-          (saidKind(said) === "date" && SHARE_NEXT.test(nx)));
+          UNIT.test(next) ||
+          MONEY_NEXT.test(next) ||
+          (saidKind(said) === "date" && SHARE_NEXT.test(next)));
       out.push({
         big: said,
         // A year or a date gets no label: the words after it describe

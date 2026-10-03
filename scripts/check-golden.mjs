@@ -139,6 +139,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     for (const [text, big, label] of [
       ["tôi trả 2000 đô mỗi tháng cho khoản vay này nhé", "2000", "đô mỗi tháng cho"],
       ["giá 1950 đô mỗi tháng là vừa", "1950", "đô mỗi tháng"],
+      ["giá 1950 đô mỗi tháng là vừa".normalize("NFD"), "1950", "đô mỗi tháng"],
       ["trả 2000 AUD mỗi tháng thôi", "2000", "AUD mỗi tháng thôi"],
       ["trả 2000 $ mỗi tháng thôi", "2000", "$ mỗi tháng thôi"],
       ["dành 1/3 thu nhập cho tiền nhà thôi", "1/3", "thu nhập cho tiền"],

@@ -34,6 +34,7 @@
 // in corrections.md, not `checked`.
 // esbuild is not a direct dependency: it ships with @remotion/bundler, so it is resolved from
 // there (works hoisted or nested, no package.json change).
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -76,9 +77,17 @@ const code = (file, given = {}) => {
 const argv = process.argv.slice(2);
 const only = argv.includes("--only") ? argv[argv.indexOf("--only") + 1] : null;
 const verbose = argv.includes("--verbose");
+// A typo fails at once, before any bundling: --only takes a design id (src/designs, src/youtube/designs).
+const ids = ["designs", "youtube/designs"].flatMap((d) => readdirSync(join(ROOT, "src", d), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name));
+if (only !== null && !ids.includes(only)) {
+  console.log(`FAIL --only ${only}: not a design id (${ids.length} known, e.g. ${ids.slice(0, 3).join(", ")})`);
+  process.exit(1);
+}
 let failed = false;
 let passed = 0;
+let matched = 0;
 const check = (name, ok, detail = "") => {
+  if (only && name.includes(only)) matched++;
   if (!ok || verbose || (only && name.includes(only))) console.log(`${ok ? "ok  " : "FAIL"} ${name}${detail ? `  (${detail})` : ""}`);
   if (!ok) failed = true;
   else passed++;
@@ -745,5 +754,13 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
   }
 }
 
+if (only === null) {
+  const typo = spawnSync(process.execPath, [import.meta.filename, "--only", "zz-no-such-design"], { encoding: "utf8" });
+  check("--only <typo> exits non-zero at once", typo.status === 1 && /not a design id/.test(typo.stdout), `exit ${typo.status}`);
+}
+if (only !== null && !matched) {
+  console.log(`FAIL --only ${only}: no check names it (a typo, or no design by that id)`);
+  failed = true;
+}
 console.log(failed ? "design figures: FAILED" : `design figures ok (${passed} checks${verbose ? "" : "; --verbose prints each"})`);
 process.exit(failed ? 1 : 0);
