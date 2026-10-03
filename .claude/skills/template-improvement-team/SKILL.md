@@ -53,7 +53,7 @@ A fixes go ahead without asking; B fixes go ahead only where a still can be rend
 
 ## Phase 5 — Independent re-check (parallel)
 
-One message: `golden-rules-auditor` (re-check; compare with each `01_golden_audit_<group>.md`), `design-critic` (did each chosen option land, did anything regress) and `quality-reviewer` (phase `refactor`). Fan-in:
+First, when the run touched shared code or the core, run `node scripts/stills-diff.mjs <slug> --before origin/main` and hand its `diff.md` to the re-checkers: a design nobody meant to change that "differs" is a regression to explain. Then one message: `golden-rules-auditor` (re-check; compare with each `01_golden_audit_<group>.md`), `design-critic` (did each chosen option land, did anything regress) and `quality-reviewer` (phase `refactor`). Fan-in:
 
 - Any rule violation left or introduced, or **FIX** → back to the improver in one combined round; re-check only what changed. At most 2 rounds, then show Daniel the open findings.
 - **BLOCK** → stop, plain words.
