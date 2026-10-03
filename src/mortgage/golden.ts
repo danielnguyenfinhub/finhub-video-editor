@@ -275,6 +275,12 @@ const AUTO_MS = 2600;
 const AUTO_GAP_MS = 4000;
 // Money and percent units only: "1 năm", "1 phần lời" are counts, not figures.
 const UNIT = /^(%|tỷ|ti|triệu|nghìn|ngàn|đô|k)(?!\p{L})/iu;
+// A bare "2000" / "1/3" followed by one of these (or by UNIT) is an amount,
+// count or share, not a year or date, unless "năm" / "ngày" / "in" / "since"
+// comes before it. ponytail: a word list; add a noun when one slips through.
+const AMOUNT_NEXT =
+  /^(đồng|usd|aud|\$|người|hộ|căn|lần|khách|thu|của|phần)(?!\p{L})/iu;
+const SAID_BEFORE = /^(năm|ngày|in|since)$/iu;
 const NUMERIC = /^[.,]?\d/;
 const clean = (s: string) => s.trim().replace(/[.,!?;:]+$/g, "");
 // Words that start a new clause: an automatic figure's label stops before them.
@@ -333,11 +339,17 @@ const spokenNumbers = (reel: Reel) => {
         .trim()
         .split(/\s+/);
       const said = clean(big) + (percent ? "%" : "");
+      // The token alone is "2000" or "1/3": a year or a date only when the
+      // words around it allow it ("năm 2000", "2026 lãi suất"; not "2000
+      // đô", "1/3 thu nhập").
+      const amount =
+        !SAID_BEFORE.test(clean(caps[i - 1]?.text ?? "")) &&
+        (percent || UNIT.test(next) || AMOUNT_NEXT.test(next));
       out.push({
         big: said,
         // A year or a date gets no label: the words after it describe
         // something else ("2026 lãi suất cơ bản" read as "the rate is 2026").
-        label: asSaid(said) ? "" : autoLabel(after),
+        label: asSaid(said) && !amount ? "" : autoLabel(after),
         startMs: caps[i].startMs,
       });
     }

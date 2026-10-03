@@ -113,7 +113,10 @@ screen ("the rate card"), never whose.
   `src/designs/README.md` rule 1; `check-golden` (self-tests, README text) and `check-design-figures`
   (evaluated: the core, every design file that defines a figure counter, the ten data stage plans,
   ticker flaps, flash/ticker/kinetic meters, faceless ring, gauge needle, the neutral kickers) ·
-  `checked`; that a meter is drawn only through its fill function is a source check · `rule`
+  `checked`; that a meter is drawn only through its fill function is a source check · `rule`;
+  an automatic figure's token is bare ("2000"), its unit the next caption word, so "2000 đô",
+  "2024 hộ", "1/3 thu nhập" lost their label: fixed 03/10/2026 (`spokenNumbers` reads the words
+  around it) → check-golden, the real caption path · `checked`
 - 02/10/2026 · design:gauge, pulse, scale, receipt, calendar, timelapse, splitscreen, flipcard · viewed
   critiques 08 V2/S1 (hook count-up from 0 paused at "4,06%", "2,39%", "0,00%" for a 4,35% rate) → a
   hook number never counts from 0: only its last tenth, exact by half the design's count (`hookCount`,

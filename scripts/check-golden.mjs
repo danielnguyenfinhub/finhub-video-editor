@@ -132,6 +132,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     check("asSaid: a date inside a stat, 1/12/2026", asSaid("Thứ Ba 29/9") && asSaid("1/12/2026"));
     const auto = figuresOf(reelOf(words("từ đầu năm 2026 lãi suất cơ bản đã tăng nhiều lần rồi đó")), FPS);
     check("an automatic year gets no label (not \"lãi suất cơ bản\")", auto[0]?.big === "2026" && auto[0].label === "", JSON.stringify(auto[0]));
+    // The real path: the caption token is bare ("2000"), its unit is the next word. An amount,
+    // count or share keeps its label (H1, maintenance 05); "năm"/"ngày" before it still says year/date.
+    for (const [text, big, label] of [
+      ["tôi trả 2000 đô mỗi tháng cho khoản vay này nhé", "2000", "đô mỗi tháng cho"],
+      ["có 2024 hộ gia đình vay thêm", "2024", "hộ gia đình vay"],
+      ["dành 1/3 thu nhập cho tiền nhà thôi", "1/3", "thu nhập cho tiền"],
+      ["vào năm 2000 đô la Úc rất mạnh", "2000", ""],
+      ["ngày 29/9 ngân hàng sẽ họp lại nhé", "29/9", ""],
+    ]) {
+      const f = figuresOf(reelOf(words(text)), FPS)[0];
+      check(`auto "${big}" in "${text}": label ${JSON.stringify(label)}`, f?.big === big && f.label === label, JSON.stringify(f));
+    }
     const yr = words("từ đầu năm 2026 lãi suất đã tăng từ 3,6 lên 4,35 phần trăm rồi mình xem tiếp nhé các bạn ơi");
     const stat = [{ atMs: 2000, durMs: 2000, big: "4,35%", label: "Lãi suất cơ bản" }];
     const hooked = figuresOf(reelOf(yr, { hook: { big: "4,35%" }, stats: stat }), FPS);

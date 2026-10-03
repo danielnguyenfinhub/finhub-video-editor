@@ -6,6 +6,7 @@ import { fitText, measureText } from "@remotion/layout-utils";
 import type React from "react";
 import { Easing, interpolate } from "remotion";
 import { brand } from "../../../brand/theme";
+import { hookText } from "../../../mortgage/golden";
 import type { LenderMention } from "../../../mortgage/lenders";
 import type { Cue } from "../../../mortgage/schema";
 import { FONT, clamp, enter, pop, toneColor } from "../../../mortgage/style";
@@ -33,24 +34,15 @@ const Kpi: React.FC<{
   big: string;
   label?: string;
   countTo?: number;
-  decimals?: number;
-  suffix?: string;
-}> = ({ v, big, label, countTo, decimals, suffix }) => {
+}> = ({ v, big, label, countTo }) => {
   const { f, fps, tile } = v;
   const p = enter(f, fps, tile.s + 3);
   const k = interpolate(f, [tile.s + 3, tile.s + 36], [0, 1], {
     ...clamp,
     easing: Easing.out(Easing.cubic),
   });
-  // Count up only the hook's own countTo; figures show as said.
-  const shown =
-    countTo === undefined || k >= 1
-      ? big
-      : `${(countTo * k).toLocaleString("vi-VN", {
-          minimumFractionDigits: decimals ?? 0,
-          maximumFractionDigits: decimals ?? 0,
-          useGrouping: /\d\.\d{3}/.test(big),
-        })}${suffix ?? ""}`;
+  // Count up only the hook's own countTo, through the core; figures show as said.
+  const shown = hookText({ big, countTo }, k);
   const size = Math.min(
     180,
     fitText({
@@ -390,8 +382,6 @@ export const Full: React.FC<TileView> = (v) => {
         big={t.big}
         label={t.label}
         countTo={t.countTo}
-        decimals={t.decimals}
-        suffix={t.suffix}
       />
     );
   if (t.kind === "figure") return <Kpi v={v} big={t.big} label={t.label} />;

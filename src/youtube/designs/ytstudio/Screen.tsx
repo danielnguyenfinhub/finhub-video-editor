@@ -10,7 +10,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../../../brand/theme";
-import { HOOK_FRAMES } from "../../../mortgage/golden";
+import { HOOK_FRAMES, hookText } from "../../../mortgage/golden";
 import { LenderLogo } from "../../../mortgage/LenderLogo";
 import { outFrameOf, type Reel } from "../../../mortgage/schema";
 import { FONT, clamp, enter, pop } from "../../../mortgage/style";
@@ -130,15 +130,9 @@ const HookPicture: React.FC<{ reel: Reel }> = ({ reel }) => {
   const hook = reel.edit.hook;
   if (!hook) return null;
   const p = pop(frame, fps, 4);
-  // The hook's own count-up (edit.json countTo), landing on `big` as written.
-  const counting = hook.countTo !== undefined && frame < 40;
-  const v = interpolate(frame, [0, 40], [0, hook.countTo ?? 0], clamp);
-  const shown = counting
-    ? `${v.toLocaleString("vi-VN", {
-        minimumFractionDigits: hook.decimals ?? 0,
-        maximumFractionDigits: hook.decimals ?? 0,
-      })}${hook.suffix ?? ""}`
-    : hook.big;
+  // The hook's own count-up through the core (never from 0, a year never
+  // counted), landing on `big` as written.
+  const shown = hookText(hook, interpolate(frame, [0, 40], [0, 1], clamp));
   return (
     <Center>
       <div
