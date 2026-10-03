@@ -139,19 +139,23 @@ const FONTS = [
   "C:/Windows/Fonts/consola.ttf",
 ];
 
-// Contact sheets of the kept frames, each tile stamped with its time. With no
-// usable font the tiles go unstamped (sweep.json still holds the times).
-export const contactSheets = (frames, outDir, { cols = SHEET_COLS, rows = SHEET_ROWS } = {}) => {
+// Contact sheets of the kept frames, each tile stamped with its time (or f.label: letters,
+// digits, spaces; "" = no stamp). With no usable font the tiles go unstamped (sweep.json
+// still holds the times). review-pack.mjs passes its own tile width and file name.
+export const contactSheets = (frames, outDir, { cols = SHEET_COLS, rows = SHEET_ROWS, tile = SHEET_TILE, name = "sheet" } = {}) => {
   const font = FONTS.find((f) => existsSync(f));
   return chunk(frames, cols * rows).map((group, k) => {
     const tiles = group.map((f, i) => {
-      const stamp = font
-        ? `,drawtext=fontfile='${font.replace(/^([A-Za-z]):/, "$1\\:")}':text='${f.s.toFixed(2)}s':x=8:y=8:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.7:boxborderw=5`
+      const text = f.label ?? `${f.s.toFixed(2)}s`;
+      const stamp = font && text
+        ? `,drawtext=fontfile='${font.replace(/^([A-Za-z]):/, "$1\\:")}':text='${text}':x=8:y=8:fontsize=${Math.round((tile * 26) / SHEET_TILE)}:fontcolor=white:box=1:boxcolor=black@0.7:boxborderw=5`
         : "";
-      return `[${i}:v]scale=${SHEET_TILE}:-2${stamp}[t${i}]`;
+      return `[${i}:v]scale=${tile}:-2${stamp}[t${i}]`;
     });
-    const graph = `${tiles.join(";")};${group.map((_, i) => `[t${i}]`).join("")}xstack=inputs=${group.length}:layout=${sheetLayout(group.length, cols)}[o]`;
-    const path = join(outDir, `sheet-${String(k + 1).padStart(2, "0")}.jpg`);
+    // xstack needs two inputs or more: a group of one is only scaled and stamped.
+    const graph = group.length === 1 ? tiles[0].replace(/\[t0\]$/, "[o]")
+      : `${tiles.join(";")};${group.map((_, i) => `[t${i}]`).join("")}xstack=inputs=${group.length}:layout=${sheetLayout(group.length, cols)}[o]`;
+    const path = join(outDir, `${name}-${String(k + 1).padStart(2, "0")}.jpg`);
     ff([...group.flatMap((f) => ["-i", f.path]), "-filter_complex", graph, "-map", "[o]", "-frames:v", "1", "-q:v", "3", path], `contact sheet ${k + 1}`);
     return { path, from: group[0].s, to: group[group.length - 1].s, frames: group.length };
   });

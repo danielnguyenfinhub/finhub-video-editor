@@ -97,7 +97,15 @@ const ALLOWED = new Set([
   ...[...readFileSync(join(root, "src", "brand", "theme.ts"), "utf8").matchAll(COLOUR)].map(([m]) => hexOf(m)),
 ]);
 
-const designFiles = (dir) =>
+// Colours: brand only (theme.ts values, white, black). Also read by review-pack.mjs (designs that cannot pass yet).
+export const offBrand = (files) => files.flatMap((f) => {
+  const raw = f.text.split("\n");
+  return uncomment(f.text).split("\n").flatMap((code, i) => (/theme-exempt:\s*\S/.test(raw[i]) ? []
+    : [...code.matchAll(COLOUR)].filter(([m]) => !ALLOWED.has(hexOf(m)))
+      .map(([m]) => `${f.name}:${i + 1} off-brand colour \`${m}\`: use a src/brand/theme.ts colour, white or black, or add // theme-exempt: <why>`)));
+});
+
+export const designFiles = (dir) =>
   readdirSync(dir, { recursive: true })
     .map(String)
     .filter((f) => /\.(tsx?|jsx?)$/.test(f))
@@ -269,16 +277,7 @@ export async function promote(id, opts = {}) {
     for (const line of lines) fail("RG 234", line.trim());
   }
 
-  // Colours: brand only (theme.ts values, white, black).
-  for (const f of files) {
-    const raw = f.text.split("\n");
-    uncomment(f.text).split("\n").forEach((code, i) => {
-      if (/theme-exempt:\s*\S/.test(raw[i])) return;
-      for (const [m] of code.matchAll(COLOUR))
-        if (!ALLOWED.has(hexOf(m)))
-          fail("colours", `${f.name}:${i + 1} off-brand colour \`${m}\`: use a src/brand/theme.ts colour, white or black, or add // theme-exempt: <why>`);
-    });
-  }
+  for (const why of offBrand(files)) fail("colours", why);
 
   // Contrast: text on its own background reaches 3.0 (scripts/check-contrast.mjs).
   for (const p of checkDesign(dir)) {
