@@ -165,24 +165,24 @@ const StatCardView: React.FC<{ big: string; label: string }> = ({
   );
 };
 
+// The stat cards on the core's staged timing (never on the hook or another
+// figure); a plain function so check-design-figures can read each Sequence.
+export const statSequences = (reel: Reel, fps: number) =>
+  figuresOf(reel, fps)
+    .filter((c) => c.source === "stat")
+    .map((c) => (
+      <Sequence
+        key={`${c.saidFrame}${c.big}`}
+        from={c.fromFrame}
+        durationInFrames={c.frames}
+      >
+        <StatCardView big={c.big} label={c.label} />
+      </Sequence>
+    ));
+
 export const StatCards: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
-  return (
-    <>
-      {/* The core's staged timing: never on the hook or another figure. */}
-      {figuresOf(reel, fps)
-        .filter((c) => c.source === "stat")
-        .map((c) => (
-          <Sequence
-            key={c.saidFrame}
-            from={c.fromFrame}
-            durationInFrames={c.frames}
-          >
-            <StatCardView big={c.big} label={c.label} />
-          </Sequence>
-        ))}
-    </>
-  );
+  return <>{statSequences(reel, fps)}</>;
 };
 
 // ---------------------------------------------------------------- chapters

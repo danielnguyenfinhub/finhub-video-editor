@@ -199,27 +199,31 @@ export const StatNote: React.FC<{
   );
 };
 
+// The stat notes on the core's staged timing (never on the hook or another
+// figure); a plain function so check-design-figures can read each Sequence.
+export const statSequences = (reel: Reel, fps: number) =>
+  figuresOf(reel, fps)
+    .filter((c) => c.source === "stat")
+    .map((c) => {
+      const { fromFrame: from, frames } = c;
+      return (
+        <Sequence
+          key={`${c.saidFrame}${c.big}`}
+          from={from}
+          durationInFrames={frames}
+        >
+          <BandWide.Provider
+            value={!logoDuring(from, frames, reel.timeline.talkFrames, fps)}
+          >
+            <StatNote big={c.big} label={c.label} />
+          </BandWide.Provider>
+        </Sequence>
+      );
+    });
+
 const StatNotes: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
-  return (
-    <>
-      {/* The core's staged timing: never on the hook or another figure. */}
-      {figuresOf(reel, fps)
-        .filter((c) => c.source === "stat")
-        .map((c) => {
-          const { fromFrame: from, frames } = c;
-          return (
-            <Sequence key={c.saidFrame} from={from} durationInFrames={frames}>
-              <BandWide.Provider
-                value={!logoDuring(from, frames, reel.timeline.talkFrames, fps)}
-              >
-                <StatNote big={c.big} label={c.label} />
-              </BandWide.Provider>
-            </Sequence>
-          );
-        })}
-    </>
-  );
+  return <>{statSequences(reel, fps)}</>;
 };
 
 // ---------------------------------------------------------------- chapters

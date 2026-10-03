@@ -698,6 +698,28 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
   const own = ["designs", "youtube"].flatMap((d) => readdirSync(join(ROOT, "src", d), { recursive: true }).map((f) => `${d}/${f.replace(/\\/g, "/")}`))
     .filter((f) => /\.tsx?$/.test(f) && /\bdurMs\b/.test(code(`../${f}`).js));
   check("no design times a stat card from edit.json (stats come from figuresOf)", own.length === 0, own.join(", "));
+  // classic, explainer and studio draw their stat cards from statSequences: each Sequence (read from
+  // the returned elements) starts and lasts as the core's stat figure, on every fixture with stats and
+  // on the two-stats-in-the-hook reel (staged: shown after the hook, not when said); each component
+  // renders statSequences.
+  const statReels = [...reels];
+  for (const slug of readdirSync(vids).sort()) {
+    const edit = existsSync(join(vids, slug, "edit.json")) ? JSON.parse(readFileSync(join(vids, slug, "edit.json"), "utf8")) : null;
+    const wordsPath = edit && join(ROOT, "public", recordingPath(slug, edit.source, "words.json"));
+    if (!edit?.stats?.length || !existsSync(wordsPath)) continue;
+    const raw = reelOf(JSON.parse(readFileSync(wordsPath, "utf8")), edit);
+    statReels.push([slug, { ...raw, edit: golden.readingFloor(raw, FPS).edit }]);
+  }
+  for (const [file, component] of [["classic/Captions.tsx", "StatCards"], ["explainer/Overlay.tsx", "StatNotes"], ["studio/index.tsx", "Overlay"]]) {
+    const { statSequences } = await design(file);
+    const bad = statReels.flatMap(([name, reel]) => {
+      const want = figuresOf(reel, FPS).filter((f) => f.source === "stat").map((f) => `${f.fromFrame}+${f.frames}`).join(" ");
+      const got = statSequences(reel, FPS).map((el) => `${el.props.from}+${el.props.durationInFrames}`).join(" ");
+      return got === want ? [] : [`${name}: ${got} vs core ${want}`];
+    });
+    check(`${file}: every stat Sequence starts and lasts as the core's figure (${statReels.length} reels)`, bad.length === 0 && statReels.length >= 8, bad.slice(0, 2).join("; "));
+    check(`${file} (source): ${component} renders statSequences(reel, fps)`, new RegExp(`const${component}=[\\s\\S]*?statSequences\\(reel,fps\\)(?=[,}\\]])`).test(code(file).js.replace(/\s/g, "")));
+  }
 }
 
 console.log(failed ? "design figures: FAILED" : "design figures ok");

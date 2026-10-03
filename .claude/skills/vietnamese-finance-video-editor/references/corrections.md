@@ -182,8 +182,11 @@ screen ("the rate card"), never whose.
   showed "400" (auto, 280) and "~$400" (stat, 297) at once; the no-overlap check ran on one fixture, and
   three designs timed stat cards from edit.json, skipping the core's staging → staged figures never
   overlap anywhere: a figure shown when said ends when the next is said, never under its reading time,
-  else the next waits for it; every design draws stats from `figuresOf` (no design reads a `durMs`) →
-  check-design-figures (h) on every fixture, hook or not, plus the source check · `checked`
+  else the next waits for it (also when said in the same frame); never stretched past its own length;
+  an automatic figure a stat repeats while its card is up is covered by the stat; every design draws
+  stats from `figuresOf` (no design reads a `durMs`; classic, explainer, studio through an evaluated
+  `statSequences`) → check-design-figures (h) on every fixture, hook or not, check-golden synthetics;
+  README rule 1 wording pending Daniel (OD-28) · `checked`
 - 03/10/2026 · youtube/Kit · same → the 16:9 classic panels rest at YT_SAFE.top (`CUE16_OFFSET`) and narrow
   on LogoMark16's own windows (from frame 0; `MotionTrack` `logo` takes a host window function) →
   check-design-figures (g), evaluated against LogoMark16's fade constants and its measured tile · `checked`
