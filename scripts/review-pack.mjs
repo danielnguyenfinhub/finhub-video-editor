@@ -73,7 +73,7 @@ export const pickFrames = (reel, extra = [], max = MAX_FRAMES) => {
   const cue = (kinds) => {
     for (const c of reel.edit.cues ?? []) {
       const ms = kinds.includes(c.kind) ? toOutMs(reel.timeline.segments, c.fromMs, FPS) : null;
-      if (ms !== null) return v(Math.round((ms / 1000) * FPS) + 15);
+      if (ms !== null) return v(Math.round((ms / 1000) * FPS) + 25); // past the drop-in, panel settled
     }
   };
   const year = figuresOf(reel, FPS).find((f) => saidKind(f.big) === "year");
@@ -172,7 +172,7 @@ const selftest = () => {
     assert.ok(fr.every((f) => f >= 0 && f <= last), `${id}: inside the reel (${last}) ${fr}`);
   }
   const fr = pickFrames(reel).map((x) => x.frame);
-  assert.deepEqual(fr, [90, 185, 314, 667, 829], "rba-sept-2026: hook, year card + handover, points, steady, compare");
+  assert.deepEqual(fr, [90, 185, 324, 667, 839], "rba-sept-2026: hook, year card + handover, points, steady, compare");
   // a short reel: nothing past its end, the hook still in
   const short = reelOf(words("rba-sept-2026").slice(0, 12), { title: "t", hook: { big: "4,35%" } });
   const sf = pickFrames(short, [60, 120, 5000]).map((x) => x.frame);
@@ -239,7 +239,7 @@ const main = async () => {
   const browserExecutable = flag("browser-executable") ?? null;
   const t0 = Date.now();
   const serveUrl = await bundle({ entryPoint: join(ROOT, "src", "index.ts"), rspack: true, bundlerOverride, publicDir, symlinkPublicDir: true, outDir: repoTmp("review-pack-bundle-") });
-  const browser = await openBrowser("chrome", { browserExecutable, chromiumOptions, chromeMode: flag("chrome-mode") });
+  const browser = await openBrowser("chrome", { browserExecutable, chromiumOptions, chromeMode: flag("chrome-mode"), logLevel: "error" });
   console.log(`bundled in ${Math.round((Date.now() - t0) / 1000)} s${browserExecutable ? ` (${browserExecutable})` : ""}`);
 
   const blank = join(outDir, "blank.png");
@@ -258,11 +258,11 @@ const main = async () => {
         const t = Date.now();
         try {
           const inputProps = { slug: a.slug, design: id };
-          const composition = await selectComposition({ serveUrl, id: "MortgageReel", inputProps, puppeteerInstance: browser, chromiumOptions, browserExecutable });
+          const composition = await selectComposition({ serveUrl, id: "MortgageReel", inputProps, puppeteerInstance: browser, chromiumOptions, browserExecutable, logLevel: "error" });
           for (const x of frames) {
             x.png = `${id}/f${String(x.frame).padStart(4, "0")}.png`;
             if (x.frame >= composition.durationInFrames) throw new Error(`frame ${x.frame} is past the reel (${composition.durationInFrames} frames)`);
-            await renderStill({ serveUrl, composition, inputProps, frame: x.frame, output: join(outDir, x.png), scale: a.scale, puppeteerInstance: browser, chromiumOptions, browserExecutable });
+            await renderStill({ serveUrl, composition, inputProps, frame: x.frame, output: join(outDir, x.png), scale: a.scale, puppeteerInstance: browser, chromiumOptions, browserExecutable, logLevel: "error" });
           }
           contactSheets(frames.map((x) => ({ path: join(outDir, x.png), label: `${id} ${x.frame}` })), join(outDir, id), { cols: frames.length, rows: 1, tile: TILE, name: "strip" });
           designs.push({ id, frames, ask, strip: `${id}/strip-01.jpg` });
