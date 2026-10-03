@@ -16,7 +16,7 @@ const bundle = join(repoTmp("golden-"), "golden.mjs");
 execFileSync(process.execPath, [
   "node_modules/esbuild/bin/esbuild", "src/mortgage/golden.ts", "src/mortgage/timeline.ts",
   "src/mortgage/captionPages.ts",
-  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs",
+  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", "--log-level=warning",
   `--outdir=${join(bundle, "..")}`,
 ]);
 const url = (p) => new URL(`file:///${p.replace(/\\/g, "/")}`);
@@ -180,6 +180,22 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const late = figuresOf(reelOf(w, { hook: { big: "4,35%" } }), FPS);
     // "4,1" is said in the hook (1.2 s) and waits; "5" and "100.000%" come later, untouched.
     check("hook: figures said after it are untouched", late[0].fromFrame === HOOK_FRAMES && at(late.slice(1)) === at(figs.slice(1)), `${at(late)} vs ${at(figs)}`);
+    // Maintenance 05 mutation survivors. A short stat said under the hook still keeps the number
+    // hold when it waits (not its own 15 frames).
+    const brief = figuresOf(reelOf(plain, { hook: { big: "4,35%" }, stats: [st(1000, 500, "5%")] }), FPS);
+    check("a 0.5 s stat waiting for the hook is held >= the number hold", brief[0]?.fromFrame === HOOK_FRAMES && brief[0].frames >= holdF, at(brief));
+    // Two automatic figures said 2 s apart: the second is dropped (AUTO_GAP_MS 4 s).
+    const two = figuresOf(reelOf(words("trả 5 triệu đô rồi thêm 6 triệu đô nữa thôi")), FPS);
+    check("automatic figures inside AUTO_GAP_MS: only the first", two.length === 1 && two[0].big === "5", at(two));
+  }
+  {
+    // hookCount: the fraction counts from 90 % of itself, exact from half way; readToken takes
+    // only a reading with 3-digit groups ("4,35" is not 435).
+    const { hookCount, hookText } = await import(url(bundle));
+    check("hookCount starts at whole + 90 % of the fraction (4,35 -> 4,315), exact from t 0.5",
+      Math.abs(hookCount(4.35, 0) - 4.315) < 1e-9 && hookCount(4.35, 0.5) === 4.35, `${hookCount(4.35, 0)}, ${hookCount(4.35, 0.5)}`);
+    check("hookText: a token whose only matching reading has a 2-digit group is not counted (\"4,35\" vs 435)",
+      hookText({ big: "4,35", countTo: 435 }, 0) === "4,35", hookText({ big: "4,35", countTo: 435 }, 0));
   }
 
   // Banks: aliases, multi-word, a repeat inside the 2.5 s window merges, a

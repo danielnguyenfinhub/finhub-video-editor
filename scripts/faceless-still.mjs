@@ -16,7 +16,9 @@ import { browserArgs, scratchPublic } from "./scratch-public.mjs";
 const ROOT = join(import.meta.dirname, "..");
 const argv = process.argv.slice(2);
 const flag = (name, dflt) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : dflt);
-const [slug, design] = argv.filter((a, i) => !a.startsWith("--") && !argv[i - 1]?.startsWith("--"));
+// Only these flags take a value; --production is boolean, so it never swallows a positional.
+const VALUED = ["--frame", "--scale", "--out"];
+const [slug, design] = argv.filter((a, i) => !a.startsWith("--") && !VALUED.includes(argv[i - 1]));
 if (!slug || !design || !/^[\w-]+$/.test(slug) || !/^[\w-]+$/.test(design)) {
   console.error("usage: node scripts/faceless-still.mjs <slug> <design> [--frame 150] [--scale 0.5] [--out file.png] [--production]");
   process.exit(1);

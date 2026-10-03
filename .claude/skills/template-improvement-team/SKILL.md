@@ -29,7 +29,7 @@ Pattern: fan-out → producer → independent re-check (harness fan-out/fan-in, 
 
 **Execution mode: subagents.** Parallel only where reads are independent (auditor ‖ critic; re-check auditor ‖ critic ‖ reviewer). The re-checkers must not have built anything, so they start from a clean context. Agent files register at session start; if one isn't found use `general-purpose` with "Read and adopt `.claude/agents/<name>.md`".
 
-A subagent sees neither this chat nor `AGENTS.md`. Every prompt carries: the repo root, `out/teams/templates/`, the design ids in scope, a slug that has `words.json` and `source.mp4` for stills (or "no render possible here"), the `--public-dir` if media lives elsewhere, and Daniel's words verbatim.
+A subagent sees neither this chat nor `AGENTS.md`. Every prompt carries: the repo root, `out/teams/templates/`, the design ids in scope, a slug that has `words.json` for stills (with no `source.mp4`, `node scripts/faceless-still.mjs <slug> <id> [--production]` renders it in the sandbox: docs/agents/rendering-without-gpu.md; else "no render possible here"), the `--public-dir` if media lives elsewhere, and Daniel's words verbatim.
 
 ## Phase 0 — Scope
 

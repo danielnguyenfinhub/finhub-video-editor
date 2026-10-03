@@ -165,7 +165,8 @@ screen ("the rate card"), never whose.
   never gets a ring, road or count; every hook prints through the core `hookText`: `big` unchanged
   unless its one number token equals countTo, then only that token counts, written its own way
   ("-0,25%", "$4.1B", "750 000 ĐÔ"), suffix/decimals never rebuild it → check-design-figures (d)(f),
-  evaluated on 19 hooks; any other `countTo` read in a design fails (source) · `checked`
+  evaluated on 19 hooks; any other `countTo` read in a design fails (source; `src/youtube` too since
+  03/10/2026: ytstudio and ytdashboard counted from 0) · `checked`
 - 02/10/2026 · blueprint, orbit, phoneapp · a figure under a compare cue; "0/2" bar half full → the cue
   wins, but a figure is never dropped (rule 1, review 557b020): cut after its floor, held over the
   cue's drop-in when short by ≤ 10 frames, else shown after the cue (a chip when another cue holds
