@@ -18,7 +18,7 @@ const argv = process.argv.slice(2);
 const flag = (name, dflt) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : dflt);
 const [slug, design] = argv.filter((a, i) => !a.startsWith("--") && !argv[i - 1]?.startsWith("--"));
 if (!slug || !design || !/^[\w-]+$/.test(slug) || !/^[\w-]+$/.test(design)) {
-  console.error("usage: node scripts/faceless-still.mjs <slug> <design> [--frame 150] [--scale 0.5] [--out file.png]");
+  console.error("usage: node scripts/faceless-still.mjs <slug> <design> [--frame 150] [--scale 0.5] [--out file.png] [--production]");
   process.exit(1);
 }
 const frame = flag("--frame", "150");
@@ -27,7 +27,7 @@ const out = flag("--out", join("out", "stills", `${slug}-${design}.png`));
 
 let pub, browser;
 try {
-  pub = scratchPublic(slug);
+  pub = scratchPublic(slug, { vignette: !argv.includes("--production") }); // --production: navy picture + transparent cut-out, the path a talking-head design takes
   browser = browserArgs();
 } catch (e) {
   console.error(e.message);

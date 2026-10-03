@@ -42,7 +42,12 @@ import { Outro } from "../classic/Outro";
 import { BoxCaptionPage } from "./BoxCaption";
 import { ColumnCueTrack, inColumn, useSideCueRoom } from "./ColumnCues";
 import { NotebookBackdrop } from "./Paper";
-import { ProgressTrack, StepColumn, type FrameMention } from "./StepColumn";
+import {
+  ProgressTrack,
+  StepColumn,
+  hookTrackLabel,
+  type FrameMention,
+} from "./StepColumn";
 
 const HOOK_FRAMES = 105;
 // Daniel on the right at 0.6 (face x ~700-1000), bleeding off the right
@@ -207,6 +212,7 @@ const Hook: React.FC<{
   chapterCount: number;
 }> = ({ big, sub, chapterCount }) => {
   const frame = useCurrentFrame();
+  const trackLabel = hookTrackLabel(chapterCount);
   const { fps, durationInFrames } = useVideoConfig();
   const p = enter(frame, fps);
   const out = interpolate(
@@ -255,9 +261,11 @@ const Hook: React.FC<{
             {sub}
           </div>
         ) : null}
-        <div style={{ marginTop: 24 }}>
-          <ProgressTrack filled={0} label={`0/${chapterCount}`} />
-        </div>
+        {trackLabel === null ? null : (
+          <div style={{ marginTop: 24 }}>
+            <ProgressTrack filled={0} label={trackLabel} />
+          </div>
+        )}
       </div>
     </AbsoluteFill>
   );

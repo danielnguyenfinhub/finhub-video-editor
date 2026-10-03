@@ -12,7 +12,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { Figure } from "../../mortgage/golden";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, asSaid } from "../../mortgage/golden";
 import type { Lender } from "../../mortgage/lenders";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import { FONT, LOGO, clamp } from "../../mortgage/style";
@@ -109,6 +109,10 @@ export const GlitchLabel: React.FC<{
   );
 };
 
+// How far a figure's bar fills: a year or a date is shown as said, with no
+// bar that reads as a proportion (golden rule 1), so it takes the plain card.
+export const barFill = (big: string): number | null => (asSaid(big) ? null : 1);
+
 // A number card sliding down from above SAFE, resting just below SAFE.top so
 // it reads above Daniel's head (golden rule: figures render in Behind, sized
 // so the top and label clear FACE.top). One real bar for a "stat" figure, a
@@ -124,7 +128,8 @@ export const FigureCard: React.FC<{ figure: Figure; right?: number }> = ({
   const drop = spring({ frame, fps, config: { damping: 15, stiffness: 160 } });
   const top = interpolate(drop, [0, 1], [-260, SAFE.top]);
   const grow = interpolate(frame, [8, 30], [0, 1], clamp);
-  const isStat = figure.source === "stat";
+  const fillTo = barFill(figure.big);
+  const isStat = figure.source === "stat" && fillTo !== null;
   return (
     <div
       style={{
@@ -191,24 +196,26 @@ export const FigureCard: React.FC<{ figure: Figure; right?: number }> = ({
           >
             {figure.big}
           </div>
-          <div
-            style={{
-              height: 10,
-              borderRadius: 6,
-              background: "#EEF2F7",
-              marginTop: 14,
-              overflow: "hidden",
-            }}
-          >
+          {fillTo === null ? null : (
             <div
               style={{
-                height: "100%",
-                width: `${grow * 100}%`,
-                background: brand.primary,
+                height: 10,
                 borderRadius: 6,
+                background: "#EEF2F7",
+                marginTop: 14,
+                overflow: "hidden",
               }}
-            />
-          </div>
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${fillTo * grow * 100}%`,
+                  background: brand.primary,
+                  borderRadius: 6,
+                }}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

@@ -41,6 +41,8 @@ export const CARD_AWAY = 1000; // px his card drops by in full-screen moments
 // Every hard-coded on-screen string (RG 234 scans the design's copy).
 export const WORD = {
   figure: "CON SỐ",
+  year: "NĂM",
+  date: "NGÀY",
   lender: "NGÂN HÀNG ĐANG NHẮC TỚI",
   chapter: "PHẦN",
   topic: "CHỦ ĐỀ",

@@ -24,6 +24,14 @@ const SIZE = 72;
 // ~3 syllables a page: short enough to read at a glance, long enough to read
 // as a phrase, not a syllable.
 const COMBINE_MS = 700;
+// The said word pops to POP and grows past its box into the space beside it
+// ("ThángHai"). Every word keeps a fixed side margin of half that overflow
+// (about 0.6 em a character), so the space stays and the line never reflows.
+// ponytail: width estimated from the character count; measure it with
+// measureText if the caption font ever differs much from 0.6 em a character.
+const POP = 1.18;
+const saidRoom = (scale: number, text: string) =>
+  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
 
 const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   page,
@@ -58,7 +66,7 @@ const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
         {page.tokens.map((t, i) => {
           const active = nowMs >= t.fromMs && nowMs < t.toMs;
           const pop = active
-            ? interpolate(nowMs, [t.fromMs, t.fromMs + 120], [1.18, 1.08], {
+            ? interpolate(nowMs, [t.fromMs, t.fromMs + 120], [POP, 1.08], {
                 extrapolateRight: "clamp",
               })
             : 1;
@@ -69,6 +77,7 @@ const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
               style={{
                 display: "inline-block",
                 whiteSpace: "pre",
+                margin: `0 ${saidRoom(POP, t.text)}em`,
                 color: active || hit.has(i) ? brand.highlight : "#fff",
                 transform: `scale(${pop})`,
                 textShadow: glow

@@ -25,6 +25,11 @@ const CARD_GAP = 10;
 
 // -------------------------------------------------------------- progress bar
 
+// The hook's "0/N" track: none when there are no chapters ("0/0" tells the
+// viewer nothing).
+export const hookTrackLabel = (chapterCount: number): string | null =>
+  chapterCount > 0 ? `0/${chapterCount}` : null;
+
 export const ProgressTrack: React.FC<{
   filled: number; // 0-1
   label?: string; // omitted on Cover (N unknown there)

@@ -6,7 +6,7 @@ import { fitText } from "@remotion/layout-utils";
 import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
-import { type Figure, hookText } from "../../mortgage/golden";
+import { type Figure, hookText, saidKind } from "../../mortgage/golden";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { FONT, clamp, toneColor } from "../../mortgage/style";
@@ -98,6 +98,20 @@ export const HookScene: React.FC<{ hook: Hook; box: Box }> = ({
 
 // ------------------------------------------------------------------ figure
 
+// A year or a date is not "the number" of anything and fills no grid (golden
+// rule 1, shown as said): its own neutral kicker, and no dot grid that reads
+// as a meter.
+export const kickerOf = (big: string): string => {
+  const kind = saidKind(big);
+  return kind === "year"
+    ? WORD.year
+    : kind === "date"
+      ? WORD.date
+      : WORD.figure;
+};
+export const gridFill = (big: string): number | null =>
+  saidKind(big) === null ? 1 : null;
+
 export const FigureScene: React.FC<{ figure: Figure; box: Box }> = ({
   figure,
   box,
@@ -105,9 +119,10 @@ export const FigureScene: React.FC<{ figure: Figure; box: Box }> = ({
   const frame = useCurrentFrame();
   const t = grow(frame, 4, 26);
   const size = fit(figure.big, box.width - 2 * PAD - 260, 130);
+  const fillTo = gridFill(figure.big);
   return (
     <Panel style={{ ...box, padding: PAD }}>
-      <Label icon="spark" text={WORD.figure} />
+      <Label icon="spark" text={kickerOf(figure.big)} />
       <div style={{ marginTop: 22, ...rise(grow(frame, 0)) }}>
         <BigNumber text={counted(figure.big, t)} size={size} t={t} />
       </div>
@@ -130,16 +145,24 @@ export const FigureScene: React.FC<{ figure: Figure; box: Box }> = ({
           {figure.label}
         </div>
       ) : null}
-      <div
-        style={{
-          position: "absolute",
-          right: PAD,
-          top: "50%",
-          transform: "translateY(-50%)",
-        }}
-      >
-        <DotGrid cols={9} rows={8} t={grow(frame, 2, 40)} size={14} gap={10} />
-      </div>
+      {fillTo === null ? null : (
+        <div
+          style={{
+            position: "absolute",
+            right: PAD,
+            top: "50%",
+            transform: "translateY(-50%)",
+          }}
+        >
+          <DotGrid
+            cols={9}
+            rows={8}
+            t={fillTo * grow(frame, 2, 40)}
+            size={14}
+            gap={10}
+          />
+        </div>
+      )}
     </Panel>
   );
 };

@@ -308,6 +308,8 @@ export const editorial: Design = {
     "FINANCE HUB",
     "GÓC NHÌN",
     "CON SỐ",
+    "NĂM",
+    "NGÀY",
     "NGÂN HÀNG",
     "được nhắc tới trong đoạn này",
     "PHẦN",

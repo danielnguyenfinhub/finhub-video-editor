@@ -84,17 +84,17 @@ export const StripLogo: React.FC = () => (
   </div>
 );
 
-// Swaps the episode line for "PHẦN n · title" for CHAPTER_FRAMES_S seconds
-// around each chapter cut, else shows the episode line throughout the talk.
-export const Strip: React.FC<{ reel: Reel; episodeLine: string }> = ({
-  reel,
-  episodeLine,
-}) => {
-  const { fps } = useVideoConfig();
-  const frame = useCurrentFrame();
-  const outFrame = outFrameOf(reel.timeline, fps);
+// The strip's text at a talk frame: "PHẦN n · TITLE" for CHAPTER_FRAMES_S
+// seconds after each chapter cut, else the episode line; "" when there is
+// neither, and then the strip is hidden (an empty amber bar says nothing).
+export const stripText = (
+  chapters: { atMs: number; title: string }[],
+  outFrame: (ms: number) => number,
+  frame: number,
+  fps: number,
+  episodeLine: string,
+): { text: string; chapter: boolean } => {
   const chapterFrames = Math.round(CHAPTER_FRAMES_S * fps);
-  const chapters = reel.edit.chapters ?? [];
   const active = chapters.reduce<{ title: string; index: number } | null>(
     (found, c, i) => {
       const at = outFrame(c.atMs);
@@ -104,16 +104,32 @@ export const Strip: React.FC<{ reel: Reel; episodeLine: string }> = ({
     },
     null,
   );
+  return active
+    ? {
+        text: `PHẦN ${active.index + 1} · ${active.title.toLocaleUpperCase("vi")}`,
+        chapter: true,
+      }
+    : { text: episodeLine, chapter: false };
+};
+
+// Swaps the episode line for "PHẦN n · title" around each chapter cut, else
+// shows the episode line throughout the talk; nothing when both are empty.
+export const Strip: React.FC<{ reel: Reel; episodeLine: string }> = ({
+  reel,
+  episodeLine,
+}) => {
+  const { fps } = useVideoConfig();
+  const frame = useCurrentFrame();
+  const { text, chapter } = stripText(
+    reel.edit.chapters ?? [],
+    outFrameOf(reel.timeline, fps),
+    frame,
+    fps,
+    episodeLine,
+  );
   return (
     <AbsoluteFill style={{ pointerEvents: "none" }}>
-      {active ? (
-        <StripBar
-          text={`PHẦN ${active.index + 1} · ${active.title.toLocaleUpperCase("vi")}`}
-          chapter
-        />
-      ) : (
-        <StripBar text={episodeLine} />
-      )}
+      {text ? <StripBar text={text} chapter={chapter} /> : null}
       {/* LogoMark (golden rule 3c) renders the animated logo in the Overlay;
           this static StripLogo is the Cover's own, elsewhere. */}
     </AbsoluteFill>
