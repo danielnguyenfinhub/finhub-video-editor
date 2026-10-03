@@ -20,7 +20,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { FPS, HOOK_FRAMES, TALK_START_FRAME, figuresOf, reelOf, saidKind, toOutMs } from "./check-golden.mjs";
-import { missingMedia } from "./promote-design.mjs";
+import { designFiles, missingMedia, offBrand } from "./promote-design.mjs";
 import { browserArgs, scratchPublic } from "./scratch-public.mjs";
 import { contactSheets, outDirProblem } from "./sweep-render.mjs";
 import { repoTmp } from "./tmp-dir.mjs";
@@ -38,15 +38,15 @@ export const QUESTIONS = {
   classic: { ask: ["Hook rays (HookBurst): does the burst band or its seam cross your eyes?"] },
   datalab: { ask: ["Hook counter: does it sit on your forehead or eyes (it is inside the face box)?", "Year card: is \"2026\" light blue for its first frames, and does that read?"] },
   newsroom: { ask: ["Hook: over your forehead?", "Stripes: do they leave a bare band beside you?"] },
-  studio: { ask: ["Name tag at the handover (frame 190): does it sit over the crown of your head?"] },
+  studio: { ask: ["Name tag at the handover (frame 185 here): does it sit over the crown of your head?"] },
   scenario: { ask: ["Divider: does it jump between frames (cuts), and does it run through the hook number?", "Year figure at the left: does it reach your face?"] },
   neon: { ask: ["Voice ring: does the dotted ring sit around you or across your face?"] },
   chatstory: { ask: ["Hook bubbles: are they on your eye line? Where should the bubbles sit?"] },
-  editorial: { ask: ["Hook size: is \"4,35%\"-sized text big enough as the hook?", "Ghost FINANCE HUB watermark across the middle: keep or drop?", "Navy half-frame block around frame 190: a clean wipe or a fault?"] },
+  editorial: { ask: ["Hook size: the smallest hook of the group, is it big enough?", "Ghost FINANCE HUB watermark across the middle: keep or drop?", "Navy half-frame block at the year card / handover: a clean wipe or a fault?"] },
   explainer: { ask: ["Hook note: does the tilted yellow note cover your forehead and eyes?"] },
   reaction: { ask: ["Headline highlighter: one stroke per word, does it read as a highlight?", "Article card: clear of the logo and of your face?"] },
   kitchen: { frames: [60, 120], ask: ["Hook at 60 / 90 / 120: is it exact and solid by 90 (3 s), with its meaning line up?"] },
-  series: { ask: ["Hook size: is the number on the amber strip big and readable enough?", "Year card (frame 190): inside your face?"] },
+  series: { ask: ["Hook size: is the number on the amber strip big and readable enough?", "Year card: inside your face?"] },
   cards: { ask: ["Year card: gold underline still under \"2026\", and an empty right half?"] },
   checklist: { ask: ["Hook: no \"0/0\" progress track when the video has no steps?"] },
   blueprint: { ask: ["Figure chip (only when a figure yields to a compare cue): under the title block, readable?"] },
@@ -60,8 +60,6 @@ export const GENERIC = [
   "Logo clear: nothing under the logo tile, and it is not on your face.",
   "Bilingual line: the English line shows and reads (when the video has subtitles).",
 ];
-// OD-12: the colour check fails these on any machine until Daniel adds the token (OD-21 correction).
-export const OD12 = ["classic", "explainer", "studio"];
 const PROMOTE_NOTE = { faceless: "needs faceless-test's stock footage on this machine" };
 
 /** Video frames worth a look in this reel: the hook at 3 s, the design's extra frames, the first
@@ -96,9 +94,11 @@ export const pickFrames = (reel, extra = [], max = MAX_FRAMES) => {
   return [...seen].map(([frame, what]) => ({ frame, what })).sort((a, b) => a.frame - b.frame);
 };
 
-/** The promote-design step per design: a command, or null with the reason it cannot pass yet. */
-export const promoteSteps = (ids) => ids.map((id) => (OD12.includes(id)
-  ? { id, cmd: null, note: "not yet: OD-12 (its colour check fails on any machine until the palette token is decided)" }
+/** The promote-design step per design: a command, or null with why it cannot pass yet.
+ * colours[id]: its off-brand colour literals (promote-design's own check); any fails it on every
+ * machine until Daniel decides OD-12 (identity palettes). */
+export const promoteSteps = (ids, colours = {}) => ids.map((id) => (colours[id]
+  ? { id, cmd: null, note: `not yet: ${colours[id]} off-brand colour literal(s) fail promote-design on any machine until OD-12 is decided` }
   : { id, cmd: `node scripts/promote-design.mjs ${id}`, note: PROMOTE_NOTE[id] ?? "" }));
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -178,11 +178,11 @@ const selftest = () => {
   const sf = pickFrames(short, [60, 120, 5000]).map((x) => x.frame);
   assert.ok(sf.includes(90) && sf.every((f) => f <= TALK_START_FRAME + short.timeline.talkFrames - 1), `short reel ${sf}`);
   for (const id of HELD) assert.ok(QUESTIONS[id]?.ask?.length, `${id} has its question`);
-  assert.deepEqual(promoteSteps(["classic", "kinetic"]).map((s) => s.cmd), [null, "node scripts/promote-design.mjs kinetic"]);
+  assert.deepEqual(promoteSteps(["classic", "kinetic"], { classic: 10 }).map((s) => s.cmd), [null, "node scripts/promote-design.mjs kinetic"]);
   // every link in a built page exists, and a missing file is caught
   const dir = repoTmp("review-pack-test-");
   const d = (id) => ({ id, strip: `${id}/strip-01.jpg`, frames: [{ frame: 90, what: "hook", png: `${id}/f0090.png` }], ask: QUESTIONS[id].ask });
-  const pack = { slug: "s", sandbox: true, args: "s", generic: GENERIC, promote: promoteSteps(["classic", "kitchen"]),
+  const pack = { slug: "s", sandbox: true, args: "s", generic: GENERIC, promote: promoteSteps(["classic", "kitchen"], { classic: 1 }),
     families: [{ name: "fam", sheet: "sheet-fam-01.jpg", designs: [d("classic"), d("kitchen"), { id: "neon", error: "x <y>", ask: QUESTIONS.neon.ask }] }] };
   for (const f of ["sheet-fam-01.jpg", "classic/strip-01.jpg", "classic/f0090.png", "kitchen/strip-01.jpg", "kitchen/f0090.png"]) {
     mkdirSync(join(dir, f, ".."), { recursive: true });
@@ -289,7 +289,8 @@ const main = async () => {
 
   const ids = families.flatMap((f) => f.designs.map((d) => d.id));
   const args = [a.slug, ...(a.designs.length ? ["--designs", a.designs.join(",")] : a.families.length ? ["--family", a.families.join(",")] : [])].join(" ");
-  const pack = { slug: a.slug, sandbox, args, generic: GENERIC, families, promote: promoteSteps(ids) };
+  const colours = Object.fromEntries(ids.map((id) => [id, offBrand(designFiles(join(ROOT, "src", "designs", id))).length]));
+  const pack = { slug: a.slug, sandbox, args, generic: GENERIC, families, promote: promoteSteps(ids, colours) };
   const html = buildHtml(pack);
   writeFileSync(join(outDir, "review.html"), html);
   writeFileSync(join(outDir, "review.md"), buildMd(pack));

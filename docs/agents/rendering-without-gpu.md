@@ -31,6 +31,10 @@ node node_modules/@remotion/cli/remotion-cli.js still src/index.ts ElementCatalo
 
 A faceless design needs no recording to be viewed: `node scripts/faceless-still.mjs <slug> <design> [--frame 150]` (for example `rba-sept-2026 kinetic`) renders it in the sandbox in about 15 s. It builds a scratch public folder in `out/.tmp` with `"background": "vignette"` (skips the matte) and a black VP9-in-MP4 `source.mp4` (the headless shell has no H.264, so a normal MP4 fails with "Cannot decode"). Checked 2026-10-02 on `kinetic`: text, stat card and Vietnamese diacritics all render. A talking-head design is viewed the same way with `--production` (flag anywhere: `faceless-still.mjs --production rba-sept-2026 classic --frame 190`): a navy picture and a transparent cut-out, the path it takes in production, but **no face**, so "over the face" means inside `FACE` (x 250-830, y 480-1250 full size) and the look over Daniel still needs his PC.
 
+## Review pack: Daniel's look, on his PC and here
+
+`node scripts/review-pack.mjs <slug>` renders both talking-head families (or `--family`, `--designs`) at the video's own frames (at most 6 per design), tiles a strip per design and a sheet per family, and writes `out/review-pack/<slug>/review.html` (open it by double-click) and `review.md`: the frames, what to judge per design, and the `promote-design` commands for after the look (`--promote` runs them). On Daniel's PC, with a slug whose recording and cut-out are present, the stills show his face. Here (no recording, or `--sandbox`) the same pack takes the production path with no face, so agents check the layout on the same frames he will see; about 20 s a design (`rba-sept-2026`, both families in about 5 min). `--promote` is refused on the sandbox picture.
+
 ## check-schema and preflight with an installed browser
 
 `scripts/check-schema.mjs` (and `preflight.mjs`, `check-preflight.mjs` through it) normally downloads Remotion's browser, which this sandbox cannot. With an installed one they run for real:

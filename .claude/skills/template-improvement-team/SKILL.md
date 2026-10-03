@@ -45,7 +45,7 @@ One message: `golden-rules-auditor` and `design-critic` on the same scope. Show 
 
 ## Phase 3 — Daniel's gate (the only one)
 
-A fixes go ahead without asking; B fixes go ahead only where a still can be rendered, else they wait flagged unviewed; D rulings are Daniel's questions, asked in plain words. For each look option Daniel picks by stills (or by description if no render is possible, and then the look is flagged unviewed). A pick that touches a golden rule is refused back to the creative director, not built. Nothing visible changes without a pick.
+A fixes go ahead without asking; B fixes go ahead only where a still can be rendered, else they wait flagged unviewed; D rulings are Daniel's questions, asked in plain words. For each look option Daniel picks by stills (the pack: `node scripts/review-pack.mjs <slug> --designs <ids>`, his recording on his PC; `--sandbox` here gives the same frames with no face) (or by description if no render is possible, and then the look is flagged unviewed). A pick that touches a golden rule is refused back to the creative director, not built. Nothing visible changes without a pick.
 
 ## Phase 4 — Build
 

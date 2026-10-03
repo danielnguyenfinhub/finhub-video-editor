@@ -2,6 +2,8 @@
 
 As of 3 October 2026 (maintenance run 6). One list of what is still unanswered, so a team run reads it instead of re-asking. Each default is a recommendation and is his to change; when he answers, strike the row through and add the answer and date. Sources: `docs/audit/templates-2026-10-01/02_concepts_*.md` (D rulings: `data` = faceless-data, `expl` = faceless-explainer, `thd` = talkinghead-data, `story` = talkinghead-story), PR #121 "Still open", [team-runs](team-runs.md). Decided already, not listed: Python checks in CI, text-size ratchet, repo `compliance.ts` canonical, YouTube preview-only (5009bc5).
 
+**How to review (the held look items, promotions):** on your PC run `node scripts/review-pack.mjs <a slug with your recording>` and open `out/review-pack/<slug>/review.html`: one sheet per family, the frames and the questions per design; then the promote commands it prints (OD-12, OD-21).
+
 ## Rulings with a default
 
 | # | Decision (source) | Recommended default | What each answer costs |
