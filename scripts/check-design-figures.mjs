@@ -1,5 +1,6 @@
 // Check the design-side number and caption rules from the viewed critiques (02/10/2026),
 // on the core and the designs' real exported helpers. Run: node scripts/check-design-figures.mjs
+//   [--only <design>] [--verbose] (default: failures and one count line).
 //   (a) a calendar year or a date is shown as said, never counted up or spun: the core's
 //       `asSaid` and every design's own counter of a figure (each file that defines a
 //       `counted` must be listed here, so a new one cannot skip the check);
@@ -15,12 +16,12 @@
 //   (e) every design whose said caption word grows keeps a non-zero `saidRoom` margin, in use
 //       ("ThángHai"); kinetic fits its lines to FIT_W, narrower than SAFE_W;
 //   (f) evaluated: no meter, bar, ring or needle for a year (flash, ticker, kinetic, faceless,
-//       gauge, orbit, phoneapp, journey), every hook count through hookCount (source), a neutral kicker not "CON SỐ" for a year or date, a level scale beam for a lone
+//       gauge, orbit, phoneapp, journey), every hook count through hookCount (source, src/designs and src/youtube), a neutral kicker not "CON SỐ" for a year or date, a level scale beam for a lone
 //       hook value and plaques off the pillar, no "TỔNG" on a rate, the calendar title page torn
 //       before a points notepad, headline units kept together (keepUnits);
 //   (g) classic cue panels (Panel) in every design that places one: clipped at their rest top,
 //       inside SAFE at every drop-in / fly-out frame, right edge clear of the measured LogoMark
-//       tile while it shows; youtube/Kit's 16:9 panels inside YT_SAFE, clear of LogoMark16's windows;
+//       tile while it shows and never left of LOGO_CLEAR; youtube/Kit's 16:9 panels inside YT_SAFE, clear of LogoMark16's windows;
 //   (h) replay of every public/videos fixture with words: with a hook, no figure before
 //       HOOK_FRAMES (the hook-time branches deleted from six designs stay unreachable).
 //   (j) talking-head repeats: checklist "0/0", series empty strip, kitchen hook by talk frame 25,
@@ -33,6 +34,7 @@
 // in corrections.md, not `checked`.
 // esbuild is not a direct dependency: it ships with @remotion/bundler, so it is resolved from
 // there (works hoisted or nested, no package.json change).
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -70,10 +72,25 @@ const code = (file, given = {}) => {
   return { js, env };
 };
 
+// Prints failures and one count line; `--verbose` every line; `--only <id>` also the ok lines that
+// name <id> (every check still runs and every failure prints: the exit code covers them all).
+const argv = process.argv.slice(2);
+const only = argv.includes("--only") ? argv[argv.indexOf("--only") + 1] : null;
+const verbose = argv.includes("--verbose");
+// A typo fails at once, before any bundling: --only takes a design id (src/designs, src/youtube/designs).
+const ids = ["designs", "youtube/designs"].flatMap((d) => readdirSync(join(ROOT, "src", d), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name));
+if (only !== null && !ids.includes(only)) {
+  console.log(`FAIL --only ${only}: not a design id (${ids.length} known, e.g. ${ids.slice(0, 3).join(", ")})`);
+  process.exit(1);
+}
 let failed = false;
+let passed = 0;
+let matched = 0;
 const check = (name, ok, detail = "") => {
-  console.log(`${ok ? "ok  " : "FAIL"} ${name}${detail ? `  (${detail})` : ""}`);
+  if (only && name.includes(only)) matched++;
+  if (!ok || verbose || (only && name.includes(only))) console.log(`${ok ? "ok  " : "FAIL"} ${name}${detail ? `  (${detail})` : ""}`);
   if (!ok) failed = true;
+  else passed++;
 };
 
 const golden = await bundle("src/mortgage/golden.ts");
@@ -329,14 +346,18 @@ for (const [name, file, fn] of [["orbit", "orbit/Stage.tsx", "arcFill"], ["phone
   check(`${name}: no ring or road meter for a year or a date`, SAID.every((b) => fill(b) === null) && fill("4,35%") > 0, SAID.map(fill).join(","));
 }
 // Comment-stripped, whitespace-free: outside the files whose hook text (d) evaluates, a design
-// may only test `countTo` against undefined; any other read (arithmetic, `?? 0`, interpolate,
-// formatting) fails, so every other hook prints through the core hookText.
-const EVALUATED = ["gauge/Scenes.tsx", "scale/Plan.ts", "pulse/Beats.tsx", "receipt/Stage.tsx", "calendar/Page.tsx", "timelapse/Plan.ts", "splitscreen/Scenes.tsx", "flipcard/Stage.tsx"];
-const fromZero = readdirSync(join(ROOT, "src", "designs"), { recursive: true })
-  .map((f) => f.replace(/\\/g, "/"))
+// (src/designs and src/youtube) may only test `countTo` against undefined, copy it unchanged
+// (`countTo:x.countTo`, a destructured prop) or hand it to hookText; any other read (arithmetic,
+// `?? 0`, interpolate, formatting) fails, so every other hook prints through the core hookText.
+const EVALUATED = ["gauge/Scenes.tsx", "scale/Plan.ts", "pulse/Beats.tsx", "receipt/Stage.tsx", "calendar/Page.tsx", "timelapse/Plan.ts", "splitscreen/Scenes.tsx", "flipcard/Stage.tsx"].map((f) => `designs/${f}`);
+const fromZero = ["designs", "youtube"].flatMap((d) => readdirSync(join(ROOT, "src", d), { recursive: true }).map((f) => `${d}/${f.replace(/\\/g, "/")}`))
   .filter((f) => /\.tsx?$/.test(f) && !EVALUATED.includes(f))
-  .filter((f) => /\.countTo(?![!=]==(?:void0|undefined))/.test(code(f).js.replace(/\s/g, "")));
-check("every design's hook text goes through the core hookText (source: no countTo read but an undefined test)", fromZero.length === 0, fromZero.join(", "));
+  .filter((f) => /countTo/.test(code(`../${f}`).js.replace(/\s/g, "")
+    .replace(/\.?countTo[!=]==(?:void0|undefined)/g, "")
+    .replace(/countTo:[\w.]+\.countTo(?=[,}])/g, "")
+    .replace(/hookText\(\{[^}]*\}/g, "")
+    .replace(/([{,])countTo(?=\}(?:\)=>|=))/g, "$1")));
+check("every design's hook text (src/designs, src/youtube) goes through the core hookText (source: countTo only tested, copied or passed to hookText)", fromZero.length === 0, fromZero.join(", "));
 const yearView = gaugeMod.figureView({ big: "2026", label: "", source: "auto", fromFrame: 0, frames: 45 }, 20, FPS);
 const rateView = gaugeMod.figureView({ big: "4,35%", label: "", source: "auto", fromFrame: 0, frames: 45 }, 20, FPS);
 check("gauge: a year is a plain readout (dial dimmed, no lit arc), a rate keeps its needle", yearView.plain === true && !yearView.lit && yearView.readout.text === "2026" && !rateView.plain && Boolean(rateView.lit));
@@ -493,11 +514,21 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
           if (new Set(edges).size !== 1) bad.push(`cue ${from}+${dur}: width changes`);
           const hit = edges.findIndex((e, fr) => golden.logoVisible(from + fr, talk, FPS) && !(e < logo.left));
           if (hit >= 0) bad.push(`cue ${from}+${dur}: frame ${from + hit} under the logo`);
+          // Two-sided: narrowed only to LOGO_CLEAR on screen (a scaled host's inset divides by its scale).
+          const normal = golden.SAFE.left + (width - (1080 - golden.SAFE.right) - golden.SAFE.left) * scale;
+          const over = edges.findIndex((e) => e < Math.min(info.LOGO_CLEAR, normal) - 1);
+          if (over >= 0) bad.push(`cue ${from}+${dur}: edge ${edges[over].toFixed(0)} left of LOGO_CLEAR ${info.LOGO_CLEAR} (over-narrowed)`);
         }
-      check(`${name}: one width per cue, clear of the LogoMark whenever it shows`, bad.length === 0, bad.join("; ") || `layer ${width}`);
+      check(`${name}: one width per cue, clear of the LogoMark whenever it shows, never past LOGO_CLEAR`, bad.length === 0, bad.join("; ") || `layer ${width}`);
     }
   }
   check("panel hosts found", hosts.length >= 30, `${hosts.length}`);
+  // A cue whose last frame is 6 before the logo window still narrows (LOGO_MARGIN: it flies out
+  // as the logo pops in); a panel resting at or below LOGO_BOTTOM never narrows.
+  const near = { offset: 0, talkFrames: talk, width: 1080, logo: true, from: golden.HOOK_FRAMES - 40 };
+  const below = { ...near, offset: info.LOGO_BOTTOM - info.PANEL_TOP, from: golden.HOOK_FRAMES };
+  check("classic Panel: narrow for a cue ending 6 frames before the logo window, never when resting below LOGO_BOTTOM",
+    info.panelInset(near, 0, 35, FPS) > 0 && info.panelInset(below, 0, 60, FPS) === 0, `${info.panelInset(near, 0, 35, FPS)}, ${info.panelInset(below, 0, 60, FPS)}`);
 
   // YouTube (src/youtube/Kit.tsx CueFallback16): the classic panels scaled into 16:9 rest inside
   // YT_SAFE and, whenever LogoMark16 shows (from frame 0, not the vertical windows), keep their
@@ -510,6 +541,7 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
   const show = Number(kitJs.match(/const LOGO_SHOW_FRAMES = (\d+);/)?.[1]);
   check("youtube Kit (source): LogoMark16 fades over [0, 10, LOGO_SHOW_FRAMES - 10, LOGO_SHOW_FRAMES] and from talkFrames - LOGO_SHOW_FRAMES",
     show > 0 && /\[0, 10, LOGO_SHOW_FRAMES - 10, LOGO_SHOW_FRAMES\]/.test(kitJs) && /\[talkFrames - LOGO_SHOW_FRAMES, talkFrames - LOGO_SHOW_FRAMES \+ 10\]/.test(kitJs));
+  check("youtube Kit: LogoMark16 shows for the vertical reels' LOGO_SECONDS", show === golden.LOGO_SECONDS * FPS, `LOGO_SHOW_FRAMES ${show}, LOGO_SECONDS ${golden.LOGO_SECONDS}`);
   const logo16Shows = (fr, talkFrames) => (fr > 0 && fr < show) || fr > talkFrames - show;
   const tile = { left: YT_SAFE.right - (kh * pw / ph + 2 * kpad[1]), bottom: YT_SAFE.top + kh + 2 * kpad[0] };
   const k = kit.CUE16_SCALE;
@@ -722,5 +754,13 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
   }
 }
 
-console.log(failed ? "design figures: FAILED" : "design figures ok");
+if (only === null) {
+  const typo = spawnSync(process.execPath, [import.meta.filename, "--only", "zz-no-such-design"], { encoding: "utf8" });
+  check("--only <typo> exits non-zero at once", typo.status === 1 && /not a design id/.test(typo.stdout), `exit ${typo.status}`);
+}
+if (only !== null && !matched) {
+  console.log(`FAIL --only ${only}: no check names it (a typo, or no design by that id)`);
+  failed = true;
+}
+console.log(failed ? "design figures: FAILED" : `design figures ok (${passed} checks${verbose ? "" : "; --verbose prints each"})`);
 process.exit(failed ? 1 : 0);

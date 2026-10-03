@@ -6,7 +6,7 @@ import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { hardCodedStrings, missingMedia, promote } from "./promote-design.mjs";
 import { loadManifests } from "./select-template.mjs";
-import { driftLine, parseLog, shallowBoundary } from "./report-promotion-drift.mjs";
+import { driftLine, parseLog, shallowBoundary, sharedImports } from "./report-promotion-drift.mjs";
 
 const dir = repoTmp("promote-");
 const put = (path, text) => {
@@ -142,6 +142,12 @@ check("drift: shallow boundary is no history", /no history \(shallow clone/.test
   rmSync(dir, { recursive: true });
 }
 check("drift: no anchor is no history", /no history/.test(driftLine({ id: "x", promoted: "d", anchor: null, commits: [] })));
+{
+  // H4 (maintenance 05): shared code a design imports drifts it too (bigdigit draws classic/Cues' Panel).
+  const shared = sharedImports("bigdigit");
+  check("drift: a design's shared imports count (bigdigit: classic/Cues, golden.ts; not its own folder)",
+    shared.includes("src/designs/classic/Cues.tsx") && shared.includes("src/mortgage/golden.ts") && !shared.some((f) => f.startsWith("src/designs/bigdigit/")), shared.join(", "));
+}
 {
   // Fixture media: a talking-head fixture lacks its recording and matte (Mode A is then
   // INCOMPLETE, never rendered), a quick-mode one needs no matte, present files are not missing.

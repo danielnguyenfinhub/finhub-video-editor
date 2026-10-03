@@ -113,7 +113,13 @@ screen ("the rate card"), never whose.
   `src/designs/README.md` rule 1; `check-golden` (self-tests, README text) and `check-design-figures`
   (evaluated: the core, every design file that defines a figure counter, the ten data stage plans,
   ticker flaps, flash/ticker/kinetic meters, faceless ring, gauge needle, the neutral kickers) ·
-  `checked`; that a meter is drawn only through its fill function is a source check · `rule`
+  `checked`; that a meter is drawn only through its fill function is a source check · `rule`;
+  an automatic figure's token is bare ("2000"), its unit the next caption word, so "2000 đô" and
+  "1/3 thu nhập" lost their label: fixed 03/10/2026 (`spokenNumbers` reads the words around it).
+  Only money or a percent after a 19xx/20xx makes it an amount (a year is followed by nouns: "2026
+  của RBA", "2026 thu nhập" stay years, so "2024 hộ" is read as a year too); nouns count only after
+  a day/month-shaped share. Known misread fixed: "mỗi năm 2000 đô" read as a year after "năm";
+  "mỗi / một / hàng năm" is per year, not a year → check-golden, the real caption path · `checked`
 - 02/10/2026 · design:gauge, pulse, scale, receipt, calendar, timelapse, splitscreen, flipcard · viewed
   critiques 08 V2/S1 (hook count-up from 0 paused at "4,06%", "2,39%", "0,00%" for a 4,35% rate) → a
   hook number never counts from 0: only its last tenth, exact by half the design's count (`hookCount`,
@@ -162,7 +168,8 @@ screen ("the rate card"), never whose.
   never gets a ring, road or count; every hook prints through the core `hookText`: `big` unchanged
   unless its one number token equals countTo, then only that token counts, written its own way
   ("-0,25%", "$4.1B", "750 000 ĐÔ"), suffix/decimals never rebuild it → check-design-figures (d)(f),
-  evaluated on 19 hooks; any other `countTo` read in a design fails (source) · `checked`
+  evaluated on 19 hooks; any other `countTo` read in a design fails (source; `src/youtube` too since
+  03/10/2026: ytstudio and ytdashboard counted from 0) · `checked`
 - 02/10/2026 · blueprint, orbit, phoneapp · a figure under a compare cue; "0/2" bar half full → the cue
   wins, but a figure is never dropped (rule 1, review 557b020): cut after its floor, held over the
   cue's drop-in when short by ≤ 10 frames, else shown after the cue (a chip when another cue holds

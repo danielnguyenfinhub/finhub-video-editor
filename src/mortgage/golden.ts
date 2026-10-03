@@ -275,6 +275,17 @@ const AUTO_MS = 2600;
 const AUTO_GAP_MS = 4000;
 // Money and percent units only: "1 năm", "1 phần lời" are counts, not figures.
 const UNIT = /^(%|tỷ|ti|triệu|nghìn|ngàn|đô|k)(?!\p{L})/iu;
+// A bare "2000" is an amount only when money or a percent follows it (UNIT,
+// MONEY_NEXT, "phần trăm"); a day/month-shaped "1/3" is a share also before
+// SHARE_NEXT ("1/3 thu nhập"). A year is followed by any noun ("2026 của
+// RBA", "2026 thu nhập"), so when unsure it stays a year. "năm" / "ngày" /
+// "in" / "since" before the token keeps it a year or date, but not "mỗi /
+// một / hàng năm" ("mỗi năm 2000 đô" is per year). ponytail: word lists; add
+// a word when one slips through.
+const MONEY_NEXT = /^(đồng|usd|aud|\$)(?!\p{L})/iu;
+const SHARE_NEXT = /^(người|hộ|căn|lần|khách|thu|của|phần)(?!\p{L})/iu;
+const SAID_BEFORE = /^(năm|ngày|in|since)$/iu;
+const PER = /^(mỗi|một|hàng)$/iu;
 const NUMERIC = /^[.,]?\d/;
 const clean = (s: string) => s.trim().replace(/[.,!?;:]+$/g, "");
 // Words that start a new clause: an automatic figure's label stops before them.
@@ -333,11 +344,24 @@ const spokenNumbers = (reel: Reel) => {
         .trim()
         .split(/\s+/);
       const said = clean(big) + (percent ? "%" : "");
+      // The token alone is "2000" or "1/3": a year or a date only when the
+      // words around it allow it ("năm 2000", "2026 lãi suất"; not "2000
+      // đô", "1/3 thu nhập").
+      const word = (k: number) => clean(caps[k]?.text ?? "");
+      const saidBefore =
+        SAID_BEFORE.test(word(i - 1)) &&
+        !(/^năm$/iu.test(word(i - 1)) && PER.test(word(i - 2)));
+      const amount =
+        !saidBefore &&
+        (percent ||
+          UNIT.test(next) ||
+          MONEY_NEXT.test(next) ||
+          (saidKind(said) === "date" && SHARE_NEXT.test(next)));
       out.push({
         big: said,
         // A year or a date gets no label: the words after it describe
         // something else ("2026 lãi suất cơ bản" read as "the rate is 2026").
-        label: asSaid(said) ? "" : autoLabel(after),
+        label: asSaid(said) && !amount ? "" : autoLabel(after),
         startMs: caps[i].startMs,
       });
     }

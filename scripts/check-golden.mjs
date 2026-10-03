@@ -16,7 +16,7 @@ const bundle = join(repoTmp("golden-"), "golden.mjs");
 execFileSync(process.execPath, [
   "node_modules/esbuild/bin/esbuild", "src/mortgage/golden.ts", "src/mortgage/timeline.ts",
   "src/mortgage/captionPages.ts",
-  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs",
+  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", "--log-level=warning",
   `--outdir=${join(bundle, "..")}`,
 ]);
 const url = (p) => new URL(`file:///${p.replace(/\\/g, "/")}`);
@@ -132,6 +132,27 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     check("asSaid: a date inside a stat, 1/12/2026", asSaid("Thứ Ba 29/9") && asSaid("1/12/2026"));
     const auto = figuresOf(reelOf(words("từ đầu năm 2026 lãi suất cơ bản đã tăng nhiều lần rồi đó")), FPS);
     check("an automatic year gets no label (not \"lãi suất cơ bản\")", auto[0]?.big === "2026" && auto[0].label === "", JSON.stringify(auto[0]));
+    // The real path: the caption token is bare ("2000"), its unit is the next word (H1, maintenance
+    // 06). Money or a percent after a 19xx/20xx makes it an amount; a noun does not (a year is
+    // followed by nouns), except after a day/month-shaped share ("1/3 thu nhập"). "năm"/"ngày" before
+    // keeps a year or date, but not "mỗi/một/hàng năm" (per year).
+    for (const [text, big, label] of [
+      ["tôi trả 2000 đô mỗi tháng cho khoản vay này nhé", "2000", "đô mỗi tháng cho"],
+      ["giá 1950 đô mỗi tháng là vừa", "1950", "đô mỗi tháng"],
+      ["giá 1950 đô mỗi tháng là vừa".normalize("NFD"), "1950", "đô mỗi tháng"],
+      ["trả 2000 AUD mỗi tháng thôi", "2000", "AUD mỗi tháng thôi"],
+      ["trả 2000 $ mỗi tháng thôi", "2000", "$ mỗi tháng thôi"],
+      ["dành 1/3 thu nhập cho tiền nhà thôi", "1/3", "thu nhập cho tiền"],
+      ["mỗi năm 2000 đô tiền phí", "2000", "đô tiền phí"],
+      ["kế hoạch 2026 của RBA rất rõ", "2026", ""],
+      ["2026 thu nhập tăng mạnh", "2026", ""],
+      ["2026 khách hàng mới", "2026", ""],
+      ["vào năm 2000 đô la Úc rất mạnh", "2000", ""],
+      ["ngày 29/9 ngân hàng sẽ họp lại nhé", "29/9", ""],
+    ]) {
+      const f = figuresOf(reelOf(words(text)), FPS)[0];
+      check(`auto "${big}" in "${text}": label ${JSON.stringify(label)}`, f?.big === big && f.label === label, JSON.stringify(f));
+    }
     const yr = words("từ đầu năm 2026 lãi suất đã tăng từ 3,6 lên 4,35 phần trăm rồi mình xem tiếp nhé các bạn ơi");
     const stat = [{ atMs: 2000, durMs: 2000, big: "4,35%", label: "Lãi suất cơ bản" }];
     const hooked = figuresOf(reelOf(yr, { hook: { big: "4,35%" }, stats: stat }), FPS);
@@ -168,6 +189,22 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const late = figuresOf(reelOf(w, { hook: { big: "4,35%" } }), FPS);
     // "4,1" is said in the hook (1.2 s) and waits; "5" and "100.000%" come later, untouched.
     check("hook: figures said after it are untouched", late[0].fromFrame === HOOK_FRAMES && at(late.slice(1)) === at(figs.slice(1)), `${at(late)} vs ${at(figs)}`);
+    // Maintenance 05 mutation survivors. A short stat said under the hook still keeps the number
+    // hold when it waits (not its own 15 frames).
+    const brief = figuresOf(reelOf(plain, { hook: { big: "4,35%" }, stats: [st(1000, 500, "5%")] }), FPS);
+    check("a 0.5 s stat waiting for the hook is held >= the number hold", brief[0]?.fromFrame === HOOK_FRAMES && brief[0].frames >= holdF, at(brief));
+    // Two automatic figures said 2 s apart: the second is dropped (AUTO_GAP_MS 4 s).
+    const two = figuresOf(reelOf(words("trả 5 triệu đô rồi thêm 6 triệu đô nữa thôi")), FPS);
+    check("automatic figures inside AUTO_GAP_MS: only the first", two.length === 1 && two[0].big === "5", at(two));
+  }
+  {
+    // hookCount: the fraction counts from 90 % of itself, exact from half way; readToken takes
+    // only a reading with 3-digit groups ("4,35" is not 435).
+    const { hookCount, hookText } = await import(url(bundle));
+    check("hookCount starts at whole + 90 % of the fraction (4,35 -> 4,315), exact from t 0.5",
+      Math.abs(hookCount(4.35, 0) - 4.315) < 1e-9 && hookCount(4.35, 0.5) === 4.35, `${hookCount(4.35, 0)}, ${hookCount(4.35, 0.5)}`);
+    check("hookText: a token whose only matching reading has a 2-digit group is not counted (\"4,35\" vs 435)",
+      hookText({ big: "4,35", countTo: 435 }, 0) === "4,35", hookText({ big: "4,35", countTo: 435 }, 0));
   }
 
   // Banks: aliases, multi-word, a repeat inside the 2.5 s window merges, a
