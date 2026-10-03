@@ -81,7 +81,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     check("LOGO_HEIGHT is 120", LOGO_HEIGHT === 120, `${LOGO_HEIGHT}; ${locked}`);
     // The README text, matched with any dash (en, em, hyphen) and any spacing or line wrap.
     const norm = (t) => t.replace(/\s*[–—-]\s*/g, "-").replace(/\s+/g, " ");
-    for (const [rule, text] of [["1", "a year or a date is shown as said"], ["1", "A figure said during the hook waits for it"], ["1", "unless an earlier waiting figure is still held"],
+    for (const [rule, text] of [["1", "a year or a date is shown as said"], ["1", "A figure said during the hook waits for it"], ["1", "unless an earlier figure is still held"], ["1", "never under its reading time nor past its own length"], ["1", "No two figures are ever up at once"],
       ["3", "y 420–1473, x 54–960"], ["3b", "x 250–830, y 480–1250"], ["3c", "120 px high"]]) {
       const ok = norm(readme).includes(norm(text));
       check(`src/designs/README.md rule ${rule} has "${text}"`, ok, ok ? "" : `src/designs/README.md no longer contains "${text}" (rule ${rule}); ` +
@@ -123,7 +123,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 
   // Rule 1 exception (Daniel, 02/10/2026): a year or a date is shown as said, still a figure;
   // a figure said during the hook waits for HOOK_FRAMES, the next waits for its hold, a stat
-  // keeps its reading time; with no hook, or said after the hook, a figure keeps its time.
+  // keeps its reading time; with no hook, or said after the hook, a figure keeps its time unless the
+  // previous one is still within its reading time (then it waits: never two at once).
   {
     const { asSaid, HOOK_FRAMES } = await import(url(bundle));
     check("asSaid: years and dates", ["2026", "1999", "năm 2026", "29/9"].every(asSaid), "");
@@ -140,8 +141,30 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     check("hook: no figure before HOOK_FRAMES", hooked.every((f) => f.fromFrame >= HOOK_FRAMES), at(hooked));
     check("hook: waiting figures never overlap", hooked.every((f, i) => !i || f.fromFrame >= hooked[i - 1].fromFrame + hooked[i - 1].frames), at(hooked));
     check("hook: each held >= the number hold", hooked.every((f) => f.frames >= Math.round((READING.minNumberHoldMs / 1000) * FPS)), at(hooked));
-    check("hook: saidFrame keeps when it was said", hooked.map((f) => f.saidFrame).join() === free.map((f) => f.fromFrame).join(), `${at(hooked)} vs ${at(free)}`);
-    check("no hook: figures keep their time", free.every((f) => f.fromFrame === f.saidFrame), at(free));
+    check("hook: saidFrame keeps when it was said", hooked.map((f) => f.saidFrame).join() === free.map((f) => f.saidFrame).join(), `${at(hooked)} vs ${at(free)}`);
+    // No hook: "2026" (24) keeps its time but ends at its number hold; the stat said 26 frames
+    // later waits for that hold: never two figures at once.
+    const holdF = Math.round((READING.minNumberHoldMs / 1000) * FPS);
+    check("no hook: the first keeps its time, cut to its hold; the next waits for it, no overlap",
+      free[0]?.fromFrame === free[0]?.saidFrame && free[0].frames === holdF && free[1]?.fromFrame === free[0].fromFrame + holdF && free[1].saidFrame < free[1].fromFrame, at(free));
+    // Never stretched: a stat shown for 1 s (30 frames) keeps 30 when the next is said 0.3 s
+    // later; the next starts at its end. Said in the same frame: the first is cut to its hold
+    // too (not the next waiting its whole 90 frames).
+    const plain = words("hôm nay mình nói về chi phí vay mua nhà ở Úc cho các gia đình trẻ nhé bạn");
+    const st = (atMs, durMs, big) => ({ atMs, durMs, big, label: "Lãi" });
+    const short = figuresOf(reelOf(plain, { stats: [st(2000, 1000, "5%"), st(2300, 3000, "6%")] }), FPS);
+    check("a stat shown 1 s keeps its 30 frames (never stretched); the next starts at its end",
+      short[0]?.frames === 30 && short[1]?.fromFrame === short[0].fromFrame + 30, at(short));
+    const same = figuresOf(reelOf(plain, { stats: [st(2000, 3000, "5%"), st(2000, 3000, "6%")] }), FPS);
+    check("two stats said in the same frame: the first is cut to its hold, the next follows it",
+      same[0]?.frames === holdF && same[1]?.fromFrame === same[0].fromFrame + holdF && same[1].frames === 90, at(same));
+    // A spoken number that a stat repeats while its card would be up is covered by the stat
+    // (ty-do-explainer: "400" 67 ms outside "~$400"'s window); another number is not.
+    const said = words("phí ngân hàng khoảng 400 đô cho mỗi hộ gia đình trong một năm qua rồi đó bạn");
+    const dup = figuresOf(reelOf(said, { stats: [{ atMs: 3000, durMs: 3000, big: "~$400", label: "cho mỗi hộ" }] }), FPS);
+    const other = figuresOf(reelOf(said, { stats: [{ atMs: 3000, durMs: 3000, big: "~$500", label: "cho mỗi hộ" }] }), FPS);
+    check("an automatic figure the next stat repeats is covered by it; a different number is not",
+      dup.length === 1 && dup[0].source === "stat" && other.some((f) => f.source === "auto" && f.big === "400"), `${at(dup)} | ${at(other)}`);
     const late = figuresOf(reelOf(w, { hook: { big: "4,35%" } }), FPS);
     // "4,1" is said in the hook (1.2 s) and waits; "5" and "100.000%" come later, untouched.
     check("hook: figures said after it are untouched", late[0].fromFrame === HOOK_FRAMES && at(late.slice(1)) === at(figs.slice(1)), `${at(late)} vs ${at(figs)}`);

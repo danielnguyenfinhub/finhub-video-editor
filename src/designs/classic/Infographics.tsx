@@ -44,7 +44,9 @@ export const PanelPlace = createContext<{
   from: number;
   talkFrames: number;
   width?: number;
-  logo?: boolean;
+  // false: no LogoMark; a function: the host's own logo windows (YouTube's
+  // LogoMark16 shows from frame 0); else the vertical LogoMark's.
+  logo?: boolean | ((frame: number) => boolean);
   scale?: number; // the host layer's scale from (SAFE.left, PANEL_TOP), as explainer's 0.8
 } | null>(null);
 
@@ -68,12 +70,11 @@ const logoClear = (
   offset: number,
   from: number,
   frames: number,
-  talkFrames: number,
-  fps: number,
+  shows: (frame: number) => boolean,
 ): number => {
   if (PANEL_TOP + offset >= LOGO_BOTTOM) return 0;
   for (let f = from - LOGO_MARGIN; f < from + frames + LOGO_MARGIN; f++)
-    if (logoVisible(f, talkFrames, fps)) return 1;
+    if (shows(f)) return 1;
   return 0;
 };
 
@@ -88,8 +89,14 @@ export const panelInset = (
   fps: number,
 ): number =>
   place && place.logo !== false
-    ? logoClear(place.offset, place.from, frames, place.talkFrames, fps) *
-      logoInset(place.width, place.scale)
+    ? logoClear(
+        place.offset,
+        place.from,
+        frames,
+        typeof place.logo === "function"
+          ? place.logo
+          : (f) => logoVisible(f, place.talkFrames, fps),
+      ) * logoInset(place.width, place.scale)
     : 0;
 
 // Navy glass card that drops in from the top and flies back out at the end.

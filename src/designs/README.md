@@ -53,8 +53,10 @@ or `toOutMs` (timeline.ts). Reel data: `reel.edit` (edit.json), `reel.timeline.c
    waits for it in turn, so they never overlap; each keeps its reading time (a stat its
    whole hold, an automatic figure what is left of its span, never under
    `READING.minNumberHoldMs`). `saidFrame` is when it was said (a stable key). Figures
-   said after the hook keep their time unless an earlier waiting figure is still held,
-   in which case they wait for it.
+   said after the hook keep their time unless an earlier figure is still held: they
+   wait for a waiting one; one shown when said ends when they are said, never under its
+   reading time nor past its own length, and if that is still too short they wait for
+   it. No two figures are ever up at once.
 2. **Bank named → its logo.** `lenderMentionsOf(reel)` returns
    `{ lender, startMs, endMs }` (talk-timeline ms). Render each with
    `<LenderLogo lender={m.lender} height={…}/>` (`src/mortgage/LenderLogo.tsx`: official

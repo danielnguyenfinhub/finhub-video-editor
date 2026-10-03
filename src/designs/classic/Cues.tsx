@@ -389,8 +389,9 @@ export const MotionTrack: React.FC<{
   numbers?: NumbersLook;
   // The WebGL light leak on each chapter cut; a calm design turns it off.
   leak?: boolean;
-  // false: the design draws no LogoMark (classic), so panels keep full width.
-  logo?: boolean;
+  // false: the design draws no LogoMark (classic), so panels keep full width;
+  // a function: the frames the host's own logo shows (YouTube's LogoMark16).
+  logo?: boolean | ((frame: number) => boolean);
 }> = ({
   reel,
   panelOffset = 0,

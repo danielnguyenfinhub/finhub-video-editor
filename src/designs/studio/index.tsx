@@ -21,7 +21,7 @@ import type {
   TalkProps,
 } from "../../mortgage/design";
 import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
-import { SAFE } from "../../mortgage/golden";
+import { SAFE, figuresOf } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import {
   BrandBackdrop,
@@ -200,6 +200,21 @@ const At: React.FC<{
   );
 };
 
+// The stat callouts on the core's staged timing (never on the hook or another
+// figure); a plain function so check-design-figures can read each Sequence.
+export const statSequences = (reel: OverlayProps["reel"], fps: number) =>
+  figuresOf(reel, fps)
+    .filter((s) => s.source === "stat")
+    .map((s) => (
+      <Sequence
+        key={`${s.saidFrame}${s.big}`}
+        from={s.fromFrame}
+        durationInFrames={s.frames}
+      >
+        <StatCallout big={s.big} label={s.label} />
+      </Sequence>
+    ));
+
 const Overlay: React.FC<OverlayProps> = ({
   reel,
   keywords,
@@ -210,16 +225,7 @@ const Overlay: React.FC<OverlayProps> = ({
   return (
     <>
       <MotionTrack reel={reel} panelOffset={SAFE.top - 110} />
-      {(reel.edit.stats ?? []).map((s) => (
-        <At
-          key={s.atMs}
-          reel={reel}
-          atMs={s.atMs}
-          frames={Math.round((s.durMs / 1000) * fps)}
-        >
-          <StatCallout big={s.big} label={s.label} />
-        </At>
-      ))}
+      {statSequences(reel, fps)}
       {(reel.edit.chapters ?? []).map((c, i) => (
         <At
           key={c.atMs}

@@ -5,7 +5,7 @@
 //       `counted` must be listed here, so a new one cannot skip the check);
 //   (b) the core's `figuresOf` makes a figure said during the hook wait for its end, never
 //       overlapping the next, each held >= the number hold, a stat its reading time; figures
-//       said after the hook (or with no hook) are untouched; faceless `stagedFigures` builds
+//       said after the hook (or with no hook) are untouched unless the previous is in its reading time; faceless `stagedFigures` builds
 //       on it (rba-sept-2026 and a synthetic reel with two stats said during the hook);
 //   (c) the eleven faceless-data designs: ten stage plans show each core figure, none before
 //       the hook end (ticker, which has no plan, by source); faceless StageLayer / index.tsx
@@ -20,7 +20,7 @@
 //       before a points notepad, headline units kept together (keepUnits);
 //   (g) classic cue panels (Panel) in every design that places one: clipped at their rest top,
 //       inside SAFE at every drop-in / fly-out frame, right edge clear of the measured LogoMark
-//       tile while it shows;
+//       tile while it shows; youtube/Kit's 16:9 panels inside YT_SAFE, clear of LogoMark16's windows;
 //   (h) replay of every public/videos fixture with words: with a hook, no figure before
 //       HOOK_FRAMES (the hook-time branches deleted from six designs stay unreachable).
 //   (j) talking-head repeats: checklist "0/0", series empty strip, kitchen hook by talk frame 25,
@@ -146,7 +146,9 @@ for (const [name, reel] of reels) {
 const s = figuresOf(statReel, FPS);
 check("two stats in the hook: each stat keeps its reading time", s.length === 2 && s.every((f) => f.frames >= Math.round(3 * FPS)), s.map((f) => f.frames).join(","));
 const noHook = figuresOf(reelOf(w, { stats: hookStats.stats }), FPS);
-check("no hook: figures start when said", noHook.every((f) => f.fromFrame === f.saidFrame), spans(noHook));
+// No hook: the first starts when said; the second, said 36 frames into the first's 90-frame
+// reading time, waits for it (never two at once).
+check("no hook: the first starts when said, the next waits for its reading time", noHook[0]?.fromFrame === noHook[0]?.saidFrame && noHook[1]?.fromFrame === noHook[0].fromFrame + noHook[0].frames && noHook[0].frames >= hold, spans(noHook));
 if (rba) {
   const years = figuresOf(rba, FPS).filter((f) => golden.asSaid(f.big));
   check("rba-sept-2026: years stay figures (shown as said, not dropped)", years.some((f) => f.big === "2026"), spans(years));
@@ -496,32 +498,114 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     }
   }
   check("panel hosts found", hosts.length >= 30, `${hosts.length}`);
+
+  // YouTube (src/youtube/Kit.tsx CueFallback16): the classic panels scaled into 16:9 rest inside
+  // YT_SAFE and, whenever LogoMark16 shows (from frame 0, not the vertical windows), keep their
+  // right edge left of its measured tile; one width per cue.
+  const kit = await bundle("src/youtube/Kit.tsx");
+  const { YT_SAFE } = await bundle("src/youtube/frame.ts");
+  const kitJs = readFileSync(join(ROOT, "src", "youtube", "Kit.tsx"), "utf8");
+  const [kh, kpad] = [Number(kitJs.match(/const LOGO_HEIGHT = (\d+);/)?.[1]), kitJs.match(/padding: "(\d+)px (\d+)px"/)?.slice(1).map(Number) ?? [NaN, NaN]];
+  // LogoMark16's own window, read from its fade (opacity > 0), not from the helper under test.
+  const show = Number(kitJs.match(/const LOGO_SHOW_FRAMES = (\d+);/)?.[1]);
+  check("youtube Kit (source): LogoMark16 fades over [0, 10, LOGO_SHOW_FRAMES - 10, LOGO_SHOW_FRAMES] and from talkFrames - LOGO_SHOW_FRAMES",
+    show > 0 && /\[0, 10, LOGO_SHOW_FRAMES - 10, LOGO_SHOW_FRAMES\]/.test(kitJs) && /\[talkFrames - LOGO_SHOW_FRAMES, talkFrames - LOGO_SHOW_FRAMES \+ 10\]/.test(kitJs));
+  const logo16Shows = (fr, talkFrames) => (fr > 0 && fr < show) || fr > talkFrames - show;
+  const tile = { left: YT_SAFE.right - (kh * pw / ph + 2 * kpad[1]), bottom: YT_SAFE.top + kh + 2 * kpad[0] };
+  const k = kit.CUE16_SCALE;
+  const boxLeft = YT_SAFE.right - 1080 * k;
+  const restTop = (info.PANEL_TOP + kit.CUE16_OFFSET) * k;
+  check("youtube Kit (source): CueFallback16 passes CUE16_OFFSET and LogoMark16's windows",
+    /panelOffset=\{CUE16_OFFSET\}\s*logo=\{\(f\) => logo16Visible\(f, reel\.timeline\.talkFrames\)\}/.test(kitJs) && /left: YT_SAFE\.right - 1080 \* scale/.test(kitJs));
+  check("youtube Kit: panels rest inside YT_SAFE", restTop >= YT_SAFE.top && boxLeft + golden.SAFE.left * k >= YT_SAFE.left, `rest top ${restTop.toFixed(1)}, YT_SAFE.top ${YT_SAFE.top}`);
+  const ytBad = [];
+  if (restTop < tile.bottom)
+    for (let from = 0; from < talk && ytBad.length < 3; from += 10)
+      for (const dur of [40, 200]) {
+        const place = { offset: kit.CUE16_OFFSET, talkFrames: talk, width: 1080, logo: (fr) => kit.logo16Visible(fr, talk), from };
+        const edges = [...Array(dur).keys()].map((fr) => boxLeft + (golden.SAFE.right - info.panelInset(place, fr, dur, FPS)) * k);
+        if (new Set(edges).size !== 1) ytBad.push(`cue ${from}+${dur}: width changes`);
+        const hit = edges.findIndex((e, fr) => logo16Shows(from + fr, talk) && !(e < tile.left));
+        if (hit >= 0) ytBad.push(`cue ${from}+${dur}: frame ${from + hit} under LogoMark16 (edge ${edges[hit].toFixed(0)} vs ${tile.left.toFixed(0)})`);
+      }
+  check("youtube Kit: one width per cue, clear of LogoMark16 whenever it shows", ytBad.length === 0, ytBad.join("; ") || `tile left ${tile.left.toFixed(1)}`);
 }
 
-// (i) blueprint and orbit, every fixture with words: every core figure is on the stage (rule 1,
-// never dropped); none shares it with a compare cue except a hold over the cue's drop-in (at most
-// 10 frames, to reach the reading floor); a figure moved after the cue is a chip whenever another
-// cue holds the stage then (rba-sept-2026: 2027 at 705 holds 45 frames, 1 over compare 749).
+// (i) blueprint and orbit, every fixture with words (and rba-sept-2026 with injected stats that
+// force a chip): every core figure is on the stage (rule 1, never dropped); none shares it with a
+// compare cue except a hold over the cue's drop-in (at most 10 frames, to reach the reading floor);
+// a figure moved after the cue is a chip whenever another cue or figure is up then; no two figures
+// in one place at once; the chip places are clear of everything that can be up with them
+// (rba-sept-2026: 2027 at 705 holds 45 frames, 1 over compare 749).
 {
   const { outFrameOf } = await bundle("src/mortgage/schema.ts");
   const { recordingPath } = await bundle("src/mortgage/recording.ts");
   const vids = join(ROOT, "public", "videos");
+  const orbitMod = await design("orbit/Stage.tsx");
   const stages = await Promise.all(["blueprint", "orbit"].map(async (n) => [n, (await design(`${n}/Stage.tsx`)).stageFigures]));
-  let replayed = 0;
+  // Where each design draws a figure: blueprint the chip strip or the stage; orbit the chip moon,
+  // the in-stage moon (moonsOf) or the core. Two figures in one place at once overlap.
+  const placeOf = {
+    blueprint: (shown) => (f) => (f.chip ? "chip" : "stage"),
+    orbit: (shown, reel) => {
+      const moons = orbitMod.moonsOf(shown, Boolean(reel.edit.hook));
+      return (f) => (f.chip ? "chip moon" : moons.has(f) ? "moon" : "core");
+    },
+  };
+  // Fixtures, plus rba-sept-2026 with injected stats that force the moved cases (none of the
+  // fixtures reaches a chip): said under the compare with the points cue next (a chip on a busy
+  // stage); said under it with another stat said just after it (a moved figure on the next
+  // figure); two said under it (two moved figures queue).
+  const reels = [];
+  const rbaPub = join(vids, "rba-sept-2026");
+  const forced = [
+    ["busy stage", [{ atMs: 25800, durMs: 3000, big: "3.675 đô", label: "Trả mỗi tháng" }], [{ atMs: 37484, title: "Rủi ro" }]],
+    ["moved on the next figure", [{ atMs: 30000, durMs: 3000, big: "3.675 đô", label: "Trả mỗi tháng" }, { atMs: 37100, durMs: 3000, big: "290 đô", label: "Thêm mỗi tháng" }]],
+    ["two moved", [{ atMs: 28000, durMs: 3000, big: "3.388 đô", label: "Trước" }, { atMs: 31000, durMs: 3000, big: "3.675 đô", label: "Sau" }]],
+  ];
   for (const slug of readdirSync(vids).sort()) {
     const editPath = join(vids, slug, "edit.json");
     if (!existsSync(editPath)) continue;
     const edit = JSON.parse(readFileSync(editPath, "utf8"));
     const wordsPath = join(ROOT, "public", recordingPath(slug, edit.source, "words.json"));
     if (!existsSync(wordsPath)) continue;
-    const raw = reelOf(JSON.parse(readFileSync(wordsPath, "utf8")), edit);
+    reels.push([slug, JSON.parse(readFileSync(wordsPath, "utf8")), edit]);
+    if (slug === "rba-sept-2026")
+      for (const [what, stats, chapters] of forced)
+        reels.push([`${slug} + ${what}`, JSON.parse(readFileSync(wordsPath, "utf8")), { ...edit, ...(chapters && { chapters }), cues: edit.cues.filter((c) => c.kind !== "points" || what === "busy stage"), stats: [...(edit.stats ?? []), ...stats].sort((a, b) => a.atMs - b.atMs) }]);
+  }
+  check("rba-sept-2026 present for the forced chip reels", existsSync(join(rbaPub, "edit.json")));
+  let replayed = 0;
+  const chips = { blueprint: 0, orbit: 0 };
+  for (const [slug, wordList, edit] of reels) {
+    const raw = reelOf(wordList, edit);
     const reel = { ...raw, edit: golden.readingFloor(raw, FPS).edit };
     const at = outFrameOf(reel.timeline, FPS);
     const cues = (reel.edit.cues ?? []).filter((c) => c.kind !== "emoji").map((c) => [at(c.fromMs), at(c.toMs), c.kind]);
     const core = figuresOf(reel, FPS);
-    replayed++;
+    if (!slug.includes(" + ")) replayed++;
     for (const [name, stageFigures] of stages) {
       const shown = stageFigures(reel, FPS);
+      chips[name] += shown.filter((f) => f.chip).length;
+      // (3b) a moved figure vs the next: no two figures in one place at once.
+      const place = placeOf[name](shown, reel);
+      const clash = shown.flatMap((f, i) => shown.slice(i + 1).filter((g) => place(g) === place(f) && g.fromFrame < f.fromFrame + f.frames && f.fromFrame < g.fromFrame + g.frames)
+        .map((g) => `${f.big}@${f.fromFrame} and ${g.big}@${g.fromFrame} on the ${place(f)}`));
+      if (name === "orbit") {
+        // A chip moon and a chapter pill up at once (2.5 s from each chapter): the pill (content-box:
+        // maxWidth 470 + padding 42 + circle 46 + gap 16 + border 3, text ~0.6 em at 32 px) must end
+        // left of the moon. ponytail: estimated text width; measure it if a title lands near the edge.
+        const moonLeft = orbitMod.CHIP_MOON.x - orbitMod.CHIP_MOON.r - 15;
+        const hits = shown.filter((f) => f.chip).flatMap((f) => (reel.edit.chapters ?? []).filter((c) => {
+          const a = at(c.atMs);
+          return a < f.fromFrame + f.frames && f.fromFrame < a + Math.round(2.5 * FPS)
+            && golden.SAFE.left + 16 + 46 + 16 + 26 + 3 + Math.min(470, 0.6 * 32 * c.title.length) > moonLeft;
+        }).map((c) => `${f.big}@${f.fromFrame} under chapter "${c.title}"`));
+        check(`orbit ${slug}: no chip moon under a chapter pill`, hits.length === 0, hits.join("; "));
+      }
+      // orbit's in-stage moon is only for a figure that lands while the core holds another.
+      const lone = shown.filter((f) => place(f) === "moon" && !shown.some((g) => place(g) === "core" && g.fromFrame <= f.fromFrame && f.fromFrame < g.fromFrame + g.frames));
+      check(`${name} ${slug}: no two figures in one place at once, a moon only beside a figure on the core`, clash.length === 0 && lone.length === 0, clash.join("; ") || shown.map((f) => `${f.big}@${f.fromFrame}+${f.frames} ${place(f)}`).join(", "));
       const missing = core.filter((f) => !shown.some((g) => g.saidFrame === f.saidFrame)).map((f) => f.big);
       const onCompare = shown.filter((f) => cues.some(([a, b, k]) => k === "compare" && f.fromFrame < b && a < f.fromFrame + f.frames && !(f.fromFrame < a && f.fromFrame + f.frames - a <= 10)));
       const onCue = shown.filter((f) => !f.chip && !core.some((g) => g.saidFrame === f.saidFrame && g.fromFrame === f.fromFrame) && cues.some(([a, b]) => f.fromFrame < b && a < f.fromFrame + f.frames));
@@ -531,6 +615,7 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     }
   }
   check("blueprint/orbit replay: fixtures found", replayed >= 10, `${replayed}`);
+  check("blueprint/orbit: the forced reels reach chips", chips.blueprint >= 3 && chips.orbit >= 3, JSON.stringify(chips));
   if (rba) {
     const shown = (await design("orbit/Stage.tsx")).stageFigures(rba, FPS);
     check("rba-sept-2026: 2027 shows at 705, held its floor over the compare drop-in", shown.some((f) => f.big === "2027" && f.fromFrame === 705 && f.frames === hold), spans(shown));
@@ -540,8 +625,32 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
   const bp = code("blueprint/Stage.tsx").js.replace(/\s/g, "");
   check("blueprint (source): a chip figure is drawn as the small FigureChip, others as FigureSheet",
     /children:f\.chip\?jsx\(FigureChip,\{figure:f\}\):jsx\(FigureSheet,\{figure:f\}\)/.test(bp) && /constFigureChip=[\s\S]*?fontSize:48,/.test(bp));
-  check("orbit (source): a chip figure is drawn as the moon, never on the core",
-    /children:moons\.has\(f\)\|\|f\.chip\?jsx\(FigureMoon,\{figure:f\}\):jsx\(FigureHero,\{figure:f\}\)/.test(code("orbit/Stage.tsx").js.replace(/\s/g, "")));
+  check("orbit (source): a chip figure is drawn as the moon in CHIP_MOON, never on the core",
+    /children:f\.chip\?jsx\(FigureMoon,\{figure:f,at:CHIP_MOON\}\):moons\.has\(f\)\?jsx\(FigureMoon,\{figure:f\}\):jsx\(FigureHero,\{figure:f\}\)/.test(code("orbit/Stage.tsx").js.replace(/\s/g, "")));
+  // Where a chip sits (evaluated on the exported places): inside SAFE, clear of everything that
+  // can be up with it. blueprint: under the title block, over the stage top (where cue panels
+  // rest), left of the logo, above a two-line caption page; orbit: the chip moon (with its ring)
+  // right of the chapter pill, left of the logo, over the stage top (panels, the points title).
+  const { CHIP } = await design("blueprint/Stage.tsx");
+  const paper = await design("blueprint/Paper.tsx");
+  const bpIdx = code("blueprint/index.tsx", { SAFE: golden.SAFE }).env;
+  const { LOGO_CLEAR } = await design("classic/Infographics.tsx");
+  const chipBox = { left: CHIP.left, right: CHIP.left + CHIP.width, top: CHIP.top, bottom: CHIP.top + CHIP.size };
+  const captionTop = bpIdx.CAPTION_BOTTOM - (2 * bpIdx.CAPTION_SIZE * 1.3 + 12 + 14 + 4) - 6; // two lines, padding, border, corner ticks
+  const inSafe = (b) => b.left >= golden.SAFE.left && b.right <= golden.SAFE.right && b.top >= golden.SAFE.top && b.bottom <= golden.SAFE.bottom;
+  check("blueprint: the chip sits in SAFE, under the title block, over the stage top, left of the logo, above a two-line caption",
+    inSafe(chipBox) && chipBox.top >= golden.SAFE.top + paper.TB_H && chipBox.bottom <= paper.STAGE.top && chipBox.right <= LOGO_CLEAR && chipBox.bottom <= captionTop,
+    `${JSON.stringify(chipBox)}; stage top ${paper.STAGE.top}, caption top ${captionTop.toFixed(0)}`);
+  const space = await design("orbit/Space.tsx");
+  const m = orbitMod.CHIP_MOON;
+  const ring = m.r + 12 + 3; // Gauge R = r + 12, stroke 6
+  const moonBox = { left: m.x - ring, right: m.x + ring, top: m.y - ring, bottom: m.y + ring };
+  const orbitIdx = code("orbit/index.tsx", { STAGE_TOP: space.STAGE_TOP }).env;
+  check("orbit (source): the chapter pill is still maxWidth 470 at SAFE.left (the per-reel pill check's model)",
+    /constChapterNode=[\s\S]*?top:SAFE\.top\+10,left:SAFE\.left,maxWidth:470,/.test(code("orbit/Stage.tsx").js.replace(/\s/g, "")));
+  check("orbit: the chip moon sits in SAFE, left of the logo, over the stage top (panels, points title)",
+    inSafe(moonBox) && moonBox.right <= LOGO_CLEAR && moonBox.bottom <= space.STAGE_TOP && moonBox.bottom <= 110 + orbitIdx.PANEL_OFFSET && moonBox.bottom <= space.DOCK.y - 32,
+    `${JSON.stringify(moonBox)}; stage top ${space.STAGE_TOP}`);
   const { yieldToCompare } = await bundle("src/elements/yieldToCompare.ts");
   const f = (fromFrame, frames) => ({ fromFrame, frames });
   const r = yieldToCompare([f(0, 90), f(100, 90), f(300, 60), f(500, 60), f(600, 90)], [[60, 120], [320, 400], [640, 700]], [[60, 120], [320, 400], [400, 430], [640, 700]], 45);
@@ -560,7 +669,7 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
 // (h) the hook-time branches deleted from kinetic, whiteboard, retro, receipt, paper and blueprint
 // stay unreachable: on every fixture in public/videos with words (its reading-time floor applied,
 // as a render does), a reel with a hook has no figure before HOOK_FRAMES. A reel without a hook
-// never took them (each needed a hook).
+// never took them (each needed a hook). Every fixture: no two core figures overlap.
 {
   const { recordingPath } = await bundle("src/mortgage/recording.ts");
   const vids = join(ROOT, "public", "videos");
@@ -574,11 +683,43 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     const raw = reelOf(JSON.parse(readFileSync(wordsPath, "utf8")), edit);
     const reel = { ...raw, edit: golden.readingFloor(raw, FPS).edit };
     replayed++;
+    // Every fixture, hook or not: no two core figures at once (ty-do-explainer: "400" at 280 and
+    // "~$400" at 297), each held >= the number hold.
+    const all = figuresOf(reel, FPS);
+    const overlap = all.filter((f, i) => i > 0 && f.fromFrame < all[i - 1].fromFrame + all[i - 1].frames);
+    check(`replay ${slug}: figures never overlap, each held >= ${hold} frames`, overlap.length === 0 && all.every((f) => f.frames >= hold), spans(all));
     if (!reel.edit.hook) continue;
     const early = figuresOf(reel, FPS).filter((f) => f.fromFrame < HOOK);
     check(`replay ${slug}: no figure before the hook ends`, early.length === 0, spans(early));
   }
   check("replay: fixtures with words found", replayed >= 10, `${replayed} replayed`);
+  // A stat card timed from edit.json itself skips the core's staging (explainer, classic, studio
+  // drew "~$400" over the automatic "400"): no design reads a durMs (source, comment-stripped).
+  const own = ["designs", "youtube"].flatMap((d) => readdirSync(join(ROOT, "src", d), { recursive: true }).map((f) => `${d}/${f.replace(/\\/g, "/")}`))
+    .filter((f) => /\.tsx?$/.test(f) && /\bdurMs\b/.test(code(`../${f}`).js));
+  check("no design times a stat card from edit.json (stats come from figuresOf)", own.length === 0, own.join(", "));
+  // classic, explainer and studio draw their stat cards from statSequences: each Sequence (read from
+  // the returned elements) starts and lasts as the core's stat figure, on every fixture with stats and
+  // on the two-stats-in-the-hook reel (staged: shown after the hook, not when said); each component
+  // renders statSequences.
+  const statReels = [...reels];
+  for (const slug of readdirSync(vids).sort()) {
+    const edit = existsSync(join(vids, slug, "edit.json")) ? JSON.parse(readFileSync(join(vids, slug, "edit.json"), "utf8")) : null;
+    const wordsPath = edit && join(ROOT, "public", recordingPath(slug, edit.source, "words.json"));
+    if (!edit?.stats?.length || !existsSync(wordsPath)) continue;
+    const raw = reelOf(JSON.parse(readFileSync(wordsPath, "utf8")), edit);
+    statReels.push([slug, { ...raw, edit: golden.readingFloor(raw, FPS).edit }]);
+  }
+  for (const [file, component] of [["classic/Captions.tsx", "StatCards"], ["explainer/Overlay.tsx", "StatNotes"], ["studio/index.tsx", "Overlay"]]) {
+    const { statSequences } = await design(file);
+    const bad = statReels.flatMap(([name, reel]) => {
+      const want = figuresOf(reel, FPS).filter((f) => f.source === "stat").map((f) => `${f.fromFrame}+${f.frames}`).join(" ");
+      const got = statSequences(reel, FPS).map((el) => `${el.props.from}+${el.props.durationInFrames}`).join(" ");
+      return got === want ? [] : [`${name}: ${got} vs core ${want}`];
+    });
+    check(`${file}: every stat Sequence starts and lasts as the core's figure (${statReels.length} reels)`, bad.length === 0 && statReels.length >= 8, bad.slice(0, 2).join("; "));
+    check(`${file} (source): ${component} renders statSequences(reel, fps)`, new RegExp(`const${component}=[\\s\\S]*?statSequences\\(reel,fps\\)(?=[,}\\]])`).test(code(file).js.replace(/\s/g, "")));
+  }
 }
 
 console.log(failed ? "design figures: FAILED" : "design figures ok");

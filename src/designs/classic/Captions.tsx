@@ -12,6 +12,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { Reel } from "../../mortgage/schema";
+import { figuresOf } from "../../mortgage/golden";
 import { toOutMs } from "../../mortgage/timeline";
 import { FONT, STROKE, emphasised, enter } from "../../mortgage/style";
 import { BoxCaptionPage } from "./BoxCaption";
@@ -164,25 +165,24 @@ const StatCardView: React.FC<{ big: string; label: string }> = ({
   );
 };
 
+// The stat cards on the core's staged timing (never on the hook or another
+// figure); a plain function so check-design-figures can read each Sequence.
+export const statSequences = (reel: Reel, fps: number) =>
+  figuresOf(reel, fps)
+    .filter((c) => c.source === "stat")
+    .map((c) => (
+      <Sequence
+        key={`${c.saidFrame}${c.big}`}
+        from={c.fromFrame}
+        durationInFrames={c.frames}
+      >
+        <StatCardView big={c.big} label={c.label} />
+      </Sequence>
+    ));
+
 export const StatCards: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
-  return (
-    <>
-      {(reel.edit.stats ?? []).map((c) => {
-        const at = toOutMs(reel.timeline.segments, c.atMs, fps);
-        if (at === null) return null;
-        return (
-          <Sequence
-            key={c.atMs}
-            from={Math.round((at / 1000) * fps)}
-            durationInFrames={Math.round((c.durMs / 1000) * fps)}
-          >
-            <StatCardView big={c.big} label={c.label} />
-          </Sequence>
-        );
-      })}
-    </>
-  );
+  return <>{statSequences(reel, fps)}</>;
 };
 
 // ---------------------------------------------------------------- chapters
