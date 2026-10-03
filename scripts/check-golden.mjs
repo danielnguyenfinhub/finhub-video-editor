@@ -123,7 +123,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 
   // Rule 1 exception (Daniel, 02/10/2026): a year or a date is shown as said, still a figure;
   // a figure said during the hook waits for HOOK_FRAMES, the next waits for its hold, a stat
-  // keeps its reading time; with no hook, or said after the hook, a figure keeps its time.
+  // keeps its reading time; with no hook, or said after the hook, a figure keeps its time unless the
+  // previous one is still within its reading time (then it waits: never two at once).
   {
     const { asSaid, HOOK_FRAMES } = await import(url(bundle));
     check("asSaid: years and dates", ["2026", "1999", "năm 2026", "29/9"].every(asSaid), "");
@@ -140,8 +141,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     check("hook: no figure before HOOK_FRAMES", hooked.every((f) => f.fromFrame >= HOOK_FRAMES), at(hooked));
     check("hook: waiting figures never overlap", hooked.every((f, i) => !i || f.fromFrame >= hooked[i - 1].fromFrame + hooked[i - 1].frames), at(hooked));
     check("hook: each held >= the number hold", hooked.every((f) => f.frames >= Math.round((READING.minNumberHoldMs / 1000) * FPS)), at(hooked));
-    check("hook: saidFrame keeps when it was said", hooked.map((f) => f.saidFrame).join() === free.map((f) => f.fromFrame).join(), `${at(hooked)} vs ${at(free)}`);
-    check("no hook: figures keep their time", free.every((f) => f.fromFrame === f.saidFrame), at(free));
+    check("hook: saidFrame keeps when it was said", hooked.map((f) => f.saidFrame).join() === free.map((f) => f.saidFrame).join(), `${at(hooked)} vs ${at(free)}`);
+    // No hook: "2026" (24) keeps its time but ends at its number hold; the stat said 26 frames
+    // later waits for that hold: never two figures at once.
+    const holdF = Math.round((READING.minNumberHoldMs / 1000) * FPS);
+    check("no hook: the first keeps its time, cut to its hold; the next waits for it, no overlap",
+      free[0]?.fromFrame === free[0]?.saidFrame && free[0].frames === holdF && free[1]?.fromFrame === free[0].fromFrame + holdF && free[1].saidFrame < free[1].fromFrame, at(free));
     const late = figuresOf(reelOf(w, { hook: { big: "4,35%" } }), FPS);
     // "4,1" is said in the hook (1.2 s) and waits; "5" and "100.000%" come later, untouched.
     check("hook: figures said after it are untouched", late[0].fromFrame === HOOK_FRAMES && at(late.slice(1)) === at(figs.slice(1)), `${at(late)} vs ${at(figs)}`);

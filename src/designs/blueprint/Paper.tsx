@@ -243,8 +243,8 @@ export const HouseSketch: React.FC<{ level: number[] }> = ({ level }) => {
 
 // ---------------------------------------------------------------- title block
 
-const TB_W = 600; // ends at x 654, clear of the LogoMark tile (x >= ~718)
-const TB_H = 112;
+export const TB_W = 600; // ends at x 654, clear of the LogoMark tile (x >= ~718)
+export const TB_H = 112;
 const TB_CELL = 118;
 
 const TitleSheet: React.FC<{ sheet: number; title: string }> = ({

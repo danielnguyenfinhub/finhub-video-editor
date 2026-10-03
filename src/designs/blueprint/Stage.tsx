@@ -33,6 +33,8 @@ import {
   STAGE,
   STAGE_H,
   Seg,
+  TB_H,
+  TB_W,
   Trace,
   circlePath,
   draw,
@@ -405,19 +407,29 @@ const FigureSheet: React.FC<{ figure: Figure }> = ({ figure }) =>
     <DimensionFigure figure={figure} />
   );
 
-// A figure shown while another cue holds the stage: the number as said,
-// plain, right-aligned in the strip under the stage (above the captions).
+// A figure shown while another cue or figure holds the stage: the number as
+// said, plain, in the free strip between the title block and the stage top
+// (under the stage it met a two-line caption page; check-design-figures).
+export const CHIP = {
+  top: SAFE.top + TB_H + 8,
+  left: SAFE.left,
+  width: TB_W,
+  size: 48,
+};
 const FigureChip: React.FC<{ figure: Figure }> = ({ figure }) => (
   <StageSheet lines={null}>
     <Txt
-      top={STAGE_H + 14}
-      left={SAFE.right - 420}
-      width={420}
+      top={CHIP.top - STAGE.top}
+      left={CHIP.left}
+      width={CHIP.width}
       style={{
         fontSize: 48,
         fontWeight: 900,
-        lineHeight: 1.2,
-        textAlign: "right",
+        lineHeight: 1,
+        textAlign: "left",
+        // ponytail: one line, no fit: a big over ~16 characters runs past
+        // TB_W toward the logo; fitText it if a stat ever does.
+        whiteSpace: "nowrap",
         color: brand.highlight,
       }}
     >

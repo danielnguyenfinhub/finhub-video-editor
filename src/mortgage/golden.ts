@@ -405,21 +405,43 @@ export const figuresOf = (reel: Reel, fps: number): Figure[] => {
   // is still held waits for it in turn, so they never overlap. A stat keeps
   // its whole reading time; an automatic figure what is left of its span,
   // never less than READING.minNumberHoldMs. Figures said after the hook
-  // are untouched.
+  // are untouched unless one would overlap the previous (ty-do-explainer:
+  // "400" then "~$400" 17 frames later): the previous, shown when said,
+  // ends when the next is said, never under its reading time; if that is
+  // still too short, the next waits for it like a hook-time figure.
   const hold = toFrame(READING.minNumberHoldMs);
   let free = reel.edit.hook ? HOOK_FRAMES : 0;
-  return [...stats, ...autos]
-    .sort((a, b) => a.fromFrame - b.fromFrame)
-    .map((f) => {
-      if (f.fromFrame >= free) return { ...f, saidFrame: f.fromFrame };
-      const frames =
-        f.source === "stat"
-          ? Math.max(f.frames, hold)
-          : Math.max(f.fromFrame + f.frames - free, hold);
-      const staged = { ...f, saidFrame: f.fromFrame, fromFrame: free, frames };
-      free += frames;
-      return staged;
-    });
+  const shown: Figure[] = [];
+  for (const f of [...stats, ...autos].sort(
+    (a, b) => a.fromFrame - b.fromFrame,
+  )) {
+    const prev = shown[shown.length - 1];
+    if (
+      prev &&
+      prev.fromFrame === prev.saidFrame &&
+      f.fromFrame > prev.fromFrame &&
+      f.fromFrame < free
+    ) {
+      const need = Math.max(hold, toFrame(readingMs([prev.big, prev.label])));
+      prev.frames = Math.max(
+        Math.min(prev.frames, need),
+        f.fromFrame - prev.fromFrame,
+      );
+      free = prev.fromFrame + prev.frames;
+    }
+    if (f.fromFrame >= free) {
+      shown.push({ ...f, saidFrame: f.fromFrame });
+      free = f.fromFrame + f.frames;
+      continue;
+    }
+    const frames =
+      f.source === "stat"
+        ? Math.max(f.frames, hold)
+        : Math.max(f.fromFrame + f.frames - free, hold);
+    shown.push({ ...f, saidFrame: f.fromFrame, fromFrame: free, frames });
+    free += frames;
+  }
+  return shown;
 };
 
 export const lenderMentionsOf = (reel: Reel): LenderMention[] =>

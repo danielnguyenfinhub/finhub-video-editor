@@ -331,9 +331,17 @@ const LenderDock: React.FC<{ lender: Lender; frames: number }> = ({
 // A figure that lands while the core already holds a number (the hook, or
 // an earlier figure) rides as a moon on the outer orbit, top-right, instead
 // of stacking on the core.
-const MOON = { x: 793, y: 648, r: 74 };
+export const MOON = { x: 793, y: 648, r: 74 };
+// A chip (a figure moved after a compare cue while another cue or figure holds
+// the stage) gets the free slot above the stage instead: between the chapter
+// pill (x <= 524) and the LogoMark tile (LOGO_CLEAR 680), under SAFE.top and
+// over STAGE_TOP (check-design-figures). Smaller, so its ring fits.
+export const CHIP_MOON = { x: 602, y: 510, r: 60 };
 
-const FigureMoon: React.FC<{ figure: Figure }> = ({ figure }) => {
+const FigureMoon: React.FC<{ figure: Figure; at?: typeof MOON }> = ({
+  figure,
+  at = MOON,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = interpolate(frame, [4, 30], [0, 1], { ...clamp, easing: ease });
@@ -351,15 +359,15 @@ const FigureMoon: React.FC<{ figure: Figure }> = ({ figure }) => {
         style={{
           ...GLASS,
           position: "absolute",
-          left: MOON.x - MOON.r,
-          top: MOON.y - MOON.r,
-          width: 2 * MOON.r,
-          height: 2 * MOON.r,
+          left: at.x - at.r,
+          top: at.y - at.r,
+          width: 2 * at.r,
+          height: 2 * at.r,
           borderRadius: "50%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: figure.big.length > 5 ? 32 : 42,
+          fontSize: ((figure.big.length > 5 ? 32 : 42) * at.r) / MOON.r,
           fontWeight: 900,
           color: "#ffffff",
           transform: `scale(${interpolate(p, [0, 1], [0.5, 1])})`,
@@ -369,9 +377,9 @@ const FigureMoon: React.FC<{ figure: Figure }> = ({ figure }) => {
       </div>
       {arcFill(figure.big) === null ? null : (
         <Gauge
-          cx={MOON.x}
-          cy={MOON.y}
-          R={MOON.r + 12}
+          cx={at.x}
+          cy={at.y}
+          R={at.r + 12}
           fill={arcFill(figure.big) ?? 1}
           t={t}
           width={6}
@@ -402,11 +410,16 @@ export const stageFigures = (
   );
 };
 
-// Figures that start while the core is taken (hook or an earlier figure).
-const moonsOf = (figures: Figure[], hook: boolean): Set<Figure> => {
+// Figures that start while the core is taken (hook or an earlier figure). A
+// chip is never on the core: it neither takes it nor becomes a moon.
+export const moonsOf = (
+  figures: (Figure & { chip?: boolean })[],
+  hook: boolean,
+): Set<Figure> => {
   const moons = new Set<Figure>();
   let coreFree = hook ? HOOK_FRAMES : 0;
   for (const f of figures) {
+    if (f.chip) continue;
     if (f.fromFrame < coreFree) moons.add(f);
     else coreFree = f.fromFrame + f.frames;
   }
@@ -433,7 +446,9 @@ export const StageLayer: React.FC<{ reel: Reel }> = ({ reel }) => {
           durationInFrames={f.frames}
           layout="none"
         >
-          {moons.has(f) || f.chip ? (
+          {f.chip ? (
+            <FigureMoon figure={f} at={CHIP_MOON} />
+          ) : moons.has(f) ? (
             <FigureMoon figure={f} />
           ) : (
             <FigureHero figure={f} />

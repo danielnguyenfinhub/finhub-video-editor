@@ -12,6 +12,7 @@ import {
 import { BadgeRow } from "../brand/BadgeRow";
 import { brand } from "../brand/theme";
 import { MotionTrack } from "../designs/classic/Cues";
+import { PANEL_TOP } from "../designs/classic/Infographics";
 import { complianceLines } from "../mortgage/EndCards";
 import {
   CTA_BUTTON,
@@ -24,6 +25,10 @@ import { YT_HEIGHT, YT_SAFE, YT_WIDTH } from "./frame";
 
 const LOGO_HEIGHT = 96;
 const LOGO_SHOW_FRAMES = 300; // first and last 10 s, as on the vertical reels
+
+// The frames LogoMark16 shows (from frame 0: no hook wait, unlike LogoMark).
+export const logo16Visible = (frame: number, talkFrames: number): boolean =>
+  frame < LOGO_SHOW_FRAMES || frame >= talkFrames - LOGO_SHOW_FRAMES;
 
 // The logo on white, top-right inside YT_SAFE, for the first and last 10 s.
 export const LogoMark16: React.FC<{ talkFrames: number }> = ({
@@ -198,7 +203,10 @@ export const ComplianceCard16: React.FC<{
 // Cue kinds a YouTube design doesn't draw itself: the classic vertical panels
 // in a 1080x1920 box scaled to the frame height, on the right third (their
 // text is sized for a phone, so at 0.5625 it still reads on a desktop).
-// `kinds` = the cue kinds to hand over; the rest are the design's.
+// `kinds` = the cue kinds to hand over; the rest are the design's. Panels rest
+// at YT_SAFE.top and narrow on LogoMark16's windows.
+export const CUE16_SCALE = YT_HEIGHT / 1920;
+export const CUE16_OFFSET = Math.ceil(YT_SAFE.top / CUE16_SCALE) - PANEL_TOP;
 export const CueFallback16: React.FC<{ reel: Reel; kinds: string[] }> = ({
   reel,
   kinds,
@@ -213,7 +221,7 @@ export const CueFallback16: React.FC<{ reel: Reel; kinds: string[] }> = ({
     (c) => frame >= at(c.fromMs) - 5 && frame <= at(c.toMs) + 15,
   );
   if (!cues.length || !up) return null;
-  const scale = YT_HEIGHT / 1920;
+  const scale = CUE16_SCALE;
   const only: Reel = {
     ...reel,
     edit: { ...reel.edit, cues, stats: [], chapters: [] },
@@ -230,7 +238,12 @@ export const CueFallback16: React.FC<{ reel: Reel; kinds: string[] }> = ({
         transformOrigin: "top left",
       }}
     >
-      <MotionTrack reel={only} leak={false} />
+      <MotionTrack
+        reel={only}
+        leak={false}
+        panelOffset={CUE16_OFFSET}
+        logo={(f) => logo16Visible(f, reel.timeline.talkFrames)}
+      />
     </div>
   );
 };

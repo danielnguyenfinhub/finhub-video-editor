@@ -145,8 +145,8 @@ screen ("the rate card"), never whose.
   life: it never rewraps while read, at the cost of a long cue staying narrow after the logo leaves);
   every host sets `PanelPlace` (explainer's points at 0.8 from SAFE.top) → check-design-figures (g),
   all hosts, one width per cue · `checked`; a narrowed trend graph prints its values under 32 px;
-  youtube/Kit narrows on the vertical logo windows, not LogoMark16's (from frame 0), and rests at
-  y 62 above YT_SAFE (older) · `rule` (known risks)
+  youtube/Kit narrowed on the vertical logo windows and rested at y 62 above YT_SAFE: fixed 03/10/2026
+  (below)
 - 02/10/2026 · design:ticker · VI and EN lines split by the tape; a 4th EN line clipped → bilingual lines
   are one block (EN right under the caption, tape on SAFE.bottom); EN shrinks to fit its band · `rule`
 - 02/10/2026 · promote-design · "Fix all these", review c849a4c → `promoted` attests: a check that cannot
@@ -178,3 +178,20 @@ screen ("the rate card"), never whose.
   LOGO_CLEAR → check-design-figures (e)(f)(j), evaluated on each design's exported helper, with
   source gates · `checked`; reaction's headline wrapping by word (never clipped) and how each fix
   looks over Daniel's face · `rule` (source check and stills only)
+- 03/10/2026 · core figuresOf, explainer, classic, studio · "Continue" (PR #127 known risks): ty-do-explainer
+  showed "400" (auto, 280) and "~$400" (stat, 297) at once; the no-overlap check ran on one fixture, and
+  three designs timed stat cards from edit.json, skipping the core's staging → staged figures never
+  overlap anywhere: a figure shown when said ends when the next is said, never under its reading time,
+  else the next waits for it; every design draws stats from `figuresOf` (no design reads a `durMs`) →
+  check-design-figures (h) on every fixture, hook or not, plus the source check · `checked`
+- 03/10/2026 · youtube/Kit · same → the 16:9 classic panels rest at YT_SAFE.top (`CUE16_OFFSET`) and narrow
+  on LogoMark16's own windows (from frame 0; `MotionTrack` `logo` takes a host window function) →
+  check-design-figures (g), evaluated against LogoMark16's fade constants and its measured tile · `checked`
+- 03/10/2026 · blueprint, orbit · same: a chip reached a two-line caption (blueprint, y 1124-1182 vs the
+  band from 1124); orbit's moved figure sat on any classic panel or a long points title; two figures
+  moved after one compare cue landed on the same frame; a moved figure landed on the next one →
+  `yieldToCompare` queues moved figures and makes a chip of one that meets another cue or figure;
+  blueprint's chip sits under the title block (y 540-588), orbit's chip moon above the stage
+  (x 527-677, y 435-585), and a chip never takes orbit's core → check-design-figures (i): place
+  geometry evaluated, per-place overlaps on every fixture and three forced rba-sept-2026 reels ·
+  `checked`; how the chips look (moon text wraps "3.675 / đô") · `rule` (stills only)

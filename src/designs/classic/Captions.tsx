@@ -12,6 +12,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { Reel } from "../../mortgage/schema";
+import { figuresOf } from "../../mortgage/golden";
 import { toOutMs } from "../../mortgage/timeline";
 import { FONT, STROKE, emphasised, enter } from "../../mortgage/style";
 import { BoxCaptionPage } from "./BoxCaption";
@@ -168,19 +169,18 @@ export const StatCards: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
   return (
     <>
-      {(reel.edit.stats ?? []).map((c) => {
-        const at = toOutMs(reel.timeline.segments, c.atMs, fps);
-        if (at === null) return null;
-        return (
+      {/* The core's staged timing: never on the hook or another figure. */}
+      {figuresOf(reel, fps)
+        .filter((c) => c.source === "stat")
+        .map((c) => (
           <Sequence
-            key={c.atMs}
-            from={Math.round((at / 1000) * fps)}
-            durationInFrames={Math.round((c.durMs / 1000) * fps)}
+            key={c.saidFrame}
+            from={c.fromFrame}
+            durationInFrames={c.frames}
           >
             <StatCardView big={c.big} label={c.label} />
           </Sequence>
-        );
-      })}
+        ))}
     </>
   );
 };

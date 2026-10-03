@@ -19,7 +19,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { OverlayProps } from "../../mortgage/design";
-import { HOOK_FRAMES, SAFE, hookText } from "../../mortgage/golden";
+import { HOOK_FRAMES, SAFE, figuresOf, hookText } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import type { EditJson, Reel } from "../../mortgage/schema";
 import { FONT, clamp, emphasised, enter } from "../../mortgage/style";
@@ -203,21 +203,21 @@ const StatNotes: React.FC<{ reel: Reel }> = ({ reel }) => {
   const { fps } = useVideoConfig();
   return (
     <>
-      {(reel.edit.stats ?? []).map((c) => {
-        const at = toOutMs(reel.timeline.segments, c.atMs, fps);
-        if (at === null) return null;
-        const from = Math.round((at / 1000) * fps);
-        const frames = Math.round((c.durMs / 1000) * fps);
-        return (
-          <Sequence key={c.atMs} from={from} durationInFrames={frames}>
-            <BandWide.Provider
-              value={!logoDuring(from, frames, reel.timeline.talkFrames, fps)}
-            >
-              <StatNote big={c.big} label={c.label} />
-            </BandWide.Provider>
-          </Sequence>
-        );
-      })}
+      {/* The core's staged timing: never on the hook or another figure. */}
+      {figuresOf(reel, fps)
+        .filter((c) => c.source === "stat")
+        .map((c) => {
+          const { fromFrame: from, frames } = c;
+          return (
+            <Sequence key={c.saidFrame} from={from} durationInFrames={frames}>
+              <BandWide.Provider
+                value={!logoDuring(from, frames, reel.timeline.talkFrames, fps)}
+              >
+                <StatNote big={c.big} label={c.label} />
+              </BandWide.Provider>
+            </Sequence>
+          );
+        })}
     </>
   );
 };
