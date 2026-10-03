@@ -19,7 +19,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { existsSync, linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, linkSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
@@ -76,6 +76,16 @@ export const compareImages = (a, b) => {
 /** The difference of two stills, x8 so a thin change shows. */
 const diffImage = (a, b, out) => spawnSync("ffmpeg", ["-v", "error", "-y", "-i", a, "-i", b, "-filter_complex",
   "[0:v]format=rgb24[a];[1:v]format=rgb24[b];[a][b]blend=all_mode=difference,lutrgb=r='min(255,val*8)':g='min(255,val*8)':b='min(255,val*8)'", "-frames:v", "1", out]).status === 0;
+
+/** Why --out may not be cleared: only a missing or empty folder, or one a stills diff wrote (it has diff.md), is. */
+export const clearProblem = (dir) =>
+  existsSync(dir) && readdirSync(dir).length && !existsSync(join(dir, "diff.md")) ? `${dir} is not empty and is not a stills-diff folder: pick another --out` : null;
+
+/** The rows that go on the contact sheet: differing, with a diff image to show. */
+export const sheetRows = (rows) => rows.filter((r) => r.status === "differs" && !r.diffFailed);
+
+/** 1 when --fail-on-diff and any frame differs or failed. */
+export const exitFor = (rows, failOnDiff) => (failOnDiff && rows.some((r) => r.status !== "same") ? 1 : 0);
 
 const score = (r) => (r.status === "failed" ? r.error : r.status === "same" ? (r.identical ? "same" : r.pct === 0 ? "same (pixels within noise)" : `same (${r.pct.toFixed(4)}%)`) : `differs (${r.pct.toFixed(4)}% of pixels${r.note ? `, ${r.note}` : ""})`);
 export const summary = (rows) => `${rows.filter((r) => r.status === "differs").length} of ${rows.length} frames differ${rows.some((r) => r.status === "failed") ? `, ${rows.filter((r) => r.status === "failed").length} failed` : ""}`;
@@ -224,6 +234,23 @@ const selftest = () => {
   for (const f of ["src/index.ts", "bundler-override.mjs", "public/videos/rba-sept-2026/edit.json", "node_modules/remotion/package.json"])
     assert.ok(existsSync(join(tree.dir, f)), `archived tree has ${f}`);
   assert.throws(() => archiveTree("no-such-ref-xyz", "s"), /not a commit/);
+  // --out is cleared only when empty, missing or ours; failed diffs stay off the sheet; the exit code
+  const out = join(dir, "out");
+  assert.equal(clearProblem(join(dir, "nope")), null);
+  mkdirSync(out);
+  assert.equal(clearProblem(out), null, "empty folder");
+  writeFileSync(join(out, "03_verdict.json"), "x");
+  assert.match(clearProblem(out), /not a stills-diff folder/, "someone else's files");
+  writeFileSync(join(out, "diff.md"), "x");
+  assert.equal(clearProblem(out), null, "our own earlier run");
+  const rs = [{ status: "differs" }, { status: "differs", diffFailed: true }, { status: "same" }, { status: "failed" }];
+  assert.equal(sheetRows(rs).length, 1);
+  assert.equal(exitFor(rs, true), 1);
+  assert.equal(exitFor(rs, false), 0);
+  assert.equal(exitFor([{ status: "same" }], true), 0);
+  assert.equal(exitFor([{ status: "same" }, { status: "failed" }], true), 1, "a failed still is not a pass");
+  // a size mismatch gives no diff image (so the row must stay off the sheet)
+  assert.equal(diffImage(a, small, join(dir, "d2.png")), false, "mismatched sizes make no diff image");
   console.log("stills-diff selftest ok");
 };
 
@@ -252,6 +279,8 @@ const main = async () => {
   const pairs = pairList(Object.fromEntries(ids.map((id) => [id, frames])));
   console.log(`${trees[0].label} -> ${trees[1].label}: ${ids.length} designs x frames ${frames.join(", ")}`);
 
+  const unsafe = clearProblem(outDir);
+  if (unsafe) throw new Error(unsafe);
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   const { bundle } = await import("@remotion/bundler");
@@ -291,20 +320,21 @@ const main = async () => {
   mkdirSync(join(outDir, "diff"), { recursive: true });
   const rows = pairs.map((p) => {
     const why = failures[`before ${p.id}`] ?? failures[`after ${p.id}`];
-    const c = why ? { error: why } : compareImages(join(outDir, p.before), join(outDir, p.after));
+    let c;
+    try { c = why ? { error: why } : compareImages(join(outDir, p.before), join(outDir, p.after)); } catch (e) { c = { error: String(e.message).split("\n")[0] }; }
     const status = classify(c, a.threshold);
-    if (status === "differs") diffImage(join(outDir, p.before), join(outDir, p.after), join(outDir, p.diff));
-    return { ...p, ...c, status };
+    const diffFailed = status === "differs" && !diffImage(join(outDir, p.before), join(outDir, p.after), join(outDir, p.diff));
+    return { ...p, ...c, status, diffFailed };
   });
   console.log(formatTable(rows));
-  const differ = rows.filter((r) => r.status === "differs");
+  const differ = sheetRows(rows);
   if (differ.length)
     contactSheets(differ.flatMap((r) => ["before", "after", "diff"].map((k) => ({ path: join(outDir, r[k]), label: `${r.id} ${r.frame} ${k}` }))), outDir, { cols: 3, rows: 4, tile: 360, name: "sheet" });
   const page = { slug: a.slug, before: trees[0].label, after: trees[1].label, sandbox, rows };
   writeFileSync(join(outDir, "diff.html"), buildHtml(page));
   writeFileSync(join(outDir, "diff.md"), buildMd(page));
   console.log(`wrote ${join(a.out, "diff.html")}, diff.md${differ.length ? ", sheet-NN.jpg" : ""} (${Math.round((Date.now() - t0) / 1000)} s)${sandbox ? ", SANDBOX PICTURE (no face)" : ""}`);
-  if (a.failOnDiff && rows.some((r) => r.status !== "same")) process.exit(1);
+  process.exit(exitFor(rows, a.failOnDiff));
 };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
