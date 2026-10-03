@@ -275,12 +275,17 @@ const AUTO_MS = 2600;
 const AUTO_GAP_MS = 4000;
 // Money and percent units only: "1 năm", "1 phần lời" are counts, not figures.
 const UNIT = /^(%|tỷ|ti|triệu|nghìn|ngàn|đô|k)(?!\p{L})/iu;
-// A bare "2000" / "1/3" followed by one of these (or by UNIT) is an amount,
-// count or share, not a year or date, unless "năm" / "ngày" / "in" / "since"
-// comes before it. ponytail: a word list; add a noun when one slips through.
-const AMOUNT_NEXT =
-  /^(đồng|usd|aud|\$|người|hộ|căn|lần|khách|thu|của|phần)(?!\p{L})/iu;
+// A bare "2000" is an amount only when money or a percent follows it (UNIT,
+// MONEY_NEXT, "phần trăm"); a day/month-shaped "1/3" is a share also before
+// SHARE_NEXT ("1/3 thu nhập"). A year is followed by any noun ("2026 của
+// RBA", "2026 thu nhập"), so when unsure it stays a year. "năm" / "ngày" /
+// "in" / "since" before the token keeps it a year or date, but not "mỗi /
+// một / hàng năm" ("mỗi năm 2000 đô" is per year). ponytail: word lists; add
+// a word when one slips through.
+const MONEY_NEXT = /^(đồng|usd|aud|\$)(?!\p{L})/iu;
+const SHARE_NEXT = /^(người|hộ|căn|lần|khách|thu|của|phần)(?!\p{L})/iu;
 const SAID_BEFORE = /^(năm|ngày|in|since)$/iu;
+const PER = /^(mỗi|một|hàng)$/iu;
 const NUMERIC = /^[.,]?\d/;
 const clean = (s: string) => s.trim().replace(/[.,!?;:]+$/g, "");
 // Words that start a new clause: an automatic figure's label stops before them.
@@ -342,9 +347,18 @@ const spokenNumbers = (reel: Reel) => {
       // The token alone is "2000" or "1/3": a year or a date only when the
       // words around it allow it ("năm 2000", "2026 lãi suất"; not "2000
       // đô", "1/3 thu nhập").
+      const word = (k: number) =>
+        clean(caps[k]?.text ?? "").normalize("NFC");
+      const nx = next.normalize("NFC");
+      const saidBefore =
+        SAID_BEFORE.test(word(i - 1)) &&
+        !(/^năm$/iu.test(word(i - 1)) && PER.test(word(i - 2)));
       const amount =
-        !SAID_BEFORE.test(clean(caps[i - 1]?.text ?? "")) &&
-        (percent || UNIT.test(next) || AMOUNT_NEXT.test(next));
+        !saidBefore &&
+        (percent ||
+          UNIT.test(nx) ||
+          MONEY_NEXT.test(nx) ||
+          (saidKind(said) === "date" && SHARE_NEXT.test(nx)));
       out.push({
         big: said,
         // A year or a date gets no label: the words after it describe

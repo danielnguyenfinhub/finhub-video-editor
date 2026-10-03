@@ -132,12 +132,20 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     check("asSaid: a date inside a stat, 1/12/2026", asSaid("Thứ Ba 29/9") && asSaid("1/12/2026"));
     const auto = figuresOf(reelOf(words("từ đầu năm 2026 lãi suất cơ bản đã tăng nhiều lần rồi đó")), FPS);
     check("an automatic year gets no label (not \"lãi suất cơ bản\")", auto[0]?.big === "2026" && auto[0].label === "", JSON.stringify(auto[0]));
-    // The real path: the caption token is bare ("2000"), its unit is the next word. An amount,
-    // count or share keeps its label (H1, maintenance 05); "năm"/"ngày" before it still says year/date.
+    // The real path: the caption token is bare ("2000"), its unit is the next word (H1, maintenance
+    // 06). Money or a percent after a 19xx/20xx makes it an amount; a noun does not (a year is
+    // followed by nouns), except after a day/month-shaped share ("1/3 thu nhập"). "năm"/"ngày" before
+    // keeps a year or date, but not "mỗi/một/hàng năm" (per year).
     for (const [text, big, label] of [
       ["tôi trả 2000 đô mỗi tháng cho khoản vay này nhé", "2000", "đô mỗi tháng cho"],
-      ["có 2024 hộ gia đình vay thêm", "2024", "hộ gia đình vay"],
+      ["giá 1950 đô mỗi tháng là vừa", "1950", "đô mỗi tháng"],
+      ["trả 2000 AUD mỗi tháng thôi", "2000", "AUD mỗi tháng thôi"],
+      ["trả 2000 $ mỗi tháng thôi", "2000", "$ mỗi tháng thôi"],
       ["dành 1/3 thu nhập cho tiền nhà thôi", "1/3", "thu nhập cho tiền"],
+      ["mỗi năm 2000 đô tiền phí", "2000", "đô tiền phí"],
+      ["kế hoạch 2026 của RBA rất rõ", "2026", ""],
+      ["2026 thu nhập tăng mạnh", "2026", ""],
+      ["2026 khách hàng mới", "2026", ""],
       ["vào năm 2000 đô la Úc rất mạnh", "2000", ""],
       ["ngày 29/9 ngân hàng sẽ họp lại nhé", "29/9", ""],
     ]) {
