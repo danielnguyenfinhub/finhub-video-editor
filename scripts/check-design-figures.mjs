@@ -23,6 +23,9 @@
 //       tile while it shows;
 //   (h) replay of every public/videos fixture with words: with a hook, no figure before
 //       HOOK_FRAMES (the hook-time branches deleted from six designs stay unreachable).
+//   (j) talking-head repeats: checklist "0/0", series empty strip, kitchen hook by talk frame 25,
+//       reaction artefact clear of the logo and its headline wrapped; (e)/(f) also cover newsroom,
+//       neon (saidRoom), cards, editorial (kicker), cards, datalab, newsroom, chatstory (no meter).
 //   (i) blueprint and orbit, every fixture: every figure on the stage, yielding to a compare cue; phoneapp's
 //       checklist bar is said / n; (d) also runs every hook text on "4,1 TỶ ĐÔ", "10%", "2026".
 // Source checks (marked "source" below) read comment-stripped, whitespace-free code, so a
@@ -268,10 +271,15 @@ for (const [name, text] of Object.entries(hookTexts)) {
 }
 
 // (e) said-word scale keeps the word space; kinetic fits to the narrower width.
-for (const file of ["journey/Captions.tsx", "orbit/Stage.tsx", "isometric/Captions.tsx", "retro/index.tsx", "kinetic/Captions.tsx"]) {
+for (const file of ["journey/Captions.tsx", "orbit/Stage.tsx", "isometric/Captions.tsx", "retro/index.tsx", "kinetic/Captions.tsx", "neon/Captions.tsx"]) {
   const { js, env } = code(file);
   const room = typeof env.saidRoom === "function" ? env.saidRoom(1.12, "Tháng") : 0;
   check(`${file}: said word keeps a saidRoom margin`, room > 0 && /margin:`[^`]*saidRoom\(/.test(js), `saidRoom(1.12, "Tháng") = ${room}`);
+}
+{
+  // newsroom's amber box reaches PAD_X past the said word: every word keeps half of it as a margin.
+  const { js, env } = code("newsroom/Captions.tsx");
+  check("newsroom/Captions.tsx: words keep half the box's reach as a margin (saidRoom)", env.saidRoom > 0 && env.saidRoom * 2 >= env.PAD_X && /margin:`0 \$\{saidRoom\}px`/.test(js), `saidRoom ${env.saidRoom}, PAD_X ${env.PAD_X}`);
 }
 {
   const { js, env } = code("flipcard/Captions.tsx");
@@ -299,6 +307,19 @@ for (const [name, fill, gate] of fills) {
   const js = code(fillFiles[name]).js;
   check(`${name} (source): the meter is drawn only when its fill is not null`, gate.test(js) && js.split(/fill(?:To)?===null\?null:/).length === 2);
 }
+// Talking-head figure meters (th critiques 13): cards' dot grid, datalab's and newsroom's bar,
+// chatstory's ring and a stat's bar; each drawn only behind its gate.
+for (const [name, file, fn, gates] of [
+  ["cards", "cards/Scenes.tsx", "gridFill", [/fillTo===null\?null:jsx\("div"/]],
+  ["datalab", "datalab/Figures.tsx", "barFill", [/fillTo===null\?null:jsx\("div"/]],
+  ["newsroom", "newsroom/Pieces.tsx", "barFill", [/fillTo===null\?null:jsx\("div"/, /isStat=figure\.source==="stat"&&fillTo!==null/]],
+  ["chatstory", "chatstory/Figures.tsx", "ringFill", [/fill===null\?number:jsx\(Circle/, /f\.source==="stat"&&fill!==null\?jsx\(OneBarChart/]],
+]) {
+  const fill = (await design(file))[fn];
+  check(`${name}: no meter, bar or ring for a year or a date`, SAID.every((b) => fill(b) === null) && fill("4,35%") > 0, SAID.map(fill).join(","));
+  const js = code(file).js;
+  check(`${name} (source): the meter is drawn only behind its fill gate`, gates.every((g) => g.test(js)));
+}
 // A ring, orbit or road meter is drawn only for a non-null fill (the prop types make a null
 // fill a tsc error, so every call site has to gate it).
 for (const [name, file, fn] of [["orbit", "orbit/Stage.tsx", "arcFill"], ["phoneapp", "phoneapp/Phone.tsx", "ringFill"], ["journey", "journey/Stage.tsx", "roadFill"]]) {
@@ -317,12 +338,15 @@ check("every design's hook text goes through the core hookText (source: no count
 const yearView = gaugeMod.figureView({ big: "2026", label: "", source: "auto", fromFrame: 0, frames: 45 }, 20, FPS);
 const rateView = gaugeMod.figureView({ big: "4,35%", label: "", source: "auto", fromFrame: 0, frames: 45 }, 20, FPS);
 check("gauge: a year is a plain readout (dial dimmed, no lit arc), a rate keeps its needle", yearView.plain === true && !yearView.lit && yearView.readout.text === "2026" && !rateView.plain && Boolean(rateView.lit));
-const kickers = [["ticker", "ticker/Stage.tsx"], ["receipt", "receipt/Figures.tsx"], ["splitscreen", "splitscreen/Chip.tsx"], ["bigdigit", "bigdigit/Stage.tsx"], ["flash", "flash/Figures.tsx"], ["retro", "retro/Stage.tsx"]];
+const kickers = [["ticker", "ticker/Stage.tsx"], ["receipt", "receipt/Figures.tsx"], ["splitscreen", "splitscreen/Chip.tsx"], ["bigdigit", "bigdigit/Stage.tsx"], ["flash", "flash/Figures.tsx"], ["retro", "retro/Stage.tsx"],
+  ["cards", "cards/Scenes.tsx"], ["editorial", "editorial/Behind.tsx"]];
 for (const [name, file] of kickers) {
   const { kickerOf } = await design(file);
   const k = ["2026", "29/9", "4,35%"].map(kickerOf);
   check(`${name}: a year or a date gets a neutral kicker, not "CON SỐ"`, k[0] === "NĂM" && k[1] === "NGÀY" && k[2] === "CON SỐ", k.join(" | "));
 }
+check("cards, editorial (source): the figure kicker is kickerOf, not a fixed word",
+  /text:kickerOf\(figure\.big\)/.test(code("cards/Scenes.tsx").js) && /children:kickerOf\(big\)/.test(code("editorial/Behind.tsx").js) && code("editorial/Behind.tsx").js.split('"CON S\\u1ED0"').length === 2);
 check("scale: a lone hook value keeps the beam level", lone.pans[0] === null && lone.tilts.every((x) => x.angle === 0), JSON.stringify(lone.tilts));
 const { CX } = await design("scale/Scale.tsx");
 const plaques = [[1, 737, 400], [1, 730, 400], [0, 277, 400], [1, 900, 300]].map(([side, x, w]) => [side, scaleStage.plaqueLeft(side, x, w), w]);
@@ -341,6 +365,35 @@ check("keepUnits: a number keeps its word, two-word units stay whole", kept === 
 for (const file of ["receipt/Stage.tsx", "timelapse/Scenes.tsx"])
   check(`${file} (source): headline wrapped through keepUnits`, /keepUnits\((hook\.sub|s\.title)\)/.test(code(file).js));
 check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.edit\.hook\?HOOK_FRAMES:0,[^}]*children:jsx\(Tape\b/.test(code("ticker/index.tsx").js));
+
+// (j) talking-head repeats (th critiques 13, 03/10/2026): checklist's hook shows no "0/0"; series
+// hides an empty strip; kitchen's hook is exact and its meaning up by talk frame 25 (a still at reel
+// frame 90); reaction's pushed artefact keeps clear of the logo, its headline wraps by word.
+{
+  const { hookTrackLabel } = await design("checklist/StepColumn.tsx");
+  check('checklist: no "0/0" track under the hook without chapters', hookTrackLabel(0) === null && hookTrackLabel(3) === "0/3", `${hookTrackLabel(0)} | ${hookTrackLabel(3)}`);
+  check("checklist/index.tsx (source): the hook track is drawn only for a label",
+    /trackLabel===null\?null:jsx\("div",\{style:\{marginTop:24\},children:jsx\(ProgressTrack,\{filled:0,label:trackLabel\}/.test(code("checklist/index.tsx").js.replace(/\s/g, "")));
+  const { stripText } = await design("series/Strip.tsx");
+  const { stripLine } = await design("series/episode.ts");
+  const ch = [{ atMs: 2000, title: "Lãi suất" }];
+  const at = (ms) => Math.round((ms / 1000) * FPS);
+  const empty = [0, 90, 190, 300].map((f) => stripText([], at, f, FPS, stripLine(undefined)).text);
+  const chap = stripText(ch, at, 70, FPS, "").text;
+  check("series: no strip text without an episode or chapter, a chapter still shows", empty.every((t) => t === "") && chap === "PHẦN 1 · LÃI SUẤT", `${JSON.stringify(empty)} | ${chap}`);
+  check("series/Strip.tsx (source): the strip is drawn only with text", /text\?jsx\(StripBar,\{text,chapter\}\):null/.test(code("series/Strip.tsx").js));
+  const { hookAt } = await design("kitchen/Bubbles.tsx");
+  const k = hookAt(25);
+  check("kitchen: by talk frame 25 the hook is solid, exact and its meaning up", k.bigIn === 1 && k.subIn === 1 && !k.typing && golden.hookText(HOOK_RATE, k.count) === "4,35%", JSON.stringify(k));
+  check("kitchen/Bubbles.tsx (source): KitchenHook draws from hookAt", /const\{bigIn,subIn,count,typing\}=hookAt\(frame\);constbig=hookText\(hook,count\)/.test(code("kitchen/Bubbles.tsx").js.replace(/\s/g, "")));
+  const { ARTEFACT, PUSH } = await design("reaction/Artefact.tsx");
+  const { LOGO_CLEAR } = await design("classic/Infographics.tsx");
+  const right = ARTEFACT.left + (ARTEFACT.width * (1 + PUSH)) / 2;
+  check("reaction: the pushed artefact's right edge stays left of LOGO_CLEAR", right <= LOGO_CLEAR, `right ${right.toFixed(1)}, LOGO_CLEAR ${LOGO_CLEAR}`);
+  const ra = code("reaction/Artefact.tsx").js.replace(/\s/g, "");
+  check("reaction/Artefact.tsx (source): the headline is highlighted word by word (wraps, never clipped), push is PUSH",
+    /words\.map\(/.test(ra) && /children:w\}\)/.test(ra) && !/children:title\}/.test(ra) && /\[1,PUSH\]/.test(ra));
+}
 
 // (g) classic cue panels (Panel, classic/Infographics.tsx), in every design that places one: each
 // panel host's real offset (bundled from its source), Panel's own motion and clip, and the

@@ -168,3 +168,13 @@ screen ("the rate card"), never whose.
   cue's drop-in when short by ≤ 10 frames, else shown after the cue (a chip when another cue holds
   the stage); the bar is said / n → check-design-figures (i), every fixture · `checked`; how a chip is
   drawn (blueprint FigureChip, orbit moon) by source only, no fixture reaches it · `rule`
+- 03/10/2026 · talking-head designs · "Yes fix the clear repeat", viewed critiques 13 (th-data, th-story):
+  the 02/10 lessons recurred → "ThángHai" / "từ3,6": newsroom's amber box and neon's popped word keep
+  a fixed `saidRoom` margin; "CON SỐ 2026": cards and editorial take `kickerOf` (`saidKind`: NĂM /
+  NGÀY); a meter on a year: no cards dot grid, datalab or newsroom bar, chatstory ring (or stat bar)
+  for a year or date; checklist shows no "0/0" hook track without chapters; series hides an empty
+  strip; kitchen's hook is exact and its meaning line up by talk frame 25 (a still at reel frame 90
+  is talk frame 25: TALK_START_FRAME 65); reaction's pushed artefact keeps its right edge at
+  LOGO_CLEAR → check-design-figures (e)(f)(j), evaluated on each design's exported helper, with
+  source gates · `checked`; reaction's headline wrapping by word (never clipped) and how each fix
+  looks over Daniel's face · `rule` (source check and stills only)

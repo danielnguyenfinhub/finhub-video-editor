@@ -92,7 +92,29 @@ export const TypingDots: React.FC = () => {
   );
 };
 
-const TYPING_FRAMES = 20;
+// The typing dots, then the rate and its meaning. The rate counts like the
+// other designs' hooks (exact half way, by talk frame 24) and the meaning
+// line is up by then too: a still at frame 90 of the reel (talk frame 25,
+// after the 65-frame cover) once caught a pale "4,32%" with no meaning line,
+// mid-animation, when the dots took 20 frames and the count 60.
+const TYPING_FRAMES = 6;
+const inOut = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
+export const hookAt = (frame: number) => ({
+  bigIn: interpolate(
+    frame,
+    [TYPING_FRAMES - 4, TYPING_FRAMES + 8],
+    [0, 1],
+    inOut,
+  ),
+  subIn: interpolate(
+    frame,
+    [TYPING_FRAMES + 8, TYPING_FRAMES + 18],
+    [0, 1],
+    inOut,
+  ),
+  count: interpolate(frame, [TYPING_FRAMES, TYPING_FRAMES + 36], [0, 1], inOut),
+  typing: frame < TYPING_FRAMES,
+});
 
 export const KitchenHook: React.FC<{
   hook: {
@@ -113,34 +135,11 @@ export const KitchenHook: React.FC<{
     [1, 0],
     { extrapolateLeft: "clamp" },
   );
-  const bigIn = interpolate(
-    frame,
-    [TYPING_FRAMES - 4, TYPING_FRAMES + 12],
-    [0, 1],
-    {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    },
-  );
-  const subIn = interpolate(
-    frame,
-    [TYPING_FRAMES + 14, TYPING_FRAMES + 30],
-    [0, 1],
-    {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    },
-  );
-  const big = hookText(
-    hook,
-    interpolate(frame, [TYPING_FRAMES, TYPING_FRAMES + 60], [0, 1], {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    }),
-  );
+  const { bigIn, subIn, count, typing } = hookAt(frame);
+  const big = hookText(hook, count);
   return (
     <AbsoluteFill style={{ opacity: outP }}>
-      {frame < TYPING_FRAMES ? (
+      {typing ? (
         <div style={{ position: "absolute", left, top }}>
           <TypingDots />
         </div>

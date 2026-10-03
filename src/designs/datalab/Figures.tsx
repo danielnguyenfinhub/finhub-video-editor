@@ -16,6 +16,7 @@ import { brand } from "../../brand/theme";
 import { Oscilloscope } from "../../elements/Oscilloscope";
 import type { Figure } from "../../mortgage/golden";
 import {
+  asSaid,
   FACE,
   LOGO_HEIGHT,
   SAFE,
@@ -39,6 +40,9 @@ export const PANEL_MAX_BOTTOM = 700;
 // side) and a gap: a panel up with the logo stops short of it.
 const LOGO_TILE_W = Math.round((LOGO_HEIGHT * 2000) / 1215) + 44;
 const LOGO_GAP = 20;
+// How far the bar under the number fills: a year or a date is shown as said,
+// with no bar that reads as a proportion (golden rule 1).
+export const barFill = (big: string): number | null => (asSaid(big) ? null : 1);
 
 const FigureCard: React.FC<{ figure: Figure; right: number }> = ({
   figure,
@@ -55,6 +59,7 @@ const FigureCard: React.FC<{ figure: Figure; right: number }> = ({
     clamp,
   );
   const compact = figure.source === "auto";
+  const fillTo = barFill(figure.big);
   return (
     <div
       style={{
@@ -94,26 +99,28 @@ const FigureCard: React.FC<{ figure: Figure; right: number }> = ({
       >
         {figure.label}
       </div>
-      <div
-        style={{
-          position: "absolute",
-          left: 34,
-          right: 34,
-          bottom: 22,
-          height: 8,
-          borderRadius: 4,
-          background: "rgba(255,255,255,0.15)",
-          overflow: "hidden",
-        }}
-      >
+      {fillTo === null ? null : (
         <div
           style={{
-            height: "100%",
-            width: `${barP * 100}%`,
-            background: brand.accent,
+            position: "absolute",
+            left: 34,
+            right: 34,
+            bottom: 22,
+            height: 8,
+            borderRadius: 4,
+            background: "rgba(255,255,255,0.15)",
+            overflow: "hidden",
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${fillTo * barP * 100}%`,
+              background: brand.accent,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

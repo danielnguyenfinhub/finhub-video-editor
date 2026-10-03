@@ -13,7 +13,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { OverlayProps } from "../../mortgage/design";
-import { SAFE, figuresOf } from "../../mortgage/golden";
+import { SAFE, figuresOf, saidKind } from "../../mortgage/golden";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
 import { MASTHEAD_BOTTOM } from "./Masthead";
@@ -23,6 +23,13 @@ import { MASTHEAD_BOTTOM } from "./Masthead";
 // (Daniel's measured footage: hair top y~600, face x 250-830) — the readable
 // kicker/number/label live in FIGURE_BAND below, above his head, never on it.
 const COLUMN_WIDTH = 560;
+
+// A year or a date is not "the number" of anything: a neutral kicker, shown
+// as said (golden rule 1).
+export const kickerOf = (big: string): string => {
+  const kind = saidKind(big);
+  return kind === "year" ? "NĂM" : kind === "date" ? "NGÀY" : "CON SỐ";
+};
 
 // Daniel says the number every design must show gets hidden behind his head
 // when it renders mid-column. The only free space above a full-frame talk is
@@ -102,7 +109,7 @@ const FigurePanel: React.FC<{
             color: brand.accent,
           }}
         >
-          CON SỐ
+          {kickerOf(big)}
         </div>
         <div
           style={{

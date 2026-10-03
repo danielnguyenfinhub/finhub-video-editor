@@ -10,22 +10,32 @@ import type React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { brand } from "../../brand/theme";
 import { SAFE } from "../../mortgage/golden";
+import { LOGO_CLEAR } from "../classic/Infographics";
 import { DEFAULT_SUBTITLE, outFrameOf, type Reel } from "../../mortgage/schema";
 import { FONT, clamp } from "../../mortgage/style";
 
-// x SAFE.left-704, y SAFE.top-(SAFE.top+height): the top of SAFE, stopping
-// well short of SAFE.right so the top-right LogoMark (golden rule 3c, ~240px
+// x SAFE.left-661 (PUSH and LOGO_CLEAR below), y SAFE.top-(SAFE.top+height):
+// the top of SAFE, stopping well short of SAFE.right so the top-right LogoMark (golden rule 3c, ~240px
 // wide on its tile) never sits on the card — checked against a still, not
 // just the logo's own SAFE.right anchor. This is Behind-layer content
 // (rendered behind Daniel's cut-out), so it may extend below his real face
 // box — that overlap is the intended "he's in
 // front of the card" look.
+// The card pushes in to PUSH about its centre; its pushed right edge stays at
+// LOGO_CLEAR (650 px wide reached under the logo's left edge, x 730).
+export const PUSH = 1.06;
 export const ARTEFACT = {
   left: SAFE.left,
   top: SAFE.top,
-  width: 650,
+  width: Math.floor(((LOGO_CLEAR - SAFE.left) * 2) / (1 + PUSH)),
   height: 600,
 };
+// The headline wraps by word (never clipped at the card's edge), sized so the
+// whole title fits about HEADLINE_LINES line widths. rba-sept-2026's
+// 36-character title stays at 64 px and wraps to 4 lines above the paper lines.
+// ponytail: wrap loss estimated at 15 %; measure the wrapped lines if a long
+// title ever runs past the paper lines.
+const HEADLINE_LINES = 3;
 
 const LINE_WIDTHS = [0.94, 0.8, 0.88, 0.62];
 
@@ -62,11 +72,14 @@ const ArtefactContent: React.FC<{
     fitText({
       text: title,
       // 50px padding each side (ArtefactContent below).
-      withinWidth: ARTEFACT.width - 100,
+      withinWidth: (ARTEFACT.width - 100) * HEADLINE_LINES * 0.85,
       fontFamily: FONT,
       fontWeight: 900,
     }).fontSize,
   );
+  // The highlighter's span never wraps, so each word gets its own stroke and
+  // the line wraps between words; the strokes sweep left to right.
+  const words = title.split(/\s+/).filter(Boolean);
   const markProgress = interpolate(frame, [6, 30], [0, 1], clamp);
   return (
     <div
@@ -94,13 +107,23 @@ const ArtefactContent: React.FC<{
           color: brand.textOnCard,
         }}
       >
-        <Highlight
-          progress={markProgress}
-          color="rgba(245,165,36,0.5)"
-          padding={{ left: 6, right: 6, top: 2, bottom: 2 }}
-        >
-          {title}
-        </Highlight>
+        {words.map((w, i) => (
+          <span key={i}>
+            {i > 0 ? " " : ""}
+            <Highlight
+              progress={interpolate(
+                markProgress * words.length - i,
+                [0, 1],
+                [0, 1],
+                clamp,
+              )}
+              color="rgba(245,165,36,0.5)"
+              padding={{ left: 6, right: 6, top: 2, bottom: 2 }}
+            >
+              {w}
+            </Highlight>
+          </span>
+        ))}
       </div>
       <PaperLines />
       {hookBig && hookVisible ? (
@@ -216,7 +239,7 @@ export const Artefact: React.FC<{ reel: Reel }> = ({ reel }) => {
     : (reel.edit.subtitle ?? DEFAULT_SUBTITLE);
   const tearFrame = active ? frame - active.from : -1;
   const tear = interpolate(tearFrame, [0, CHAPTER_TEAR_FRAMES], [0, 1], clamp);
-  const push = interpolate(frame, [0, HOOK_FRAMES], [1, 1.06], clamp);
+  const push = interpolate(frame, [0, HOOK_FRAMES], [1, PUSH], clamp);
   const away = cueUp(reel, frame, fps);
   if (away >= 1) return null;
   return (

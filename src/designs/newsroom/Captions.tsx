@@ -24,6 +24,11 @@ const LINE_HEIGHT = 1.15;
 const PAD_X = 16;
 const PAD_Y = 10;
 const MOVE_FRAMES = 5;
+// The amber box reaches PAD_X past the word into the space beside it
+// ("ThángHai", "từ3,6"). Every word keeps a fixed side margin of half that,
+// so the boxed word's neighbour stays about a word space from the box's edge,
+// and the line never reflows as the box moves.
+const saidRoom = PAD_X / 2;
 // Captions sit on SAFE.bottom, below Daniel's mouth, and grow upward. While a
 // bottom bar (the ticker, or the taller bank bar during a mention) is up at
 // any point of the page, the page sits on top of that bar instead, so it
@@ -135,6 +140,7 @@ const CaptionPage: React.FC<{
                   position: "relative",
                   display: "inline-block",
                   whiteSpace: "pre",
+                  margin: `0 ${saidRoom}px`,
                   color: boxed
                     ? brand.textOnCard
                     : hit.has(i)
