@@ -152,7 +152,9 @@ export const contactSheets = (frames, outDir, { cols = SHEET_COLS, rows = SHEET_
         : "";
       return `[${i}:v]scale=${tile}:-2${stamp}[t${i}]`;
     });
-    const graph = `${tiles.join(";")};${group.map((_, i) => `[t${i}]`).join("")}xstack=inputs=${group.length}:layout=${sheetLayout(group.length, cols)}[o]`;
+    // xstack needs two inputs or more: a group of one is only scaled and stamped.
+    const graph = group.length === 1 ? tiles[0].replace(/\[t0\]$/, "[o]")
+      : `${tiles.join(";")};${group.map((_, i) => `[t${i}]`).join("")}xstack=inputs=${group.length}:layout=${sheetLayout(group.length, cols)}[o]`;
     const path = join(outDir, `${name}-${String(k + 1).padStart(2, "0")}.jpg`);
     ff([...group.flatMap((f) => ["-i", f.path]), "-filter_complex", graph, "-map", "[o]", "-frames:v", "1", "-q:v", "3", path], `contact sheet ${k + 1}`);
     return { path, from: group[0].s, to: group[group.length - 1].s, frames: group.length };

@@ -5,7 +5,7 @@
 //
 //   node scripts/review-pack.mjs <slug> [--family talkinghead-data,talkinghead-story] [--designs a,b]
 //     [--frames 90,190] [--out out/review-pack/<slug>] [--sandbox] [--promote] [--scale 0.5]
-//   (run from the repo root; --selftest: the frame picker, question table and page builder)
+//   (from any folder; --selftest: the frame picker, question table, page builder, verdict and sheets)
 //
 // Default: the two talking-head families. With the slug's recording here (source.mp4 and its
 // cut-out, as promote-design checks) the stills are plain MortgageReel stills of the real
@@ -16,10 +16,11 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
-import { FPS, HOOK_FRAMES, TALK_START_FRAME, figuresOf, reelOf, saidKind, toOutMs } from "./check-golden.mjs";
+import { FPS, HOOK_FRAMES, TALK_START_FRAME, figuresOf, reelOf, saidKind, toOutMs, words as wordsOf } from "./check-golden.mjs";
 import { designFiles, missingMedia, offBrand } from "./promote-design.mjs";
 import { browserArgs, scratchPublic } from "./scratch-public.mjs";
 import { contactSheets, outDirProblem } from "./sweep-render.mjs";
@@ -53,14 +54,15 @@ export const QUESTIONS = {
   orbit: { ask: ["Chip moon (only when a figure yields to a compare cue): text size, does \"3.675 / đô\" wrap?"] },
 };
 // The held items Daniel must judge with his face (PR 128-131); the selftest needs a question for each.
-export const HELD = ["classic", "datalab", "studio", "scenario", "neon", "chatstory", "editorial", "explainer", "reaction", "kitchen", "series"];
+export const HELD = ["classic", "datalab", "studio", "scenario", "neon", "chatstory", "editorial", "explainer", "reaction", "kitchen", "series", "newsroom", "cards", "checklist"];
 export const GENERIC = [
   "Hook exact by 3 s (frame 90): the number as written, solid, not mid-count.",
   "A year as said (\"2026\"): never counted, no meter, bar or ring under it.",
   "Logo clear: nothing under the logo tile, and it is not on your face.",
   "Bilingual line: the English line shows and reads (when the video has subtitles).",
 ];
-const PROMOTE_NOTE = { faceless: "needs faceless-test's stock footage on this machine" };
+const TEST_CARDS = "needs the _test-cards recording (chon-ngan-hang), only on Daniel's PC";
+const PROMOTE_NOTE = { faceless: "needs faceless-test's stock footage on this machine", cards: TEST_CARDS, scenario: TEST_CARDS };
 
 /** Video frames worth a look in this reel: the hook at 3 s, the design's extra frames, the first
  * year figure, the first points cue, the first compare/change cue, the hook handover, a steady
@@ -68,19 +70,23 @@ const PROMOTE_NOTE = { faceless: "needs faceless-test's stock footage on this ma
 export const pickFrames = (reel, extra = [], max = MAX_FRAMES) => {
   const v = (talk) => TALK_START_FRAME + talk;
   const last = v(reel.timeline.talkFrames - 1);
-  const cue = (kinds) => {
+  // points: its entry, 25 frames in (panel settled). compare / change: complete, 20 frames after its
+  // last card, VS badge or swap pops (their cards pop on their own atMs, up to seconds after the
+  // drop-in), at least 1 s before the cue ends.
+  const cue = (kinds, whenMs, settle) => {
     for (const c of reel.edit.cues ?? []) {
-      const ms = kinds.includes(c.kind) ? toOutMs(reel.timeline.segments, c.fromMs, FPS) : null;
-      if (ms !== null) return v(Math.round((ms / 1000) * FPS) + 25); // past the drop-in, panel settled
+      const ms = kinds.includes(c.kind) ? toOutMs(reel.timeline.segments, Math.min(whenMs(c), (c.toMs ?? Infinity) - 1000), FPS) : null;
+      if (ms !== null) return v(Math.round((ms / 1000) * FPS) + settle);
     }
   };
+  const complete = (c) => Math.max(c.fromMs, ...(c.cards ?? []).map((k) => k.atMs ?? 0), c.vsAtMs ?? 0, c.swapAtMs ?? 0);
   const year = figuresOf(reel, FPS).find((f) => saidKind(f.big) === "year");
   const picks = [
     [v(25), reel.edit.hook ? "hook at 3 s" : "talk at 3 s (no hook)"],
     ...extra.map((f) => [f, "held item"]),
     [year && v(year.fromFrame + 15), `year card "${year?.big}"`],
-    [cue(["points"]), "first points cue"],
-    [cue(["compare", "change"]), "compare / change cue"],
+    [cue(["points"], (c) => c.fromMs, 25), "first points cue"],
+    [cue(["compare", "change"], complete, 20), "compare / change cue, complete"],
     [v(HOOK_FRAMES + 20), "hook handover, logo in"],
     [v(Math.round(reel.timeline.talkFrames * 0.4)), "steady talk (40%)"],
   ];
@@ -100,6 +106,41 @@ export const pickFrames = (reel, extra = [], max = MAX_FRAMES) => {
 export const promoteSteps = (ids, colours = {}) => ids.map((id) => (colours[id]
   ? { id, cmd: null, note: `not yet: ${colours[id]} off-brand colour literal(s) fail promote-design on any machine until OD-12 is decided` }
   : { id, cmd: `node scripts/promote-design.mjs ${id}`, note: PROMOTE_NOTE[id] ?? "" }));
+
+/** The pack's promote list: rendered designs through promoteSteps (colourCount(id): off-brand
+ * literals); a design whose stills failed was never looked at, so it gets no command. */
+export const packSteps = (families, colourCount) => {
+  const all = families.flatMap((f) => f.designs);
+  const seen = all.filter((d) => !d.error).map((d) => d.id);
+  return [...promoteSteps(seen, Object.fromEntries(seen.map((id) => [id, colourCount(id)]))),
+    ...all.filter((d) => d.error).map((d) => ({ id: d.id, cmd: null, note: "not rendered, not looked at" }))];
+};
+
+// A grey 9:16 tile (the family sheet's padding; the selftest's stand-in still).
+const grey = (file) => spawnSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "color=c=0x808080:s=540x960", "-frames:v", "1", file]).status === 0;
+
+/** A design's frames in one row, stamped "<id> <frame>"; returns its path relative to outDir. */
+export const stripOf = (outDir, id, frames) => {
+  contactSheets(frames.map((x) => ({ path: join(outDir, x.png), label: `${id} ${x.frame}` })), join(outDir, id), { cols: frames.length, rows: 1, tile: TILE, name: "strip" });
+  return `${id}/strip-01.jpg`;
+};
+
+/** One sheet per family, a row per rendered design, padded with `blank` tiles so the frames line
+ * up by row; returns its path relative to outDir, or null when nothing rendered. */
+export const familySheet = (outDir, name, designs, blank) => {
+  const rows = designs.filter((d) => !d.error);
+  if (!rows.length) return null;
+  const cols = Math.max(...rows.map((d) => d.frames.length));
+  const tiles = rows.flatMap((d) => [...d.frames.map((x) => ({ path: join(outDir, x.png), label: `${d.id} ${x.frame}` })),
+    ...Array(cols - d.frames.length).fill({ path: blank, label: "" })]);
+  contactSheets(tiles, outDir, { cols, rows: rows.length, tile: TILE, name: `sheet-${name}` });
+  return `sheet-${name}-01.jpg`;
+};
+
+/** promote-design's verdict: promoted only on exit 0 with its own "promote <id>: promoted" line,
+ * never with a SKIPPED or INCOMPLETE check, never a dry run. */
+export const promotedOf = (id, status, log) =>
+  status === 0 && log.split("\n").some((l) => l.trim().startsWith(`promote ${id}: promoted`)) && !/INCOMPLETE|SKIPPED/.test(log);
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const tick = (q) => `<li><label><input type="checkbox"> ${esc(q)}</label></li>`;
@@ -172,12 +213,26 @@ const selftest = () => {
     assert.ok(fr.every((f) => f >= 0 && f <= last), `${id}: inside the reel (${last}) ${fr}`);
   }
   const fr = pickFrames(reel).map((x) => x.frame);
-  assert.deepEqual(fr, [90, 185, 324, 667, 839], "rba-sept-2026: hook, year card + handover, points, steady, compare");
+  assert.deepEqual(fr, [90, 185, 324, 667, 963], "rba-sept-2026: hook, year card + handover, points, steady, compare complete");
   // a short reel: nothing past its end, the hook still in
   const short = reelOf(words("rba-sept-2026").slice(0, 12), { title: "t", hook: { big: "4,35%" } });
   const sf = pickFrames(short, [60, 120, 5000]).map((x) => x.frame);
   assert.ok(sf.includes(90) && sf.every((f) => f <= TALK_START_FRAME + short.timeline.talkFrames - 1), `short reel ${sf}`);
   for (const id of HELD) assert.ok(QUESTIONS[id]?.ask?.length, `${id} has its question`);
+  assert.equal(HELD.length, 14, "the 14 held talking-head designs");
+  // the year card is the first YEAR figure, not the first figure
+  const yr = reelOf(wordsOf("lãi suất hiện là 4,35 % rồi sau đó chúng ta nói về kế hoạch cho năm 2026 nhé các bạn ơi"));
+  const yf = figuresOf(yr, FPS);
+  assert.ok(yf[0].big !== "2026" && yf.some((f) => f.big === "2026"), `fixture: a figure before the year ${yf.map((f) => f.big)}`);
+  const card = pickFrames(yr).find((x) => x.what.includes("year card"));
+  assert.equal(card?.frame, TALK_START_FRAME + yf.find((f) => f.big === "2026").fromFrame + 15, `year card at the year figure ${JSON.stringify(card)}`);
+  // promote: verdicts, and a design that did not render gets no command
+  for (const [status, log, want] of [[0, "promote cards: promoted (promoted today, uses 0, lastUsed null)", true], [1, "promote cards: promoted", false],
+    [0, "note Mode A SKIPPED\npromote cards: promoted", false], [0, "FAIL still A: INCOMPLETE\npromote cards: promoted", false],
+    [0, "promote cards: would promote (dry run)", false], [0, "promote cardsx: promoted", false], [0, "", false]])
+    assert.equal(promotedOf("cards", status, log), want, `verdict ${status} ${JSON.stringify(log)}`);
+  assert.deepEqual(packSteps([{ designs: [{ id: "cards", frames: [] }, { id: "scenario", error: "boom" }, { id: "classic", frames: [] }] }], (id) => (id === "classic" ? 10 : 0))
+    .map((x) => [x.id, x.cmd !== null, x.note.startsWith("not rendered")]), [["cards", true, false], ["classic", false, false], ["scenario", false, true]]);
   assert.deepEqual(promoteSteps(["classic", "kinetic"], { classic: 10 }).map((s) => s.cmd), [null, "node scripts/promote-design.mjs kinetic"]);
   // every link in a built page exists, and a missing file is caught
   const dir = repoTmp("review-pack-test-");
@@ -197,10 +252,21 @@ const selftest = () => {
   assert.throws(() => parsePackArgs(["s", "--sandbox", "--promote"]), /real recording/);
   assert.throws(() => parsePackArgs(["s", "--frames", "90,x"]), /usage:/);
   assert.deepEqual(parsePackArgs(["s", "--designs", "a, b", "--frames", "90,190"]).frames, [90, 190]);
+  // sheets of one tile (xstack needs two): a 1-frame strip and a 1-design, 1-frame family sheet
+  if (!grey(join(dir, "blank.png"))) throw new Error("ffmpeg is not on PATH: the sheet cases cannot run (install ffmpeg; not passed)");
+  mkdirSync(join(dir, "one"), { recursive: true });
+  grey(join(dir, "one", "f0090.png"));
+  const one = [{ frame: 90, png: "one/f0090.png" }];
+  assert.ok(existsSync(join(dir, stripOf(dir, "one", one))), "1-frame strip written");
+  assert.ok(existsSync(join(dir, familySheet(dir, "solo", [{ id: "one", frames: one }, { id: "bad", error: "x" }], join(dir, "blank.png")))), "1-tile family sheet written");
+  // it does not depend on the working folder (check-golden bundles from the repo root)
+  const away = spawnSync(process.execPath, ["-e", `import(${JSON.stringify(import.meta.url)}).then((m) => console.log(typeof m.pickFrames))`], { cwd: tmpdir(), encoding: "utf8" });
+  assert.ok(away.status === 0 && away.stdout.includes("function"), `imports from ${tmpdir()}: ${away.stderr.split("\n").find((l) => /Error/.test(l)) ?? away.status}`);
   console.log("review-pack selftest ok");
 };
 
 const main = async () => {
+  process.chdir(ROOT); // Remotion and the shared checks resolve paths from the repo root
   let a;
   try {
     a = parsePackArgs(process.argv.slice(2));
@@ -243,7 +309,7 @@ const main = async () => {
   console.log(`bundled in ${Math.round((Date.now() - t0) / 1000)} s${browserExecutable ? ` (${browserExecutable})` : ""}`);
 
   const blank = join(outDir, "blank.png");
-  spawnSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "color=c=0x808080:s=540x960", "-frames:v", "1", blank]);
+  grey(blank);
   const families = [];
   let failed = 0;
   try {
@@ -264,8 +330,7 @@ const main = async () => {
             if (x.frame >= composition.durationInFrames) throw new Error(`frame ${x.frame} is past the reel (${composition.durationInFrames} frames)`);
             await renderStill({ serveUrl, composition, inputProps, frame: x.frame, output: join(outDir, x.png), scale: a.scale, puppeteerInstance: browser, chromiumOptions, browserExecutable, logLevel: "error" });
           }
-          contactSheets(frames.map((x) => ({ path: join(outDir, x.png), label: `${id} ${x.frame}` })), join(outDir, id), { cols: frames.length, rows: 1, tile: TILE, name: "strip" });
-          designs.push({ id, frames, ask, strip: `${id}/strip-01.jpg` });
+          designs.push({ id, frames, ask, strip: stripOf(outDir, id, frames) });
           console.log(`${id}: frames ${frames.map((x) => x.frame).join(", ")} (${Math.round((Date.now() - t) / 1000)} s)`);
         } catch (e) {
           failed++;
@@ -274,37 +339,33 @@ const main = async () => {
           console.log(`${id}: FAILED ${msg}`);
         }
       }
-      // One row per design, padded with grey tiles so the frames line up by row.
-      const rows = designs.filter((d) => !d.error);
-      const cols = Math.max(0, ...rows.map((d) => d.frames.length));
-      const tiles = rows.flatMap((d) => [...d.frames.map((x) => ({ path: join(outDir, x.png), label: `${d.id} ${x.frame}` })),
-        ...Array(cols - d.frames.length).fill({ path: blank, label: "" })]);
-      const sheet = rows.length ? `sheet-${name}-01.jpg` : null;
-      if (sheet) contactSheets(tiles, outDir, { cols, rows: rows.length, tile: TILE, name: `sheet-${name}` });
-      families.push({ name, sheet, designs });
+      families.push({ name, sheet: familySheet(outDir, name, designs, blank), designs });
     }
   } finally {
     await browser.close({ silent: true });
   }
 
-  const ids = families.flatMap((f) => f.designs.map((d) => d.id));
+  const ids = families.flatMap((f) => f.designs.filter((d) => !d.error).map((d) => d.id));
   const args = [a.slug, ...(a.designs.length ? ["--designs", a.designs.join(",")] : a.families.length ? ["--family", a.families.join(",")] : [])].join(" ");
-  const colours = Object.fromEntries(ids.map((id) => [id, offBrand(designFiles(join(ROOT, "src", "designs", id))).length]));
-  const pack = { slug: a.slug, sandbox, args, generic: GENERIC, families, promote: promoteSteps(ids, colours) };
+  const pack = { slug: a.slug, sandbox, args, generic: GENERIC, families, promote: packSteps(families, (id) => offBrand(designFiles(join(ROOT, "src", "designs", id))).length) };
   const html = buildHtml(pack);
   writeFileSync(join(outDir, "review.html"), html);
   writeFileSync(join(outDir, "review.md"), buildMd(pack));
   const missing = missingLinks(html, outDir);
   if (missing.length) throw new Error(`review.html links to missing files: ${missing.join(", ")}`);
-  console.log(`wrote ${join(a.out, "review.html")} and review.md (${ids.length} designs, ${Math.round((Date.now() - t0) / 1000)} s)${sandbox ? ", SANDBOX PICTURE (no face)" : ""}`);
+  console.log(`wrote ${join(a.out, "review.html")} and review.md (${ids.length} designs rendered, ${failed} failed, ${Math.round((Date.now() - t0) / 1000)} s)${sandbox ? ", SANDBOX PICTURE (no face)" : ""}`);
   console.log("After you have looked, promote with:");
   for (const s of pack.promote) console.log(s.cmd ? `  ${s.cmd}${s.note ? `   # ${s.note}` : ""}` : `  # ${s.id}: ${s.note}`);
 
+  if (a.promote && failed) {
+    console.log(`--promote refused: ${failed} design(s) did not render, so they were not looked at; fix that and run the pack again`);
+    process.exit(1);
+  }
   if (a.promote) {
     for (const s of pack.promote.filter((x) => x.cmd)) {
       const r = spawnSync(process.execPath, [join(ROOT, "scripts", "promote-design.mjs"), s.id], { cwd: ROOT, encoding: "utf8" });
       const log = `${r.stdout ?? ""}${r.stderr ?? ""}`;
-      const promoted = r.status === 0 && log.includes(`promote ${s.id}: promoted`) && !/INCOMPLETE|SKIPPED/.test(log);
+      const promoted = promotedOf(s.id, r.status, log);
       console.log(`${s.id}: ${promoted ? "promoted" : `NOT promoted (exit ${r.status})`}`);
       if (!promoted) {
         console.log(log.trim().split("\n").filter((l) => /FAIL|INCOMPLETE|SKIPPED|NOT promoted/.test(l)).slice(-6).join("\n"));

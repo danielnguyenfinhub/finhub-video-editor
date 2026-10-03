@@ -18,7 +18,7 @@ execFileSync(process.execPath, [
   "src/mortgage/captionPages.ts",
   "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", "--log-level=warning",
   `--outdir=${join(bundle, "..")}`,
-]);
+], { cwd: join(import.meta.dirname, "..") }); // the paths above are the repo's, from any working folder
 const url = (p) => new URL(`file:///${p.replace(/\\/g, "/")}`);
 export const { figuresOf, lenderMentionsOf, faceHiddenOf, CUTAWAY_MAX_MS, READING, readingMs, readingFloor, saidKind, HOOK_FRAMES } =
   await import(url(bundle));
