@@ -21,7 +21,7 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync, linkSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { reelOf } from "./check-golden.mjs";
 import { missingMedia } from "./promote-design.mjs";
@@ -109,7 +109,7 @@ export const buildHtml = (p) => `<!doctype html>
 <p>${esc(p.before)} &rarr; ${esc(p.after)}${p.sandbox ? " (SANDBOX PICTURE: no face)" : ""}. ${esc(summary(p.rows))}.</p>
 <p><strong>Same:</strong> ${esc(unchanged(p.rows).join(", ") || "none")}</p>
 ${changed(p.rows).map(([id, rs]) => `<h2>${esc(id)}</h2>${rs.filter((r) => r.status !== "same").map((r) => r.status === "failed" ? `<p>frame ${r.frame}: <strong>failed</strong> ${esc(r.error)}</p>`
-  : `<p>frame ${r.frame}: ${esc(score(r))}</p><div class="row">${["before", "after", "diff"].map((k) => `<figure><a href="${r[k]}"><img src="${r[k]}" alt="${id} ${r.frame} ${k}"></a><figcaption>${k}</figcaption></figure>`).join("")}</div>`).join("\n")}`).join("\n")}
+  : `<p>frame ${r.frame}: ${esc(score(r))}</p><div class="row">${(r.diffFailed ? ["before", "after"] : ["before", "after", "diff"]).map((k) => `<figure><a href="${r[k]}"><img src="${r[k]}" alt="${id} ${r.frame} ${k}"></a><figcaption>${k}</figcaption></figure>`).join("")}</div>${r.diffFailed ? "<p>no diff image (the stills differ in size)</p>" : ""}`).join("\n")}`).join("\n")}
 </body></html>
 `;
 
@@ -117,7 +117,7 @@ ${changed(p.rows).map(([id, rs]) => `<h2>${esc(id)}</h2>${rs.filter((r) => r.sta
 export const buildMd = (p) => [`# Stills diff: ${p.slug}`, "", `${p.before} -> ${p.after}${p.sandbox ? " (SANDBOX PICTURE: no face)" : ""}. ${summary(p.rows)}.`, "",
   `Same: ${unchanged(p.rows).join(", ") || "none"}`,
   ...changed(p.rows).flatMap(([id, rs]) => ["", `## ${id}`, ...rs.filter((r) => r.status !== "same").map((r) => (r.status === "failed" ? `- frame ${r.frame}: failed, ${r.error}`
-    : `- frame ${r.frame}: ${score(r)}: [before](${r.before}) | [after](${r.after}) | [diff](${r.diff})`))]), ""].join("\n");
+    : `- frame ${r.frame}: ${score(r)}: [before](${r.before}) | [after](${r.after})${r.diffFailed ? " | no diff image (the stills differ in size)" : ` | [diff](${r.diff})`}`))]), ""].join("\n");
 
 const list = (s) => (s ? s.split(",").map((x) => x.trim()).filter(Boolean) : []);
 export const parseDiffArgs = (args) => {
@@ -249,6 +249,27 @@ const selftest = () => {
   assert.equal(exitFor(rs, false), 0);
   assert.equal(exitFor([{ status: "same" }], true), 0);
   assert.equal(exitFor([{ status: "same" }, { status: "failed" }], true), 1, "a failed still is not a pass");
+  // a failed diff image is not linked from the pages
+  const failedPage = { slug: "s", before: "a", after: "b", sandbox: false, rows: [{ id: "d", frame: 90, status: "differs", pct: 100, diffFailed: true, before: "before/d/f.png", after: "after/d/f.png", diff: "diff/d-f.png" }] };
+  for (const text of [buildHtml(failedPage), buildMd(failedPage)]) {
+    assert.ok(!text.includes("diff/d-f.png"), "no link to a diff image that was never written");
+    assert.ok(text.includes("no diff image"), "says why");
+  }
+  // the whole script refuses a foreign --out before any bundle or render
+  const foreign = join(ROOT, "out", `stills-diff-selftest-${process.pid}`);
+  mkdirSync(foreign, { recursive: true });
+  try {
+    writeFileSync(join(foreign, "keep.txt"), "x");
+    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), "selftest-slug", "--designs", "classic", "--out", `out/stills-diff-selftest-${process.pid}`], { cwd: ROOT, encoding: "utf8" });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /not a stills-diff folder/);
+    assert.ok(existsSync(join(foreign, "keep.txt")), "a foreign --out is not deleted");
+  } finally {
+    rmSync(foreign, { recursive: true, force: true });
+  }
+  const outside = spawnSync(process.execPath, [fileURLToPath(import.meta.url), "selftest-slug", "--designs", "classic", "--out", ".."], { cwd: ROOT, encoding: "utf8" });
+  assert.equal(outside.status, 1);
+  assert.match(outside.stderr, /is not a folder inside/, "--out outside out/ is refused by the out/ guard");
   // a size mismatch gives no diff image (so the row must stay off the sheet)
   assert.equal(diffImage(a, small, join(dir, "d2.png")), false, "mismatched sizes make no diff image");
   console.log("stills-diff selftest ok");
@@ -264,6 +285,8 @@ const main = async () => {
   const outDir = resolve(ROOT, a.out);
   const bad = outDirProblem(outDir, ROOT);
   if (bad) throw new Error(bad);
+  const unsafe = clearProblem(outDir); // before any bundle or render: a refusal costs seconds, not minutes
+  if (unsafe) throw new Error(unsafe);
 
   const head = git(["rev-parse", "HEAD"]);
   const beforeRef = a.before ?? (git(["rev-parse", "origin/main"]) === head ? "HEAD~1" : "origin/main");
@@ -279,8 +302,6 @@ const main = async () => {
   const pairs = pairList(Object.fromEntries(ids.map((id) => [id, frames])));
   console.log(`${trees[0].label} -> ${trees[1].label}: ${ids.length} designs x frames ${frames.join(", ")}`);
 
-  const unsafe = clearProblem(outDir);
-  if (unsafe) throw new Error(unsafe);
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   const { bundle } = await import("@remotion/bundler");
