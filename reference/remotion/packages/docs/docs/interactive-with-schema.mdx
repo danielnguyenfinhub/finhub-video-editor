@@ -1,0 +1,114 @@
+---
+image: /generated/articles-docs-interactive-with-schema.png
+id: interactive-with-schema
+title: Interactive.withSchema()
+crumb: 'API'
+---
+
+# Interactive.withSchema()<AvailableFrom v="4.0.530" />
+
+Wraps a React component so Remotion Studio shows it as interactive.
+
+```tsx twoslash title="Circle.tsx"
+import type React from 'react';
+import {Interactive, type InteractivitySchema} from 'remotion';
+
+type CircleProps = {
+  readonly radius?: number;
+  readonly color?: string;
+  readonly style?: React.CSSProperties;
+};
+
+const circleSchema = {
+  radius: {
+    type: 'number',
+    min: 1,
+    step: 1,
+    default: 80,
+    description: 'Radius',
+    hiddenFromList: false,
+  },
+  color: {
+    type: 'color',
+    default: '#0b84ff',
+    description: 'Color',
+  },
+} as const satisfies InteractivitySchema;
+
+const CircleInner: React.FC<CircleProps> = ({radius = 80, color = '#0b84ff', style}) => {
+  return (
+    <div
+      style={{
+        ...style,
+        width: radius * 2,
+        height: radius * 2,
+        borderRadius: '50%',
+        backgroundColor: color,
+      }}
+    />
+  );
+};
+
+export const Circle = Interactive.withSchema({
+  Component: CircleInner,
+  componentName: '<Circle>',
+  schema: circleSchema,
+  wrapInSequence: true,
+});
+```
+
+The exported `Circle` component accepts `CircleProps`, [timing props](/docs/timing), [premount props](/docs/interactive#interactivepremountprops) and [cropping props](/docs/interactive#interactivecropprops).
+
+## API
+
+```ts twoslash
+import {Interactive} from 'remotion';
+```
+
+The options for `Interactive.withSchema()` are:
+
+### `Component`
+
+The component to wrap.
+
+It must accept a `style?: React.CSSProperties` prop and apply it to its visual root.
+
+### `componentName`
+
+The component name used by Studio and in validation messages.
+
+### `schema`
+
+An [`InteractivitySchema`](/docs/interactivity-schema) that describes which props are editable in Remotion Studio. Basic schemas like timing, premounting, cropping, and transforms are included by default and don't need to be specified
+
+See: [Make a component interactive](/docs/studio/make-component-interactive#create-a-schema)
+
+### `wrapInSequence`<AvailableFrom v="4.0.530" />
+
+Wraps the component in a [`<Sequence>`](/docs/sequence) automatically.
+Set this to `true`, unless you already have components from previous examples which handle wrapping in a `<Sequence>` manually.
+If set to false, you need to manually forward all props.
+
+### Return value
+
+Returns a React component.
+
+### Ref forwarding<AvailableFrom v="4.0.530" />
+
+If `Component` accepts a ref, the returned component preserves its ref type and forwards the ref directly to `Component`.
+
+## Compatibility
+
+<CompatibilityTable chrome firefox safari nodejs="" bun="" serverlessFunctions="" clientSideRendering serverSideRendering player studio hideServers />
+
+Rendering support depends on `Component`. Editing timeline controls requires an editable Remotion Studio session.
+
+## See also
+
+- [Make a component interactive](/docs/studio/make-component-interactive)
+- [`InteractivitySchema`](/docs/interactivity-schema)
+- [`Interactive`](/docs/interactive)
+- [Interactivity best practices](/docs/studio/interactivity-best-practices)
+- [`createEffect()`](/docs/create-effect)
+- [`<Sequence>`](/docs/sequence)
+- [Source code for this function](https://github.com/remotion-dev/remotion/blob/main/packages/core/src/Interactive.tsx)
