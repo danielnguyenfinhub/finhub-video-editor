@@ -32,7 +32,14 @@ import {
   MASTHEAD_BOTTOM,
   MastheadRule,
 } from "./Masthead";
-import { Behind } from "./Behind";
+import {
+  Behind,
+  DRIFT,
+  DRIFT_Y,
+  LIFT,
+  REST_HAIR_Y,
+  SCALE,
+} from "./Behind";
 import { Overlay } from "./Overlay";
 import { panelBottomAt } from "./RoomCues";
 import { Outro } from "../classic/Outro";
@@ -196,8 +203,6 @@ const EDGE_FADE =
 // edge. Passing a headY 110 px above his hair line lands the hair line
 // 0.55 * 110 ~ 60 px lower (y ~860): eyebrows ~y 1010, mouth ~y 1230.
 const CUE_DROP = 110;
-const SCALE = 0.85;
-const LIFT = 1280 - 1400 * SCALE;
 const FRAMING: React.CSSProperties = {
   transform: `translate(${540 * (1 - SCALE)}px, ${LIFT}px) scale(${SCALE})`,
   transformOrigin: "0 0",
@@ -255,7 +260,12 @@ const Talk: React.FC<TalkProps> = ({
   behind,
 }) => {
   const frame = useCurrentFrame();
-  const drift = interpolate(frame, [0, seg.outDuration], [1, 1.02], clamp);
+  const drift = interpolate(
+    frame,
+    [0, seg.outDuration],
+    [1, 1 + DRIFT],
+    clamp,
+  );
   const room = useCueRoom(seg);
   const panelBottom = useRoomPanelBottom(seg);
   return (
@@ -273,11 +283,19 @@ const Talk: React.FC<TalkProps> = ({
           hair line around y 1248. */}
       <AbsoluteFill
         style={
-          foreground ? cueRoomStyle(room, 1248 - 648 * drift - CUE_DROP) : {}
+          foreground
+            ? cueRoomStyle(
+                room,
+                DRIFT_Y - (DRIFT_Y - REST_HAIR_Y) * drift - CUE_DROP,
+              )
+            : {}
         }
       >
         <AbsoluteFill
-          style={{ transform: `scale(${drift})`, transformOrigin: "50% 65%" }}
+          style={{
+            transform: `scale(${drift})`,
+            transformOrigin: `50% ${DRIFT_Y}px`,
+          }}
         >
           <AbsoluteFill style={foreground ? FRAMING : roomFraming(panelBottom)}>
             <PacedVideo

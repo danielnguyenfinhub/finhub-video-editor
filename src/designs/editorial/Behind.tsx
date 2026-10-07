@@ -16,7 +16,9 @@ import type { OverlayProps } from "../../mortgage/design";
 import { SAFE, figuresOf, saidKind } from "../../mortgage/golden";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
-import { MASTHEAD_BOTTOM } from "./Masthead";
+import { HookBand, useHookBand } from "../../elements/BehindWord";
+import { HEAD_Y } from "../../mortgage/cueRoom";
+import { INK, MASTHEAD_BOTTOM } from "./Masthead";
 
 // x 0-560: a backdrop-scale fill (golden rule: backdrops may fill the frame),
 // from the masthead down to the bottom of the page. Purely decorative now
@@ -162,6 +164,42 @@ const Figures: React.FC<{ reel: Reel }> = ({ reel }) => {
   );
 };
 
-export const Behind: React.FC<OverlayProps> = ({ reel }) => (
-  <Figures reel={reel} />
-);
+// Talk's framing (index.tsx): his cut-out at SCALE, lifted so his chin (source
+// CHIN_SRC when he leans in) lands at CHIN_Y, then a slow zoom drift from 1 to
+// 1 + DRIFT over each cut about y DRIFT_Y (65% of 1920).
+export const SCALE = 0.85;
+export const CHIN_Y = 1280;
+export const CHIN_SRC = 1400;
+export const LIFT = CHIN_Y - CHIN_SRC * SCALE;
+export const REST_HAIR_Y = LIFT + HEAD_Y * SCALE;
+export const DRIFT = 0.02;
+export const DRIFT_Y = 1248;
+// His hair line on screen while the hook is up: at the end of the drift,
+// which lifts it most. check-design-figures (k) re-derives it from these.
+export const HOOK_HAIR_Y = DRIFT_Y - (DRIFT_Y - REST_HAIR_Y) * (1 + DRIFT);
+const HOOK_FRAMES = 105;
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+export const useBand = (reel: Reel) => useHookBand(reel, HOOK_HAIR_Y);
+
+// The hook as a stacked masthead headline in the band above his head, ink on
+// the cream page (rule 6 ruling, 07/10/2026); Overlay.tsx keeps its own hook
+// when the band does not hold it.
+export const Behind: React.FC<OverlayProps> = ({ reel }) => {
+  const band = useBand(reel);
+  return (
+    <>
+      <Figures reel={reel} />
+      {band && reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          <HookBand
+            hook={reel.edit.hook}
+            band={band}
+            bigStyle={{ color: INK, letterSpacing: -2 }}
+            subStyle={{ color: INK, fontWeight: 700 }}
+          />
+        </Sequence>
+      ) : null}
+    </>
+  );
+};

@@ -30,6 +30,7 @@ import {
 } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
+import { HookBand, useHookBand } from "../../elements/BehindWord";
 import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
 import {
@@ -182,6 +183,13 @@ const Cover: React.FC<CoverProps> = ({
   );
 };
 
+// Talk's framing: the zoom about y ZOOM_Y (30% of 1920, above HEAD_Y) for a
+// plain and a zoomed cut, and the cut's spring punch-in (its overshoot can
+// take up to PUNCH off the zoom).
+export const ZOOM_Y = 576;
+export const ZOOM = { cut: 1.02, zoomed: 1.1 } as const;
+export const PUNCH = 0.05;
+
 // ---------------------------------------------------------------- talk
 
 const Talk: React.FC<TalkProps> = ({
@@ -194,12 +202,12 @@ const Talk: React.FC<TalkProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const base = seg.zoomed ? 1.1 : 1.02;
+  const base = seg.zoomed ? ZOOM.zoomed : ZOOM.cut;
   const punch =
     index === 0
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
-        0.05;
+        PUNCH;
   const room = useCueRoom(seg);
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
@@ -208,7 +216,10 @@ const Talk: React.FC<TalkProps> = ({
       {/* Makes room under cue panels (golden rule 3b). The zoom is around
           y 576, so his hair line (HEAD_Y) sits at 576 + 24 * zoom. */}
       <AbsoluteFill
-        style={cueRoomStyle(room, 576 + (HEAD_Y - 576) * (base + punch))}
+        style={cueRoomStyle(
+          room,
+          ZOOM_Y + (HEAD_Y - ZOOM_Y) * (base + punch),
+        )}
       >
         <PacedVideo
           seg={seg}
@@ -218,7 +229,7 @@ const Talk: React.FC<TalkProps> = ({
           backdrop="none"
           style={{
             transform: `scale(${base + punch})`,
-            transformOrigin: "50% 30%",
+            transformOrigin: `50% ${ZOOM_Y}px`,
           }}
         />
       </AbsoluteFill>
@@ -290,9 +301,41 @@ const Hook: React.FC<{ big: string; sub?: string }> = ({ big, sub }) => {
   );
 };
 
+// His hair line on screen while the hook is up: at the smallest zoom (Talk),
+// which lifts it most. check-design-figures (k) re-derives it from these.
+export const HOOK_HAIR_Y =
+  ZOOM_Y + (HEAD_Y - ZOOM_Y) * (Math.min(ZOOM.cut, ZOOM.zoomed) - PUNCH);
+// The band hook's slanted stripe: inset so its skewed corners stay in SAFE.
+const STRIPE_SKEW = -12;
+// The number keeps this far from SAFE's sides (inside the stripe).
+const STRIPE_PAD = 40;
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+const useBand = (reel: OverlayProps["reel"]) =>
+  useHookBand(reel, HOOK_HAIR_Y, { padX: STRIPE_PAD });
+// The stripe behind the number: skewX moves its corners sideways by
+// tan(skew) * height / 2, so it is inset by that (plus 1 px) to keep every
+// corner inside SAFE (rule 3). Pure: check-design-figures (k).
+export const stripeBox = (big: { top: number; bottom: number }) => {
+  const top = Math.max(SAFE.top, big.top - 6);
+  const height = big.bottom + 6 - top;
+  const inset =
+    Math.ceil((Math.tan((Math.abs(STRIPE_SKEW) * Math.PI) / 180) * height) / 2) +
+    1;
+  return {
+    top,
+    height,
+    left: SAFE.left + inset,
+    right: SAFE.right - inset,
+    skew: STRIPE_SKEW,
+  };
+};
+
 // Figures render BEHIND Daniel's cut-out (golden rule: charts never cover his
-// face). Same props and frame 0 as Overlay.
+// face). Same props and frame 0 as Overlay. So does the hook, white on a
+// slanted stripe in the band above his head (rule 6 ruling, 07/10/2026).
 const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => {
+  const band = useBand(reel);
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
   // A card up at any frame the logo shows stops short of it for its whole
@@ -315,11 +358,43 @@ const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => {
           />
         </Sequence>
       ))}
+      {band && reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          {/* As said, no count (as the Overlay hook). */}
+          <HookBand
+            hook={reel.edit.hook}
+            band={band}
+            countFrames={[-1, 0]}
+            bigStyle={{ color: "#fff" }}
+            subStyle={{ color: brand.textDim, fontWeight: 700 }}
+          >
+            {(() => {
+              const b = stripeBox(band.big);
+              return (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: b.left,
+                    width: b.right - b.left,
+                    top: b.top,
+                    height: b.height,
+                    background: brand.primary,
+                    transform: `skewX(${b.skew}deg)`,
+                    boxShadow: "0 14px 30px rgba(0,0,0,0.35)",
+                  }}
+                />
+              );
+            })()}
+          </HookBand>
+        </Sequence>
+      ) : null}
     </>
   );
 };
 
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
+  // The hook draws in Behind when the band holds it; here otherwise.
+  const band = useBand(reel);
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
   const mentions = lenderMentionsOf(reel);
@@ -382,7 +457,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
           </Sequence>
         );
       })}
-      {reel.edit.hook ? (
+      {reel.edit.hook && !band ? (
         <Sequence durationInFrames={HOOK_FRAMES}>
           <Hook big={reel.edit.hook.big} sub={reel.edit.hook.sub} />
         </Sequence>

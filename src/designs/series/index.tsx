@@ -32,6 +32,7 @@ import { FONT } from "../../mortgage/style";
 import { chapterTransition } from "../../mortgage/transitions";
 import { SocialHandle } from "../../elements/SocialHandle";
 import { StaggerTitle } from "../../elements/StaggerTitle";
+import { HookBand, useHookBand } from "../../elements/BehindWord";
 import { MotionTrack } from "../classic/Cues";
 import { Outro } from "../classic/Outro";
 import { SeriesCaptions } from "./Captions";
@@ -42,7 +43,7 @@ import {
   Tracker,
   useSidebarFade,
 } from "./Sidebar";
-import { Strip, StripBar, StripLogo } from "./Strip";
+import { STRIP_HEIGHT, Strip, StripBar, StripLogo } from "./Strip";
 import { SeriesBackdrop } from "./Waves";
 
 const HOOK_FRAMES = 105;
@@ -205,8 +206,21 @@ const Cover: React.FC<CoverProps> = ({ src, coverFrame, title, subtitle }) => {
 // CHIN_Y: a caption page (x 400-960, top ~1290 for two lines) sits under it.
 // The layer ends above the frame's bottom and short of the sidebar, so its
 // right and bottom edges fade out instead of cutting hard.
-const SCALE = 0.633;
-const CHIN_Y = 1280;
+export const SCALE = 0.633;
+export const CHIN_Y = 1280;
+export const CHIN_SRC = 1400; // his chin in the source when he leans in
+// A cut's punch-in around CHIN_Y (Talk): spring(0) = 0, so a cut's first
+// frame is the full 1 + PUNCH.
+export const PUNCH = 0.04;
+// His hair line on screen while the hook is up: the framing above, lifted by
+// that punch-in. check-design-figures (k) re-derives it from these constants.
+export const HOOK_HAIR_Y = CHIN_Y - (CHIN_SRC - HEAD_Y) * SCALE * (1 + PUNCH);
+// The band hook starts under the episode strip (Strip.tsx), on a navy plate.
+export const HOOK_TOP = SAFE.top + STRIP_HEIGHT + 10;
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+const useBand = (reel: OverlayProps["reel"]) =>
+  useHookBand(reel, HOOK_HAIR_Y, { top: HOOK_TOP, padX: 24 });
 const EDGE_FADE =
   "linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, #000 80%, transparent)";
 // k (useCueRoom, 0..1) eases him to CUE_SCALE (face centre kept at x 342)
@@ -219,7 +233,7 @@ const framing = (k: number): React.CSSProperties => {
   const hair = interpolate(
     k,
     [0, 1],
-    [CHIN_Y - (1400 - HEAD_Y) * SCALE, CUE_HAIR_Y],
+    [CHIN_Y - (CHIN_SRC - HEAD_Y) * SCALE, CUE_HAIR_Y],
   );
   return {
     transform: `translate(${540 * (SCALE - s)}px, ${hair - HEAD_Y * s}px) scale(${s})`,
@@ -247,7 +261,7 @@ const Talk: React.FC<TalkProps> = ({
     index === 0
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
-        0.04;
+        PUNCH;
   const room = useCueRoom(seg);
   return (
     <AbsoluteFill>
@@ -275,6 +289,8 @@ const Talk: React.FC<TalkProps> = ({
 
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   const hook = reel.edit.hook;
+  // The hook draws in Behind when the band holds it; here otherwise.
+  const band = useBand(reel);
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
@@ -282,7 +298,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
       <Strip reel={reel} episodeLine={stripLine(reel.edit.subtitle)} />
       <LogoMark talkFrames={talkFrames} style={{ top: SAFE.top + 70 }} />
       <SeriesCaptions reel={reel} keywords={keywords} />
-      {hook ? (
+      {hook && !band ? (
         <Sequence durationInFrames={HOOK_FRAMES}>
           <div
             style={{
@@ -317,27 +333,55 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
 // lender stack. The sidebar sits at x 620-960, right of his head (x 0-684
 // layer, face x ~200-490), so he barely reaches it — but this keeps it behind him, and
 // fades it out while a cue card is up so the two never fight for space.
+// The hook draws here too, amber on navy under the strip, above his head
+// (rule 6 ruling, 07/10/2026).
 const Behind: React.FC<OverlayProps> = ({ reel }) => {
+  const band = useBand(reel);
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
   const mentions = lenderMentionsOf(reel);
   const fade = useSidebarFade(reel);
   return (
-    <div style={{ opacity: fade }}>
-      <Tracker reel={reel} />
-      <LenderTracker mentions={mentions} />
-      {figures
-        .filter((f) => f.source === "auto")
-        .map((f) => (
-          <Sequence
-            key={f.fromFrame}
-            from={f.fromFrame}
-            durationInFrames={f.frames}
+    <>
+      {band && reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          <HookBand
+            hook={reel.edit.hook}
+            band={band}
+            bigStyle={{ color: brand.highlight }}
+            subStyle={{ color: "#fff" }}
           >
-            <AutoFigureCard big={f.big} label={f.label} />
-          </Sequence>
-        ))}
-    </div>
+            <div
+              style={{
+                position: "absolute",
+                left: SAFE.left,
+                right: 1080 - SAFE.right,
+                top: HOOK_TOP - 6,
+                height: band.big.bottom + 12 - (HOOK_TOP - 6),
+                borderRadius: 18,
+                background: brand.navy,
+                boxShadow: "0 14px 30px rgba(0,0,0,0.35)",
+              }}
+            />
+          </HookBand>
+        </Sequence>
+      ) : null}
+      <div style={{ opacity: fade }}>
+        <Tracker reel={reel} />
+        <LenderTracker mentions={mentions} />
+        {figures
+          .filter((f) => f.source === "auto")
+          .map((f) => (
+            <Sequence
+              key={f.fromFrame}
+              from={f.fromFrame}
+              durationInFrames={f.frames}
+            >
+              <AutoFigureCard big={f.big} label={f.label} />
+            </Sequence>
+          ))}
+      </div>
+    </>
   );
 };
 

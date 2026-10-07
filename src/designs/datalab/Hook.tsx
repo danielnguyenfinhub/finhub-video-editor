@@ -10,12 +10,45 @@ import { ProgressBar } from "../../elements/ProgressBar";
 import type { EditJson } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
 import { SAFE, hookText } from "../../mortgage/golden";
+import { HookBand, type HookBandLayout } from "../../elements/BehindWord";
 
 // LogoMark's tile sits top-right inside SAFE for the same first-10s window
 // the hook shows in, so the hook box stops short of it instead of running
 // underneath (golden rule 4: no overlaps).
 const HOOK_RIGHT_INSET = 1080 - SAFE.right + 260;
 const HOOK_WIDTH = 1080 - SAFE.left - HOOK_RIGHT_INSET;
+
+const GLOW = `0 0 30px ${brand.highlight}, 0 0 80px ${brand.highlight}99, 0 10px 30px rgba(0,0,0,0.6)`;
+
+// The same counter in the band above his head (Behind layer, S1/D1): sub on
+// top, the glowing number under it, the amber readout line in the gap above
+// his hair line (a line, not a digit).
+export const BandCounter: React.FC<{
+  hook: NonNullable<EditJson["hook"]>;
+  band: HookBandLayout;
+}> = ({ hook, band }) => (
+  <HookBand
+    hook={hook}
+    band={band}
+    countFrames={[0, 30]}
+    bigStyle={{ color: brand.highlight, letterSpacing: -3, textShadow: GLOW }}
+    subStyle={{ color: "#fff" }}
+  >
+    <div
+      style={{
+        position: "absolute",
+        left: SAFE.left,
+        right: 1080 - SAFE.right,
+        top: band.big.bottom + 6,
+        height: 6,
+        borderRadius: 3,
+        overflow: "hidden",
+      }}
+    >
+      <ProgressBar position="top" height={6} color={brand.accent} />
+    </div>
+  </HookBand>
+);
 
 export const HookCounter: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
   hook,
@@ -58,7 +91,7 @@ export const HookCounter: React.FC<{ hook: NonNullable<EditJson["hook"]> }> = ({
           color: brand.highlight,
           letterSpacing: -3,
           lineHeight: 1.05,
-          textShadow: `0 0 30px ${brand.highlight}, 0 0 80px ${brand.highlight}99, 0 10px 30px rgba(0,0,0,0.6)`,
+          textShadow: GLOW,
           transform: `scale(${interpolate(inP, [0, 1], [1.6, 1])})`,
           opacity: inP,
         }}

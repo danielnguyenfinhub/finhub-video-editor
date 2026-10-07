@@ -14,7 +14,9 @@ import type { Design, OverlayProps, TalkProps } from "../../mortgage/design";
 import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { SAFE } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
-import { toOutMs } from "../../mortgage/timeline";
+import { toOutMs, type Segment } from "../../mortgage/timeline";
+import { HookBand, useHookBand } from "../../elements/BehindWord";
+import { brand } from "../../brand/theme";
 import { PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
 import { MotionTrack } from "../classic/Cues";
@@ -40,9 +42,33 @@ const CHAPTER_FRAMES_S = 2.5;
 // edge. Passing a headY 110 px above his hair line lands the hair line
 // 0.55 * 110 ~ 60 px lower (y ~860): eyebrows ~y 1010, mouth ~y 1230.
 const CUE_DROP = 110;
-const SCALE = 0.85;
-const ZOOMED_SCALE = 0.92;
-const CHIN_Y = 1280;
+export const SCALE = 0.85;
+export const ZOOMED_SCALE = 0.92;
+export const CHIN_Y = 1280;
+export const CHIN_SRC = 1400; // his chin in the source when he leans in
+// A cut's punch-in around CHIN_Y (Talk): spring(0) = 0, so a cut's first
+// frame is the full 1 + PUNCH.
+export const PUNCH = 0.04;
+// His hair line on screen while the hook is up, per reel: each cut in the
+// hook at its scale (a zoomed cut at ZOOMED_SCALE) with a cut's punch-in
+// lifting it; the highest wins. check-design-figures (k).
+export const hookHairY = (segments: Segment[]) =>
+  Math.min(
+    ...segments
+      .filter((s) => s.outFrom < HOOK_FRAMES)
+      .map(
+        (s, i) =>
+          CHIN_Y -
+          (CHIN_SRC - HEAD_Y) *
+            (s.zoomed ? ZOOMED_SCALE : SCALE) *
+            (i ? 1 + PUNCH : 1),
+      ),
+  );
+const BUBBLE_PAD = 40;
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+const useBand = (reel: OverlayProps["reel"]) =>
+  useHookBand(reel, hookHairY(reel.timeline.segments), { padX: BUBBLE_PAD });
 const EDGE_FADE =
   "linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, #000 80%, transparent)";
 
@@ -63,7 +89,7 @@ const Talk: React.FC<TalkProps> = ({
     index === 0
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
-        0.04;
+        PUNCH;
   return (
     <AbsoluteFill>
       <Backdrop />
@@ -73,7 +99,7 @@ const Talk: React.FC<TalkProps> = ({
       <AbsoluteFill
         style={cueRoomStyle(
           room,
-          CHIN_Y - (1400 - HEAD_Y) * talkScale * (1 + punch) - CUE_DROP,
+          CHIN_Y - (CHIN_SRC - HEAD_Y) * talkScale * (1 + punch) - CUE_DROP,
         )}
       >
         <AbsoluteFill
@@ -84,7 +110,7 @@ const Talk: React.FC<TalkProps> = ({
         >
           <AbsoluteFill
             style={{
-              transform: `translate(${540 * (1 - talkScale)}px, ${CHIN_Y - 1400 * talkScale}px) scale(${talkScale})`,
+              transform: `translate(${540 * (1 - talkScale)}px, ${CHIN_Y - CHIN_SRC * talkScale}px) scale(${talkScale})`,
               transformOrigin: "0 0",
               maskImage: EDGE_FADE,
               WebkitMaskImage: EDGE_FADE,
@@ -129,7 +155,45 @@ const Chapters: React.FC<{ reel: OverlayProps["reel"] }> = ({ reel }) => {
   );
 };
 
+// The hook as one big sent bubble in the band above his head, sub on top,
+// number under it (rule 6 ruling, 07/10/2026); behind his cut-out with the
+// figures. The Overlay keeps HookBubbles when the band does not hold it.
+const Behind: React.FC<OverlayProps> = (props) => {
+  const { reel } = props;
+  const band = useBand(reel);
+  return (
+    <>
+      <Figures {...props} />
+      {band && reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES} layout="none">
+          <HookBand
+            hook={reel.edit.hook}
+            band={band}
+            bigStyle={{ color: "#fff" }}
+            subStyle={{ color: "#fff", fontWeight: 700 }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: SAFE.left,
+                right: 1080 - SAFE.right,
+                top: SAFE.top,
+                height: band.big.bottom + 14 - SAFE.top,
+                borderRadius: 40,
+                background: brand.primary,
+                boxShadow: "0 10px 26px rgba(11,31,61,0.14)",
+              }}
+            />
+          </HookBand>
+        </Sequence>
+      ) : null}
+    </>
+  );
+};
+
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
+  // The hook draws in Behind when the band holds it; here otherwise.
+  const band = useBand(reel);
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
@@ -138,7 +202,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
       <Lenders reel={reel} />
       <Chapters reel={reel} />
       <ChatCaptions reel={reel} keywords={keywords} />
-      {reel.edit.hook ? (
+      {reel.edit.hook && !band ? (
         <Sequence durationInFrames={HOOK_FRAMES} layout="none">
           <HookBubbles hook={reel.edit.hook} />
         </Sequence>
@@ -152,7 +216,7 @@ export const chatstory: Design = {
   Cover,
   Talk,
   Overlay,
-  Behind: Figures,
+  Behind,
   Outro,
   chapterTransition,
   copy: [

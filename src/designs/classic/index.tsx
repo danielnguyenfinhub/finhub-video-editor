@@ -13,7 +13,7 @@ import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { SAFE } from "../../mortgage/golden";
 import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
-import { Behind } from "./Behind";
+import { Behind, PUNCH, ZOOM, ZOOM_Y, useBand } from "./Behind";
 import { Captions, Chapters, StatCards } from "./Captions";
 import { MotionTrack } from "./Cues";
 import {
@@ -44,15 +44,17 @@ const Talk: React.FC<TalkProps> = ({
   const { fps } = useVideoConfig();
   const base =
     index === 0
-      ? interpolate(frame, [0, 24], [1.3, 1], { extrapolateRight: "clamp" })
+      ? interpolate(frame, [0, 24], [ZOOM.first, ZOOM.cut], {
+          extrapolateRight: "clamp",
+        })
       : seg.zoomed
-        ? 1.13
-        : 1.0;
+        ? ZOOM.zoomed
+        : ZOOM.cut;
   const punch =
     index === 0
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
-        0.05;
+        PUNCH;
   const drift = interpolate(frame, [0, seg.outDuration], [0, 0.02]);
   const room = useCueRoom(seg);
   return (
@@ -71,7 +73,7 @@ const Talk: React.FC<TalkProps> = ({
           backdrop="none"
           style={{
             transform: `scale(${base + punch + drift})`,
-            transformOrigin: "50% 30%",
+            transformOrigin: `50% ${ZOOM_Y}px`,
           }}
         />
       </AbsoluteFill>
@@ -99,24 +101,28 @@ const Talk: React.FC<TalkProps> = ({
   );
 };
 
-const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => (
-  <>
-    {/* Panels in the safe band; Talk makes room under them (cueRoom). */}
-    <MotionTrack reel={reel} panelOffset={SAFE.top - 110} logo={false} />
-    <Chrome talkFrames={talkFrames} />
-    <StatCards reel={reel} />
-    <Chapters reel={reel} />
-    <Captions reel={reel} keywords={keywords} />
-    {reel.edit.hook ? (
-      <Sequence durationInFrames={HOOK_FRAMES}>
-        <MoneyRain />
-        <HookTitle hook={reel.edit.hook} />
-        <HookBurst />
-        <HookSfx />
-      </Sequence>
-    ) : null}
-  </>
-);
+const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
+  // The hook title, burst and money rain draw in Behind when the band holds them.
+  const band = useBand(reel);
+  return (
+    <>
+      {/* Panels in the safe band; Talk makes room under them (cueRoom). */}
+      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} logo={false} />
+      <Chrome talkFrames={talkFrames} />
+      <StatCards reel={reel} />
+      <Chapters reel={reel} />
+      <Captions reel={reel} keywords={keywords} />
+      {reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          {band ? null : <MoneyRain />}
+          {band ? null : <HookTitle hook={reel.edit.hook} />}
+          {band ? null : <HookBurst />}
+          <HookSfx />
+        </Sequence>
+      ) : null}
+    </>
+  );
+};
 
 export const classic: Design = {
   id: "classic",
