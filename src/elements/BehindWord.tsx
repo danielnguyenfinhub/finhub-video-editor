@@ -176,20 +176,20 @@ export const hookBandLayout = ({
   subFit?: number;
 }): HookBandLayout | null => {
   const bottom = hairY - HAIR_GAP;
-  let subLine: BandLine | null = null;
-  let y = top;
-  if (sub) {
-    const size = Math.floor(Math.min(SUB.max, subFit));
-    if (size < SUB.min) return null;
-    subLine = line(y, size, sub);
-    y = subLine.bottom + LINE_GAP;
+  const subSize = Math.floor(Math.min(SUB.max, subFit));
+  if (sub && subSize < SUB.min) return null;
+  // The fitted sub first; if the number then falls under its floor, the sub
+  // at its own floor gives the number the room.
+  for (const s of sub ? [subSize, SUB.min] : [0]) {
+    const subLine = sub ? line(top, s, sub) : null;
+    const y = subLine ? subLine.bottom + LINE_GAP : top;
+    const [up, down] = REACH[DIGITS.test(big) ? "digits" : "text"];
+    const size = Math.floor(
+      Math.min(BIG.max, bigFit, (bottom - y) / (up + down)),
+    );
+    if (size >= BIG.min) return { sub: subLine, big: line(y, size, big) };
   }
-  const [up, down] = REACH[DIGITS.test(big) ? "digits" : "text"];
-  const size = Math.floor(
-    Math.min(BIG.max, bigFit, (bottom - y) / (up + down)),
-  );
-  if (size < BIG.min) return null;
-  return { sub: subLine, big: line(y, size, big) };
+  return null;
 };
 
 // Behind sits behind his cut-out only when there is one.
