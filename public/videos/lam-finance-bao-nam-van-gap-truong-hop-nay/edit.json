@@ -1,0 +1,405 @@
+{
+  "source": "lam-finance-bao-nam-van-gap-truong-hop-nay",
+  "title": "Làm Finance Bao Năm Vẫn Gặp Trường Hợp Này",
+  "pacing": {
+    "mode": "off"
+  },
+  "chapters": [
+    {
+      "atMs": 47800,
+      "title": "Ví dụ: đổi nhà",
+      "effect": "slide"
+    },
+    {
+      "atMs": 79480,
+      "title": "Câu trả lời sẽ là",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 115470,
+      "title": "Lo mà không có thông tin",
+      "effect": "fade"
+    }
+  ],
+  "stats": [],
+  "cues": [
+    {
+      "kind": "emoji",
+      "fromMs": 4040,
+      "toMs": 7000,
+      "name": "eyes",
+      "position": "right"
+    },
+    {
+      "kind": "points",
+      "fromMs": 10180,
+      "toMs": 15680,
+      "title": "Khi muốn",
+      "items": [
+        {
+          "text": "Vay mượn",
+          "atMs": 11860
+        },
+        {
+          "text": "Đầu tư",
+          "atMs": 13260
+        }
+      ]
+    },
+    {
+      "kind": "kinetic",
+      "fromMs": 18400,
+      "toMs": 28360,
+      "struck": [
+        {
+          "text": "Lo lắng",
+          "atMs": 18400,
+          "strikeMs": 21540
+        },
+        {
+          "text": "Suy nghĩ đủ thứ",
+          "atMs": 19480,
+          "strikeMs": 21540
+        }
+      ],
+      "slam": {
+        "text": "Tìm hiểu chọn lựa trước",
+        "atMs": 23500
+      },
+      "sub": {
+        "text": "Nhất là khi vay mượn",
+        "atMs": 25700
+      }
+    },
+    {
+      "kind": "points",
+      "fromMs": 31140,
+      "toMs": 38200,
+      "title": "Chưa biết chọn lựa của mình?",
+      "items": [
+        {
+          "text": "Tìm hiểu trước đã",
+          "atMs": 33080
+        },
+        {
+          "text": "Mình muốn làm gì?",
+          "atMs": 35480
+        },
+        {
+          "text": "Có những chọn lựa nào?",
+          "atMs": 36860
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 38480,
+      "toMs": 44160,
+      "title": "Rồi sau đó",
+      "items": [
+        {
+          "text": "Nói chuyện với đúng người",
+          "atMs": 38480
+        },
+        {
+          "text": "Hỏi đúng việc",
+          "atMs": 39600
+        },
+        {
+          "text": "Biết mình có những chọn lựa gì",
+          "atMs": 41960
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 44520,
+      "toMs": 47280,
+      "name": "thinking-face",
+      "position": "right"
+    },
+    {
+      "kind": "kinetic",
+      "fromMs": 50100,
+      "toMs": 64500,
+      "struck": [
+        {
+          "text": "Sợ không biết điều này",
+          "atMs": 51840,
+          "strikeMs": 57820
+        },
+        {
+          "text": "Không biết điều kia",
+          "atMs": 53740,
+          "strikeMs": 57820
+        }
+      ],
+      "slam": {
+        "text": "Đổi nhà bằng cách nào?",
+        "atMs": 59580
+      },
+      "sub": {
+        "text": "Làm sao đổi được, có được không?",
+        "atMs": 62520
+      }
+    },
+    {
+      "kind": "points",
+      "fromMs": 65180,
+      "toMs": 69760,
+      "title": "Đổi nhà: giá bao nhiêu?",
+      "items": [
+        {
+          "text": "Gọi agent tới",
+          "atMs": 67100
+        },
+        {
+          "text": "Định giá xem khoảng bao nhiêu",
+          "atMs": 67880
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 71420,
+      "toMs": 79000,
+      "title": "Cần mượn tiền ngân hàng?",
+      "items": [
+        {
+          "text": "Tìm brokers hoặc lenders",
+          "atMs": 73220
+        },
+        {
+          "text": "Hiểu chọn lựa của mình",
+          "atMs": 75120
+        },
+        {
+          "text": "Có khả thi hay không?",
+          "atMs": 77800
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 82280,
+      "toMs": 91500,
+      "title": "Hai câu trả lời",
+      "items": [
+        {
+          "text": "Không được: khỏi suy nghĩ nữa",
+          "atMs": 83700
+        },
+        {
+          "text": "Được: lệ phí, tiền lời",
+          "atMs": 86580
+        },
+        {
+          "text": "Repayment, mọi thứ ra sao",
+          "atMs": 89720
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 92120,
+      "toMs": 95100,
+      "name": "balance-scale",
+      "position": "right"
+    },
+    {
+      "kind": "points",
+      "fromMs": 95480,
+      "toMs": 99080,
+      "title": "Có thông tin rồi: quyết định",
+      "items": [
+        {
+          "text": "Chọn",
+          "atMs": 97300
+        },
+        {
+          "text": "Hay không chọn",
+          "atMs": 98060
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 100220,
+      "toMs": 108700,
+      "title": "Khi đã biết",
+      "items": [
+        {
+          "text": "Ngân hàng có người cho làm",
+          "atMs": 100560
+        },
+        {
+          "text": "Lệ phí, số tiền phải trả",
+          "atMs": 105100
+        },
+        {
+          "text": "Rủi ro",
+          "atMs": 107600
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 108880,
+      "toMs": 111900,
+      "ok": true,
+      "text": "Được: chọn, tiếp tục"
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 112120,
+      "toMs": 116400,
+      "ok": false,
+      "text": "Không đáng: khỏi chọn"
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 117400,
+      "toMs": 120300,
+      "name": "light-bulb",
+      "position": "right"
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 122100,
+      "toMs": 124900,
+      "name": "question",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 125300,
+      "toMs": 134860,
+      "title": "Không có thông tin",
+      "items": [
+        {
+          "text": "Cứ suy nghĩ",
+          "atMs": 125540
+        },
+        {
+          "text": "Chỉ lo lắng",
+          "atMs": 128320
+        },
+        {
+          "text": "Stress càng nhiều",
+          "atMs": 132180
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 136620,
+      "toMs": 139100,
+      "ok": false,
+      "text": "Lo lắng không cho câu giải đáp"
+    },
+    {
+      "kind": "points",
+      "fromMs": 140420,
+      "toMs": 147180,
+      "title": "Cho nên",
+      "items": [
+        {
+          "text": "Tìm xem mình có những chọn lựa gì",
+          "atMs": 140920
+        },
+        {
+          "text": "Rồi quyết định: chọn hay không",
+          "atMs": 144320
+        }
+      ]
+    }
+  ],
+  "compliance": {
+    "illustrativeNumbers": false
+  },
+  "notes": [
+    "SUMMARY: Daniel (talking head, ~2:28) says that after years in finance he keeps seeing the same thing: people planning to borrow, invest or change homes worry and overthink. His view: it is simple. First find out what your options are (talk to the right people, ask the right questions), then the only decision left is take it or not. Example: changing homes, (1) get an agent to appraise the property if you do not know its value, (2) if you need a bank loan, talk to brokers or lenders to see if it is feasible; the answer is either no (stop worrying) or yes with fees, interest, repayments and risks laid out, and you choose. Worrying without information only raises stress because it gives no real answer. Close: find your options, then just decide yes or no.",
+    "HOOK 560 ms: \"Thật ra thì làm finance lâu năm rồi đó, thì mình thấy có một điều mà mình không hiểu sao là cứ thấy lặp đi lặp lại hoài.\"",
+    "TOPIC CHANGES: 8160 the recurring problem (worry before borrowing/investing/moving); 21540 \"đơn giản lắm\" thesis; 38480 talk to the right people; 47800 example: changing homes; 57280 step 1 valuation by agent (64820); 69760 step 2 brokers/lenders (73460/74540); 79480 two outcomes (không được / được: lệ phí, tiền lời, repayment); 122020 worry without info raises stress; 139340 close.",
+    "NUMBERS: none. Only list ordinals (một / hai / thứ hai) and no dollar, rate or percentage figures. Nothing to recompute.",
+    "WATCH-WORDS spoken (CONTEXT_VI, not characterising FinHub offer): \"đơn giản\" at 22900 (\"thật ra thấy đó đơn giản lắm\" = deciding is simple once options are known); \"dễ dàng\" at 118280 (\"ít ra nó dễ dàng hơn\" = choosing between known options is easier). Not cut, not reworded. No PROMOTIONAL_VI phrase spoken.",
+    "TAX TALK: none. BANK NAMES: none (generic ngân hàng, brokers, lenders, agent). Credit terms mentioned generically: lệ phí, tiền lời, repayment, rủi ro (104000-108000). No client data.",
+    "OUTRO HALLUCINATION: words.json 147500-147820 \"Hãy subscribe cho kênh La La School Để không bỏ lỡ những video hấp dẫn\" (14 words in 320 ms, 13 of them zero-length) is a Whisper hallucination, not Daniel: audio RMS falls from about -17 dB to -38..-44 dB at 147.55 s (end of \"thôi.\") and stays at room tone to the end of file (147.96 s) apart from a single 50 ms blip at 147.75 s. Zero-length words are already dropped by timeline.ts; captionFixes hides the one timed word \"Hãy\" (atMs 147500). Audio untouched (tail is silence, auto-cut).",
+    "REMOVE [55300, 57280]: false start \"Nhưng các bạn chỉ cần đầu tiên hơn hết.\" restated immediately as \"Thứ nhất, mình nghĩ là các bạn chỉ cần là xem ...\". No claim, number or condition lost.",
+    "CAPTION FIXES: vai -> vay (vay mượn) at 12400 and 27780; Hãy -> \"\" at 147500. lợi phí -> lệ phí at 87980 and 105100 is built in.",
+    "WORDS.JSON RETIMES (2026-10-05, from check-speech-cuts; prep re-run overwrites them): \"Đó\" startMs 8160 -> 7810 (onset clipped); \"bây\" endMs 60940 -> 60860 and \"giờ\" startMs 60940 -> 60860 (zero-length word); \"đó\" startMs 115680 -> 115470 (zero-length word, voiced 115470-115590 confirms it was said); \"nghĩ,\" endMs 125940 -> 126190 (tail clipped); \"có\" endMs 145760 -> 145880 and \"muốn\" startMs 145760 -> 145880 (zero-length word).",
+    "UNSURE (verify by ear): \"sai đổi\" at 14860 RESOLVED by Daniel (2026-10-05, by ear) to \"thay đổi\" via captionFixes sai -> thay at 14860;\"Thứ nhất,\" at 57280 (zero-length, conf 0.07/0.34, not shown in captions; may not be spoken); \"up\" at 133720 (\"stress càng up càng nhiều\", conf 0.37); \"brokers\" at 73460 (conf 0.59).",
+    "DESIGN (editor, 2026-10-05): cards, Daniel's default for footage (select-template top pick was explainer 5.75; cards logged as override). Background removed (brand backdrop, matted cut-out); pacing off (his voice at 1x).",
+    "SIGNATURE MOMENTS: hook 'CỨ LO LẮNG HOÀI?' (0-3.5 s); kinetic strike-through 'Lo lắng / Suy nghĩ đủ thứ' struck at 21540, slam 'Tìm hiểu chọn lựa trước' at 23500; chapter 'Ví dụ: đổi nhà' 47800 + kinetic 'Sợ không biết điều này / điều kia' struck at 57820, slam 'Đổi nhà bằng cách nào?' 59580; points for the two steps (agent valuation 65180, brokers/lenders 71420) and the two answers (82280); verdict pills yes/no 108880 / 112120; close: points 'Không có thông tin' 125300, verdict 136620, points 'Cho nên' 140420.",
+    "VARIETY: main.py check differs on 5 of 7 skin axes from each of the last 3 (cover, framing, transitions, texture, sound) but repeats the previous caption style (cards' fixed caption box; same as the three earlier cards videos by Daniel's default).",
+    "GAPS: no music track on this checkout (public/music has only README.md); B-roll library empty (no hits for worry/stress, house valuation, agent, bank, decision, moving house, advice); no visuals added.",
+    "CHAPTER 3 TRANSITION (fix round 1, 2026-10-05): chapters[2].atMs moved 122020 -> 115470 so the chapter card and the fade land together on the only cut in reach (pause 114900-115470, 'đáng,' | 'đó'). The topic change at 122020 has no cut: gaps 116700-116920 (220 ms) and 121840-122020 (180 ms) are under the 380 ms split, and a pause-only remove drops no word so it makes no cut. Landing it at 122020 needs Daniel to allow a word retime or a remove.",
+    "MUSIC (editor, 2026-10-05, at Daniel's request after approval): music/calm-gentle-study-flow.mp3, Pixabay track by alex-morgan (https://pixabay.com/music/small-drama-piano-background-gentle-study-flow-578490/), Pixabay Content License (commercial use, no attribution needed), labelled AI generated by Pixabay, not Content ID registered per public/music/README.md (checked 2026-09-25), 2:27, downloaded 2026-10-05. Default volume 0.3, ducks under voice, starts at 0 ms."
+  ],
+  "remove": [
+    [
+      55300,
+      57280
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "vai",
+      "to": "vay",
+      "atMs": 12400
+    },
+    {
+      "from": "vai",
+      "to": "vay",
+      "atMs": 27780
+    },
+    {
+      "from": "Hãy",
+      "to": "",
+      "atMs": 147500
+    },
+    {
+      "from": "sai",
+      "to": "thay",
+      "atMs": 14860
+    }
+  ],
+  "design": "cards",
+  "background": "brand",
+  "music": { "file": "music/calm-gentle-study-flow.mp3" },
+  "subtitle": "Daniel Nguyen · Finance Hub",
+  "coverFrameMs": 39280,
+  "hook": {
+    "big": "CỨ LO LẮNG HOÀI?",
+    "sub": "Biết chọn lựa trước, rồi mới quyết định"
+  },
+  "keywords": [
+    "chọn lựa",
+    "lo lắng",
+    "đúng người",
+    "định giá",
+    "khả thi",
+    "rủi ro",
+    "quyết định"
+  ],
+  "cta": {
+    "question": "Bạn muốn biết mình có những chọn lựa nào?"
+  },
+  "post": {
+    "title": "Làm finance bao năm vẫn gặp trường hợp này",
+    "caption": "Muốn vay mượn, đầu tư hay đổi nhà mà cứ lo lắng, suy nghĩ đủ thứ? Daniel chia sẻ cách nghĩ của mình: trước hết tìm hiểu xem bạn có những chọn lựa gì, nói chuyện với đúng người và hỏi đúng việc. Khi đã biết lệ phí, tiền lời, số tiền phải trả và rủi ro, bạn chỉ cần quyết định chọn hay không chọn. Thông tin chỉ mang tính tham khảo. Nhắn tin cho Daniel nếu bạn muốn tìm hiểu chọn lựa của mình.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#vaymuanha",
+      "#doinha",
+      "#dautu",
+      "#taichinh",
+      "#nguoivietuc"
+    ]
+  },
+  "cut": {
+    "stutters": false,
+    "fillers": false
+  }
+}
