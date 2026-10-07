@@ -13,7 +13,8 @@ import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { SAFE } from "../../mortgage/golden";
 import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
-import { Behind } from "./Behind";
+import { Behind, HOOK_HAIR_Y } from "./Behind";
+import { useHookBand } from "../../elements/BehindWord";
 import { Captions, Chapters, StatCards } from "./Captions";
 import { MotionTrack } from "./Cues";
 import {
@@ -99,24 +100,28 @@ const Talk: React.FC<TalkProps> = ({
   );
 };
 
-const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => (
-  <>
-    {/* Panels in the safe band; Talk makes room under them (cueRoom). */}
-    <MotionTrack reel={reel} panelOffset={SAFE.top - 110} logo={false} />
-    <Chrome talkFrames={talkFrames} />
-    <StatCards reel={reel} />
-    <Chapters reel={reel} />
-    <Captions reel={reel} keywords={keywords} />
-    {reel.edit.hook ? (
-      <Sequence durationInFrames={HOOK_FRAMES}>
-        <MoneyRain />
-        <HookTitle hook={reel.edit.hook} />
-        <HookBurst />
-        <HookSfx />
-      </Sequence>
-    ) : null}
-  </>
-);
+const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
+  // The hook title and burst draw in Behind when the band holds them.
+  const band = useHookBand(reel, HOOK_HAIR_Y);
+  return (
+    <>
+      {/* Panels in the safe band; Talk makes room under them (cueRoom). */}
+      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} logo={false} />
+      <Chrome talkFrames={talkFrames} />
+      <StatCards reel={reel} />
+      <Chapters reel={reel} />
+      <Captions reel={reel} keywords={keywords} />
+      {reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          <MoneyRain />
+          {band ? null : <HookTitle hook={reel.edit.hook} />}
+          {band ? null : <HookBurst />}
+          <HookSfx />
+        </Sequence>
+      ) : null}
+    </>
+  );
+};
 
 export const classic: Design = {
   id: "classic",

@@ -22,7 +22,8 @@ import type {
 } from "../../mortgage/design";
 import { LOGO_HEIGHT, SAFE, lenderMentionsOf } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
-import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
+import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
+import { useHookBand } from "../../elements/BehindWord";
 import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import {
   FONT,
@@ -37,10 +38,13 @@ import { DataLabBackdrop, LIGHT_BLUE } from "./Backdrop";
 import { PoppingCaptions } from "./Captions";
 import { ChaptersLayer } from "./Chapters";
 import { FiguresBehindLayer, FiguresPipLayer } from "./Figures";
-import { HookCounter } from "./Hook";
+import { BandCounter, HookCounter } from "./Hook";
 import { LenderLayer } from "./LenderLabel";
 
 const HOOK_FRAMES = 105;
+// His hair line on screen while the hook is up: Talk never scales him, so it
+// stays at HEAD_Y (a cue panel only lowers it). check-design-figures (k).
+export const HOOK_HAIR_Y = HEAD_Y;
 const KICKER = "NGÂN HÀNG ĐƯỢC NHẮC";
 const CHAPTER_WORD = "PHẦN";
 
@@ -166,10 +170,21 @@ const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
   );
 };
 
-// Golden rule 3b: figure cards render behind Daniel's cut-out.
-const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => (
-  <FiguresBehindLayer reel={reel} talkFrames={talkFrames} />
-);
+// Golden rule 3b: figure cards render behind Daniel's cut-out, and so does
+// the hook, in the band above his head (rule 6 ruling, 07/10/2026).
+const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => {
+  const band = useHookBand(reel, HOOK_HAIR_Y);
+  return (
+    <>
+      <FiguresBehindLayer reel={reel} talkFrames={talkFrames} />
+      {band && reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          <BandCounter hook={reel.edit.hook} band={band} />
+        </Sequence>
+      ) : null}
+    </>
+  );
+};
 
 const Overlay: React.FC<OverlayProps> = ({
   reel,
@@ -178,6 +193,8 @@ const Overlay: React.FC<OverlayProps> = ({
   src,
 }) => {
   const mentions = lenderMentionsOf(reel);
+  // The hook draws in Behind when the band holds it; here otherwise.
+  const band = useHookBand(reel, HOOK_HAIR_Y);
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
@@ -186,7 +203,7 @@ const Overlay: React.FC<OverlayProps> = ({
       <LenderLayer mentions={mentions} />
       <ChaptersLayer reel={reel} />
       <PoppingCaptions reel={reel} keywords={keywords} />
-      {reel.edit.hook ? (
+      {reel.edit.hook && !band ? (
         <Sequence durationInFrames={HOOK_FRAMES}>
           <HookCounter hook={reel.edit.hook} />
         </Sequence>

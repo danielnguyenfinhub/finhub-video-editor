@@ -33,6 +33,7 @@ import {
   useCueRoom,
 } from "../../mortgage/cueRoom";
 import { LogoMark } from "../../mortgage/LogoMark";
+import { HookBand, useHookBand } from "../../elements/BehindWord";
 import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import type { Cue } from "../../mortgage/schema";
 import { outFrameOf } from "../../mortgage/schema";
@@ -73,6 +74,9 @@ const LOGO_BOX: React.CSSProperties = {
 // they fade out instead of cutting hard across his shoulders.
 const SCALE = 0.6;
 const CHIN_Y = 1270;
+// His hair line on screen while the hook is up: the framing above, with a
+// cut's 4% punch-in around CHIN_Y (Talk) lifting it. check-design-figures (k).
+export const HOOK_HAIR_Y = CHIN_Y - (1440 - HEAD_Y) * SCALE * 1.04;
 const EDGE_FADE =
   "linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 78%, transparent)";
 // k (useCueRoom, 0..1) eases him to CUE_SCALE with his hair line (source
@@ -261,12 +265,42 @@ const isCompare = (c: Cue): c is Extract<Cue, { kind: "compare" }> =>
 // Charts BEHIND Daniel (golden rule 3b): the two-column compare table, its
 // A/B header chips (bank logo or idle placeholder) and every figuresOf figure
 // card. Hidden during the hook (frame < HOOK_FRAMES) since the hook and the
-// columns share the top of SAFE.
+// columns share the top of SAFE. The hook itself draws here, above his head,
+// on a navy plate that hides the divider (rule 6 ruling, 07/10/2026).
 const Behind: React.FC<OverlayProps> = ({ reel }) => {
+  const band = useHookBand(reel, HOOK_HAIR_Y, { padX: 24 });
   const { fps } = useVideoConfig();
   const frame = useCurrentFrame();
   const outFrame = outFrameOf(reel.timeline, fps);
-  if (reel.edit.hook && frame < HOOK_FRAMES) return null;
+  if (reel.edit.hook && frame < HOOK_FRAMES) {
+    return band ? (
+      <Sequence durationInFrames={HOOK_FRAMES} layout="none">
+        <HookBand
+          hook={reel.edit.hook}
+          band={band}
+          bigStyle={{
+            color: "#fff",
+            letterSpacing: -3,
+            textShadow: "0 10px 40px rgba(0,0,0,0.6)",
+          }}
+          subStyle={{ color: brand.accent }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              left: SAFE.left,
+              right: 1080 - SAFE.right,
+              top: SAFE.top,
+              height: band.big.bottom + 12 - SAFE.top,
+              borderRadius: 18,
+              background: brand.background,
+              boxShadow: "0 14px 30px rgba(0,0,0,0.35)",
+            }}
+          />
+        </HookBand>
+      </Sequence>
+    ) : null;
+  }
   const compareCues = (reel.edit.cues ?? []).filter(isCompare);
   const hasCompare = compareCues.length > 0;
   // Idle "A"/"B" placeholders sit in the same column region another cue
@@ -340,6 +374,8 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   // LogoMark's tile: hide the logo while the hook is up (same "share the
   // top, hide the other one" rule as the hook vs. the columns).
   const hookUp = Boolean(reel.edit.hook) && frame < HOOK_FRAMES;
+  // The hook draws in Behind when the band holds it; here otherwise.
+  const band = useHookBand(reel, HOOK_HAIR_Y, { padX: 24 });
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
@@ -364,7 +400,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
         </Sequence>
       ))}
       <ScenarioPillCaptions reel={reel} keywords={keywords} />
-      {reel.edit.hook ? (
+      {reel.edit.hook && !band ? (
         <Sequence durationInFrames={HOOK_FRAMES} layout="none">
           <ScenarioHook hook={reel.edit.hook} />
         </Sequence>

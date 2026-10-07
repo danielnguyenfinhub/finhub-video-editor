@@ -27,6 +27,8 @@ import { StaggerTitle } from "../../elements/StaggerTitle";
 import { MotionTrack } from "../classic/Cues";
 import { INK, MASTHEAD_BOTTOM } from "./Masthead";
 import { ROOM_KINDS, RoomCues } from "./RoomCues";
+import { HOOK_HAIR_Y } from "./Behind";
+import { useHookBand } from "../../elements/BehindWord";
 
 const HOOK_FRAMES = 105;
 // The Finance Hub logo doesn't show during the hook (logoVisible starts at
@@ -372,41 +374,45 @@ export const Overlay: React.FC<OverlayProps> = ({
   reel,
   keywords,
   talkFrames,
-}) => (
-  <>
-    {/* Cue panels shifted into the safe band; grain stays full-frame. */}
-    {/* leak off: the WebGL light leak on each chapter cut flooded the cream
+}) => {
+  // The hook draws in Behind when the band holds it; here otherwise.
+  const band = useHookBand(reel, HOOK_HAIR_Y);
+  return (
+    <>
+      {/* Cue panels shifted into the safe band; grain stays full-frame. */}
+      {/* leak off: the WebGL light leak on each chapter cut flooded the cream
         page orange mid-transition (QC, pre-approval-tu-dong). */}
-    {reel.edit.background === "room" ? (
-      <>
-        {/* Room mode: points, verdict and compare drawn by RoomCues (their
+      {reel.edit.background === "room" ? (
+        <>
+          {/* Room mode: points, verdict and compare drawn by RoomCues (their
             bottom edge drives the photo in Talk), the rest by MotionTrack. */}
-        <MotionTrack
-          reel={{
-            ...reel,
-            edit: {
-              ...reel.edit,
-              cues: (reel.edit.cues ?? []).filter(
-                (c) => !ROOM_KINDS.has(c.kind),
-              ),
-            },
-          }}
-          panelOffset={SAFE.top - 110}
-          leak={false}
-        />
-        <RoomCues reel={reel} />
-      </>
-    ) : (
-      <MotionTrack reel={reel} panelOffset={SAFE.top - 110} leak={false} />
-    )}
-    <LenderSidebar reel={reel} />
-    <Chapters reel={reel} />
-    <Captions reel={reel} keywords={keywords} />
-    {reel.edit.hook ? (
-      <Sequence durationInFrames={HOOK_FRAMES}>
-        <Hook hook={reel.edit.hook} />
-      </Sequence>
-    ) : null}
-    <LogoMark talkFrames={talkFrames} />
-  </>
-);
+          <MotionTrack
+            reel={{
+              ...reel,
+              edit: {
+                ...reel.edit,
+                cues: (reel.edit.cues ?? []).filter(
+                  (c) => !ROOM_KINDS.has(c.kind),
+                ),
+              },
+            }}
+            panelOffset={SAFE.top - 110}
+            leak={false}
+          />
+          <RoomCues reel={reel} />
+        </>
+      ) : (
+        <MotionTrack reel={reel} panelOffset={SAFE.top - 110} leak={false} />
+      )}
+      <LenderSidebar reel={reel} />
+      <Chapters reel={reel} />
+      <Captions reel={reel} keywords={keywords} />
+      {reel.edit.hook && !band ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          <Hook hook={reel.edit.hook} />
+        </Sequence>
+      ) : null}
+      <LogoMark talkFrames={talkFrames} />
+    </>
+  );
+};

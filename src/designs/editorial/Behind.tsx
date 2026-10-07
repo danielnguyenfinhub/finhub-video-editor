@@ -16,7 +16,8 @@ import type { OverlayProps } from "../../mortgage/design";
 import { SAFE, figuresOf, saidKind } from "../../mortgage/golden";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
-import { MASTHEAD_BOTTOM } from "./Masthead";
+import { HookBand, useHookBand } from "../../elements/BehindWord";
+import { INK, MASTHEAD_BOTTOM } from "./Masthead";
 
 // x 0-560: a backdrop-scale fill (golden rule: backdrops may fill the frame),
 // from the masthead down to the bottom of the page. Purely decorative now
@@ -162,6 +163,30 @@ const Figures: React.FC<{ reel: Reel }> = ({ reel }) => {
   );
 };
 
-export const Behind: React.FC<OverlayProps> = ({ reel }) => (
-  <Figures reel={reel} />
-);
+// His hair line on screen while the hook is up: 600 at the 0.85 framing
+// (index.tsx), lifted by Talk's drift zoom (up to 1.02 around y 1248).
+// check-design-figures (k).
+export const HOOK_HAIR_Y = 1248 - 648 * 1.02;
+const HOOK_FRAMES = 105;
+
+// The hook as a stacked masthead headline in the band above his head, ink on
+// the cream page (rule 6 ruling, 07/10/2026); Overlay.tsx keeps its own hook
+// when the band does not hold it.
+export const Behind: React.FC<OverlayProps> = ({ reel }) => {
+  const band = useHookBand(reel, HOOK_HAIR_Y);
+  return (
+    <>
+      <Figures reel={reel} />
+      {band && reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          <HookBand
+            hook={reel.edit.hook}
+            band={band}
+            bigStyle={{ color: INK, letterSpacing: -2 }}
+            subStyle={{ color: INK, fontWeight: 700 }}
+          />
+        </Sequence>
+      ) : null}
+    </>
+  );
+};

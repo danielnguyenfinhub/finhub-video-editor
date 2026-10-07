@@ -27,6 +27,8 @@
 //   (j) talking-head repeats: checklist "0/0", series empty strip, kitchen hook by talk frame 25,
 //       reaction artefact clear of the logo and its headline wrapped; (e)/(f) also cover newsroom,
 //       neon (saidRoom), cards, editorial (kicker), cards, datalab, newsroom, chatstory (no meter).
+//   (k) the hook band above his head (rule 6 ruling, 07/10/2026): seven designs draw the hook in
+//       Behind, every glyph >= 20 px above the hair line re-derived from each design's framing.
 //   (i) blueprint and orbit, every fixture: every figure on the stage, yielding to a compare cue; phoneapp's
 //       checklist bar is said / n; (d) also runs every hook text on "4,1 TỶ ĐÔ", "10%", "2026".
 // Source checks (marked "source" below) read comment-stripped, whitespace-free code, so a
@@ -751,6 +753,89 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     });
     check(`${file}: every stat Sequence starts and lasts as the core's figure (${statReels.length} reels)`, bad.length === 0 && statReels.length >= 8, bad.slice(0, 2).join("; "));
     check(`${file} (source): ${component} renders statSequences(reel, fps)`, new RegExp(`const${component}=[\\s\\S]*?statSequences\\(reel,fps\\)(?=[,}\\]])`).test(code(file).js.replace(/\s/g, "")));
+  }
+}
+
+// (k) the hook band (rule 6 ruling, Daniel 07/10/2026: a hook drawn in Behind above his head
+// satisfies rule 6, provided no digit is ever behind his hair). In the seven band designs the hook
+// draws in Behind and the Overlay keeps its own hook only when the band is null; every glyph of the
+// sub and of the number (as it lands and as its count starts) ends >= 20 px above the design's hair
+// line and stays in SAFE. Glyph boxes come from the TTFs (opentype.js), not the helper's own
+// metrics, and each design's hair line is re-derived here from its framing constants (a cut's 4 %
+// punch-in, a zoomed cut, editorial's drift), so a framing change that lifts his hair fails until
+// the band follows it. The face box itself is never checked: Behind is under his cut-out.
+{
+  const opentype = req("opentype.js");
+  const ttf = (n) => opentype.parse(readFileSync(join(ROOT, "public", "fonts", `BeVietnamPro-${n}.ttf`)).buffer);
+  const black = ttf("Black");
+  const extra = ttf("ExtraBold");
+  const { hookBandLayout, hookInBand } = await bundle("src/elements/BehindWord.tsx");
+  const { HEAD_Y } = await bundle("src/mortgage/cueRoom.ts");
+  const { SAFE, hookText } = golden;
+  const GAP = 20; // the concept's margin above his hair line, independent of the helper's HAIR_GAP
+  const W = SAFE.right - SAFE.left;
+  const fit = (f, text) => W / f.getAdvanceWidth(text, 1);
+  const box = (f, text, size, baseline) => {
+    const x = SAFE.left + (W - f.getAdvanceWidth(text, size)) / 2;
+    return f.getPath(text, x, baseline, size).getBoundingBox();
+  };
+  const HOOKS = [
+    { big: "4,35%", countTo: 4.35, decimals: 2, suffix: "%", sub: "Lãi suất cơ bản sau 3 lần tăng" },
+    { big: "4,1 TỶ ĐÔ", countTo: 4.1, decimals: 1, suffix: "TỶ ĐÔ", sub: "Người Úc trả thêm mỗi năm" },
+    { big: "DUYỆT BẰNG HỆ THỐNG", sub: "Có thật sự tốt không? Rủi ro nằm ở đâu?" },
+    { big: "ĐỔI NHÀ MỚI?" },
+    { big: "10%", countTo: 10, suffix: "%" },
+    { big: "$600,000", countTo: 600000, sub: "Ệ Ễ Ỹ gjpqy" },
+  ];
+  const env = (file, given = {}) => code(file, { HEAD_Y, SAFE, ...given }).env;
+  const cs = { ...env("chatstory/index.tsx"), hookHairY: (await design("chatstory/index.tsx")).hookHairY };
+  const csTruth = (segs) => Math.min(...segs.filter((s) => s.outFrom < HOOK).map((s, i) => cs.CHIN_Y - (1400 - HEAD_Y) * (s.zoomed ? cs.ZOOMED_SCALE : cs.SCALE) * (i ? 1.04 : 1)));
+  const ed = env("editorial/index.tsx");
+  const strip = env("series/Strip.tsx");
+  const series = env("series/index.tsx", { STRIP_HEIGHT: strip.STRIP_HEIGHT });
+  const scen = env("scenario/index.tsx");
+  // [design, declared hair line, re-derived hair line, band top]; chatstory per reel (a zoomed cut
+  // starting inside the hook, and one after it).
+  const zoomedIn = [{ outFrom: 0, zoomed: false }, { outFrom: 60, zoomed: true }];
+  const zoomedAfter = [{ outFrom: 0, zoomed: false }, { outFrom: 200, zoomed: true }];
+  const BAND = [
+    ["classic", env("classic/Behind.tsx").HOOK_HAIR_Y, HEAD_Y, SAFE.top],
+    ["datalab", env("datalab/index.tsx").HOOK_HAIR_Y, HEAD_Y, SAFE.top],
+    ["newsroom", env("newsroom/index.tsx").HOOK_HAIR_Y, HEAD_Y, SAFE.top],
+    ["scenario", scen.HOOK_HAIR_Y, scen.CHIN_Y - (1440 - HEAD_Y) * scen.SCALE * 1.04, SAFE.top],
+    ["series", series.HOOK_HAIR_Y, series.CHIN_Y - (1400 - HEAD_Y) * series.SCALE * 1.04, series.HOOK_TOP],
+    ["editorial", env("editorial/Behind.tsx").HOOK_HAIR_Y, 1248 - (1248 - (ed.LIFT + HEAD_Y * ed.SCALE)) * 1.02, SAFE.top],
+    ["chatstory (zoomed cut in the hook)", cs.hookHairY?.(zoomedIn), csTruth(zoomedIn), SAFE.top],
+    ["chatstory", cs.hookHairY?.(zoomedAfter), csTruth(zoomedAfter), SAFE.top],
+  ];
+  // classic and newsroom zoom him (>= 1) around y 576, above HEAD_Y, which only lowers his hair.
+  for (const [id, file] of [["classic", "classic/index.tsx"], ["newsroom", "newsroom/index.tsx"]])
+    check(`${id} (source): Talk zooms around y 576 ("50% 30%"), so his hair stays at or below HEAD_Y`, /transformOrigin:"50% 30%"/.test(code(file).js));
+  check("hookInBand: only with his cut-out (not vignette, not room)",
+    hookInBand({}) && hookInBand({ background: "brand" }) && !hookInBand({ background: "vignette" }) && !hookInBand({ background: "room" }));
+  for (const [id, hair, truth, top] of BAND) {
+    check(`${id}: band hair line ${hair?.toFixed?.(1)} at or above his hair line from the framing (${truth.toFixed(1)})`, Number.isFinite(hair) && hair <= truth + 1e-9);
+    let shown = 0;
+    const bad = [];
+    for (const hook of HOOKS) {
+      const big = hookText(hook, 1);
+      const start = hookText(hook, 0);
+      const band = hookBandLayout({ hairY: hair, top, big, sub: hook.sub, bigFit: Math.min(fit(black, big), fit(black, start)), subFit: hook.sub ? fit(extra, hook.sub) : 0 });
+      if (!band) continue; // the Overlay keeps the hook (fallback)
+      shown++;
+      const boxes = [[black, big, band.big], [black, start, band.big], ...(band.sub ? [[extra, hook.sub, band.sub]] : [])]
+        .map(([f, text, l]) => [text, box(f, text, l.size, l.baseline)]);
+      for (const [text, b] of boxes)
+        if (b.y1 < top - 0.5 || b.y2 > truth - GAP + 0.5 || b.x1 < SAFE.left || b.x2 > SAFE.right)
+          bad.push(`"${text}" y ${b.y1.toFixed(0)}-${b.y2.toFixed(0)} x ${b.x1.toFixed(0)}-${b.x2.toFixed(0)}`);
+    }
+    check(`${id}: every band glyph in SAFE from y ${top} and >= ${GAP} px above his hair line (y <= ${(truth - GAP).toFixed(0)})`, bad.length === 0, bad.slice(0, 3).join("; "));
+    if (!id.includes("zoomed")) check(`${id}: the band holds the "4,35%" rate hook with its sub`, shown > 0 && Boolean(hookBandLayout({ hairY: hair, top, big: "4,35%", sub: HOOKS[0].sub, bigFit: fit(black, "4,315%"), subFit: fit(extra, HOOKS[0].sub) })));
+  }
+  for (const id of ["classic", "datalab", "newsroom", "scenario", "series", "editorial", "chatstory"]) {
+    const js = readdirSync(join(ROOT, "src", "designs", id)).filter((f) => f.endsWith(".tsx")).map((f) => code(`${id}/${f}`).js).join("\n");
+    check(`${id} (source): hook drawn by HookBand in Behind, the Overlay hook only when the band is null`,
+      (js.match(/useHookBand\(/g) ?? []).length >= 2 && /jsxs?\(HookBand,/.test(js) && /hook&&!band\?|band\?null:/.test(js), "");
   }
 }
 

@@ -18,7 +18,7 @@ import { SAFE } from "../../mortgage/golden";
 const CHAPTER_FRAMES_S = 2.5;
 const SLIDE_FRAMES = 10;
 
-const STRIP_HEIGHT = 60;
+export const STRIP_HEIGHT = 60;
 
 export const StripBar: React.FC<{ text: string; chapter?: boolean }> = ({
   text,

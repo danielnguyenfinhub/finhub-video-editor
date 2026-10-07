@@ -20,11 +20,14 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import type { OverlayProps } from "../../mortgage/design";
-import { SAFE, figuresOf, lenderMentionsOf } from "../../mortgage/golden";
+import { FACE, SAFE, figuresOf, lenderMentionsOf } from "../../mortgage/golden";
+import { HEAD_Y } from "../../mortgage/cueRoom";
+import { HookBand, useHookBand } from "../../elements/BehindWord";
 import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
+import { HookBurst } from "./Frame";
 
 const CARD_WIDTH = 480; // x 54-534; the lender tile (<= 280) starts at 680+
 // 86: every logo file (scale 0.7-1.3) is at least 60 px tall.
@@ -170,9 +173,47 @@ const Lenders: React.FC<{ reel: Reel }> = ({ reel }) => {
   );
 };
 
-export const Behind: React.FC<OverlayProps> = ({ reel }) => (
-  <>
-    <Figures reel={reel} />
-    <Lenders reel={reel} />
-  </>
-);
+const HOOK_FRAMES = 105;
+// His hair line on screen while the hook is up: Talk only zooms him (>= 1)
+// around y 576, which lowers it, so HEAD_Y is the highest it gets.
+// check-design-figures (k).
+export const HOOK_HAIR_Y = HEAD_Y;
+// The starburst behind the band hook fades out before FACE.top, so its edge
+// never crosses his face (the Overlay version left a seam at eye level).
+const BURST_MASK = `linear-gradient(#000 ${SAFE.top}px, transparent ${FACE.top}px)`;
+
+// The hook in the band above his head (rule 6 ruling, 07/10/2026); the
+// Overlay keeps HookTitle when the band does not hold it (index.tsx).
+// ponytail: a bank named in the first 3.5 s shares the band's right end with
+// the hook; give the lender its own slot if a video does that.
+export const Behind: React.FC<OverlayProps> = ({ reel }) => {
+  const band = useHookBand(reel, HOOK_HAIR_Y);
+  return (
+    <>
+      <Figures reel={reel} />
+      <Lenders reel={reel} />
+      {band && reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          <AbsoluteFill
+            style={{ maskImage: BURST_MASK, WebkitMaskImage: BURST_MASK }}
+          >
+            <HookBurst />
+          </AbsoluteFill>
+          <HookBand
+            hook={reel.edit.hook}
+            band={band}
+            bigStyle={{
+              color: brand.highlight,
+              letterSpacing: -4,
+              textShadow: "0 10px 40px rgba(0,0,0,0.6)",
+            }}
+            subStyle={{
+              color: "#fff",
+              textShadow: "0 4px 16px rgba(0,0,0,0.6)",
+            }}
+          />
+        </Sequence>
+      ) : null}
+    </>
+  );
+};

@@ -30,6 +30,7 @@ import {
 } from "../../mortgage/golden";
 import { LogoMark } from "../../mortgage/LogoMark";
 import { HEAD_Y, cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
+import { HookBand, useHookBand } from "../../elements/BehindWord";
 import { CoverCutOut, PacedVideo } from "../../mortgage/PacedVideo";
 import { outFrameOf } from "../../mortgage/schema";
 import {
@@ -290,9 +291,19 @@ const Hook: React.FC<{ big: string; sub?: string }> = ({ big, sub }) => {
   );
 };
 
+// His hair line on screen while the hook is up: Talk zooms him (>= 1.02)
+// around y 576, which only lowers it, so HEAD_Y is the highest it gets.
+// check-design-figures (k).
+export const HOOK_HAIR_Y = HEAD_Y;
+// The band hook's slanted stripe: inset so its skewed corners stay in SAFE.
+const STRIPE_SKEW = -12;
+const STRIPE_INSET = 16;
+
 // Figures render BEHIND Daniel's cut-out (golden rule: charts never cover his
-// face). Same props and frame 0 as Overlay.
+// face). Same props and frame 0 as Overlay. So does the hook, white on a
+// slanted stripe in the band above his head (rule 6 ruling, 07/10/2026).
 const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => {
+  const band = useHookBand(reel, HOOK_HAIR_Y, { padX: STRIPE_INSET + 24 });
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
   // A card up at any frame the logo shows stops short of it for its whole
@@ -315,11 +326,38 @@ const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => {
           />
         </Sequence>
       ))}
+      {band && reel.edit.hook ? (
+        <Sequence durationInFrames={HOOK_FRAMES}>
+          {/* As said, no count (as the Overlay hook). */}
+          <HookBand
+            hook={reel.edit.hook}
+            band={band}
+            countFrames={[-1, 0]}
+            bigStyle={{ color: "#fff" }}
+            subStyle={{ color: brand.textDim, fontWeight: 700 }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: SAFE.left + STRIPE_INSET,
+                right: 1080 - SAFE.right + STRIPE_INSET,
+                top: band.big.top - 6,
+                height: band.big.bottom - band.big.top + 12,
+                background: brand.primary,
+                transform: `skewX(${STRIPE_SKEW}deg)`,
+                boxShadow: "0 14px 30px rgba(0,0,0,0.35)",
+              }}
+            />
+          </HookBand>
+        </Sequence>
+      ) : null}
     </>
   );
 };
 
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
+  // The hook draws in Behind when the band holds it; here otherwise.
+  const band = useHookBand(reel, HOOK_HAIR_Y, { padX: STRIPE_INSET + 24 });
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
   const mentions = lenderMentionsOf(reel);
@@ -382,7 +420,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
           </Sequence>
         );
       })}
-      {reel.edit.hook ? (
+      {reel.edit.hook && !band ? (
         <Sequence durationInFrames={HOOK_FRAMES}>
           <Hook big={reel.edit.hook.big} sub={reel.edit.hook.sub} />
         </Sequence>
