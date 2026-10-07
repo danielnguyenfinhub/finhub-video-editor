@@ -78,7 +78,8 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
 ## Pipeline A — edit footage
 
 1. **Prep (A1.1)** in the background; several takes: prep each take the same way first.
-2. **Matte (A1.3), asked at the start, runs in parallel.** Say to Daniel: "Please run
+2. **Clean, then matte (A1.2b, A1.3), asked at the start, runs in parallel.** Run
+   `node scripts/clean-clip.mjs <slug>` and show Daniel its summary first (runbook A1.2b). Then say to Daniel: "Please run
    `npm run review`, open `http://localhost:4100/matte.html?slug=<slug>` in the Claude app
    browser and leave it until it says Saved (about 13× the video's length)." Don't wait; carry
    on. Check for `foreground.webm` before render (step 6); still missing → ask once more, then wait.

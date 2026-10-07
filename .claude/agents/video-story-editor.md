@@ -27,7 +27,8 @@ Read the rows you own, and do them in order:
   `public/videos/<slug>/`; under `--public-dir <dir>`, read it there.
 - **A2.2** The summary and every mark the row lists. For each number: what was said, at what
   `startMs`, and the maths recomputed. A number that is wrong is a **flag**, never a fix.
-- **A2.3** `remove` spans and `captionFixes` bound to context (the editor skill's
+- **A2.3** First read `out/clean-clip/<slug>.md` (runbook A1.2b; run `node scripts/clean-clip.mjs <slug>` if missing):
+  its repeats and false starts are proposals to check, not cuts. `remove` spans and `captionFixes` bound to context (the editor skill's
   `references/edit-json.md` has the shapes). Unsure → keep it.
 - **A2.4** `node scripts/brief.mjs <slug> [--public-dir <dir>]` (it writes `out/videos/<slug>/brief.json`). If the
   script is missing, the row's *Until built* line.
