@@ -100,5 +100,22 @@
       "cta": "classic white contact card + compliance card"
     },
     "reused": false
+  },
+  {
+    "slug": "lam-finance-bao-nam-van-gap-truong-hop-nay",
+    "date": "2026-10-05",
+    "design": "cards",
+    "direction": "EXPLAINER (narrative + steps), cards, background removed (brand backdrop); template is Daniel's default for footage; captions repeat the previous cards videos (fixed caption box), 5 of 7 skin axes differ from each of the last 3",
+    "reused": false,
+    "axes": {
+      "cover": "title on a white info card, logo tile top-right, Daniel's matted cut-out in the rounded card below (frozen cover frame 39280 ms)",
+      "captions": "44 px bold lowercase as spoken, white on a dark translucent rounded box, keywords gold, 2-4 words a page",
+      "framing": "split: info stage on top, Daniel's matted cut-out on the navy brand backdrop in a large rounded video card in the lower part (background removed, not his room)",
+      "graphics": "numbered points cards above Daniel for the steps and the two answers; kinetic strike-through for worry vs find your options; verdict pills for yes/no; emoji reactions; no figures",
+      "transitions": "cards rise in and lift out; kinetic strike-through then slam on the two turns; chapter cards Vi du doi nha / Cau tra loi / Lo ma khong co thong tin (slide, pushCut, fade); spring punch on cuts",
+      "texture": "airy cream gradient with a faint dot texture around a navy brand-backdrop video card (cut-out), white cards, FinHub navy and gold",
+      "sound": "voice only (no music track on this checkout), whoosh as cards move, click per point",
+      "cta": "classic white contact card + compliance card"
+    }
   }
 ]
