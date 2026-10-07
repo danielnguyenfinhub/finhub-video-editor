@@ -101,7 +101,7 @@ const Talk: React.FC<TalkProps> = ({
 };
 
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
-  // The hook title and burst draw in Behind when the band holds them.
+  // The hook title, burst and money rain draw in Behind when the band holds them.
   const band = useHookBand(reel, HOOK_HAIR_Y);
   return (
     <>
@@ -113,7 +113,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
       <Captions reel={reel} keywords={keywords} />
       {reel.edit.hook ? (
         <Sequence durationInFrames={HOOK_FRAMES}>
-          <MoneyRain />
+          {band ? null : <MoneyRain />}
           {band ? null : <HookTitle hook={reel.edit.hook} />}
           {band ? null : <HookBurst />}
           <HookSfx />

@@ -27,7 +27,7 @@ import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import type { Reel } from "../../mortgage/schema";
 import { FONT, clamp, enter } from "../../mortgage/style";
-import { HookBurst } from "./Frame";
+import { HookBurst, MoneyRain } from "./Frame";
 
 const CARD_WIDTH = 480; // x 54-534; the lender tile (<= 280) starts at 680+
 // 86: every logo file (scale 0.7-1.3) is at least 60 px tall.
@@ -199,6 +199,8 @@ export const Behind: React.FC<OverlayProps> = ({ reel }) => {
           >
             <HookBurst />
           </AbsoluteFill>
+          {/* Behind the hook text, so no coin ever covers a digit. */}
+          <MoneyRain />
           <HookBand
             hook={reel.edit.hook}
             band={band}
