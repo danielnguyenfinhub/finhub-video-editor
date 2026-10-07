@@ -13,7 +13,7 @@ import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { SAFE } from "../../mortgage/golden";
 import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
-import { Behind, HOOK_HAIR_Y } from "./Behind";
+import { Behind, HOOK_HAIR_Y, PUNCH, ZOOM, ZOOM_Y } from "./Behind";
 import { useHookBand } from "../../elements/BehindWord";
 import { Captions, Chapters, StatCards } from "./Captions";
 import { MotionTrack } from "./Cues";
@@ -45,15 +45,17 @@ const Talk: React.FC<TalkProps> = ({
   const { fps } = useVideoConfig();
   const base =
     index === 0
-      ? interpolate(frame, [0, 24], [1.3, 1], { extrapolateRight: "clamp" })
+      ? interpolate(frame, [0, 24], [ZOOM.first, ZOOM.cut], {
+          extrapolateRight: "clamp",
+        })
       : seg.zoomed
-        ? 1.13
-        : 1.0;
+        ? ZOOM.zoomed
+        : ZOOM.cut;
   const punch =
     index === 0
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
-        0.05;
+        PUNCH;
   const drift = interpolate(frame, [0, seg.outDuration], [0, 0.02]);
   const room = useCueRoom(seg);
   return (
@@ -72,7 +74,7 @@ const Talk: React.FC<TalkProps> = ({
           backdrop="none"
           style={{
             transform: `scale(${base + punch + drift})`,
-            transformOrigin: "50% 30%",
+            transformOrigin: `50% ${ZOOM_Y}px`,
           }}
         />
       </AbsoluteFill>

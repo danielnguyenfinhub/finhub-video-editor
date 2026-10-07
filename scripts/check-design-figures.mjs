@@ -28,7 +28,9 @@
 //       reaction artefact clear of the logo and its headline wrapped; (e)/(f) also cover newsroom,
 //       neon (saidRoom), cards, editorial (kicker), cards, datalab, newsroom, chatstory (no meter).
 //   (k) the hook band above his head (rule 6 ruling, 07/10/2026): seven designs draw the hook in
-//       Behind, every glyph >= 20 px above the hair line re-derived from each design's framing.
+//       Behind, every glyph >= 20 px above the hair line re-derived from each design's exported
+//       framing constants (pinned in Talk); no band while a cue, chapter, bank, visual or chapter
+//       transition is up in the hook; HookBand's baseline, entrance and count; every Overlay gate.
 //   (i) blueprint and orbit, every fixture: every figure on the stage, yielding to a compare cue; phoneapp's
 //       checklist bar is said / n; (d) also runs every hook text on "4,1 TỶ ĐÔ", "10%", "2026".
 // Source checks (marked "source" below) read comment-stripped, whitespace-free code, so a
@@ -757,28 +759,47 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
 }
 
 // (k) the hook band (rule 6 ruling, Daniel 07/10/2026: a hook drawn in Behind above his head
-// satisfies rule 6, provided no digit is ever behind his hair). In the seven band designs the hook
-// draws in Behind and the Overlay keeps its own hook only when the band is null; every glyph of the
-// sub and of the number (as it lands and as its count starts) ends >= 20 px above the design's hair
-// line and stays in SAFE. Glyph boxes come from the TTFs (opentype.js), not the helper's own
-// metrics, and each design's hair line is re-derived here from its framing constants (a cut's 4 %
-// punch-in, a zoomed cut, editorial's drift), so a framing change that lifts his hair fails until
-// the band follows it. The face box itself is never checked: Behind is under his cut-out.
+// satisfies rule 6, provided no digit is ever behind his hair, only with his cut-out). The 20 px
+// margin is ours. Each band design's hair line is re-derived from the framing constants its Talk
+// uses (exported, and pinned in Talk's source so they cannot drift apart); every glyph of the sub
+// and the number (as it lands and as its count starts) is measured from the TTFs (opentype.js) at
+// the helper's layout, and must stay in SAFE, >= 20 px above that hair line, sub over number with
+// no overlap, at the size floors. The render pieces (baseline vs the TTF metrics, entrance never
+// past the box, the count never from 0) are pure functions pinned in HookBand. The gate: no band
+// when anything drawn above Behind is up in the hook (cue, chapter, bank, visual, transition), and
+// each Overlay hook is drawn only when the band is null. Behind is under his cut-out, so the face
+// box itself is not checked here; the hair line only holds for HEAD_Y = 600 (his recordings).
 {
   const opentype = req("opentype.js");
   const ttf = (n) => opentype.parse(readFileSync(join(ROOT, "public", "fonts", `BeVietnamPro-${n}.ttf`)).buffer);
   const black = ttf("Black");
   const extra = ttf("ExtraBold");
-  const { hookBandLayout, hookInBand } = await bundle("src/elements/BehindWord.tsx");
+  const bw = await bundle("src/elements/BehindWord.tsx");
+  const { hookBandLayout, hookInBand, hookBandClear, bandLineTop, bandEntry, bandText, BASELINE } = bw;
   const { HEAD_Y } = await bundle("src/mortgage/cueRoom.ts");
   const { SAFE, hookText } = golden;
-  const GAP = 20; // the concept's margin above his hair line, independent of the helper's HAIR_GAP
+  const GAP = 20; // our margin above his hair line, independent of the helper's HAIR_GAP
+  const [SUB_MIN, BIG_MIN] = [40, 60];
   const W = SAFE.right - SAFE.left;
   const fit = (f, text) => W / f.getAdvanceWidth(text, 1);
   const box = (f, text, size, baseline) => {
     const x = SAFE.left + (W - f.getAdvanceWidth(text, size)) / 2;
     return f.getPath(text, x, baseline, size).getBoundingBox();
   };
+  // The baseline of a lineHeight: 1 line, from the TTF's own metrics (both faces).
+  const baselineOf = (f) => {
+    const asc = f.tables.hhea.ascender / f.unitsPerEm;
+    const desc = -f.tables.hhea.descender / f.unitsPerEm;
+    return asc - (asc + desc - 1) / 2;
+  };
+  check("hook band: BASELINE matches Be Vietnam Pro's metrics (hhea = typo, both faces)",
+    [black, extra].every((f) => Math.abs(baselineOf(f) - BASELINE) < 1e-6 && f.tables.hhea.ascender === f.tables.os2.sTypoAscender), `${BASELINE} vs ${baselineOf(black)}`);
+  const L = { size: 100, baseline: 500, top: 416, bottom: 516 };
+  check("hook band: a line's CSS top puts its baseline where the layout says", Math.abs(bandLineTop(L) - (L.baseline - baselineOf(black) * L.size)) < 1e-6, bandLineTop(L));
+  const entries = [0, 6].flatMap((d) => [...Array(106).keys()].map((fr) => bandEntry(fr, FPS, d)));
+  check("hook band: the entrance grows into the box, never past it (scale 0.8-1, opacity <= 1)",
+    entries.every((e) => e.scale <= 1 && e.scale >= 0.8 - 1e-9 && e.opacity <= 1) && bandEntry(60, FPS, 0).scale > 0.999,
+    `max scale ${Math.max(...entries.map((e) => e.scale))}`);
   const HOOKS = [
     { big: "4,35%", countTo: 4.35, decimals: 2, suffix: "%", sub: "Lãi suất cơ bản sau 3 lần tăng" },
     { big: "4,1 TỶ ĐÔ", countTo: 4.1, decimals: 1, suffix: "TỶ ĐÔ", sub: "Người Úc trả thêm mỗi năm" },
@@ -786,56 +807,133 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     { big: "ĐỔI NHÀ MỚI?" },
     { big: "10%", countTo: 10, suffix: "%" },
     { big: "$600,000", countTo: 600000, sub: "Ệ Ễ Ỹ gjpqy" },
+    { big: "3,6%", countTo: 3.6, decimals: 1, suffix: "%", sub: "Một dòng phụ rất dài, dài hơn hẳn chiều ngang của vùng an toàn khi đặt ở bốn mươi điểm ảnh" },
   ];
-  const env = (file, given = {}) => code(file, { HEAD_Y, SAFE, ...given }).env;
-  const cs = { ...env("chatstory/index.tsx"), hookHairY: (await design("chatstory/index.tsx")).hookHairY };
-  const csTruth = (segs) => Math.min(...segs.filter((s) => s.outFrom < HOOK).map((s, i) => cs.CHIN_Y - (1400 - HEAD_Y) * (s.zoomed ? cs.ZOOMED_SCALE : cs.SCALE) * (i ? 1.04 : 1)));
-  const ed = env("editorial/index.tsx");
-  const strip = env("series/Strip.tsx");
-  const series = env("series/index.tsx", { STRIP_HEIGHT: strip.STRIP_HEIGHT });
-  const scen = env("scenario/index.tsx");
-  // [design, declared hair line, re-derived hair line, band top]; chatstory per reel (a zoomed cut
-  // starting inside the hook, and one after it).
-  const zoomedIn = [{ outFrom: 0, zoomed: false }, { outFrom: 60, zoomed: true }];
-  const zoomedAfter = [{ outFrom: 0, zoomed: false }, { outFrom: 200, zoomed: true }];
-  const BAND = [
-    ["classic", env("classic/Behind.tsx").HOOK_HAIR_Y, HEAD_Y, SAFE.top],
-    ["datalab", env("datalab/index.tsx").HOOK_HAIR_Y, HEAD_Y, SAFE.top],
-    ["newsroom", env("newsroom/index.tsx").HOOK_HAIR_Y, HEAD_Y, SAFE.top],
-    ["scenario", scen.HOOK_HAIR_Y, scen.CHIN_Y - (1440 - HEAD_Y) * scen.SCALE * 1.04, SAFE.top],
-    ["series", series.HOOK_HAIR_Y, series.CHIN_Y - (1400 - HEAD_Y) * series.SCALE * 1.04, series.HOOK_TOP],
-    ["editorial", env("editorial/Behind.tsx").HOOK_HAIR_Y, 1248 - (1248 - (ed.LIFT + HEAD_Y * ed.SCALE)) * 1.02, SAFE.top],
-    ["chatstory (zoomed cut in the hook)", cs.hookHairY?.(zoomedIn), csTruth(zoomedIn), SAFE.top],
-    ["chatstory", cs.hookHairY?.(zoomedAfter), csTruth(zoomedAfter), SAFE.top],
-  ];
-  // classic and newsroom zoom him (>= 1) around y 576, above HEAD_Y, which only lowers his hair.
-  for (const [id, file] of [["classic", "classic/index.tsx"], ["newsroom", "newsroom/index.tsx"]])
-    check(`${id} (source): Talk zooms around y 576 ("50% 30%"), so his hair stays at or below HEAD_Y`, /transformOrigin:"50% 30%"/.test(code(file).js));
+  const bad = [];
+  for (const hook of HOOKS) for (const cf of [[4, 40], [0, 30], [-1, 0]]) {
+    const seen = [...Array(106).keys()].map((fr) => bandText(hook, fr, cf));
+    const ok = seen[105] === hook.big && (hook.countTo === undefined || seen.every((t) => num(t) >= 0.9 * num(hook.big) - 1e-9));
+    if (!ok) bad.push(`${hook.big} [${cf}]: ${seen[0]}..${seen[105]}`);
+  }
+  check("hook band: the number never counts from 0 and lands on the hook as written", bad.length === 0, bad.slice(0, 2).join("; "));
+  const src = code("../elements/BehindWord.tsx").js;
+  check("hook band (source): HookBand places each line with bandLineTop and bandEntry, a skin cannot move it, the number via bandText",
+    /\{\.\.\.style,position:"absolute"/.test(src) && /top:bandLineTop\(l\)/.test(src) && /const e=bandEntry\(frame,fps,delay\)/.test(src)
+      && /transform:`scale\(\$\{e\.scale\}\)`/.test(src) && /children:bandText\(hook,frame,countFrames\)/.test(src));
+  check("hook band (source): useHookBand gives no band without a hook, a cut-out or a clear hook window",
+    /if\(!hook\|\|!hookInBand\(reel\.edit\)\|\|!hookBandClear\(reel,fps\)\)return null;/.test(src));
   check("hookInBand: only with his cut-out (not vignette, not room)",
     hookInBand({}) && hookInBand({ background: "brand" }) && !hookInBand({ background: "vignette" }) && !hookInBand({ background: "room" }));
+  // The gate: anything drawn above Behind during the hook keeps the hook in the Overlay.
+  const quiet = words("dân Úc trả lãi suất cơ bản rồi họ thấy con số mà nhiều người hay quên mất đi khi tính tổng chi phí của khoản vay mỗi tháng xong");
+  const hooked = { hook: HOOKS[0] };
+  const base = reelOf(quiet, hooked);
+  const bank = reelOf(words("dân Úc vay westpac trả lãi suất cơ bản rồi họ thấy con số mà nhiều người hay quên mất đi khi tính tổng chi phí xong"), hooked);
+  const trans = { ...base, timeline: { ...base.timeline, segments: base.timeline.segments.map((sg, i) => (i ? sg : { ...sg, outDuration: 80, transitionAfter: "fade" })) } };
+  const rate = JSON.parse(readFileSync(join(ROOT, "public", "videos", "_test-rate-alert", "edit.json"), "utf8"));
+  // Source ms whose output frame is `fr` on this words timeline (first match).
+  const { outFrameOf } = await bundle("src/mortgage/schema.ts");
+  const msAt = (fr) => [...Array(400).keys()].map((i) => i * 25).find((ms) => outFrameOf(base.timeline, FPS)(ms) === fr);
+  const cue = (fromMs) => ({ kind: "change", fromMs, toMs: fromMs + 4000, from: "3,6%", to: "4,35%", label: "x" });
+  const gate = [
+    ["nothing above Behind", base, true],
+    ["a cue panel at 0.7 s", reelOf(quiet, { ...hooked, cues: [{ kind: "change", fromMs: 700, toMs: 7700, from: "3,6%", to: "4,35%", label: "x" }] }), false],
+    [`a cue panel from the hook's last frame (${HOOK - 1})`, reelOf(quiet, { ...hooked, cues: [cue(msAt(HOOK - 1))] }), false],
+    [`a cue panel from the frame after the hook (${HOOK})`, reelOf(quiet, { ...hooked, cues: [cue(msAt(HOOK))] }), true],
+    ["a chapter at 0", reelOf(quiet, { ...hooked, chapters: [{ atMs: 0, title: "Mở đầu" }] }), false],
+    [`a chapter cut at frame ${HOOK + 6} (its light leak flashes 12 frames early)`, reelOf(quiet, { ...hooked, chapters: [{ atMs: msAt(HOOK + 6), title: "Mở đầu" }] }), false],
+    [`a chapter cut at frame ${HOOK + 12}`, reelOf(quiet, { ...hooked, chapters: [{ atMs: msAt(HOOK + 12), title: "Mở đầu" }] }), true],
+    ["a bank named at 1.2 s", bank, false],
+    ["a cutaway at 1 s", reelOf(quiet, { ...hooked, visuals: [{ mode: "cutaway", atMs: 1000, durMs: 2000, asset: "x.jpg" }] }), false],
+    ["a chapter transition at frame 80", trans, false],
+    [`_test-rate-alert (its cue at ${rate.cues[0].fromMs} ms)`, reelOf(quiet, { hook: rate.hook, cues: rate.cues }), false],
+  ];
+  for (const [name, reel, want] of gate) check(`hook band gate: ${name} -> ${want ? "band" : "Overlay hook"}`, hookBandClear(reel, FPS) === want);
+  // Hair lines from each design's exported framing constants.
+  const d = Object.fromEntries(await Promise.all(["classic/Behind.tsx", "datalab/index.tsx", "newsroom/index.tsx", "scenario/index.tsx", "series/index.tsx", "editorial/Behind.tsx", "chatstory/index.tsx", "series/Strip.tsx"].map(async (f) => [f.split("/")[0] + (f.endsWith("Strip.tsx") ? "Strip" : ""), await design(f)])));
+  const zoomHair = (m) => m.ZOOM_Y + (HEAD_Y - m.ZOOM_Y) * (Math.min(...Object.values(m.ZOOM)) - m.PUNCH);
+  const chinHair = (m) => m.CHIN_Y - (m.CHIN_SRC - HEAD_Y) * m.SCALE * (1 + m.PUNCH);
+  const ed = d.editorial;
+  const edRest = ed.CHIN_Y - ed.CHIN_SRC * ed.SCALE + HEAD_Y * ed.SCALE;
+  const cs = d.chatstory;
+  const csTruth = (segs) => Math.min(...segs.filter((sg) => sg.outFrom < HOOK).map((sg, i) => cs.CHIN_Y - (cs.CHIN_SRC - HEAD_Y) * (sg.zoomed ? cs.ZOOMED_SCALE : cs.SCALE) * (i ? 1 + cs.PUNCH : 1)));
+  const zoomedIn = [{ outFrom: 0, zoomed: false }, { outFrom: 60, zoomed: true }];
+  const plainIn = [{ outFrom: 0, zoomed: false }, { outFrom: 60, zoomed: false }];
+  const zoomedAfter = [{ outFrom: 0, zoomed: false }, { outFrom: 200, zoomed: true }];
+  // Talk must use those constants (a literal there would let the framing and the band drift apart).
+  const pins = {
+    classic: ["classic/index.tsx", [/\[ZOOM\.first,ZOOM\.cut\]/, /seg\.zoomed\?ZOOM\.zoomed:ZOOM\.cut/, /\*PUNCH;/, /transformOrigin:`50% \$\{ZOOM_Y\}px`/]],
+    datalab: ["datalab/index.tsx", [/const Talk=\(\{seg,src,look,foreground,behind\}\)=>\{const room=useCueRoom\(seg\);return jsxs\(AbsoluteFill,\{style:\{backgroundColor:"#000"\},children:\[jsx\(DataLabBackdrop,\{\}\),behind,jsx\(AbsoluteFill,\{style:cueRoomStyle\(room\),children:jsx\(PacedVideo,\{seg,src,look,foreground,backdrop:"none"\}\)/]],
+    newsroom: ["newsroom/index.tsx", [/seg\.zoomed\?ZOOM\.zoomed:ZOOM\.cut/, /\*PUNCH;/, /transformOrigin:`50% \$\{ZOOM_Y\}px`/]],
+    scenario: ["scenario/index.tsx", [/\*PUNCH;/, /transformOrigin:`50% \$\{CHIN_Y\}px`/, /\[CHIN_Y-\(CHIN_SRC-HEAD_Y\)\*SCALE,CUE_HEAD_Y\]/]],
+    series: ["series/index.tsx", [/\*PUNCH;/, /transformOrigin:`\$\{540\*SCALE\}px \$\{CHIN_Y\}px`/, /\[CHIN_Y-\(CHIN_SRC-HEAD_Y\)\*SCALE,CUE_HAIR_Y\]/]],
+    editorial: ["editorial/index.tsx", [/\[1,1\+DRIFT\]/, /transformOrigin:`50% \$\{DRIFT_Y\}px`/, /translate\(\$\{540\*\(1-SCALE\)\}px, \$\{LIFT\}px\) scale\(\$\{SCALE\}\)/]],
+    chatstory: ["chatstory/index.tsx", [/\*PUNCH;/, /transformOrigin:`50% \$\{CHIN_Y\}px`/, /\$\{CHIN_Y-CHIN_SRC\*talkScale\}px\) scale\(\$\{talkScale\}\)/, /seg\.zoomed\?ZOOMED_SCALE:SCALE/]],
+  };
+  for (const [id, [file, res]] of Object.entries(pins)) {
+    const js = code(file).js;
+    const miss = res.filter((re) => !re.test(js));
+    check(`${id} (source): Talk frames him with the exported constants the band's hair line uses`, miss.length === 0, miss.map(String).join(" "));
+  }
+  check("classic, newsroom: the zoom centre is above his hair line, so only a smaller zoom lifts it", d.classic.ZOOM_Y < HEAD_Y && d.newsroom.ZOOM_Y < HEAD_Y);
+  check("series: the band starts under the episode strip", d.series.HOOK_TOP >= SAFE.top + d.seriesStrip.STRIP_HEIGHT, `${d.series.HOOK_TOP}`);
+  const BAND = [
+    ["classic", d.classic.HOOK_HAIR_Y, zoomHair(d.classic), SAFE.top],
+    ["datalab", d.datalab.HOOK_HAIR_Y, HEAD_Y, SAFE.top],
+    ["newsroom", d.newsroom.HOOK_HAIR_Y, zoomHair(d.newsroom), SAFE.top],
+    ["scenario", d.scenario.HOOK_HAIR_Y, chinHair(d.scenario), SAFE.top],
+    ["series", d.series.HOOK_HAIR_Y, chinHair(d.series), d.series.HOOK_TOP],
+    ["editorial", ed.HOOK_HAIR_Y, ed.DRIFT_Y - (ed.DRIFT_Y - edRest) * (1 + ed.DRIFT), SAFE.top],
+    ["chatstory (zoomed cut in the hook)", cs.hookHairY(zoomedIn), csTruth(zoomedIn), SAFE.top],
+    ["chatstory (plain cut in the hook)", cs.hookHairY(plainIn), csTruth(plainIn), SAFE.top],
+    ["chatstory", cs.hookHairY(zoomedAfter), csTruth(zoomedAfter), SAFE.top],
+  ];
   for (const [id, hair, truth, top] of BAND) {
     check(`${id}: band hair line ${hair?.toFixed?.(1)} at or above his hair line from the framing (${truth.toFixed(1)})`, Number.isFinite(hair) && hair <= truth + 1e-9);
     let shown = 0;
-    const bad = [];
+    const out = [];
     for (const hook of HOOKS) {
       const big = hookText(hook, 1);
       const start = hookText(hook, 0);
       const band = hookBandLayout({ hairY: hair, top, big, sub: hook.sub, bigFit: Math.min(fit(black, big), fit(black, start)), subFit: hook.sub ? fit(extra, hook.sub) : 0 });
       if (!band) continue; // the Overlay keeps the hook (fallback)
       shown++;
-      const boxes = [[black, big, band.big], [black, start, band.big], ...(band.sub ? [[extra, hook.sub, band.sub]] : [])]
-        .map(([f, text, l]) => [text, box(f, text, l.size, l.baseline)]);
+      if (band.big.size < BIG_MIN || (hook.sub && !(band.sub?.size >= SUB_MIN))) out.push(`"${big}" sizes ${band.big.size}/${band.sub?.size}`);
+      const lines = [[black, big, band.big], [black, start, band.big], ...(band.sub ? [[extra, hook.sub, band.sub]] : [])];
+      const boxes = lines.map(([f, text, l]) => [text, box(f, text, l.size, l.baseline)]);
       for (const [text, b] of boxes)
         if (b.y1 < top - 0.5 || b.y2 > truth - GAP + 0.5 || b.x1 < SAFE.left || b.x2 > SAFE.right)
-          bad.push(`"${text}" y ${b.y1.toFixed(0)}-${b.y2.toFixed(0)} x ${b.x1.toFixed(0)}-${b.x2.toFixed(0)}`);
+          out.push(`"${text}" y ${b.y1.toFixed(0)}-${b.y2.toFixed(0)} x ${b.x1.toFixed(0)}-${b.x2.toFixed(0)}`);
+      if (band.sub && !(boxes[2][1].y2 < Math.min(boxes[0][1].y1, boxes[1][1].y1))) out.push(`"${hook.sub}" overlaps "${big}"`);
+      if (id === "newsroom") {
+        const st = d.newsroom.stripeBox(band.big);
+        const lean = Math.tan((Math.abs(st.skew) * Math.PI) / 180) * st.height / 2;
+        if (st.left - lean < SAFE.left || st.right + lean > SAFE.right || st.top < SAFE.top) out.push(`stripe x ${(st.left - lean).toFixed(1)}-${(st.right + lean).toFixed(1)} top ${st.top}`);
+      }
     }
-    check(`${id}: every band glyph in SAFE from y ${top} and >= ${GAP} px above his hair line (y <= ${(truth - GAP).toFixed(0)})`, bad.length === 0, bad.slice(0, 3).join("; "));
-    if (!id.includes("zoomed")) check(`${id}: the band holds the "4,35%" rate hook with its sub`, shown > 0 && Boolean(hookBandLayout({ hairY: hair, top, big: "4,35%", sub: HOOKS[0].sub, bigFit: fit(black, "4,315%"), subFit: fit(extra, HOOKS[0].sub) })));
+    check(`${id}: every band glyph in SAFE from y ${top}, >= ${GAP} px above his hair line (y <= ${(truth - GAP).toFixed(0)}), sub over number, at the size floors`, out.length === 0, out.slice(0, 3).join("; "));
+    if (!id.includes("cut in")) check(`${id}: the band holds the "4,35%" rate hook with its sub`, shown > 0 && Boolean(hookBandLayout({ hairY: hair, top, big: "4,35%", sub: HOOKS[0].sub, bigFit: fit(black, "4,35%"), subFit: fit(extra, HOOKS[0].sub) })));
   }
-  for (const id of ["classic", "datalab", "newsroom", "scenario", "series", "editorial", "chatstory"]) {
-    const js = readdirSync(join(ROOT, "src", "designs", id)).filter((f) => f.endsWith(".tsx")).map((f) => code(`${id}/${f}`).js).join("\n");
-    check(`${id} (source): hook drawn by HookBand in Behind, the Overlay hook only when the band is null`,
-      (js.match(/useHookBand\(/g) ?? []).length >= 2 && /jsxs?\(HookBand,/.test(js) && /hook&&!band\?|band\?null:/.test(js), "");
+  check("hook band: a sub too long for one line at 40 px keeps the Overlay hook", BAND.every(([, hair, , top]) => hookBandLayout({ hairY: hair, top, big: "3,6%", sub: HOOKS[6].sub, bigFit: fit(black, "3,6%"), subFit: fit(extra, HOOKS[6].sub) }) === null));
+  // Each Overlay hook is drawn only when the band is null (every piece of it), and each Behind
+  // draws the band only when it is set.
+  const gated = {
+    classic: ["classic/index.tsx", ["band\\?null:jsx\\(MoneyRain,", "band\\?null:jsx\\(HookTitle,", "band\\?null:jsx\\(HookBurst,"], ["MoneyRain", "HookTitle", "HookBurst"]],
+    datalab: ["datalab/index.tsx", ["hook&&!band\\?jsx\\(Sequence,\\{durationInFrames:HOOK_FRAMES,children:jsx\\(HookCounter,"], ["HookCounter"]],
+    newsroom: ["newsroom/index.tsx", ["hook&&!band\\?jsx\\(Sequence,\\{durationInFrames:HOOK_FRAMES,children:jsx\\(Hook,"], ["Hook"]],
+    scenario: ["scenario/index.tsx", ["hook&&!band\\?jsx\\(Sequence,\\{durationInFrames:HOOK_FRAMES,layout:\"none\",children:jsx\\(ScenarioHook,"], ["ScenarioHook"]],
+    series: ["series/index.tsx", ["hook&&!band\\?jsx\\(Sequence,\\{durationInFrames:HOOK_FRAMES,children:jsxs\\(\"div\",\\{style:\\{position:\"absolute\",left:60,top:SAFE\\.top-20,right:340\\},children:\\[jsx\\(StaggerTitle,\\{text:hook\\.big"], []],
+    editorial: ["editorial/Overlay.tsx", ["hook&&!band\\?jsx\\(Sequence,\\{durationInFrames:HOOK_FRAMES,children:jsx\\(Hook,"], ["Hook"]],
+    chatstory: ["chatstory/index.tsx", ["hook&&!band\\?jsx\\(Sequence,\\{durationInFrames:HOOK_FRAMES,layout:\"none\",children:jsx\\(HookBubbles,"], ["HookBubbles"]],
+  };
+  for (const [id, [file, gates, names]] of Object.entries(gated)) {
+    const js = code(file).js;
+    const once = names.every((n) => (js.match(new RegExp(`jsxs?\\(${n},`, "g")) ?? []).length === 1);
+    const series = id !== "series" || (js.match(/jsxs?\(StaggerTitle,\{text:hook\.big/g) ?? []).length === 1;
+    const folder = readdirSync(join(ROOT, "src", "designs", id)).filter((f) => f.endsWith(".tsx")).map((f) => code(`${id}/${f}`).js).join("\n");
+    const behind = /band&&reel\.edit\.hook\?|return band\?jsx\(Sequence/.test(folder) && (folder.match(/useHookBand\(/g) ?? []).length >= 2;
+    check(`${id} (source): every Overlay hook piece drawn only when the band is null, once; Behind draws the band only when set`,
+      gates.every((g) => new RegExp(g).test(js)) && once && series && behind);
   }
 }
 

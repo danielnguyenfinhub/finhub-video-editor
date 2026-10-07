@@ -134,10 +134,12 @@ or `toOutMs` (timeline.ts). Reel data: `reel.edit` (edit.json), `reel.timeline.c
 6. **Hook in 3 s.** `reel.edit.hook` (`{big, sub?, countTo?, suffix?}`) shows in the first
    105 frames of the Overlay; the Cover title uses `fitText` (`@remotion/layout-utils`).
    Daniel (07/10/2026): a hook drawn in `Behind` above his head satisfies this, provided
-   no digit is ever behind his hair: every glyph from SAFE.top to 20 px above his hair
-   line, and only with his cut-out (in quick mode and room the hook stays in the
-   Overlay). `useHookBand` / `HookBand` (`src/elements/BehindWord.tsx`) do this;
-   `check-design-figures` (k) measures it.
+   no digit is ever behind his hair, and only with his cut-out (in quick mode and room
+   the hook stays in the Overlay). Implementation, not part of the ruling:
+   `useHookBand` / `HookBand` (`src/elements/BehindWord.tsx`) keep every glyph from
+   SAFE.top to 20 px above his hair line, and fall back to the Overlay hook when
+   anything drawn above `Behind` is up during the hook; `check-design-figures` (k)
+   checks the layout maths.
 7. **Brand only.** Colours from `src/brand/theme.ts` (tints/gradients of them are fine).
    Font `FONT` (Be Vietnam Pro). The logo always on white.
 8. **Compliance.** A template adds no claims of its own. Copy in `copy` is scanned.

@@ -72,11 +72,15 @@ const LOGO_BOX: React.CSSProperties = {
 // and his head (top ~y 800) stays under the compare columns' rows and the
 // figure card's label. The layer's sides and bottom end inside the frame, so
 // they fade out instead of cutting hard across his shoulders.
-const SCALE = 0.6;
-const CHIN_Y = 1270;
-// His hair line on screen while the hook is up: the framing above, with a
-// cut's 4% punch-in around CHIN_Y (Talk) lifting it. check-design-figures (k).
-export const HOOK_HAIR_Y = CHIN_Y - (1440 - HEAD_Y) * SCALE * 1.04;
+export const SCALE = 0.6;
+export const CHIN_Y = 1270;
+export const CHIN_SRC = 1440; // his chin in the source when he leans in
+// A cut's punch-in around CHIN_Y (Talk): spring(0) = 0, so a cut's first
+// frame is the full 1 + PUNCH.
+export const PUNCH = 0.05;
+// His hair line on screen while the hook is up: the framing above, lifted by
+// that punch-in. check-design-figures (k) re-derives it from these constants.
+export const HOOK_HAIR_Y = CHIN_Y - (CHIN_SRC - HEAD_Y) * SCALE * (1 + PUNCH);
 const EDGE_FADE =
   "linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 78%, transparent)";
 // k (useCueRoom, 0..1) eases him to CUE_SCALE with his hair line (source
@@ -88,7 +92,7 @@ const framing = (k: number): React.CSSProperties => {
   const hair = interpolate(
     k,
     [0, 1],
-    [CHIN_Y - (1440 - HEAD_Y) * SCALE, CUE_HEAD_Y],
+    [CHIN_Y - (CHIN_SRC - HEAD_Y) * SCALE, CUE_HEAD_Y],
   );
   return {
     transform: `translate(${540 * (1 - s)}px, ${hair - HEAD_Y * s}px) scale(${s})`,
@@ -233,7 +237,7 @@ const Talk: React.FC<TalkProps> = ({
     index === 0
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
-        0.05;
+        PUNCH;
   const room = useCueRoom(seg);
   return (
     <AbsoluteFill style={{ backgroundColor: brand.background }}>

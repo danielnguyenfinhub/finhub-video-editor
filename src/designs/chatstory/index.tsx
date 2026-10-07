@@ -42,12 +42,16 @@ const CHAPTER_FRAMES_S = 2.5;
 // edge. Passing a headY 110 px above his hair line lands the hair line
 // 0.55 * 110 ~ 60 px lower (y ~860): eyebrows ~y 1010, mouth ~y 1230.
 const CUE_DROP = 110;
-const SCALE = 0.85;
-const ZOOMED_SCALE = 0.92;
-const CHIN_Y = 1280;
+export const SCALE = 0.85;
+export const ZOOMED_SCALE = 0.92;
+export const CHIN_Y = 1280;
+export const CHIN_SRC = 1400; // his chin in the source when he leans in
+// A cut's punch-in around CHIN_Y (Talk): spring(0) = 0, so a cut's first
+// frame is the full 1 + PUNCH.
+export const PUNCH = 0.04;
 // His hair line on screen while the hook is up, per reel: each cut in the
-// hook at its scale (a zoomed cut at 0.92) with a cut's 4% punch-in around
-// CHIN_Y lifting it; the highest wins. check-design-figures (k).
+// hook at its scale (a zoomed cut at ZOOMED_SCALE) with a cut's punch-in
+// lifting it; the highest wins. check-design-figures (k).
 export const hookHairY = (segments: Segment[]) =>
   Math.min(
     ...segments
@@ -55,7 +59,9 @@ export const hookHairY = (segments: Segment[]) =>
       .map(
         (s, i) =>
           CHIN_Y -
-          (1400 - HEAD_Y) * (s.zoomed ? ZOOMED_SCALE : SCALE) * (i ? 1.04 : 1),
+          (CHIN_SRC - HEAD_Y) *
+            (s.zoomed ? ZOOMED_SCALE : SCALE) *
+            (i ? 1 + PUNCH : 1),
       ),
   );
 const BUBBLE_PAD = 40;
@@ -79,7 +85,7 @@ const Talk: React.FC<TalkProps> = ({
     index === 0
       ? 0
       : (1 - spring({ frame, fps, config: { damping: 18, stiffness: 260 } })) *
-        0.04;
+        PUNCH;
   return (
     <AbsoluteFill>
       <Backdrop />
@@ -89,7 +95,7 @@ const Talk: React.FC<TalkProps> = ({
       <AbsoluteFill
         style={cueRoomStyle(
           room,
-          CHIN_Y - (1400 - HEAD_Y) * talkScale * (1 + punch) - CUE_DROP,
+          CHIN_Y - (CHIN_SRC - HEAD_Y) * talkScale * (1 + punch) - CUE_DROP,
         )}
       >
         <AbsoluteFill
@@ -100,7 +106,7 @@ const Talk: React.FC<TalkProps> = ({
         >
           <AbsoluteFill
             style={{
-              transform: `translate(${540 * (1 - talkScale)}px, ${CHIN_Y - 1400 * talkScale}px) scale(${talkScale})`,
+              transform: `translate(${540 * (1 - talkScale)}px, ${CHIN_Y - CHIN_SRC * talkScale}px) scale(${talkScale})`,
               transformOrigin: "0 0",
               maskImage: EDGE_FADE,
               WebkitMaskImage: EDGE_FADE,

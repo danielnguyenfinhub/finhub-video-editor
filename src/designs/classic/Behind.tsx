@@ -174,10 +174,16 @@ const Lenders: React.FC<{ reel: Reel }> = ({ reel }) => {
 };
 
 const HOOK_FRAMES = 105;
-// His hair line on screen while the hook is up: Talk only zooms him (>= 1)
-// around y 576, which lowers it, so HEAD_Y is the highest it gets.
-// check-design-figures (k).
-export const HOOK_HAIR_Y = HEAD_Y;
+// Talk's framing (index.tsx): the zoom about y ZOOM_Y (30% of 1920, above
+// HEAD_Y) for the first cut, a plain cut and a zoomed cut, and the cut's
+// spring punch-in (its overshoot can take up to PUNCH off the zoom).
+export const ZOOM_Y = 576;
+export const ZOOM = { first: 1.3, cut: 1.0, zoomed: 1.13 } as const;
+export const PUNCH = 0.05;
+// His hair line on screen while the hook is up: at the smallest zoom, which
+// lifts it most. check-design-figures (k) re-derives it from these constants.
+export const HOOK_HAIR_Y =
+  ZOOM_Y + (HEAD_Y - ZOOM_Y) * (Math.min(ZOOM.cut, ZOOM.zoomed) - PUNCH);
 // The starburst behind the band hook fades out before FACE.top, so its edge
 // never crosses his face (the Overlay version left a seam at eye level).
 const BURST_MASK = `linear-gradient(#000 ${SAFE.top}px, transparent ${FACE.top}px)`;

@@ -20,9 +20,17 @@ import {
   useVideoConfig,
 } from "remotion";
 import { brand } from "../brand/theme";
-import { SAFE, hookText } from "../mortgage/golden";
-import type { EditJson, Reel } from "../mortgage/schema";
-import type { OutCaption } from "../mortgage/timeline";
+import {
+  HOOK_FRAMES,
+  SAFE,
+  hookText,
+  lenderMentionsOf,
+} from "../mortgage/golden";
+import { outFrameOf, type EditJson, type Reel } from "../mortgage/schema";
+import {
+  CHAPTER_TRANSITION_FRAMES,
+  type OutCaption,
+} from "../mortgage/timeline";
 import {
   FONT,
   clamp,
@@ -124,21 +132,24 @@ export const BehindWord: React.FC<{
 // The sub is one fitted line on top, the number fitted under it. Only with
 // his cut-out: in quick mode ("vignette") and "room" the Behind layer draws
 // on top of him or under an opaque frame, so the design keeps its Overlay
-// hook there, and also when the band cannot hold the hook at the floor sizes.
+// hook there, and also when the band cannot hold the hook at the floor sizes
+// or when something drawn above Behind is up during the hook (hookBandClear).
 type Hook = NonNullable<EditJson["hook"]>;
-export const HAIR_GAP = 20; // every glyph ends at least this far above his hair line
-const SUB = { min: 40, max: 46 };
+// Our margin, not part of the ruling: every glyph ends this far above his hair line.
+export const HAIR_GAP = 20;
+export const SUB = { min: 40, max: 46 };
 // ponytail: BIG_MIN 60 (1.5x the sub floor) is a look call; raise it if a
 // band hook reads small on Daniel's stills, the hook then stays in the Overlay.
-const BIG = { min: 60, max: 150 };
-const LINE_GAP = 4;
+export const BIG = { min: 60, max: 150 };
+export const LINE_GAP = 4;
 // Be Vietnam Pro 800/900, measured with opentype.js (em): how far glyphs reach
 // above and below the baseline. Digits, "%", "$" and the decimal comma vs any
 // text (stacked Vietnamese marks: "Ẳ" reaches 1.24 above, "Ạ" 0.26 below).
 const DIGITS = /^[\d\s.,%$+~–-]*$/;
 const REACH = { digits: [0.84, 0.16], text: [1.24, 0.26] } as const;
-// Baseline from the top of a lineHeight: 1 box (ascent 1, descent 0.265).
-const BASELINE = 1 - (1.265 - 1) / 2;
+// Baseline from the top of a lineHeight: 1 box (ascent 1, descent 0.265);
+// check-design-figures (k) compares it with the TTFs.
+export const BASELINE = 1 - (1.265 - 1) / 2;
 
 export type BandLine = {
   size: number;
@@ -196,7 +207,43 @@ export const hookBandLayout = ({
 export const hookInBand = (edit: EditJson): boolean =>
   edit.background !== "vignette" && edit.background !== "room";
 
-// The band for this reel, or null (no hook, no cut-out, or it does not fit):
+// MotionTrack's light leak flashes 12 frames before a chapter cut
+// (classic/Cues.tsx); its cue panels start on their cue's frame.
+const CHAPTER_LEAD = 12;
+// Pure: true when nothing drawn above Behind can be up during the hook (talk
+// frames 0-HOOK_FRAMES), so the band hook is never covered: a cue panel, a
+// chapter card, a bank mention (the designs draw its logo), a cutaway or pip
+// visual (the core draws Visuals above Talk), or a chapter transition (both
+// segments render Behind there, so the band would show twice). The same
+// built-reel timing the designs and the core use, in output frames.
+export const hookBandClear = (reel: Reel, fps: number): boolean => {
+  const { edit, timeline } = reel;
+  const out = outFrameOf(timeline, fps);
+  const f = (ms: number) => Math.round((ms / 1000) * fps);
+  const inHook = (from: number, to: number) => from < HOOK_FRAMES && to > 0;
+  return !(
+    (edit.cues ?? []).some((c) =>
+      inHook(out(c.fromMs), out(c.toMs)),
+    ) ||
+    (edit.chapters ?? []).some(
+      (c) => out(c.atMs) - CHAPTER_LEAD < HOOK_FRAMES,
+    ) ||
+    lenderMentionsOf(reel).some((m) => inHook(f(m.startMs), f(m.endMs))) ||
+    (edit.visuals ?? []).some((v) =>
+      inHook(out(v.atMs), out(v.atMs) + f(v.durMs)),
+    ) ||
+    timeline.segments.some((s) => {
+      const end = s.outFrom + s.outDuration;
+      return (
+        s.transitionAfter !== null &&
+        inHook(end - CHAPTER_TRANSITION_FRAMES, end + CHAPTER_TRANSITION_FRAMES)
+      );
+    })
+  );
+};
+
+// The band for this reel, or null (no hook, no cut-out, something above Behind
+// during the hook, or it does not fit):
 // Behind draws <HookBand> when it is set, the Overlay its own hook when not.
 // Measured once Be Vietnam Pro is in (the frame is held until then).
 export const useHookBand = (
@@ -215,8 +262,9 @@ export const useHookBand = (
   useEffect(() => {
     if (ready) continueRender(handle);
   }, [ready, handle, continueRender]);
+  const { fps } = useVideoConfig();
   const hook = reel.edit.hook;
-  if (!hook || !hookInBand(reel.edit)) return null;
+  if (!hook || !hookInBand(reel.edit) || !hookBandClear(reel, fps)) return null;
   const withinWidth = SAFE.right - SAFE.left - 2 * padX;
   const fit = (text: string, fontWeight: number) =>
     fitText({ text, withinWidth, fontFamily: FONT, fontWeight }).fontSize;
@@ -226,11 +274,28 @@ export const useHookBand = (
     top,
     big,
     sub: hook.sub,
-    // The count can show one more digit than it lands on (4,315 -> 4,35).
+    // Fitted to the narrower of the count's first text and the landed one,
+    // so neither runs past the band's width.
     bigFit: Math.min(fit(big, 900), fit(hookText(hook, 0), 900)),
     subFit: hook.sub ? fit(hook.sub, 800) : 0,
   });
 };
+
+// Pure pieces of HookBand, checked by check-design-figures (k): a line's CSS top
+// for its baseline, the entrance (opacity and a scale that grows into the box,
+// never past it, though `enter` overshoots to ~1.056), and the number as shown.
+export const ENTRY_FROM = 0.8;
+export const bandLineTop = (l: BandLine): number =>
+  l.baseline - BASELINE * l.size;
+export const bandEntry = (frame: number, fps: number, delay: number) => {
+  const p = Math.min(1, enter(frame, fps, delay));
+  return { opacity: p, scale: interpolate(p, [0, 1], [ENTRY_FROM, 1]) };
+};
+export const bandText = (
+  hook: Hook,
+  frame: number,
+  countFrames: [number, number],
+): string => hookText(hook, interpolate(frame, countFrames, [0, 1], clamp));
 
 // The two lines at the band's places, counting with hookText (never from 0),
 // fading in and out with the hook. `children` (a skin's plate) draws under them.
@@ -250,22 +315,23 @@ export const HookBand: React.FC<{
     [1, 0],
     clamp,
   );
+  // A skin styles the ink only: place, size and entrance come last.
   const text = (l: BandLine, delay: number, style?: React.CSSProperties) => {
-    const p = Math.min(1, enter(frame, fps, delay));
+    const e = bandEntry(frame, fps, delay);
     return {
+      ...style,
       position: "absolute",
       left: SAFE.left,
       width: SAFE.right - SAFE.left,
-      top: l.baseline - BASELINE * l.size,
+      top: bandLineTop(l),
       fontFamily: FONT,
       fontSize: l.size,
       lineHeight: 1,
       textAlign: "center",
       whiteSpace: "nowrap",
-      opacity: p,
+      opacity: e.opacity,
       // Grows into its box (never past it), so no glyph passes the hair line.
-      transform: `scale(${interpolate(p, [0, 1], [0.8, 1])})`,
-      ...style,
+      transform: `scale(${e.scale})`,
     } satisfies React.CSSProperties;
   };
   return (
@@ -277,7 +343,7 @@ export const HookBand: React.FC<{
         </div>
       ) : null}
       <div style={text(band.big, 6, { fontWeight: 900, ...bigStyle })}>
-        {hookText(hook, interpolate(frame, countFrames, [0, 1], clamp))}
+        {bandText(hook, frame, countFrames)}
       </div>
     </AbsoluteFill>
   );
