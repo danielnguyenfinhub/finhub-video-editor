@@ -48,3 +48,12 @@ ruler, auto-scroll and undo maths (`review/timelineMath.ts`), and
 path containment, UTF-8 request body), directly and through the running server
 started on a temp `public/` (`REVIEW_PUBLIC`; bad Range headers, a sibling
 `public-x` path, a split Vietnamese save).
+
+## Matte benchmark
+
+`http://localhost:4100/matte.html?slug=<slug>&bench=10` times the real background removal on the first
+10 seconds of the video (`bench=<3-60>` to change), stops, and saves nothing. It prints frames per second,
+how many times the video's length it takes, an estimate for the whole video, and which GPU the browser
+gave the page (a "software fallback" adapter means the CPU is doing the work). Compare it with the
+roughly 13x of a full run before starting a long matte. `node review/check-matte-bench.mjs` checks the
+maths and wording (`review/matteBench.ts`); the page itself needs a GPU browser and is not run in CI.
