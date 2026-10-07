@@ -829,10 +829,20 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
   const hooked = { hook: HOOKS[0] };
   const base = reelOf(quiet, hooked);
   const bank = reelOf(words("dân Úc vay westpac trả lãi suất cơ bản rồi họ thấy con số mà nhiều người hay quên mất đi khi tính tổng chi phí xong"), hooked);
-  const trans = { ...base, timeline: { ...base.timeline, segments: base.timeline.segments.map((sg, i) => (i ? sg : { ...sg, outDuration: 80, transitionAfter: "fade" })) } };
+  const { outFrameOf } = await bundle("src/mortgage/schema.ts");
+  // A chapter transition after the first cut, ending at `end` (both segments render Behind for
+  // CHAPTER_TRANSITION_FRAMES around it).
+  const transAt = (end) => ({ ...base, timeline: { ...base.timeline, segments: base.timeline.segments.map((sg, i) => (i ? sg : { ...sg, outDuration: end, transitionAfter: "fade" })) } });
+  const trans = transAt(80);
+  // A bank named at talk 4.8 s on a timeline that starts 3 s into the source (talk ms != source
+  // ms): the mention is after the hook, though read as source ms it would land inside it.
+  const late = words("dân Úc lãi suất cơ bản rồi họ thấy con số mà nhiều người westpac hay quên mất đi khi tính tổng chi phí của khoản vay xong").map((w) => ({ ...w, startMs: w.startMs + 3000, endMs: w.endMs + 3000 }));
+  const lateBank = reelOf(late, hooked);
+  const lateMention = golden.lenderMentionsOf(lateBank)[0];
+  check("hook band gate fixture: the bank mention is after the hook in talk frames, inside it if read as source ms",
+    lateMention && Math.round((lateMention.startMs / 1000) * FPS) >= HOOK && outFrameOf(lateBank.timeline, FPS)(lateMention.startMs) < HOOK, JSON.stringify(lateMention?.startMs));
   const rate = JSON.parse(readFileSync(join(ROOT, "public", "videos", "_test-rate-alert", "edit.json"), "utf8"));
   // Source ms whose output frame is `fr` on this words timeline (first match).
-  const { outFrameOf } = await bundle("src/mortgage/schema.ts");
   const msAt = (fr) => [...Array(400).keys()].map((i) => i * 25).find((ms) => outFrameOf(base.timeline, FPS)(ms) === fr);
   const cue = (fromMs) => ({ kind: "change", fromMs, toMs: fromMs + 4000, from: "3,6%", to: "4,35%", label: "x" });
   const gate = [
@@ -842,10 +852,15 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     [`a cue panel from the frame after the hook (${HOOK})`, reelOf(quiet, { ...hooked, cues: [cue(msAt(HOOK))] }), true],
     ["a chapter at 0", reelOf(quiet, { ...hooked, chapters: [{ atMs: 0, title: "Mở đầu" }] }), false],
     [`a chapter cut at frame ${HOOK + 6} (its light leak flashes 12 frames early)`, reelOf(quiet, { ...hooked, chapters: [{ atMs: msAt(HOOK + 6), title: "Mở đầu" }] }), false],
+    [`a chapter cut at frame ${HOOK + 11} (its leak's first frame is ${HOOK - 1})`, reelOf(quiet, { ...hooked, chapters: [{ atMs: msAt(HOOK + 11), title: "Mở đầu" }] }), false],
     [`a chapter cut at frame ${HOOK + 12}`, reelOf(quiet, { ...hooked, chapters: [{ atMs: msAt(HOOK + 12), title: "Mở đầu" }] }), true],
     ["a bank named at 1.2 s", bank, false],
     ["a cutaway at 1 s", reelOf(quiet, { ...hooked, visuals: [{ mode: "cutaway", atMs: 1000, durMs: 2000, asset: "x.jpg" }] }), false],
+    ["a cutaway from 0 ms", reelOf(quiet, { ...hooked, visuals: [{ mode: "cutaway", atMs: 0, durMs: 2000, asset: "x.jpg" }] }), false],
+    ["a bank named at talk 4.8 s, the source starting 3 s in", lateBank, true],
     ["a chapter transition at frame 80", trans, false],
+    [`a chapter transition ending at frame ${HOOK + 9} (overlaps the hook's last frame)`, transAt(HOOK + 9), false],
+    [`a chapter transition ending at frame ${HOOK + 10}`, transAt(HOOK + 10), true],
     [`_test-rate-alert (its cue at ${rate.cues[0].fromMs} ms)`, reelOf(quiet, { hook: rate.hook, cues: rate.cues }), false],
   ];
   for (const [name, reel, want] of gate) check(`hook band gate: ${name} -> ${want ? "band" : "Overlay hook"}`, hookBandClear(reel, FPS) === want);
@@ -931,8 +946,16 @@ check("ticker/index.tsx (source): the tape starts after the hook", /from:reel\.e
     const once = names.every((n) => (js.match(new RegExp(`jsxs?\\(${n},`, "g")) ?? []).length === 1);
     const series = id !== "series" || (js.match(/jsxs?\(StaggerTitle,\{text:hook\.big/g) ?? []).length === 1;
     const folder = readdirSync(join(ROOT, "src", "designs", id)).filter((f) => f.endsWith(".tsx")).map((f) => code(`${id}/${f}`).js).join("\n");
-    const behind = /band&&reel\.edit\.hook\?|return band\?jsx\(Sequence/.test(folder) && (folder.match(/useHookBand\(/g) ?? []).length >= 2;
-    check(`${id} (source): every Overlay hook piece drawn only when the band is null, once; Behind draws the band only when set`,
+    // One band call per design, its hair line the exported one, shared by both layers; the band's
+    // Sequence lasts the hook (HOOK_FRAMES equal to the core's in every file that defines it).
+    const calls = folder.match(/useHookBand\([^;]*?\)(?=;|\n|$)/g) ?? [];
+    const hair = id === "chatstory" ? "hookHairY(reel.timeline.segments)" : "HOOK_HAIR_Y";
+    const oneCall = calls.length === 1 && new RegExp(`^useHookBand\\(reel,${hair.replace(/[().]/g, "\\$&")}(\\)|,\\{)`).test(calls[0]) && (id !== "series" || calls[0].includes("top:HOOK_TOP"))
+      && (folder.match(/const band=useBand\(reel\);/g) ?? []).length === 2;
+    const seq = /(band&&reel\.edit\.hook\?|return band\?)jsxs?\(Sequence,\{durationInFrames:HOOK_FRAMES,/.test(folder)
+      && readdirSync(join(ROOT, "src", "designs", id)).filter((f) => f.endsWith(".tsx")).every((f) => [undefined, HOOK].includes(code(`${id}/${f}`).env.HOOK_FRAMES));
+    const behind = oneCall && seq;
+    check(`${id} (source): every Overlay hook piece drawn only when the band is null, once; Behind draws the band for the hook's frames only when set; one shared useBand`,
       gates.every((g) => new RegExp(g).test(js)) && once && series && behind);
   }
 }

@@ -178,12 +178,15 @@ export const DRIFT_Y = 1248;
 // which lifts it most. check-design-figures (k) re-derives it from these.
 export const HOOK_HAIR_Y = DRIFT_Y - (DRIFT_Y - REST_HAIR_Y) * (1 + DRIFT);
 const HOOK_FRAMES = 105;
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+export const useBand = (reel: Reel) => useHookBand(reel, HOOK_HAIR_Y);
 
 // The hook as a stacked masthead headline in the band above his head, ink on
 // the cream page (rule 6 ruling, 07/10/2026); Overlay.tsx keeps its own hook
 // when the band does not hold it.
 export const Behind: React.FC<OverlayProps> = ({ reel }) => {
-  const band = useHookBand(reel, HOOK_HAIR_Y);
+  const band = useBand(reel);
   return (
     <>
       <Figures reel={reel} />

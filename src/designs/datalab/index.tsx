@@ -45,6 +45,9 @@ const HOOK_FRAMES = 105;
 // His hair line on screen while the hook is up: Talk never scales him, so it
 // stays at HEAD_Y (a cue panel only lowers it). check-design-figures (k).
 export const HOOK_HAIR_Y = HEAD_Y;
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+const useBand = (reel: OverlayProps["reel"]) => useHookBand(reel, HOOK_HAIR_Y);
 const KICKER = "NGÂN HÀNG ĐƯỢC NHẮC";
 const CHAPTER_WORD = "PHẦN";
 
@@ -173,7 +176,7 @@ const Talk: React.FC<TalkProps> = ({ seg, src, look, foreground, behind }) => {
 // Golden rule 3b: figure cards render behind Daniel's cut-out, and so does
 // the hook, in the band above his head (rule 6 ruling, 07/10/2026).
 const Behind: React.FC<OverlayProps> = ({ reel, talkFrames }) => {
-  const band = useHookBand(reel, HOOK_HAIR_Y);
+  const band = useBand(reel);
   return (
     <>
       <FiguresBehindLayer reel={reel} talkFrames={talkFrames} />
@@ -194,7 +197,7 @@ const Overlay: React.FC<OverlayProps> = ({
 }) => {
   const mentions = lenderMentionsOf(reel);
   // The hook draws in Behind when the band holds it; here otherwise.
-  const band = useHookBand(reel, HOOK_HAIR_Y);
+  const band = useBand(reel);
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}

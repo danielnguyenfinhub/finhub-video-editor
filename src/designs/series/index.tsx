@@ -217,6 +217,10 @@ export const PUNCH = 0.04;
 export const HOOK_HAIR_Y = CHIN_Y - (CHIN_SRC - HEAD_Y) * SCALE * (1 + PUNCH);
 // The band hook starts under the episode strip (Strip.tsx), on a navy plate.
 export const HOOK_TOP = SAFE.top + STRIP_HEIGHT + 10;
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+const useBand = (reel: OverlayProps["reel"]) =>
+  useHookBand(reel, HOOK_HAIR_Y, { top: HOOK_TOP, padX: 24 });
 const EDGE_FADE =
   "linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, #000 80%, transparent)";
 // k (useCueRoom, 0..1) eases him to CUE_SCALE (face centre kept at x 342)
@@ -286,7 +290,7 @@ const Talk: React.FC<TalkProps> = ({
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   const hook = reel.edit.hook;
   // The hook draws in Behind when the band holds it; here otherwise.
-  const band = useHookBand(reel, HOOK_HAIR_Y, { top: HOOK_TOP, padX: 24 });
+  const band = useBand(reel);
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
@@ -332,7 +336,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
 // The hook draws here too, amber on navy under the strip, above his head
 // (rule 6 ruling, 07/10/2026).
 const Behind: React.FC<OverlayProps> = ({ reel }) => {
-  const band = useHookBand(reel, HOOK_HAIR_Y, { top: HOOK_TOP, padX: 24 });
+  const band = useBand(reel);
   const { fps } = useVideoConfig();
   const figures = figuresOf(reel, fps);
   const mentions = lenderMentionsOf(reel);

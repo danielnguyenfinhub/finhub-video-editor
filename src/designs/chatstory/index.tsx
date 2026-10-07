@@ -65,6 +65,10 @@ export const hookHairY = (segments: Segment[]) =>
       ),
   );
 const BUBBLE_PAD = 40;
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+const useBand = (reel: OverlayProps["reel"]) =>
+  useHookBand(reel, hookHairY(reel.timeline.segments), { padX: BUBBLE_PAD });
 const EDGE_FADE =
   "linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, #000 80%, transparent)";
 
@@ -156,9 +160,7 @@ const Chapters: React.FC<{ reel: OverlayProps["reel"] }> = ({ reel }) => {
 // figures. The Overlay keeps HookBubbles when the band does not hold it.
 const Behind: React.FC<OverlayProps> = (props) => {
   const { reel } = props;
-  const band = useHookBand(reel, hookHairY(reel.timeline.segments), {
-    padX: BUBBLE_PAD,
-  });
+  const band = useBand(reel);
   return (
     <>
       <Figures {...props} />
@@ -191,9 +193,7 @@ const Behind: React.FC<OverlayProps> = (props) => {
 
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   // The hook draws in Behind when the band holds it; here otherwise.
-  const band = useHookBand(reel, hookHairY(reel.timeline.segments), {
-    padX: BUBBLE_PAD,
-  });
+  const band = useBand(reel);
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}

@@ -13,8 +13,7 @@ import { cueRoomStyle, useCueRoom } from "../../mortgage/cueRoom";
 import { SAFE } from "../../mortgage/golden";
 import { BrandBackdrop, PacedVideo } from "../../mortgage/PacedVideo";
 import { chapterTransition } from "../../mortgage/transitions";
-import { Behind, HOOK_HAIR_Y, PUNCH, ZOOM, ZOOM_Y } from "./Behind";
-import { useHookBand } from "../../elements/BehindWord";
+import { Behind, PUNCH, ZOOM, ZOOM_Y, useBand } from "./Behind";
 import { Captions, Chapters, StatCards } from "./Captions";
 import { MotionTrack } from "./Cues";
 import {
@@ -104,7 +103,7 @@ const Talk: React.FC<TalkProps> = ({
 
 const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   // The hook title, burst and money rain draw in Behind when the band holds them.
-  const band = useHookBand(reel, HOOK_HAIR_Y);
+  const band = useBand(reel);
   return (
     <>
       {/* Panels in the safe band; Talk makes room under them (cueRoom). */}

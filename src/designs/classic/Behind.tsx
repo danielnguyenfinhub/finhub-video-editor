@@ -190,10 +190,14 @@ const BURST_MASK = `linear-gradient(#000 ${SAFE.top}px, transparent ${FACE.top}p
 
 // The hook in the band above his head (rule 6 ruling, 07/10/2026); the
 // Overlay keeps HookTitle when the band does not hold it (index.tsx).
-// ponytail: a bank named in the first 3.5 s shares the band's right end with
-// the hook; give the lender its own slot if a video does that.
+// A bank named during the hook never shares the band: hookBandClear then keeps
+// the hook in the Overlay (BehindWord.tsx).
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+export const useBand = (reel: Reel) => useHookBand(reel, HOOK_HAIR_Y);
+
 export const Behind: React.FC<OverlayProps> = ({ reel }) => {
-  const band = useHookBand(reel, HOOK_HAIR_Y);
+  const band = useBand(reel);
   return (
     <>
       <Figures reel={reel} />

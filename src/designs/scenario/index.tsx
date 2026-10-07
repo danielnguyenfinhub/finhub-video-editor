@@ -81,6 +81,10 @@ export const PUNCH = 0.05;
 // His hair line on screen while the hook is up: the framing above, lifted by
 // that punch-in. check-design-figures (k) re-derives it from these constants.
 export const HOOK_HAIR_Y = CHIN_Y - (CHIN_SRC - HEAD_Y) * SCALE * (1 + PUNCH);
+// The one band call both layers make (Behind draws it, the Overlay keeps its
+// own hook when it is null), so the two can never disagree.
+const useBand = (reel: OverlayProps["reel"]) =>
+  useHookBand(reel, HOOK_HAIR_Y, { padX: 24 });
 const EDGE_FADE =
   "linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 78%, transparent)";
 // k (useCueRoom, 0..1) eases him to CUE_SCALE with his hair line (source
@@ -272,7 +276,7 @@ const isCompare = (c: Cue): c is Extract<Cue, { kind: "compare" }> =>
 // columns share the top of SAFE. The hook itself draws here, above his head,
 // on a navy plate that hides the divider (rule 6 ruling, 07/10/2026).
 const Behind: React.FC<OverlayProps> = ({ reel }) => {
-  const band = useHookBand(reel, HOOK_HAIR_Y, { padX: 24 });
+  const band = useBand(reel);
   const { fps } = useVideoConfig();
   const frame = useCurrentFrame();
   const outFrame = outFrameOf(reel.timeline, fps);
@@ -379,7 +383,7 @@ const Overlay: React.FC<OverlayProps> = ({ reel, keywords, talkFrames }) => {
   // top, hide the other one" rule as the hook vs. the columns).
   const hookUp = Boolean(reel.edit.hook) && frame < HOOK_FRAMES;
   // The hook draws in Behind when the band holds it; here otherwise.
-  const band = useHookBand(reel, HOOK_HAIR_Y, { padX: 24 });
+  const band = useBand(reel);
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}

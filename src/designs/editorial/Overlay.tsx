@@ -27,8 +27,7 @@ import { StaggerTitle } from "../../elements/StaggerTitle";
 import { MotionTrack } from "../classic/Cues";
 import { INK, MASTHEAD_BOTTOM } from "./Masthead";
 import { ROOM_KINDS, RoomCues } from "./RoomCues";
-import { HOOK_HAIR_Y } from "./Behind";
-import { useHookBand } from "../../elements/BehindWord";
+import { useBand } from "./Behind";
 
 const HOOK_FRAMES = 105;
 // The Finance Hub logo doesn't show during the hook (logoVisible starts at
@@ -376,7 +375,7 @@ export const Overlay: React.FC<OverlayProps> = ({
   talkFrames,
 }) => {
   // The hook draws in Behind when the band holds it; here otherwise.
-  const band = useHookBand(reel, HOOK_HAIR_Y);
+  const band = useBand(reel);
   return (
     <>
       {/* Cue panels shifted into the safe band; grain stays full-frame. */}
