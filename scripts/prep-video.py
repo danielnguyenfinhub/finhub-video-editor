@@ -244,12 +244,19 @@ def read_clips(path: Path) -> list[dict]:
 
 
 def video_format(path: Path) -> tuple[Fraction, int, int]:
-    """(frame rate, width, height) of the first video stream."""
+    """(frame rate, width, height) of the first video stream, as displayed:
+    a phone video stored 1920x1080 with a 90 degree rotation flag is 1080x1920
+    (ffmpeg rotates it on re-encode, so the crop must be sized for that)."""
     out = run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
-               "stream=r_frame_rate,width,height", "-of", "json", str(path)],
-              f"ffprobe {path.name}")
+               "stream=r_frame_rate,width,height:stream_side_data=rotation:stream_tags=rotate",
+               "-of", "json", str(path)], f"ffprobe {path.name}")
     s = json.loads(out)["streams"][0]
-    return Fraction(s["r_frame_rate"]), int(s["width"]), int(s["height"])
+    turn = [x["rotation"] for x in s.get("side_data_list", []) if "rotation" in x]
+    turn = turn[0] if turn else s.get("tags", {}).get("rotate", 0)
+    w, h = int(s["width"]), int(s["height"])
+    if abs(int(turn)) % 180 == 90:
+        w, h = h, w
+    return Fraction(s["r_frame_rate"]), w, h
 
 
 def shift_words(words: list[dict], start_ms: float, end_ms: float,
