@@ -227,7 +227,8 @@ const together = (runs) => Promise.all(runs.map((argv) => new Promise((done) => 
     assert.equal(r.status, 1, `a case-only or NFD title clash must not replace another slug's files: ${title}`);
     assert.match(r.stderr, /is video "_test-a", not "_test-c"/);
   }
-  assert.deepEqual(readdirSync(out).sort(), [".publish-slugs.json", "Cùng một chủ đề - caption.txt", "Cùng một chủ đề.mp4"]);
+  assert.deepEqual(readdirSync(out).sort(), [".publish-slugs.json", "Cùng một chủ đề - COMPLETED.txt", "Cùng một chủ đề - caption.txt", "Cùng một chủ đề.mp4"]);
+  assert.match(readFileSync(join(out, "Cùng một chủ đề - COMPLETED.txt"), "utf8"), /^COMPLETED .* AEST\nVideo: Cùng một chủ đề\.mp4\n/, "the COMPLETED marker names the video");
   assert.equal(readFileSync(join(out, "Cùng một chủ đề.mp4"), "utf8"), "A");
   // (b) Titles that are Object.prototype names: a legacy file (no owner) is claimed, not owned by "function Object()".
   for (const title of ["constructor", "toString", "__proto__"]) {
