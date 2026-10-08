@@ -116,7 +116,7 @@ for (const s of ["..", "../x", "a/b", "a\\b", "/etc", "a..b", "Ty-Do", "-x", ".h
 // assertSlug (Node) or an argparse type=check_slug (Python), outside comments and imports.
 // A new script that calls it is added here (the reverse check below says so).
 const SLUG_ENTRY_POINTS = [
-  "brief.mjs", "export-srt.mjs", "library.mjs", "listing-stills.mjs", "publish-listing.mjs", "publish-video.mjs",
+  "brief.mjs", "export-srt.mjs", "library.mjs", "listing-stills.mjs", "publish-listing.mjs", "publish-video.mjs", "publish-post.mjs",
   "select-template.mjs", "sweep-render.mjs", "video-status.mjs", "voice-video.mjs", "check-spoken-phrases.mjs",
   "render-video.py", "listing-render.py",
 ];

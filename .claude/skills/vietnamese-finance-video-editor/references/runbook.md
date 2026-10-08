@@ -120,6 +120,7 @@ makes a point clearer. Anything else is cut.
 | A7.2 | Post-render check | Claude | Re-transcribe about 15 s around each cut, taken from the talk, not the end cards (Whisper invents "cảm ơn các bạn đã theo dõi" on silence). Then open every frame the render's sweep wrote to `out/videos/<slug>/team/qc/sweep/` (`node scripts/sweep-render.mjs <slug>` re-makes them: one small frame per visual change) | Sweep frames looked at | No clipped word at any cut; nothing in the sweep that edit.json didn't ask for (a late cutaway, an element over a spoken number, a broken card) |
 | A7.3 | Log | Claude | `python .claude/skills/vietnamese-finance-video-editor/scripts/main.py add <entry.json>`. `library.mjs` records `usedIn` for library assets | Design log entry | — |
 | A7.4 | Deliver | Claude | Say **COMPLETED** first, then send Daniel: where the finished video, caption and `<Topic> - COMPLETED.txt` marker are (`2 - FINISHED VIDEOS/`, written by `publish-video.mjs`), the mobile file, the thumbnail, and the **verify list**: spoken watch-words with timestamps, flagged numbers, caption words Claude is unsure of, tax or rate points, and any B-roll keyword the library could not resolve | — | **Daniel approves before posting** |
+| A7.5 | Publish | Claude (orchestrator) | Only after Daniel's yes for this video: `video-production-team` skill, "Publish" (Drive upload via the synced folder, YouTube `finhub_au`, Facebook Reel, then move to the posted folder). Ledger `team/07_published.json` via `node scripts/publish-post.mjs <slug>` | Live posts, Drive files in the posted folder | Both platforms posted and recorded before anything moves |
 
 ---
 
@@ -175,6 +176,7 @@ on voice or images.
 | B5.3 | Final compliance | Claude (`video-compliance-reviewer`) | Final stage review on the stills, `script.json` and `facts.json` | PASS / FIX / BLOCK | PASS |
 | B5.4 | Render | Claude | `python scripts/render-video.py <slug>` (publishes the `script.json` `post`) | Same outputs as A7.1, finished video + caption in `2 - FINISHED VIDEOS/`, sweep frames in `team/qc/sweep/` | Open every sweep frame, as A7.2 |
 | B5.5 | Deliver | Claude | Say **COMPLETED** first (the `<Topic> - COMPLETED.txt` marker sits beside the video in `2 - FINISHED VIDEOS/`); then the mobile file, thumbnail, the `post` copy if written, and the **verify list**: document date, accreditation or public-use points still unconfirmed, any fact tagged `asAt` older than 90 days, the AI-voice disclosure if OmniVoice was used, and cost incurred | — | **Daniel approves before posting** |
+| B5.6 | Publish | Claude (orchestrator) | As A7.5 | As A7.5 | As A7.5 |
 
 ---
 

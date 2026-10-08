@@ -396,4 +396,13 @@ assert.equal(topicFileName("nul.mp4 hướng dẫn"), "nul video.mp4 hướng d�
 assert.equal(topicFileName("com1.x"), "com1 video.x");
 assert.equal(topicFileName("Con cái"), "Con cái");
 
+// publish-post.mjs: the Drive file names follow the folder's existing ASCII pattern; the ledger order holds the gates.
+import { asciiSlug, driveNames, nextStep } from "./publish-post.mjs";
+assert.equal(asciiSlug("Đừng tin tất cả những gì mình chia sẻ nhé"), "Dung-tin-tat-ca-nhung-gi-minh-chia-se-nhe");
+assert.equal(driveNames("Cách làm việc với mortgage broker", "2026-10-08").caption, "2026-10-08_Cach-lam-viec-voi-mortgage-broker_Caption.txt");
+assert.equal(nextStep({}), "approved");
+assert.equal(nextStep({ approved: 1, staged: 1, drive: 1 }), "youtube");
+assert.equal(nextStep({ approved: 1, staged: 1, drive: 1, youtube: 1, thumbnail: 1, public: 1, facebook: 1 }), "moved");
+assert.equal(nextStep(Object.fromEntries(["approved", "staged", "drive", "youtube", "thumbnail", "public", "facebook", "moved"].map((k) => [k, 1]))), "done");
+
 console.log("publish ok");

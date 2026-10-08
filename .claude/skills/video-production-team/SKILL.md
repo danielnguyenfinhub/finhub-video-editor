@@ -200,6 +200,7 @@ preflight runs the last two before every render. Post-render QC verifies the ren
 | `04_compliance_final.json` | B; A if run | video-compliance-reviewer, stage final |
 | `05_qc_render.json` | A | video-qc, stage render |
 | `06_delivery.md` | A, B | orchestrator (the verify list as sent) |
+| `07_published.json` | A, B | orchestrator via `publish-post.mjs` (the publish ledger) |
 
 Each agent reads the files before its own; a re-run agent reads its previous file first.
 The video's own files follow the runbook (`public/videos/<slug>/`, `out/videos/<slug>/`).
@@ -258,7 +259,7 @@ Send Daniel the mobile file and thumbnail (SendUserFile), then this list (write 
 than drop a line), saved as `team/06_delivery.md`:
 
 ```
-COMPLETED: <slug> — <Topic>.mp4 in 2 - FINISHED VIDEOS (next to it: <Topic> - COMPLETED.txt) — ready for your approval before posting
+COMPLETED: <slug> — <Topic>.mp4 in 2 - FINISHED VIDEOS (next to it: <Topic> - COMPLETED.txt) — ready for your approval before posting (say "publish" and I post it)
 Verdicts: QC <PASS|FIX…> · compliance <PASS|not run: reason>
 1. Watch-words (spoken or on screen): <word> @ mm:ss.s — <why neutral / what to check>
 2. Flagged numbers: <number> @ mm:ss.s — <what was done>
@@ -275,6 +276,41 @@ NEXT: <one step>
 
 Items 1–4 come from the story-editor, QC and compliance reports; 5 from `facts.json` or the dry run; 8 from each
 `visuals` asset's `.meta.json` (`licence`, `author`). Then ask once whether anything should change.
+
+## Publish — after COMPLETED and Daniel's yes (both pipelines)
+
+The orchestrator runs this in the main session (subagents lack the MCP tools). Nothing here runs without Daniel's
+yes for **this** video in this session; a standing yes only if he says so in those words. Config:
+`config/publish.json`. Ledger: `team/07_published.json`, kept by `node scripts/publish-post.mjs <slug> …`; a step with a
+ledger entry is never repeated (a YouTube upload is not idempotent), a retry runs only what is missing.
+
+1. `node scripts/publish-post.mjs <slug> plan`. Any line under `stop` ends the run and goes to Daniel (no final
+   compliance PASS, a file missing, `drive.syncDir`/`containsSyntheticMedia`/`paidProductPlacement` still null).
+   His yes → `node scripts/publish-post.mjs <slug> mark approved text="<his words>"`.
+2. **Drive:** `publish-post.mjs <slug> stage` copies video, caption and thumbnail into the Google Drive for Desktop
+   folder that syncs to the upload folder, named `<date>_<Title-slug>_Video.mp4 / _Caption.txt / _Thumbnail.png`. Then
+   `drive_ops search` (`folder_id` = uploadFolder, `name` = each name) until all three show with the local size (sync
+   lag: wait, search again); `mark drive video=<id> caption=<id> thumbnail=<id>`. File bytes never go through
+   `create_file` (inline base64); a caption-only fix may.
+3. **YouTube** (`youtube_ops`, `channel: "finhub_au"`; the default channel is another one): `upload_video` from the video's
+   `drive_file_id`, title = `post.title`, description = the caption file, privacy, `made_for_kids`,
+   `contains_synthetic_media`, `has_paid_product_placement` all from config, never defaulted. Preview, then the
+   `confirmation_token` call. `mark youtube video_id=<id>`. Then `set_video_thumbnail` from the thumbnail's Drive id
+   (same two-step); `mark thumbnail` (`skipped=<reason>` if the channel cannot set custom thumbnails).
+4. **Facebook** (`fb_write`, `page_id` from config, `confirm: true` only after the dry run reads right): the tool
+   only posts video as a Reel, and Meta fetches it from a public https URL. `drive_ops set_public` on the video (two-step),
+   build the direct URL, `mark public url=<url>`. Then `start_reel_upload` → `upload_reel_from_url` (`video_id`, `file_url`)
+   → `fb_read get_video_status` until processing is done → `finish_reel` (`video_state: "PUBLISHED"`, `description` = the
+   caption file, `is_ai_generated` as the AI-voice disclosure line decided). `mark facebook video_id=<id> post_id=<id>`.
+   If Meta cannot fetch the Drive URL, stop and tell Daniel; the fallback (a copy on the FinHub server through the cPanel
+   connector) writes to the live website, so it needs his yes first. Reel limits (length, 9:16) are Meta's: unverified
+   here, so read `get_video_status` before finishing.
+5. **Posted:** only when `youtube`, `thumbnail` and `facebook` are all in the ledger: `drive_ops set_private` on the
+   video (it was public only for Meta), then `move` video, caption and thumbnail to the posted folder
+   (`parent_folder_id`, names kept), `mark moved`. One platform failed: nothing moves; say which posted, which did not
+   and why, and rerun `plan` for what is next.
+6. Report: the YouTube and Facebook links, the ledger, and what Daniel checks (the live posts, both captions, the
+   disclosures chosen). A deleted or edited live post is Daniel's call, never a retry.
 
 ## Worker briefs
 
