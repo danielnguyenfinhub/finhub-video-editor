@@ -258,7 +258,7 @@ Send Daniel the mobile file and thumbnail (SendUserFile), then this list (write 
 than drop a line), saved as `team/06_delivery.md`:
 
 ```
-<slug> — ready for your approval before posting
+COMPLETED: <slug> — <Topic>.mp4 in 2 - FINISHED VIDEOS (next to it: <Topic> - COMPLETED.txt) — ready for your approval before posting
 Verdicts: QC <PASS|FIX…> · compliance <PASS|not run: reason>
 1. Watch-words (spoken or on screen): <word> @ mm:ss.s — <why neutral / what to check>
 2. Flagged numbers: <number> @ mm:ss.s — <what was done>

@@ -9,6 +9,8 @@
 // once; RG 234 over all of it (src/mortgage/compliance.ts, as voice-video.mjs).
 // Writes to "2 - FINISHED VIDEOS/" (or --out):
 //   <Topic>.mp4             copy of out/videos/<slug>/<slug>.mp4 (or --video)
+//   <Topic> - COMPLETED.txt the marker Daniel asked for: when the edit finished, which
+//                           slug, and that it waits for his approval before posting
 //   <Topic> - caption.txt   title, caption, broker details (config/broker.json),
 //                           hashtags, then the licence and disclaimer footer
 // Topic = post.title made safe as a Windows file name. The caption file is
@@ -37,6 +39,12 @@ export const OUTPUT_DIR = join(ROOT, "2 - FINISHED VIDEOS");
 export const TAG_COUNT = 7;
 export const REQUIRED_TAGS = ["#finhub", "#vietnamese"];
 const MAX_NAME = 120;
+
+/** The COMPLETED marker beside the finished video (Daniel, 08/10/2026: "add completed to the video you completed"). */
+export const completedNote = (topic, slug, now = new Date()) =>
+  [`COMPLETED ${now.toLocaleString("en-AU", { timeZone: "Australia/Sydney", hour12: false })} AEST`,
+   `Video: ${topic}.mp4`, `Caption: ${topic} - caption.txt`, `Slug: ${slug}`,
+   "Status: edit finished by the video team. Watch it and read the caption, then approve before posting.", ""].join("\n");
 
 /** post.title as a Windows file name: "29/9" -> "29-9", "a: b" -> "a - b". */
 export const topicFileName = (title) => {
@@ -354,6 +362,7 @@ const main = async () => {
   const topic = topicFileName(post.title);
   const mp4 = join(outDir, `${topic}.mp4`);
   const txt = join(outDir, `${topic} - caption.txt`);
+  const done = join(outDir, `${topic} - COMPLETED.txt`);
   // Read live on each call, so the owner checks after lockOwners see a file a concurrent publish just copied.
   const exists = (path) => readdirSync(outDir).some((name) => fold(name) === fold(basename(path)));
   if (!argv.includes("--force"))
@@ -390,9 +399,10 @@ const main = async () => {
   writeOwners(outDir, owner);
   copyFileSync(video, mp4);
   writeFileSync(txt, text, "utf8");
+  writeFileSync(done, completedNote(topic, slug), "utf8");
   if (removed.length)
     console.log(`publish-video: the caption already had ${removed.length} footer line(s); they appear once, in the footer.`);
-  console.log(`publish-video: finished video and caption ready\n  ${mp4}\n  ${txt}`);
+  console.log(`publish-video: finished video and caption ready\n  ${mp4}\n  ${txt}\n  ${done}`);
 };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
