@@ -164,6 +164,36 @@ def resumable(src: Path, proxy: Path, clean: bool) -> bool:
     return True
 
 
+def invented_text_signs(words: list[dict], duration_s: float) -> list[str]:
+    """Why a transcript looks made up by Whisper (empty list: looks fine). The signs come
+    from the real failures, with thresholds set in the gap between them and six real
+    talks (real: 3.3-4.1 words a second, at most 4 repeated phrases, at most 2
+    zero-length words in a second; invented: 0.55, 15 and 14):
+    almost no words for the length of the audio, many different phrases repeated 3+
+    times, and a burst of zero-length words (the packed outro Whisper puts over silence).
+    # ponytail: blunt thresholds, no model; warns only, because a real talk can repeat
+    # a phrase or two (repeated takes do). Upgrade to a per-segment check if it misfires."""
+    signs: list[str] = []
+    if duration_s >= 20 and len(words) / duration_s < 1.5:
+        signs.append(f"only {len(words)} words in {duration_s:.0f} s of audio")
+    toks = [re.sub(r"\W", "", w["text"].lower()) for w in words]
+    counts: dict[tuple[str, ...], int] = {}
+    for i in range(len(toks) - 4):
+        gram = tuple(toks[i:i + 5])
+        counts[gram] = counts.get(gram, 0) + 1
+    repeated = [g for g, n in counts.items() if n >= 3]
+    if len(repeated) >= 8:
+        signs.append(f'{len(repeated)} different phrases repeat 3+ times, e.g. "{" ".join(repeated[0])}"')
+    start = 0
+    for i, w in enumerate(words):
+        while w["startMs"] - words[start]["startMs"] >= 1000:
+            start += 1
+        if sum(1 for x in words[start:i + 1] if x["endMs"] <= x["startMs"]) >= 6:
+            signs.append(f"a burst of zero-length words at {w['startMs'] / 1000:.1f} s")
+            break
+    return signs
+
+
 def transcribe(proxy: Path) -> list[dict]:
     try:
         from faster_whisper import WhisperModel
@@ -173,9 +203,15 @@ def transcribe(proxy: Path) -> list[dict]:
     # ponytail: 8 threads measured fastest on the i9-13900H (124 s vs 140 s at 16,
     # identical words.json); re-time if the machine changes.
     model = WhisperModel("large-v3", device="cpu", compute_type="int8", cpu_threads=8)
+    # vad_filter: without it Whisper sometimes "transcribes" the music or silence at the
+    # start or end of a file as a stock YouTube outro ("Hãy subscribe cho kênh ...") and
+    # repeats it for the whole file (a 136 s clip came back as 75 invented words; the
+    # same clip gives 514 correct words with it). On a 75 s clip with six "ờ" fillers
+    # the prompt still kept them (7 with vad_filter, 6 without), so FILLER_PROMPT and the
+    # default condition_on_previous_text stay: switching that off lost five of the six.
     segments, info = model.transcribe(str(proxy), language="vi",
                                       word_timestamps=True, beam_size=5,
-                                      initial_prompt=FILLER_PROMPT)
+                                      initial_prompt=FILLER_PROMPT, vad_filter=True)
     started = time.time()
     words: list[dict] = []
     for seg in segments:
@@ -192,6 +228,12 @@ def transcribe(proxy: Path) -> list[dict]:
               f"({time.time() - started:.0f}s elapsed) {seg.text.strip()}", flush=True)
     if not words:
         raise SystemExit("Transcription produced no words.")
+    signs = invented_text_signs(words, info.duration)
+    for sign in signs:
+        print(f"WARNING: this transcript looks invented: {sign}.", flush=True)
+    if signs:
+        print("WARNING: check words.json against the audio before editing: Whisper can make "
+              "up text over music or silence.", flush=True)
     return words
 
 
@@ -244,12 +286,19 @@ def read_clips(path: Path) -> list[dict]:
 
 
 def video_format(path: Path) -> tuple[Fraction, int, int]:
-    """(frame rate, width, height) of the first video stream."""
+    """(frame rate, width, height) of the first video stream, as displayed:
+    a phone video stored 1920x1080 with a 90 degree rotation flag is 1080x1920
+    (ffmpeg rotates it on re-encode, so the crop must be sized for that)."""
     out = run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
-               "stream=r_frame_rate,width,height", "-of", "json", str(path)],
-              f"ffprobe {path.name}")
+               "stream=r_frame_rate,width,height:stream_side_data=rotation:stream_tags=rotate",
+               "-of", "json", str(path)], f"ffprobe {path.name}")
     s = json.loads(out)["streams"][0]
-    return Fraction(s["r_frame_rate"]), int(s["width"]), int(s["height"])
+    turn = [x["rotation"] for x in s.get("side_data_list", []) if "rotation" in x]
+    turn = turn[0] if turn else s.get("tags", {}).get("rotate", 0)
+    w, h = int(s["width"]), int(s["height"])
+    if abs(int(turn)) % 180 == 90:
+        w, h = h, w
+    return Fraction(s["r_frame_rate"]), w, h
 
 
 def shift_words(words: list[dict], start_ms: float, end_ms: float,
