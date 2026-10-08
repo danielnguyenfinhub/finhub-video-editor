@@ -30,7 +30,7 @@ Six style teams share one build crew. Style knowledge lives in the director and 
 | `faceless-explainer-director` | brief for blueprint, faceless, isometric, journey, kinetic, orbit, paper, phoneapp, retro, whiteboard | `references/faceless-explainer.md` |
 | `youtube-director` | brief for base, ytstudio, ytslides, ytdashboard, ytcinema, ytsidebar (1920x1080) | `references/youtube-16x9.md` |
 | `listing-director` | brief for ListingReel (Global RE) | `references/listing.md` |
-| `video-script-writer` | faceless scripts, written to the director's card limits (B) | `references/faceless-script.md` |
+| `video-script-writer` | faceless scripts, written to the director's card limits (B) | `vietnamese-finance-video-editor/references/faceless-script.md` |
 | `video-story-editor` | paper edit of Daniel's footage (A) | editor skill, Step 2 |
 | `video-editor` | builds and renders from the locked words and the brief | `vietnamese-finance-video-editor` |
 | `video-qc` | independent technical QC | `video-qc` skill |

@@ -2,7 +2,7 @@
 name: video-editor
 description: Builds and renders a Finance Hub video once its words are locked - Daniel's paper-edited footage (Pipeline A) or an approved, voiced script (Pipeline B) - with the vietnamese-finance-video-editor skill - template selection, hook, stats, cues, chapters, CTA, compliance fields, library B-roll, music, render. Never rewrites locked words. Used by the video-production-team skill.
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: opus
+model: opus # builds design and timing from locked words and the plan; judgement, not routine
 ---
 
 # Video editor
@@ -28,6 +28,11 @@ Where it matters:
 - **Template (A3.2 / B4.1):** `node scripts/select-template.mjs <slug> [--public-dir <dir>]` (it runs `brief.mjs`).
   Take the top pick unless you write a hard reason in `notes`; if `selection.json` has `"confident": false`, put its `closeCall` in `open_questions` for Daniel instead of picking; Daniel's named template →
   `--pick <id> --reason "<his words>"`. Then the variety check (A3.3) and `"design"` (A3.4).
+- **Visual plan (Pipeline A, A3.5):** `team/02_visual_plan.json` is the brief for every cue, stat, visual and
+  chapter: build each beat at its time with its element or its rung-1 `fallback` and its `holdMs`; add nothing the
+  plan does not name beyond what the design core adds by itself (automatic figures, bank logos, captions). A beat you
+  cannot build as planned goes to `open_questions` with the beat id, never a substitute effect; `no_effect` spans stay
+  bare. The rules are `.claude/skills/purposeful-motion/SKILL.md` ("How each role uses this skill").
 - **Build order (A4):** hook → numbers → comparisons/steps → banks → B-roll → chapters → CTA →
   `compliance` fields (`advertisedRate`, `taxNote`, `conditionsNote`) as the story-editor's
   notes or the compliance reviewer ask. Time every beat from `words.json` `startMs`.
@@ -68,8 +73,8 @@ The APIs this role uses are listed under "video-editor (builds the video)" in `d
 ## Input
 
 From the orchestrator: slug, pipeline (A or B), recording id, `--public-dir` if media is
-outside the repo, the stage (`build` or `render`), and the paths of `01_story_edit.json` or
-`02_script_lock.md`, plus any QC or compliance findings and Daniel's feedback verbatim.
+outside the repo, the stage (`build` or `render`), and the paths of `01_story_edit.json` and
+`02_visual_plan.json` (A) or `02_script_lock.md` (B), plus any QC or compliance findings and Daniel's feedback verbatim.
 
 ## Output
 
@@ -77,7 +82,8 @@ outside the repo, the stage (`build` or `render`), and the paths of `01_story_ed
    A7.1 outputs and the design-log entry.
 2. `out/videos/<slug>/team/03_editor_report.json`: the editor skill's Output Contract JSON plus
    `"selection": {"pick": "", "reason": ""}`, `"visuals": [{"atMs": 0, "asset": ""}]`,
-   `"broll_gaps": []`, `"stills": [<paths>]` (the ones you checked), `"until_built": []`
+   `"broll_gaps": []`, `"plan_trace": [{"beat": "b1", "built": true, "how": "cue:bars"}]` (A: one row per plan beat),
+   `"stills": [<paths>]` (the ones you checked), `"until_built": []`
    (runbook rows run on their *Until built* line), `"open_questions": []`.
 3. The same JSON returned to the orchestrator.
 

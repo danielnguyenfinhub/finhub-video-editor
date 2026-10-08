@@ -51,6 +51,17 @@ known gaps are in [README.md](README.md). CLI flags (`npx remotion render|still 
 | Transcripts from other engines | `@remotion/openai-whisper`: `openAiWhisperApiToCaptions`; `@remotion/elevenlabs`: `elevenLabsTranscriptToCaptions` |
 | Take lengths for `clips.json` | `@remotion/media-utils`: `getVideoMetadata`, `getAudioDurationInSeconds` |
 
+## motion-designer (plans the visuals)
+
+Reads, never imports: the plan names elements by rung (`.claude/skills/purposeful-motion/references/element-sources.md`).
+
+| Job | APIs |
+|---|---|
+| Hold and timing vocabulary | `remotion`: `Sequence`, `interpolate`, `spring` (to read what an element does, not to write it) |
+| Transitions (`breathe`) | `@remotion/transitions`: `TransitionSeries`, `fade`, `slide`, `linearTiming`, `springTiming`; `@remotion/light-leaks` |
+| Emphasis and annotation | `@remotion/rough-notation`, `@remotion/rounded-text-box`, `@remotion/layout-utils`: `fitText` |
+| Shapes and charts | `@remotion/shapes`, `@remotion/paths`: `evolvePath` |
+
 ## pipeline-optimizer (render speed)
 
 | Job | APIs |

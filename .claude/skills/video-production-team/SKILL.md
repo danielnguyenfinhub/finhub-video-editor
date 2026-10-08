@@ -3,24 +3,24 @@ name: video-production-team
 description: >-
   Runs Finance Hub's whole video production process end to end with a team of agents, for both
   pipelines: A, editing Daniel's own footage (talking-head or several takes), and B, a faceless
-  video from a document or topic. Intake, paper edit or script, compliance, build, technical QC,
-  render and a verify list, with Daniel deciding only at the gates. ALWAYS use when Daniel says:
-  "edit my video", "edit this video", "I recorded a video about…", "new talking-head video",
-  "make a video from this document/policy", "faceless video about…", "turn this RBA announcement
-  into a video", "what's trending", "what should I make a video about", "research … for a
-  video", "run the video team", "produce this with the team", "with a compliance check",
-  and for follow-ups on a video the team made: "redo the paper edit", "re-run QC", "fix what QC
-  flagged", "fix what compliance flagged", "re-run compliance", "redo the script only", "update
-  the video from the last run". NOT for footage-free rate-alert reels (finhub-rate-alert-reel),
-  branding an existing clip (finhub-branded-reel), a compliance check of a script on its own
-  (video-compliance-review), or repo refactors and speed-ups (refactor-team).
+  video from a document or topic. Intake, marketing review and plan, paper edit or script,
+  visual plan, compliance, build, QC, render and a verify list; Daniel decides only at the gates.
+  ALWAYS use when Daniel says: "edit my video", "I recorded a video about…", "make a video from
+  this document", "faceless video about…", "what should I make a video about", "run the video
+  team", "what's wrong with my video", "plan the edit"; and for follow-ups: "redo the paper edit /
+  marketing review / visual plan", "too many effects", "re-run QC", "fix what QC or compliance
+  flagged", "redo the script only", "update the video from the last run". NOT for rate-alert
+  reels, branding an existing clip, a compliance check of a script alone, or repo refactors.
 ---
 
 # Video production team
 
 **User story:** Daniel hands over a recording or a document and gets back a finished, QC'd,
 compliance-checked video and one verify list, having decided only at the gates: the script
-lock (B), a wrongly spoken number (A), and posting (both).
+lock (B), a wrongly spoken number (A), and posting (both). For his own footage the team first
+watches the talk as a viewer, plans the edit around the one message it must land, and puts every
+effect on screen for a stated reason (`purposeful-motion`); the background is removed only from
+the footage that survives the cut.
 
 The process is `vietnamese-finance-video-editor/references/runbook.md`. Every step id below
 (0.3, A2.2, B5.3 …) is a runbook row: read the row for its command and gate. This skill only
@@ -30,21 +30,51 @@ says who runs each step, in what order, and where the run stops. It never copies
 
 | Agent (`.claude/agents/`) | Runbook steps | Standard |
 |---|---|---|
-| `video-script-writer` | B1.1–B1.4, B2.1–B2.3 | `references/faceless-script.md` |
-| `video-story-editor` | A1.2 `clips.json`, A2.1–A2.4 | editor skill, Workflow Step 2 |
-| `video-editor` | A3, A4, A5.3, A6.1, A7.1, A7.3; B4, B5.1, B5.4 | `vietnamese-finance-video-editor` |
-| `video-qc` | A5.1–A5.2, A6.2–A6.3, A7.2; B5.2 | `video-qc` skill |
+| `marketing-manager` | A2.0: watches the raw talk, message, strengths and weaknesses, clarity map, production plan | this skill, `purposeful-motion` (purposes) |
+| `video-script-writer` | B1.1–B1.4, B2.1–B2.3 | `vietnamese-finance-video-editor/references/faceless-script.md` |
+| `video-story-editor` | A1.2 `clips.json` (kept spans), A2.1–A2.4 | editor skill, Workflow Step 2 |
+| `motion-designer` | A3.5: the visual plan, one purpose and element per beat | `purposeful-motion` |
+| `video-editor` | A3, A4 (from the plan), A5.3, A6.1, A7.1, A7.3; B4, B5.1, B5.4 | `vietnamese-finance-video-editor` |
+| `video-qc` | A5.1–A5.2, A6.2–A6.3 (+ plan trace), A7.2; B5.2 | `video-qc` skill |
 | `video-compliance-reviewer` | B2.4, A6.4, B5.3 | `video-compliance-review` skill |
 
-You (the orchestrator) run Phase 0, prep (A1.1), the matte request (A1.3), voicing (B3, because
-it is the paid call and you hold the cost gate), every gate, and delivery. You do no editing.
+A style director from `style-production-teams` joins only when Daniel names a style or several
+videos are in play; the marketing manager's plan then names it as the owner of the brief.
 
-**Execution mode: subagents in a pipeline** (Agent tool, `subagent_type` = agent name; pass
-no `model`, so each agent's own `model:` applies), with two parallel fan-outs: in A the paper
-edit runs while Daniel's matte renders, and in both pipelines QC and final compliance review
-the same build at the same time (one message, two Agent calls). Not an agent team, because the flow stops for Daniel mid-run and both reviewers
-(`video-qc`, `video-compliance-reviewer`) must judge the artefacts from a clean context, not
-the builder's reasoning. Agents report to you; you relay questions to Daniel.
+You (the orchestrator) run Phase 0, prep (A1.1), the assembly (A1.2), the matte request (A1.3),
+voicing (B3, because it is the paid call and you hold the cost gate), every gate, and delivery.
+You do no editing, reviewing or planning yourself: the marketing manager plans, you assign.
+
+**Execution mode: sub-agent delegation (Mode C), a pipeline of one-shot agents** (Agent tool,
+`subagent_type` = agent name; pass no `model`, so each agent's own `model:` applies), with two
+parallel fan-outs: in A the motion designer plans while Daniel's matte renders, and in both
+pipelines QC and final compliance review the same build at the same time (one message, two Agent
+calls). Not a persistent team, because the flow stops for Daniel mid-run and both reviewers
+(`video-qc`, `video-compliance-reviewer`) must judge the artefacts from a clean context, not the
+builder's reasoning. Agents report to you; you relay questions to Daniel. **Target surface:
+Claude Code** (Agent tool). In Claude chat or Cowork there is no Agent tool: run the same steps in
+this context in order, writing each role's file yourself under its name, and say so in `00_intake.md`.
+
+## Delegation gate
+
+- Independent units and hand-offs: A2.0 review → A2 paper edit (`01_marketing_review.md` → `01_story_edit.json`, `clips.json`) → A1.2 assembly → A1.3 matte ‖ A3.5 plan (`02_visual_plan.json`) → A4 build (`03_editor_report.json`) → QC ‖ compliance (`04_*.json`) → render → render QC (`05_qc_render.json`). Pipeline B as before.
+- What splitting buys: a separate context per judgement (viewer, cutter, designer, builder, two independent reviewers) so no one marks their own work; parallel speed only for the two fan-outs.
+- Write ownership: the Writers table below; every role writes its own `team/` file and the runbook files its rows name, nothing else.
+- Tools: each agent file's `tools:` line; reviewers have no Edit; all run on Claude Code.
+- Synthesis and acceptance: you, at each gate and at delivery; a stage is accepted when its file exists, parses, and its `STATUS` line is `done` (a `partly done` or `blocked` is carried as such, never papered over).
+- Partial, blocked, conflicting: the Errors table; two reviewers disagreeing go to Daniel with both verdicts.
+- Outcome: **delegate** (Daniel asked for this team). Risk stated: the marketing manager's plan is advisory to the pipeline order; it adds instructions to the fixed steps, it does not reorder gates.
+
+## Writers
+
+| Batch | Role | Writes | Label | Wanted | Mechanism or reason |
+|---|---|---|---|---|---|
+| 1 | marketing-manager | `out/videos/<slug>/team/01_marketing_review.md`, `out/videos/<slug>/team/mm/**` | serialised | serialised | |
+| 2 | video-story-editor | `public/videos/<slug>/edit.json` (`notes`, `remove`, `captionFixes`), `public/videos/<slug>/clips.json`, `out/videos/<slug>/team/01_story_edit.json` | serialised | serialised | |
+| 3 | motion-designer | `out/videos/<slug>/team/02_visual_plan.json` | serialised | serialised | the matte running beside it is Daniel's browser, not a writer agent |
+| 4 | video-editor | `public/videos/<slug>/edit.json` (design, hook, stats, cues, chapters, visuals, post), `out/videos/<slug>/**` except `team/0[1245]_*`, `out/videos/<slug>/team/03_editor_report.json` | serialised | serialised | |
+| 5 | video-qc | `out/videos/<slug>/team/04_qc_stills.json`, `out/videos/<slug>/team/05_qc_render.json`, `out/videos/<slug>/team/qc/**` | advisory | advisory | disjoint files; no path hook exists in this repo |
+| 5 | video-compliance-reviewer | `out/videos/<slug>/team/02_compliance_script.json`, `out/videos/<slug>/team/04_compliance_final.json` | advisory | advisory | disjoint files; no path hook exists in this repo |
 
 Agent files register at session start. If an agent type isn't found (files added mid-session),
 use `subagent_type: "general-purpose"` and begin the prompt "Read and adopt
@@ -77,24 +107,40 @@ it doesn't, the agent follows that row's *Until built* line and says so in its r
 
 ## Pipeline A — edit footage
 
-1. **Prep (A1.1)** in the background; several takes: prep each take the same way first.
-2. **Clean, then matte (A1.2b, A1.3), asked at the start, runs in parallel.** Run
-   `node scripts/clean-clip.mjs <slug>` and show Daniel its summary first (runbook A1.2b). Then say to Daniel: "Please run
-   `npm run review`, open `http://localhost:4100/matte.html?slug=<slug>` in the Claude app
-   browser and leave it until it says Saved (about 13× the video's length)." Don't wait; carry
-   on. Check for `foreground.webm` before render (step 6); still missing → ask once more, then wait.
-3. **Paper edit ‖ matte:** `video-story-editor` → `team/01_story_edit.json`. Several takes: it writes `clips.json`,
-   you run the A1.2 assembly, it finishes A2 on the assembled words.
+Order matters: the review comes before any cut, the matte after the cut, the plan before the build.
+
+1. **Prep (A1.1)** in the background; several takes: prep each take the same way first. Run
+   `node scripts/sandbox-facts.mjs` once; its table goes into every agent prompt.
+2. **Clean-clip report (A1.2b):** `node scripts/clean-clip.mjs <slug>`; show Daniel the summary. Do **not** ask for
+   the matte yet.
+3. **Marketing review (A2.0):** `marketing-manager` → `team/01_marketing_review.md` and its JSON. `blocked` (client
+   data) → stop. Its `plan` rows become the instructions you paste, verbatim, into each later agent's prompt under
+   "Your task from the production plan"; its `compliance_notes` go to the compliance reviewer's prompt. Show Daniel
+   the message line and the plan table (no gate; he can redirect in one message).
+4. **Paper edit, pass `cuts` (A2.1–A2.4):** `video-story-editor` with the review → `team/01_story_edit.json`.
    - `flags` not empty (a wrongly spoken number, a meaning-changing cut) → **gate: stop for Daniel** with each
      flag's timestamp and quote; pass his answer back. Unsure words alone don't stop the run; they go to the verify list.
-4. **Build:** `video-editor` (A3, A4, A5.3, A6.1) → `team/03_editor_report.json`.
-5. **Review, in parallel:** `video-qc`, stage `stills` → `team/04_qc_stills.json`, and, only if
-   Daniel asked for it or the video states a rate or a number claim taken from a document,
-   **compliance (A6.4)**: `video-compliance-reviewer`, stage `final` →
-   `team/04_compliance_final.json`. Both in one message. FIX/BLOCK loop below.
-6. **Render once** (below): matte present → `video-editor` (A7.1, A7.3).
-7. **Post-render QC:** `video-qc`, stage `render` (A7.2) → `team/05_qc_render.json`.
-8. **Deliver** (A7.4, below). **Gate: Daniel approves before posting.**
+   - `clips` is a path (kept spans; `kept_ratio` < 0.9 or several takes) → **assembly (A1.2):**
+     `python scripts/prep-video.py <slug> --clips public/videos/<slug>/clips.json`, then the story editor again, pass
+     `words`, on the assembled words. `clips` is `none` → the recording stays as prepped.
+5. **Matte (A1.3) ‖ visual plan (A3.5).** Now ask Daniel: "Please run `npm run review`, open
+   `http://localhost:4100/matte.html?slug=<slug>` in the Claude app browser and leave it until it says Saved (about 13×
+   the kept footage's length)." The page mattes the assembly when one exists. Don't wait. In the same breath run the
+   template pick if Daniel named none (`node scripts/select-template.mjs <slug>`, A3.1–A3.2 as the editor would; the
+   editor keeps A3.3–A3.4) and spawn `motion-designer` → `team/02_visual_plan.json`. `open_questions` naming an
+   element no design has → show Daniel the beat and its fallback; the fallback is built unless he says otherwise.
+6. **Build (A3.3–A3.4, A4 from the plan, A5.3, A6.1):** `video-editor` → `team/03_editor_report.json` with its
+   `plan_trace`. Check for `foreground.webm` before step 8; still missing → ask once more, then wait.
+7. **Review, in parallel:** `video-qc`, stage `stills` (incl. the plan trace) → `team/04_qc_stills.json`, and, only
+   if Daniel asked for it, the marketing review listed a compliance note, or the video states a rate or a number
+   claim taken from a document, **compliance (A6.4)**: `video-compliance-reviewer`, stage `final` →
+   `team/04_compliance_final.json`. Both in one message. FIX/BLOCK loop below; a plan finding goes to the designer,
+   the editor rebuilds that beat.
+8. **Render once** (below): matte present → `video-editor` (A7.1, A7.3).
+9. **Post-render QC:** `video-qc`, stage `render` (A7.2) → `team/05_qc_render.json`.
+10. **Deliver** (A7.4, below). **Gate: Daniel approves before posting.**
+
+Quick mode (`"background": "vignette"`, Daniel's choice) skips the matte in step 5 and nothing else.
 
 ## Pipeline B — faceless from a document or topic
 
@@ -143,7 +189,9 @@ preflight runs the last two before every render. Post-render QC verifies the ren
 | File | Pipeline | Written by |
 |---|---|---|
 | `00_intake.md` | A, B | orchestrator (0.1–0.5, B1.1, cost plan) |
+| `01_marketing_review.md`, `mm/*.png` | A | marketing-manager (A2.0) |
 | `01_story_edit.json` | A | video-story-editor |
+| `02_visual_plan.json` | A | motion-designer (A3.5) |
 | `01_writer_notes.md` | B | video-script-writer |
 | `02_compliance_script.json` | B | video-compliance-reviewer, stage script |
 | `02_script_lock.md` | B | orchestrator (Daniel's approval verbatim, date, cost stated) |
@@ -167,7 +215,9 @@ an existing slug instead of re-reading the team files, and fix anything `blocked
 
 | Daniel says / finding owner | Start at | Then |
 |---|---|---|
-| "redo the paper edit", a cut or caption fix, a re-cut number | story-editor | editor re-times → qc → (compliance) → render → qc render |
+| "redo the marketing review", "the message is wrong", "it's for refinancers not first-home buyers" | marketing-manager | story-editor reads the new review → (assembly, matte if the cuts changed) → designer → editor → qc → … |
+| "redo the paper edit", a cut or caption fix, a re-cut number | story-editor | assembly + matte again only if `clips.json` changed → designer re-times → editor → qc → (compliance) → render → qc render |
+| "redo the visual plan", "too many effects", "that chart doesn't help", a QC plan finding owned by the designer | motion-designer | editor rebuilds the named beats → qc → (compliance) → render → (qc render) |
 | "redo the script", script wording (B) | writer | compliance script → lock → voice (cost again) → editor → … |
 | design, hook, graphics, B-roll, music, CTA | editor | qc → (compliance) → render → (qc render) |
 | "re-run QC" | video-qc | FIX loop as usual |
@@ -183,6 +233,10 @@ Pass the previous team files and the feedback verbatim. Downstream phases re-run
 | Situation | Action |
 |---|---|
 | Agent returns malformed or no JSON, or `failed` | Re-run once with the error; again → stop, report its last 5 lines |
+| A worker report lacks the `STATUS` / `EVIDENCE` / `BLOCKER` lines, or claims a look it did not take | Ask it once for the lines; still missing → carry the result as `unverified` in the delivery list, never as done |
+| The plan names a beat the editor cannot build (`open_questions`) | Build the beat's rung-1 `fallback`; tell Daniel the element it wanted; no mid-run template change |
+| The marketing plan assigns a task to a role not on the team | Put it on Daniel's verify list as an open question; do not invent an agent |
+| `clips.json` changed after the matte was made | The matte is stale: ask Daniel to run matte.html again on the assembly; never render the old `foreground.webm` |
 | Rounds used up (2 content, 1 cosmetic) and a finding is open | Stop the loop; show Daniel the open finding |
 | `check-schema` or `check-speech-cuts` fails | Fix the cause (text, cut, `words.json`); never loosen the schema or add an exemption; no render |
 | QC and compliance, or reviewer and author, disagree | Don't pick a side; show Daniel both, rule cited |
@@ -222,10 +276,33 @@ NEXT: <one step>
 Items 1–4 come from the story-editor, QC and compliance reports; 5 from `facts.json` or the dry run; 8 from each
 `visuals` asset's `.meta.json` (`licence`, `author`). Then ask once whether anything should change.
 
+## Worker briefs
+
+Every spawn carries: Goal (the runbook rows and the plan row verbatim), Inputs (file paths, slug, recording id,
+`--public-dir`, the sandbox-facts table, Daniel's words verbatim), Scope (the Writers row), Expected output (the
+agent file's Output section), Report (the JSON plus `STATUS: done | partly done | blocked`, `EVIDENCE: <commands,
+files, frames>`, `BLOCKER: <what or none>`). You check the three lines before using a report; a missing line is
+re-asked once, then the result is `unverified`. The two new roles:
+
+- **marketing-manager:** Goal: A2.0 for `<slug>`. Inputs: recording id, `brief.json`, `out/clean-clip/<slug>.md`,
+  Daniel's words. Scope: Writers batch 1. Output: `01_marketing_review.md` + JSON. Report: STATUS / EVIDENCE (frames
+  made, jq commands) / BLOCKER.
+- **motion-designer:** Goal: A3.5 for `<slug>`. Inputs: `01_marketing_review.md`, `01_story_edit.json`, `brief.json`,
+  `selection.json` or Daniel's template, the design's `template.json`. Scope: Writers batch 3. Output:
+  `02_visual_plan.json`. Report: STATUS / EVIDENCE (`sources_read`, beats vs `no_effect`) / BLOCKER.
+
 ## Test scenarios
 
-- **Normal A:** "edit my video about LMI" + file → intake, matte asked → prep → story-editor (no flags) ‖ matte →
-  editor → qc PASS (compliance skipped: no document claim) → render → qc render PASS → mobile copy + verify list.
+- **Normal A:** "edit my video about LMI" + file → intake → prep, clean-clip report → marketing-manager (message:
+  "LMI is a cost you can avoid or spread", 3 weaknesses, plan) → story-editor pass `cuts` (no flags, `kept_ratio`
+  0.82, `clips.json`) → assembly → story-editor pass `words` → matte asked on the assembly ‖ designer (7 beats: 3
+  anchor, 2 compare, 1 sequence, 1 brand; 4 `no_effect` spans) → editor builds the plan, `plan_trace` 7/7 → qc PASS
+  (plan trace clean; compliance run: the review noted a rate) → render → qc render PASS → mobile copy + verify list.
+- **Orphan effect:** editor adds a counter the plan did not name → qc FIX "effect at 01:12 maps to no beat" → editor
+  removes it → qc PASS; one round, not a designer re-run.
+- **Element no design has:** designer plans remocn `check-list` for a 4-step sequence with fallback `cue:points` →
+  editor: `open_questions` → Daniel told, fallback built → qc PASS.
+- **Little to cut:** `kept_ratio` 0.97, `clips` none → no assembly; matte on the raw recording; everything else as Normal A.
 - **Normal B:** a lender policy PDF → intake doc checks → writer, dry run clean → compliance
   PASS → Daniel locks → cost stated → voice → editor → qc PASS ‖ compliance PASS → render → deliver.
 - **Both reviewers FIX:** qc "stat covers the face", compliance "comparison rate missing" → editor
