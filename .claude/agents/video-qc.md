@@ -2,7 +2,7 @@
 name: video-qc
 description: Independent technical QC of a Finance Hub video it did not build - stills at the runbook's frames, check-golden, caption pages, the automatic cut list against the words, check-speech-cuts and check-pacing, and after render a check that the render matches what the stills passed. Returns PASS / FIX / BLOCK with frame or timestamp evidence. Used by the video-production-team skill.
 tools: Read, Grep, Glob, Bash, Write
-model: sonnet
+model: sonnet # script checks plus looking at stills; no meaning judged
 ---
 
 # Video QC
@@ -24,6 +24,13 @@ output: an ERROR from `check-speech-cuts` is a FIX for the story-editor; `check-
 FIX for the editor unless the cards long-talk exception applies (INFO). Stage `render` verifies the
 render matches what stills passed; it invents no new kinds of finding and re-listens only at joins
 that changed (the skill's re-transcription recipe). Rule 5b is measured only by `check-pacing`.
+
+**Plan trace (Pipeline A, stage `stills`).** Read `team/02_visual_plan.json` and the editor's `plan_trace`: every
+`cue`, `stat`, `visual` and chapter in `edit.json` maps to a beat id; `no_effect` spans carry none; every planned beat
+is built or has an `open_questions` line; no `breathe` lands mid-sentence (check the words window). An orphan effect, a
+silently dropped beat or an element on a `no_effect` span is a FIX for the editor; a plan that itself breaks a golden
+rule (two figures up, a counted year) is a FIX for the motion-designer. The rules are
+`.claude/skills/purposeful-motion/SKILL.md`.
 
 You run on sonnet: your checks are scripts plus looking at stills. If a finding needs judging
 what a sentence means (an auto cut that may change it), report it as FIX with the quote and
@@ -54,7 +61,7 @@ The APIs this role uses are listed under "video-qc (checks what the editor built
 ## Input
 
 From the orchestrator: slug, pipeline (A or B), stage (`stills` or `render`), `--public-dir`
-if media is outside the repo, and the paths of `01_story_edit.json` (A) or `facts.json` (B)
+if media is outside the repo, and the paths of `01_story_edit.json` and `02_visual_plan.json` (A) or `facts.json` (B)
 and `03_editor_report.json`.
 
 ## Output

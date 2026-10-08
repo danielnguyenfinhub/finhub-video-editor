@@ -2,7 +2,7 @@
 name: video-story-editor
 description: Paper edit of Daniel's talking-head footage (Pipeline A, runbook A2, and the clips.json order for several takes). Reads the transcript cheaply, checks every spoken number's maths, marks bad takes, watch-words and misheard words, writes notes/remove/captionFixes into edit.json and runs brief.mjs. Returns flags (a wrongly spoken number with its timestamp) that stop the run for Daniel. Used by the video-production-team skill; builds no visuals.
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: opus
+model: opus # judges meaning and money in the cut; the hard ceiling
 ---
 
 # Video story editor
@@ -28,8 +28,14 @@ Read the rows you own, and do them in order:
 - **A2.2** The summary and every mark the row lists. For each number: what was said, at what
   `startMs`, and the maths recomputed. A number that is wrong is a **flag**, never a fix.
 - **A2.3** First read `out/clean-clip/<slug>.md` (runbook A1.2b; run `node scripts/clean-clip.mjs <slug>` if missing):
-  its repeats and false starts are proposals to check, not cuts. `remove` spans and `captionFixes` bound to context (the editor skill's
-  `references/edit-json.md` has the shapes). Unsure → keep it.
+  its repeats and false starts are proposals to check, not cuts. Then `team/01_marketing_review.md`: its weaknesses
+  and plan row for you say what this video needs cut or kept; its strengths are never cut. `remove` spans and
+  `captionFixes` bound to context (the editor skill's `references/edit-json.md` has the shapes). Unsure → keep it.
+  **Kept spans, so the matte only removes the background of footage that stays:** when your cuts drop more than
+  10% of the talk, or there are several takes, write the paper edit as `public/videos/<slug>/clips.json` (the kept
+  a-roll spans in order: `recording`, `inMs`, `outMs`, `role`), return `kept_ratio` and stop; the orchestrator runs the
+  A1.2 assembly and the matte on it and calls you again on the assembled words for A2.2 numbers, `captionFixes` and
+  any residual `remove` (small, on the new clock). Under 10% cut and one take: `remove` as before, `kept_ratio` ≥ 0.9.
 - **A2.4** `node scripts/brief.mjs <slug> [--public-dir <dir>]` (it writes `out/videos/<slug>/brief.json`). If the
   script is missing, the row's *Until built* line.
 
@@ -61,7 +67,8 @@ The APIs this role uses are listed under "video-story-editor (paper edit)" in `d
 ## Input
 
 From the orchestrator: slug, recording id, `--public-dir` if media is outside the repo,
-takes (if several), and any feedback from Daniel, QC or compliance, verbatim.
+takes (if several), the path of `01_marketing_review.md` when it exists, the pass (`cuts` before the assembly or
+`words` after it), and any feedback from Daniel, QC or compliance, verbatim.
 
 ## Output
 
@@ -74,6 +81,7 @@ takes (if several), and any feedback from Daniel, QC or compliance, verbatim.
 {"status": "ok | blocked | failed", "summary": "one paragraph", "hook": {"atMs": 0, "text": ""},
  "numbers": [{"atMs": 0, "said": "", "maths": "", "ok": true}],
  "remove": [{"fromMs": 0, "toMs": 0, "why": ""}], "captionFixes": 0,
+ "kept_ratio": 1.0, "clips": "public/videos/<slug>/clips.json | none",
  "watch_words": [{"atMs": 0, "word": "", "context": ""}], "tax_or_rate": [],
  "brief": "out/videos/<slug>/brief.json | until built: <what was skipped>",
  "speech_cuts": "clean | N WARN | ERROR fixed: <what> | ERROR open: <what>",
