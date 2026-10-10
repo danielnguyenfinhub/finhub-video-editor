@@ -1,0 +1,280 @@
+{
+  "source": "dung-tin-tat-ca-nhung-gi-chia-se",
+  "title": "Đừng Tin Hết Những Gì Mình Chia Sẻ",
+  "pacing": {
+    "mode": "off"
+  },
+  "chapters": [
+    {
+      "atMs": 19260,
+      "title": "Lý do thứ hai",
+      "effect": "wipe"
+    },
+    {
+      "atMs": 59360,
+      "title": "Đừng hỏi trên mạng",
+      "effect": "clockWipe"
+    }
+  ],
+  "stats": [],
+  "cues": [
+    {
+      "kind": "verdict",
+      "fromMs": 5380,
+      "toMs": 8840,
+      "ok": false,
+      "text": "Tin tuyệt đối tất cả"
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 9120,
+      "toMs": 10300,
+      "name": "question",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 10420,
+      "toMs": 18700,
+      "title": "Lý do 1",
+      "items": [
+        {
+          "text": "Không chia sẻ cụ thể từng trường hợp",
+          "atMs": 11880
+        },
+        {
+          "text": "Chỉ là thông tin chung chung",
+          "atMs": 15860
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 20080,
+      "toMs": 29640,
+      "title": "Lý do 2",
+      "items": [
+        {
+          "text": "Kiến thức mình có: không đủ",
+          "atMs": 21840
+        },
+        {
+          "text": "Không là giải pháp cho tất cả",
+          "atMs": 26440
+        },
+        {
+          "text": "Hoàn cảnh mỗi người khác nhau",
+          "atMs": 28460
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 30000,
+      "toMs": 36740,
+      "title": "Lý do 3",
+      "items": [
+        {
+          "text": "Kinh nghiệm mỗi người khác nhau",
+          "atMs": 30680
+        },
+        {
+          "text": "Cách giải quyết vấn đề khác nhau",
+          "atMs": 32880
+        }
+      ]
+    },
+    {
+      "kind": "kinetic",
+      "fromMs": 36920,
+      "toMs": 44320,
+      "struck": [
+        {
+          "text": "Tin tuyệt đối",
+          "atMs": 37720,
+          "strikeMs": 41820
+        }
+      ],
+      "slam": {
+        "text": "Để tham khảo",
+        "atMs": 41820
+      },
+      "sub": {
+        "text": "Và đi tìm tòi thêm",
+        "atMs": 42560
+      }
+    },
+    {
+      "kind": "points",
+      "fromMs": 45740,
+      "toMs": 52080,
+      "title": "Lời khuyên thêm",
+      "items": [
+        {
+          "text": "Hỏi những người chuyên gia",
+          "atMs": 47260
+        },
+        {
+          "text": "Muốn thông tin chính xác",
+          "atMs": 50240
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 53280,
+      "toMs": 58840,
+      "title": "Nên liên lạc",
+      "items": [
+        {
+          "text": "Những người làm trong nghề",
+          "atMs": 54820
+        },
+        {
+          "text": "Có những cách nhìn khác nhau",
+          "atMs": 57160
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 61540,
+      "toMs": 63460,
+      "name": "thinking-face",
+      "position": "left"
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 64940,
+      "toMs": 67600,
+      "ok": false,
+      "text": "Hỏi trên mạng, trong group"
+    },
+    {
+      "kind": "points",
+      "fromMs": 68560,
+      "toMs": 78920,
+      "title": "Ý kiến trên mạng",
+      "items": [
+        {
+          "text": "Toàn kinh nghiệm cá nhân",
+          "atMs": 70240
+        },
+        {
+          "text": "Khiến các bạn càng rối",
+          "atMs": 73640
+        },
+        {
+          "text": "Làm sao cho thích hợp với mình?",
+          "atMs": 77000
+        }
+      ]
+    }
+  ],
+  "compliance": {
+    "illustrativeNumbers": false
+  },
+  "notes": [
+    "A2 story edit 2026-10-07. Summary: Daniel tells viewers not to treat everything he shares online as absolute truth, for three reasons: (1) he cannot share case-specific information, only general information; (2) his own knowledge is not enough to make what he shares a solution for everyone, since everyone’s circumstances differ; (3) people have different experience and different ways to solve a problem. So treat his content as reference, research further, and ask professionals in the industry for accurate information. Do not rely on questions asked online or in groups: those answers are personal experience and can leave you more confused about what suits you.",
+    "Hook 920-8840: Những bạn đã và đang xem những video của mình, thì mình có lời khuyên là các bạn cũng đừng tuyệt đối tin tất cả những thông tin của mình chia sẻ trên mạng nhé.",
+    "Topic changes: 9120 Lý do là tại sao; 10420 Một (reason 1); 19260 Thứ hai (reason 2); 30000 Và thứ ba (reason 3); 36920 Cho nên ... tham khảo (conclusion); 44660 Nhưng ... hỏi những người chuyên gia (advice: ask professionals); 59080 Đừng bao giờ hỏi ... trên mạng hoặc trong group (warning); 67220 reason why (personal experience).",
+    "Numbers: none. Only list ordinals Một / Thứ hai / Thứ ba (10420, 19260, 30140), three reasons, count matches. No money, rate, LVR, tax or date figure.",
+    "Watch-words (compliance.ts PROMOTIONAL_VI + CONTEXT_VI): none spoken. Tax talk: none. Bank names: none. Client data: none.",
+    "Removes: [16340,16740] false start ‘chia những’ before ‘chia sẻ về những thông tin chung chung’; [59480,59820] false start ‘đừng...’ before ‘Đừng bao giờ hỏi’. Neither touches a claim.",
+    "captionFixes (context-bound by atMs): 5620 tiệt→tuyệt (tuyệt đối); 36120 phí→quyết (giải quyết một cái vấn đề); 52540 càng→cần and 52940 tiệt→thiết (cần thiết, unsure); 75620 làm→lầm (hiểu lầm, unsure).",
+    "Unsure, kept as transcribed: 54620 ‘deal’ (liên lạc hoặc là deal những người làm trong nghề); 64580 ‘đòi hỏi’ (may be ‘đi hỏi’); 76040 ‘đi việc’.",
+    "Last segment checked: transcript ends 78920 on ‘thích hợp cho các bạn.’, genuine speech; no Whisper outro hallucination in 78920-81000, no captionFix needed.",
+    "Title field says ‘Chia Sẽ’; correct spelling is ‘Chia Sẻ’. Not changed here (title is not a story-editor field).",
+    "TITLE (editor, 2026-10-07): Chia Sẽ -> Chia Sẻ (spelling; story-editor item 1).",
+    "DESIGN (editor, 2026-10-07): cards, Daniel's default for footage (select-template top pick explainer 2.75, cards logged as override). Background removed (brand backdrop, matted cut-out; foreground.webm being made by Daniel's matte page, render refuses until it exists). Pacing off (his voice at 1x). Chapter effects wipe / clockWipe (sibling dung-co-tinh-che-giau-thong-tin uses iris; last video slide/pushCut/fade).",
+    "SIGNATURE MOMENTS: hook ĐỪNG TIN TUYỆT ĐỐI (0-3.5 s); ✗ verdict Tin tuyệt đối tất cả 5380; Lý do 1 / 2 / 3 points cards 10420 / 20080 / 30000 (chapter Lý do thứ hai at the 19260 cut); kinetic strike Tin tuyệt đối -> slam Để tham khảo 41820; advice cards 45740 and 53280; chapter Đừng hỏi trên mạng at the 59360 cut + ✗ verdict Hỏi trên mạng, trong group 64940; close points Ý kiến trên mạng 68560. Every cue text is Daniel's own words; no figures, rates, banks or tax.",
+    "SOUND: voice only. calm-gentle-study-flow is the only licensed track and it was the bed on the previous video; a serious warn talk reads better without a bed and it keeps the sound axis different from the last three. Swap in music if Daniel prefers.",
+    "SPEECH CUTS (editor, 2026-10-07, measured RMS/ZCR/pitch at 10-20 ms + faster-whisper large-v3 on spliced clips): (a) cut.stutters=false: the auto stutter cut took the first chung of real chung chung (18080). Side effect in the core: with stutters off a word repeated exactly is shown once in captions, so the caption reads thông tin chung mà thôi while both are heard. (b) remove 16340-16740 -> 16310-16710: the old start left 20 ms of the false start after thể and the old end clipped the onset of the kept chia (voiced from 16720); new edges sit in the dips at 16310 (-32 dB) and 16700 (-28 dB). words.json retimed to match: thể end 16340->16310, chia start 16340->16310, những end 16740->16710, chia start 16740->16710. (c) remove 59480-59820 DELETED: there is only ONE đừng (Còn 59360-59600, đừng 59620-59870, bao from 59960). Splice tests: cutting 59600-59950 is heard as Còn bao giờ hỏi, cutting 59360-59620 as đừng bao giờ hỏi; the paper-edit cut took the only đừng and turned Đừng bao giờ hỏi into Còn bao giờ hỏi (meaning reversed). Whisper had doubled the word. words.json: Còn 59080-59480 -> 59360-59600, the doubled đừng... made zero-length at 59620 (dropped as an artefact), Đừng 59820 -> 59620-59880. Prep re-run overwrites these retimes.",
+    "CHECK-SPEECH-CUTS remaining WARNs (accepted): 16300-16430 voiced at the remove start is the removed false start, not thể; 58767-59433 chapter 2 transition reports 0 ms of overlapping speech (only room-tone-level frames at -38 dB on each side).",
+    "FIX ROUND 1 (editor, 2026-10-07, video-qc stills): emoji cues 9120 and 61540 position right -> left (were past the right SAFE edge and over the stage/video card edge); compliance.illustrativeNumbers true -> false (no figures in this video); hook sub Mọi thông tin mình chia sẻ trên mạng -> Thông tin mình chia sẻ (Daniel: những thông tin của mình chia sẻ trên mạng; was orphaning mạng); captionFixes (captions only, audio untouched): chung at 18080 -> chung chung and chung at 18320 hidden, so the caption reads chung chung as spoken (the core showed it once with stutters off); Đừng at 59620 -> đừng (mid-phrase after Còn). Cover title Đừng Tin Tất Cả Những Gì Mình Chia Sẻ Nhé (10 syllables) -> Đừng Tin Hết Những Gì Mình Chia Sẻ (8; preflight warns over 8 words; hết = tất cả, same meaning). post.title (file name) unchanged. Daniel may restore the long title and accept the warning."
+  ],
+  "remove": [
+    [
+      16310,
+      16710
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "tiệt",
+      "to": "tuyệt",
+      "atMs": 5620
+    },
+    {
+      "from": "phí",
+      "to": "quyết",
+      "atMs": 36120
+    },
+    {
+      "from": "càng",
+      "to": "cần",
+      "atMs": 52540
+    },
+    {
+      "from": "tiệt",
+      "to": "thiết",
+      "atMs": 52940
+    },
+    {
+      "from": "làm",
+      "to": "lầm",
+      "atMs": 75620
+    },
+    {
+      "from": "chung",
+      "to": "chung chung",
+      "atMs": 17950
+    },
+    {
+      "from": "chung",
+      "to": "",
+      "atMs": 18450
+    },
+    {
+      "from": "Đừng",
+      "to": "đừng",
+      "atMs": 59620
+    }
+  ],
+  "cut": {
+    "stutters": false
+  },
+  "design": "cards",
+  "background": "brand",
+  "subtitle": "Daniel Nguyen · Finance Hub",
+  "coverFrameMs": 23340,
+  "hook": {
+    "big": "ĐỪNG TIN TUYỆT ĐỐI",
+    "sub": "Thông tin mình chia sẻ"
+  },
+  "keywords": [
+    "tuyệt đối",
+    "tham khảo",
+    "chuyên gia",
+    "trong nghề",
+    "hoàn cảnh",
+    "kinh nghiệm cá nhân",
+    "rối"
+  ],
+  "cta": {
+    "question": "Bạn cần thông tin đúng với hoàn cảnh của mình?"
+  },
+  "post": {
+    "title": "Đừng tin tất cả những gì mình chia sẻ nhé",
+    "caption": "Những video Daniel chia sẻ trên mạng chỉ là thông tin chung chung, không phải giải pháp cho từng trường hợp. Hoàn cảnh mỗi người khác nhau, kinh nghiệm và cách giải quyết cũng khác nhau. Hãy xem đây là thông tin để tham khảo, tìm tòi thêm, và hỏi những người làm trong nghề thay vì hỏi trên mạng hay trong group. Nhắn tin cho Daniel nếu bạn muốn hỏi về hoàn cảnh của mình.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#taichinh",
+      "#vaymuanha",
+      "#nguoivietuc",
+      "#loikhuyen",
+      "#chuyengia"
+    ]
+  }
+}

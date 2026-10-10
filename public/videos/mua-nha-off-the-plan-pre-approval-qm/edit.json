@@ -1,0 +1,405 @@
+{
+  "source": "mua-nha-off-the-plan-pre-approval",
+  "design": "cards",
+  "background": "vignette",
+  "title": "Mua nhà off the plan có cần pre-approval?",
+  "coverFrameMs": 35600,
+  "pacing": {
+    "mode": "off"
+  },
+  "music": {
+    "file": "music/calm-gentle-study-flow.mp3",
+    "startMs": 0
+  },
+  "hook": {
+    "big": "CÓ CẦN PRE-APPROVAL?",
+    "sub": "Off the plan, đặt cọc 10%"
+  },
+  "keywords": [
+    "pre-approval",
+    "off the plan",
+    "tiền cọc",
+    "điểm yếu",
+    "back out"
+  ],
+  "chapters": [
+    {
+      "atMs": 35970,
+      "title": "Khi đặt 10% xuống",
+      "effect": "crossZoom"
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 11930,
+      "durMs": 1500,
+      "big": "10%",
+      "label": "tiền cọc"
+    },
+    {
+      "atMs": 51190,
+      "durMs": 1500,
+      "big": "10%",
+      "label": "đặt xuống"
+    }
+  ],
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 5500,
+      "toMs": 9400,
+      "title": "Mua nhà off the plan",
+      "items": [
+        {
+          "text": "Còn 1, 2 hoặc 3 năm nữa",
+          "atMs": 6810
+        },
+        {
+          "text": "Mới hoàn thành",
+          "atMs": 8490
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 13610,
+      "toMs": 15700,
+      "name": "thinking-face",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 16950,
+      "toMs": 24800,
+      "title": "Pre-approval thường thường",
+      "items": [
+        {
+          "text": "Chỉ có chừng cỡ 3 tháng",
+          "atMs": 17630
+        },
+        {
+          "text": "Sau 3 tháng: hết hiệu lực",
+          "atMs": 22210
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 25010,
+      "toMs": 29600,
+      "ok": true,
+      "text": "Pre-approval trước: cần thiết"
+    },
+    {
+      "kind": "compare",
+      "fromMs": 29650,
+      "toMs": 35330,
+      "cards": [
+        {
+          "title": "Off the plan",
+          "atMs": 31630,
+          "rows": [
+            {
+              "label": "Mới hoàn thành sau",
+              "value": "1, 2, 3 năm",
+              "tone": "neutral",
+              "atMs": 31950
+            }
+          ]
+        },
+        {
+          "title": "Pre-approval",
+          "atMs": 32970,
+          "highlightAtMs": 34890,
+          "rows": [
+            {
+              "label": "Chỉ có trong vòng",
+              "value": "3 tháng",
+              "tone": "bad",
+              "atMs": 34390
+            }
+          ]
+        }
+      ],
+      "vsAtMs": 32590
+    },
+    {
+      "kind": "points",
+      "fromMs": 38010,
+      "toMs": 47390,
+      "title": "Khi đặt 10% xuống, cần biết",
+      "items": [
+        {
+          "text": "Điều kiện hiện tại của bạn",
+          "atMs": 39730
+        },
+        {
+          "text": "Có thể mượn được số tiền cần",
+          "atMs": 45470
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 47810,
+      "toMs": 50300,
+      "name": "eyes",
+      "position": "left"
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 52710,
+      "toMs": 55930,
+      "ok": true,
+      "text": "Nếu không gì thay đổi: có khả năng mượn"
+    },
+    {
+      "kind": "points",
+      "fromMs": 58290,
+      "toMs": 69150,
+      "title": "Tệ nhất, bạn cũng biết",
+      "items": [
+        {
+          "text": "Điểm yếu của mình",
+          "atMs": 59950
+        },
+        {
+          "text": "Khả năng mượn cao nhất",
+          "atMs": 61330
+        },
+        {
+          "text": "Tiền cọc cần thêm",
+          "atMs": 63110
+        },
+        {
+          "text": "Thu nhập cần thêm",
+          "atMs": 65570
+        },
+        {
+          "text": "Để mượn số tiền mình cần",
+          "atMs": 67430
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 69670,
+      "toMs": 76400,
+      "title": "Trong thời gian đó",
+      "items": [
+        {
+          "text": "1, 2 năm hoặc 3 năm",
+          "atMs": 70790
+        },
+        {
+          "text": "Tập trung vào điều cần thiết nhất",
+          "atMs": 73190
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 76610,
+      "toMs": 79500,
+      "name": "light-bulb",
+      "position": "left"
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 79730,
+      "toMs": 83200,
+      "ok": true,
+      "text": "Dự án sắp hoàn thành: đã chuẩn bị"
+    },
+    {
+      "kind": "points",
+      "fromMs": 84600,
+      "toMs": 89000,
+      "title": "Còn trường hợp nếu như",
+      "items": [
+        {
+          "text": "Để mượn số tiền đó",
+          "atMs": 85890
+        },
+        {
+          "text": "Cho dù 1-2 năm sau",
+          "atMs": 87450
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 89010,
+      "toMs": 92330,
+      "ok": false,
+      "text": "Điều kiện hiện tại: không khả thi"
+    },
+    {
+      "kind": "bars",
+      "fromMs": 92510,
+      "toMs": 100090,
+      "kicker": "VÍ DỤ",
+      "title": "Lương để mượn được số tiền đó",
+      "bars": [
+        {
+          "label": "Lương hiện tại",
+          "value": "50 ngàn",
+          "height": 0.33,
+          "tone": "neutral",
+          "atMs": 93930
+        },
+        {
+          "label": "Lương cần",
+          "value": "150 ngàn",
+          "height": 1,
+          "tone": "bad",
+          "atMs": 98130
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 101300,
+      "toMs": 106300,
+      "title": "Công việc của bạn",
+      "items": [
+        {
+          "text": "Trong 1 hoặc 2 năm",
+          "atMs": 103110
+        },
+        {
+          "text": "Không thể tăng nhiều như vậy",
+          "atMs": 104570
+        }
+      ]
+    },
+    {
+      "kind": "kinetic",
+      "fromMs": 106410,
+      "toMs": 111000,
+      "kicker": "Rõ ràng là",
+      "struck": [
+        {
+          "text": "Mua cái nhà đó",
+          "atMs": 106770,
+          "strikeMs": 109130
+        }
+      ],
+      "slam": {
+        "text": "Không nên mua",
+        "atMs": 109370
+      },
+      "sub": {
+        "text": "Cái nhà đó",
+        "atMs": 109650
+      }
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 111100,
+      "toMs": 113600,
+      "name": "light-bulb",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 114350,
+      "toMs": 122900,
+      "title": "Chuẩn bị trước để biết rõ",
+      "items": [
+        {
+          "text": "Nếu không gì thay đổi",
+          "atMs": 116230
+        },
+        {
+          "text": "Vẫn có thể có loan approval",
+          "atMs": 118070
+        },
+        {
+          "text": "Khi dự án hoàn thành",
+          "atMs": 121110
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 122990,
+      "toMs": 127500,
+      "title": "Còn nếu như không",
+      "items": [
+        {
+          "text": "Nên back out",
+          "atMs": 124850
+        },
+        {
+          "text": "Đừng mua",
+          "atMs": 125930
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 127670,
+      "toMs": 130600,
+      "ok": false,
+      "text": "Không tính toán mà nhảy vào"
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 130670,
+      "toMs": 133570,
+      "name": "exclamation",
+      "position": "left"
+    }
+  ],
+  "cta": {
+    "question": "Bạn đang tính mua nhà off the plan?"
+  },
+  "compliance": {
+    "illustrativeNumbers": true
+  },
+  "notes": [
+    "TRANSCRIPT REPLACED (story edit, 2026-10-07): prep's words.json was a Whisper hallucination over the whole file (75 tokens, 'Hãy subscribe cho kênh Ghiền Mì Gõ ...' x5, nothing Daniel said). Re-transcribed the same proxy audio with faster-whisper large-v3, language vi, vad_filter=True (min_silence 300 ms), condition_on_previous_text=False, no initial_prompt: 513 tokens, 2030-133570 ms. The prep version is kept at out/videos/mua-nha-off-the-plan-pre-approval/team/words.prep-hallucinated.json. Re-running prep will bring the hallucination back.",
+    "RETIME (words.json, hand edit): ' thi.' at 91910 endMs 92110 -> 92330 (check-speech-cuts WARN: 60 ms voiced tail clipped at 92260-92330).",
+    "Fillers (ờ/ừm) were not transcribed (no filler prompt in the re-run), so the automatic filler cut will not see any; check-speech-cuts reports 0 errors, 0 warnings, so no voicing is cut.",
+    "SUMMARY: Single clean take, one topic. Hook (2030): if you plan to buy off the plan finishing in 1, 2 or 3 years and must put down a 10% deposit, do you need a pre-approval first, given a pre-approval usually lasts only about 3 months? Answer (25010): certainly needed. Why (35970): when you put the 10% down you know your current position can borrow what you need, or at worst you know your weak point, your maximum borrowing, how much more deposit or income you need, so over the 1-3 years you can prepare before completion. Counter-case (83270): if borrowing that amount is not feasible even in 1-2 years, e.g. income 50k now but 150k needed, a job cannot rise that much in 1-2 years, so you should not buy. Close (110050): prepare early so that, if nothing changes, you can still get loan approval at completion; if not, back out, do not buy; jumping in without calculating makes it harder to fix later.",
+    "TOPIC CHANGES: 2030 question; 25010 answer; 35970 reasons; 83270 when not to buy (example 92510); 110050 conclusion.",
+    "NUMBERS: 6930/7330/7950 '1 hoặc 2 năm hoặc 3 năm' build time; repeated 70790 '1, 2 năm hoặc 3 năm', 87830 '1-2 năm sau', 103530 '1 năm hoặc 2 năm': consistent. 11930 / 40050 / 51190 '10%' deposit: consistent, the standard off-the-plan deposit. 20730 / 22430 / 34890 '3 tháng' pre-approval validity, said with 'thường thường ... chừng cỡ' (usually, about): general statement, many lenders use 90 days and some longer; not a wrong number. 95050 'lương hiện tại mình 50 ngàn' vs 98870 'cần 150 ngàn': illustrative ('mình nói ví dụ'), 150/50 = 3x, +100k (+200%), consistent with 'không thể nào tăng được nhiều như vậy' in 1-2 years. Window re-transcription confirmed 10%, 3 tháng, 50 ngàn, 150 ngàn. No wrongly spoken number.",
+    "WATCH-WORDS: none from compliance.ts PROMOTIONAL_VI or CONTEXT_VI spoken. For the compliance reviewer: 27110 'câu trả lời này sẽ là chắc chắn là cần thiết' (certainty about needing a pre-approval, not about approval); 54410 'khả năng mượn của các bạn là hoàn toàn có' conditional on 52410 'nếu như tình hình không gì thay đổi'; 118470 'các bạn vẫn có thể có cái loan approval khi mà dự án hoàn thành' conditional on 116410 'nếu như không gì thay đổi'; 15790-23990 pre-approval validity '3 tháng' stated as usual, not universal.",
+    "TAX / RATE: none spoken. BANK NAMES: none. CLIENT DATA: none (the 50k/150k income is a hypothetical 'ví dụ').",
+    "REMOVE: none. One take, no false starts worth cutting. Considered and kept: 81130 'cũng có thể cũng đã chuẩn bị' (small restart, meaning unchanged, not worth a cut inside running speech); 108330 'không thể mua, không nên mua' (self-correction; cutting 'không thể mua' would change the claim from 'cannot' to 'should not', flagged for Daniel). 85230 a zero-length duplicate 'Thấy' (Whisper artefact) is dropped by the timeline automatically (endMs == startMs); not a remove. Adjacent repeats checked: 16950 'thường thường' is a reduplication (protected); 109910 'đó. Đó' crosses a sentence end (protected).",
+    "CAPTION FIXES: 12570 cầu->cọc (tiền cọc, confirmed by window re-transcription); 34690 and 103350 dòng->vòng (trong vòng, confirmed at 34690); 60770 đăng->đang (confirmed); 129050 tóm->toán ('không tính toán', unconfirmed: the window re-run also heard 'tóm').",
+    "EDITOR DESIGN (2026-10-07): cards, Daniel's default for footage (select-template top pick classic 4.75 vs cards 3, confident=false; cards logged as override, close call in open_questions). Background removed ('brand', matte pending). Pacing off. Music calm-gentle-study-flow from 0 ms (music-start: track is full from 0 s): the last three logged videos and both in-flight siblings are voice only, hopeful-inspiring or calm-morning-keys, so a calm bed keeps the sound axis new and suits a calm advice talk. Chapter 'Khi đặt 10% xuống' at the only >= 0.5 s pause (35330-35970), effect crossZoom (not used by the last 3 logged videos or the in-flight siblings: dung-co-tinh iris, dung-tin wipe/clockWipe, cach-lam-viec flip).",
+    "EDITOR SIGNATURE MOMENTS: hook CÓ CẦN PRE-APPROVAL? / Off the plan, đặt cọc 10% (0-3.5 s); 10% count-up cards labelled tiền cọc (11930) and đặt xuống (51190) as stats (the automatic labels read tiền cọc đó có / xuống các bạn biết); full-screen compare Off the plan 1, 2, 3 năm vs Pre-approval 3 tháng (29650); 5-row navy terminal Tệ nhất, bạn cũng biết (58290); full-screen VÍ DỤ bars Lương hiện tại 50 ngàn vs Lương cần 150 ngàn (92510); kinetic strike Mua cái nhà đó -> Không nên mua / Cái nhà đó (106410); close points Chuẩn bị trước để biết rõ with the condition first (114350), then Còn nếu như không: Nên back out / Đừng mua (122990).",
+    "EDITOR APPROVAL WORDING: every on-screen line near approval keeps Daniel's condition: 'Nếu không gì thay đổi: có khả năng mượn' (52410), 'Nếu không gì thay đổi' then 'Vẫn có thể có loan approval khi dự án hoàn thành' (116230/118070). The 27110 'chắc chắn là cần thiết' is shown as 'Pre-approval trước: cần thiết' (no 'chắc chắn' on screen). Example figures are labelled VÍ DỤ.",
+    "EDITOR TIMING: cues kept apart in time from each other and from the two stats (preflight top-panel rule); emoji always position left; every card held to its reading floor (check-golden: only cues[0] held 33 ms longer). The compare value 1, 2, 3 năm keeps a preflight WARNING (VS badge, written for classic): in cards the VS badge sits between the two cards, the still at reel frame 1051 shows no collision."
+  ],
+  "remove": [],
+  "captionFixes": [
+    {
+      "from": "cầu",
+      "to": "cọc",
+      "atMs": 12570
+    },
+    {
+      "from": "dòng",
+      "to": "vòng",
+      "atMs": 34690
+    },
+    {
+      "from": "dòng",
+      "to": "vòng",
+      "atMs": 103350
+    },
+    {
+      "from": "đăng",
+      "to": "đang",
+      "atMs": 60770
+    },
+    {
+      "from": "tóm",
+      "to": "toán",
+      "atMs": 129050
+    }
+  ]
+}

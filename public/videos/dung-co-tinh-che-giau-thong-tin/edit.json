@@ -1,0 +1,318 @@
+{
+  "source": "dung-co-tinh-che-giau-thong-tin",
+  "title": "Đừng Cố Tình Che Giấu Thông Tin",
+  "pacing": {
+    "mode": "off"
+  },
+  "chapters": [
+    {
+      "atMs": 19880,
+      "title": "Tại sao?",
+      "effect": "iris"
+    }
+  ],
+  "stats": [],
+  "cues": [
+    {
+      "kind": "emoji",
+      "fromMs": 7040,
+      "toMs": 9900,
+      "name": "exclamation",
+      "position": "right"
+    },
+    {
+      "kind": "points",
+      "fromMs": 10020,
+      "toMs": 12650,
+      "title": "Kể cả khi làm việc với",
+      "items": [
+        {
+          "text": "Broker",
+          "atMs": 11220
+        },
+        {
+          "text": "Lenders",
+          "atMs": 11880
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 13100,
+      "toMs": 16300,
+      "ok": false,
+      "text": "Cố tình che giấu thông tin"
+    },
+    {
+      "kind": "points",
+      "fromMs": 16420,
+      "toMs": 18800,
+      "title": "Thông tin bạn nghĩ",
+      "items": [
+        {
+          "text": "Ảnh hưởng tới",
+          "atMs": 17040
+        },
+        {
+          "text": "Quyết định ngân hàng",
+          "atMs": 17720
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 20760,
+      "toMs": 23600,
+      "name": "thinking-face",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 24400,
+      "toMs": 30800,
+      "title": "Broker hoặc lender sẽ",
+      "items": [
+        {
+          "text": "Tìm hiểu hồ sơ của bạn",
+          "atMs": 25000
+        },
+        {
+          "text": "Gửi thông tin, giải trình",
+          "atMs": 26980
+        },
+        {
+          "text": "Để ngân hàng xem xét",
+          "atMs": 30000
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 31220,
+      "toMs": 33300,
+      "name": "eyes",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 33380,
+      "toMs": 40800,
+      "title": "Phía ngân hàng",
+      "items": [
+        {
+          "text": "Credit assessor kiểm tra lại",
+          "atMs": 33520
+        },
+        {
+          "text": "Chỉ dựa vào những gì mình có",
+          "atMs": 37980
+        },
+        {
+          "text": "Và những gì họ tìm được",
+          "atMs": 39640
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 40920,
+      "toMs": 42600,
+      "ok": false,
+      "text": "Khi bạn cố tình che giấu"
+    },
+    {
+      "kind": "points",
+      "fromMs": 42660,
+      "toMs": 51400,
+      "title": "Tụi mình sẽ không thể",
+      "items": [
+        {
+          "text": "Biết trước điểm yếu",
+          "atMs": 43880
+        },
+        {
+          "text": "Giải thích trước cho họ",
+          "atMs": 45700
+        },
+        {
+          "text": "Tìm thông tin khác hỗ trợ",
+          "atMs": 48840
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 51940,
+      "toMs": 54600,
+      "name": "exclamation",
+      "position": "right"
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 54720,
+      "toMs": 57500,
+      "ok": false,
+      "text": "Không giúp ích cho hồ sơ"
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 57640,
+      "toMs": 60600,
+      "ok": false,
+      "text": "Không tăng cơ hội được duyệt"
+    },
+    {
+      "kind": "kinetic",
+      "fromMs": 60800,
+      "toMs": 68500,
+      "struck": [
+        {
+          "text": "Che giấu",
+          "atMs": 60800,
+          "strikeMs": 64160
+        }
+      ],
+      "slam": {
+        "text": "Hãy nói tất cả",
+        "atMs": 64500
+      },
+      "sub": {
+        "text": "Những gì có thể ảnh hưởng tới hồ sơ",
+        "atMs": 66080
+      }
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 68600,
+      "toMs": 70450,
+      "name": "light-bulb",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 81360,
+      "toMs": 88400,
+      "title": "Tại vì tụi mình",
+      "items": [
+        {
+          "text": "Hiểu vấn đề trước",
+          "atMs": 83240
+        },
+        {
+          "text": "Giải trình với assessor",
+          "atMs": 86940
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 88540,
+      "toMs": 91440,
+      "ok": true,
+      "text": "Có thể tăng cơ hội được duyệt"
+    }
+  ],
+  "compliance": {
+    "illustrativeNumbers": false
+  },
+  "notes": [
+    "Summary: Daniel warns anyone planning to borrow from a bank, even through a broker or lender, never to deliberately hide information they think could affect the bank's decision. Why: the broker/lender reviews the file and submits an explanation to the bank, where a credit assessor re-checks it using only what was provided and what they find themselves. If the client hides something, the broker cannot see the weak points in advance, explain them, or find other information to support them, so hiding does not help the chance of acceptance. Conclusion: tell us everything that might affect the application; we can only solve a problem when we understand it first, then explain it to the assessor, so the chance of approval is higher.",
+    "Hook (1560-18840): 'Nếu như các bạn chưa từng đi vay mượn ... đây là điều mà các bạn cần tuyệt đối là không nên làm ... cố tình đi che giấu những thông tin ...'.",
+    "Topic changes: 19880 'Tại sao?' (the why: broker role, credit assessor); 40920 consequence of hiding; 60800 call to action 'hãy nói tất cả'; 70040 closing reason.",
+    "Numbers: none spoken. No rates, amounts, percentages or dates. compliance.illustrativeNumbers left as prep set it.",
+    "Watch-words (compliance.ts PROMOTIONAL/CONTEXT lists, EN and VI): none spoken. Nearest: 'approve' at 90100 in 'khả năng được approve sẽ được cao hơn' (a higher chance, not a guarantee; fine) and 'ngân hàng chấp nhận hồ sơ' at ~58000 (stated as a chance, not a promise).",
+    "Tax talk: none. Bank names: none (generic 'ngân hàng', 'lenders', 'credit assessor').",
+    "Client data: none. No client names, addresses or figures.",
+    "Cut 1 [53280,54440]: false start 'các bạn sẽ không,' then Daniel restarts 'điều các bạn làm không giúp ích ...'. Meaning unchanged. Fix round 1 (QC finding 1): end moved 54040 -> 54440; the old end kept ~140 ms of the voiced tail of 'không,' (-13 dB at 53980-54060, decays to -40 dB by 54200) plus ~300 ms of near-silence (-45 to -52 dB, 54200-54440). 54440 sits at -44 dB, 20 ms before the 'điều' onset (-35 dB at 54460). Splice test (large-v3, 51800-53280 + 54440-56300, plain/filler prompt, vad on/off): 'trường hợp đấy, điều các bạn làm không giúp' in 3 of 4 runs, 'nếu' (0.55) in 1; no leftover 'không'.",
+    "Cut 2 [70500,81360]: repeated takes after 'Tại vì' ('nếu tụi mình chỉ giải quyết được vấn đề, khi tụi mình biết nó, và tụi mình sẽ phải, tụi mình chỉ quyết, tụi mình chỉ giải quyết được vấn đề, tụi mình chỉ giải quyết được,'); keeps his final clean take 'Tại vì | tụi mình chỉ giải quyết được vấn đề khi tụi mình hiểu nó trước ...'. Same claim ('biết nó' restated as 'hiểu nó trước').",
+    "captionFixes: 'tiệt'->'tuyệt' at 8060 ('tuyệt đối'); 'kiểm'->'kiếm' at 48220 ('kiếm những thông tin khác' = find other information).",
+    "Hallucination check: last transcript segment 86040-91440 is Daniel's real closing line ending 'cao hơn.'; no invented outro/subscribe line; nothing hidden.",
+    "Unsure words for the verify list: 'như' at 11120 in 'làm việc như broker' (maybe 'với'); 'sao,' at 24040 in 'một người sao, một người đó' (conf 0.667, unclear); 'được' at 47940 before 'kiếm' (maybe 'đi'); 'cải tăng' at 56960 (conf 0.659, maybe 'gia tăng'); 'dựa đến' at 38140 (maybe 'dựa vào'); 'lenders' at 11880/22460 (English, may be singular). Left as transcribed.",
+    "words.json retimes (fix round 1, story editor, from RMS at 10-20 ms steps): 'không,' 53720-54000 -> 53880-54160; 'điều' startMs 54040 -> 54460 (endMs 54720 unchanged). No words added. Re-running prep overwrites these.",
+    "Editor 2026-10-07 design brief: cards (Daniel's default for footage, selector top pick explainer 5.75 overridden by --pick). Background removed (brand backdrop, matte pending). Sound: voice only, no music bed: a serious warning, and the sibling video (dung-tin-tat-ca-nhung-gi-chia-se) and the last logged cards video both have calm-gentle-study-flow. One chapter 'Tại sao?' at 19880 with an iris transition (not used by the last 3); the other topic changes (40920, 60800) have no pause >= 0.5 s for a transition, so they are carried by cues instead. Signature moments: hook 'TUYỆT ĐỐI KHÔNG NÊN LÀM' (1560); red verdict 'Cố tình che giấu thông tin' (13100); credit assessor points (33380); 'Tụi mình sẽ không thể' points (42660); kinetic 'Che giấu' struck -> 'Hãy nói tất cả' (62300-64500); green verdict 'Có thể tăng cơ hội được duyệt' (88540), a chance not a promise (RG 234).",
+    "cut.stutters=false: the auto stutter cut dropped the first 'họ' in 'đối với họ, họ chỉ dựa' (37560); measured RMS -13.1 dB over 37560-37780, same as the words around it, so it is real speech, not a stutter. Only stutter the check found.",
+    "compliance.illustrativeNumbers=false: no numbers spoken or shown.",
+    "Caption fixes, fix round 1 (QC finding 3; re-transcribed with faster-whisper large-v3 on CPU, plain, filler prompt and a neutral domain prompt, narrow and wide windows; the filler prompt hallucinated a stock 'Hãy subscribe cho kênh ...' line on short clips, so those runs were discarded): (a) 'được'->'đi' at 47940: large-v3 hears 'địch' x3, 'đứt' x1, 'được' (0.18) x2 before 'kiếm'; a đi-vowel syllable, and 'hoặc là đi kiếm những thông tin khác' is the only reading that fits. (b) 'tin.' at 48820 and 'Thông' at 48840 hidden: zero-length duplicate tokens from a segment join ('thông tin. Thông tin khác'); every large-v3 run reads 'thông tin khác' once. (c) 'cải' at 56960 hidden: a 120 ms false-start syllable (56920-57040, then 220 ms silence) before 'tăng khả năng'; large-v3 reads it 'khả' x2 and 'cải' x2, so it is his start of 'khả năng' abandoned; caption now reads 'cho việc tăng khả năng'. Audio untouched for all.",
+    "Left as spoken after re-listen (fix round 1): 'sao,' at 24040 (large-v3 'sao' 0.79-0.86 in context, matches prep; a spoken hesitation 'một người sao, một người đó', not a mis-hearing); 'dựa đến' at 38140/38360 ('đến' is a 60 ms reduced syllable; large-v3 'đến' x3, 'trên' x1 at 0.30; could be 'dựa trên', not resolved with good confidence; Daniel to verify).",
+    "Editor fix round 1 (2026-10-07): QC finding 2: thinking-face (20760) and eyes (31220) emoji moved position right -> left (were ~55 px outside SAFE and covered the chapter card 1 / 1 counter). Points item at 30000 \"Để ngân hàng duyệt\" -> \"Để ngân hàng xem xét\" (compliance reviewer optional, more neutral; fits on one line, no reflow).",
+    "Editor render fix (2026-10-07): preflight blocker 'cues[14] (emoji) overlaps cues[13] (kinetic)': deleted the decorative light-bulb emoji (src 68600-70450, no words/numbers/claims); the kinetic 'Hãy nói tất cả' card still covers that span. Orchestrator's Option A.",
+    "Editor render fix, Option C (2026-10-07, orchestrator decision on Daniel's standing you-decide): kinetic cues[13] 'Che giấu'/'Hãy nói tất cả' toMs 70500 -> 68500, and the light-bulb emoji restored (position left, src 68600-70450, as before Option A); closes the 3.5 s pacing gap without the emoji/kinetic overlap.",
+    "Editor render fix, Option C1 (2026-10-07, orchestrator): kinetic cues[13] sub 'Những gì có thể ảnh hưởng tới hồ sơ' atMs 66980 -> 66080 (onset of 'có' in 'có thể ảnh hưởng'); sub now holds ~2420 ms (floor 2267 ms), slam 'Hãy nói tất cả' keeps 64500-66080 = 1580 ms (floor 933 ms)."
+  ],
+  "remove": [
+    [
+      53280,
+      54440
+    ],
+    [
+      70500,
+      81360
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "tiệt",
+      "to": "tuyệt",
+      "atMs": 8060
+    },
+    {
+      "from": "kiểm",
+      "to": "kiếm",
+      "atMs": 48220
+    },
+    {
+      "from": "được",
+      "to": "đi",
+      "atMs": 47940
+    },
+    {
+      "from": "tin.",
+      "to": "",
+      "atMs": 48820
+    },
+    {
+      "from": "Thông",
+      "to": "",
+      "atMs": 48840
+    },
+    {
+      "from": "cải",
+      "to": "",
+      "atMs": 56960
+    }
+  ],
+  "subtitle": "Daniel Nguyen · Finance Hub",
+  "design": "cards",
+  "background": "brand",
+  "cut": {
+    "stutters": false
+  },
+  "hook": {
+    "big": "TUYỆT ĐỐI KHÔNG NÊN LÀM",
+    "sub": "Khi đi vay ngân hàng, kể cả qua broker"
+  },
+  "keywords": [
+    "che giấu",
+    "điểm yếu",
+    "giải trình",
+    "credit assessor",
+    "nói tất cả"
+  ],
+  "cta": {
+    "question": "Bạn cần tư vấn trước khi nộp hồ sơ vay?"
+  },
+  "post": {
+    "title": "Đừng cố tình che giấu thông tin",
+    "caption": "Sắp vay ngân hàng, dù qua broker hay lender? Đừng cố tình che giấu những thông tin bạn nghĩ có thể ảnh hưởng tới quyết định của ngân hàng. Broker chỉ giải trình được những điểm yếu mình biết trước, còn credit assessor của ngân hàng chỉ dựa vào những gì được cung cấp và những gì họ tự tìm được. Hãy nói hết với tụi mình để hồ sơ được giải trình rõ ràng, điều đó có thể giúp tăng khả năng hồ sơ được chấp nhận. Thông tin chỉ mang tính tham khảo. Nhắn tin cho Daniel nếu bạn cần tư vấn trước khi nộp hồ sơ.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#vaynganhang",
+      "#hosovay",
+      "#broker",
+      "#taichinh",
+      "#nguoivietuc"
+    ]
+  },
+  "coverFrameMs": 24000
+}
