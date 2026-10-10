@@ -1,0 +1,288 @@
+{
+  "source": "cach-lam-viec-voi-mortgage-broker",
+  "title": "Cách Làm Việc Với Mortgage Broker",
+  "subtitle": "Daniel Nguyen · Finance Hub",
+  "design": "cards",
+  "background": "brand",
+  "coverFrameMs": 26300,
+  "pacing": {
+    "mode": "off"
+  },
+  "hook": {
+    "big": "LÀM VIỆC VỚI MORTGAGE BROKER",
+    "sub": "Ba việc các bạn nên làm"
+  },
+  "chapters": [
+    {
+      "atMs": 4120,
+      "title": "Thẳng thắn chia sẻ",
+      "effect": "flip"
+    },
+    {
+      "atMs": 15540,
+      "title": "Đưa đủ giấy tờ",
+      "effect": "flip"
+    },
+    {
+      "atMs": 60800,
+      "title": "Hỏi đi sâu",
+      "effect": "flip"
+    }
+  ],
+  "stats": [],
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 5780,
+      "toMs": 15200,
+      "title": "Chia sẻ với broker",
+      "items": [
+        {
+          "text": "Những gì các bạn muốn làm",
+          "atMs": 7480
+        },
+        {
+          "text": "Thông tin liên quan tới các bạn",
+          "atMs": 9380
+        },
+        {
+          "text": "Điều có thể ảnh hưởng hồ sơ",
+          "atMs": 12340
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 16680,
+      "toMs": 27560,
+      "title": "Đưa tất cả",
+      "items": [
+        {
+          "text": "Những thông tin",
+          "atMs": 19220
+        },
+        {
+          "text": "Giấy tờ broker đòi hỏi",
+          "atMs": 20000
+        },
+        {
+          "text": "Để xem hợp ngân hàng nào",
+          "atMs": 24760
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 29860,
+      "toMs": 32800,
+      "name": "thinking-face",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 33560,
+      "toMs": 39300,
+      "title": "Đi thẳng ngân hàng",
+      "items": [
+        {
+          "text": "Thông tin khách hiện tại có sẵn",
+          "atMs": 35060
+        },
+        {
+          "text": "Chỉ cần bạn cho phép",
+          "atMs": 37000
+        }
+      ]
+    },
+    {
+      "kind": "compare",
+      "fromMs": 39500,
+      "toMs": 44500,
+      "cards": [
+        {
+          "title": "Đi thẳng ngân hàng",
+          "atMs": 39500,
+          "rows": [
+            {
+              "label": "Thông tin khách hiện tại",
+              "value": "Có sẵn",
+              "tone": "neutral",
+              "atMs": 39600
+            },
+            {
+              "label": "Chỉ cần bạn",
+              "value": "Cho phép",
+              "tone": "neutral",
+              "atMs": 39850
+            }
+          ]
+        },
+        {
+          "title": "Mortgage broker",
+          "atMs": 40500,
+          "highlightAtMs": 43200,
+          "rows": [
+            {
+              "label": "Tìm hiểu ngân hàng",
+              "value": "Nhiều",
+              "tone": "neutral",
+              "atMs": 41680
+            },
+            {
+              "label": "Cần trước mặt",
+              "value": "Giấy tờ",
+              "tone": "neutral",
+              "atMs": 43060
+            }
+          ]
+        }
+      ],
+      "vsAtMs": 40150
+    },
+    {
+      "kind": "points",
+      "fromMs": 44700,
+      "toMs": 47900,
+      "title": "Mortgage broker",
+      "items": [
+        {
+          "text": "Có giấy tờ trước mặt",
+          "atMs": 44760
+        },
+        {
+          "text": "Ngân hàng nào thích hợp với bạn?",
+          "atMs": 45360
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 47940,
+      "toMs": 53720,
+      "title": "Lưu ý",
+      "items": [
+        {
+          "text": "Tiền lời càng thấp",
+          "atMs": 49400
+        },
+        {
+          "text": "Điều kiện thường càng khó",
+          "atMs": 51040
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 54300,
+      "toMs": 60100,
+      "title": "Khi thấy rõ",
+      "items": [
+        {
+          "text": "Giúp đỡ những chọn lựa",
+          "atMs": 56200
+        },
+        {
+          "text": "Đưa tới các bạn",
+          "atMs": 57640
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 63700,
+      "toMs": 68500,
+      "title": "Sau khi có chọn lựa",
+      "items": [
+        {
+          "text": "Bắt đầu thắc mắc",
+          "atMs": 65460
+        },
+        {
+          "text": "Hỏi đi sâu về vấn đề",
+          "atMs": 67240
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 70060,
+      "toMs": 72900,
+      "name": "thumbs-up",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 75700,
+      "toMs": 83300,
+      "title": "Đừng đợi broker hỏi",
+      "items": [
+        {
+          "text": "Các bạn nói, không cần broker hỏi",
+          "atMs": 77460
+        },
+        {
+          "text": "Ảnh hưởng trực tiếp tới hồ sơ",
+          "atMs": 81160
+        }
+      ]
+    }
+  ],
+  "keywords": [
+    "thẳng thắn",
+    "giấy tờ",
+    "nhiều ngân hàng",
+    "điều kiện",
+    "đi sâu",
+    "trực tiếp"
+  ],
+  "music": {
+    "file": "music/calm-gentle-study-flow.mp3",
+    "startMs": 0
+  },
+  "cta": {
+    "question": "Bạn có thắc mắc về hồ sơ vay của mình?"
+  },
+  "compliance": {
+    "illustrativeNumbers": false
+  },
+  "notes": [
+    "STORY EDIT (A2, 2026-10-07). One take, 86.06 s, talk 0-83.26 s, silence to the end (no Whisper end-hallucination: an independent faster-whisper large-v3 pass ends on the same last line). SUMMARY: how to work with a mortgage broker effectively. (1) Be upfront about what you want and everything relevant, especially anything you think could hurt the application. (2) Hand over every document the broker asks for so they can see which lender suits you; a bank you go to directly asks for less because it already holds your data and only needs your permission, while a broker compares many lenders and needs the papers in front of them; lenders with lower rates usually have stricter conditions, so the full picture lets the broker put suitable options to you. (3) Once you have the options, ask questions and dig in. Close: if you hold something back because the broker did not ask, it directly affects the outcome of your application. HOOK 0-3740: Đây là cách mà các bạn có thể làm việc với mortgage broker một cách hiệu quả nhất. TOPIC CHANGES: 4120 Đầu tiên (be upfront); 15540 Thứ hai (give all documents); 28880 why a bank asks for less than a broker; 47940 lower rate = stricter conditions; 60700 then ask questions; 74220 warning: withholding information hurts the application. NUMBERS: none spoken (Thứ hai and hai người are not figures); nothing to recompute. WATCH-WORDS (spoken; never cut or reworded): 3240 hiệu quả nhất (superlative about the way of working, not the service; not on the lists); 55640 bảo đảm (CONTEXT_VI) in để bảo đảm là giúp đỡ những chọn lựa mà cho đưa tới các bạn là những chọn lựa tốt và thích hợp nhất; 59260 tốt ... nhất in that same sentence, a close paraphrase of PROMOTIONAL_VI lựa chọn tốt nhất: compliance to review; 71280 bảo đảm được in sẽ bảo đảm được là việc hai người sẽ làm việc hiệu quả hơn (not about approval). TAX/RATE TALK: 49400 tiền lời (interest) càng thấp thì ... điều kiện càng khó khăn hơn: general, no figure, no lender. BANKS NAMED: none. CLIENT DATA: none. REMOVE: [21000,21560] the restart mà đòi hỏi, before người mortgage broker đòi hỏi. Separate large-v3 passes of each side place mà đòi hỏi inside 21020-21540 (fast, after a silence 20760-21000); the timeline join (src 20933 -> 21533) re-transcribes as những giấy tờ / người mortgage broker đòi hỏi; the documents the broker asks for: meaning unchanged. Kept on purpose: trao tất cả hay là đưa tất cả (no quiet dip before đưa, an edge would land in voicing); sẽ trực tiếp sẽ ảnh hưởng (both passes hear the double sẽ, spoken). Full timeline audio (pacing off) spliced and re-transcribed: every word kept, no word lost at any join. WORDS.JSON RETIMES (hand edits, re-running prep overwrites them; old -> new startMs-endMs): trao 17060-18240 -> 18080-18240 (0.74 s pause after hãy hidden in the token; now auto-cut); tờ 20340-20700 -> 20340-20760; mà 20700-21040 -> 21020-21080; đòi 21040-21260 -> 21080-21300; hỏi, 21260-21600 -> 21300-21540 (so the remove holds whole words, voicing measured 21020-21530); người 21660-22020 -> 21620-22020 (kept edge on the -34 dB dip at 21533, onset 21570); và 28360-29320 -> 28880-29320 (0.45 s pause hidden in the token; now auto-cut). CAPTION FIXES: Đấy, at 28340 hidden (20 ms token, confidence 0.004, absent in both independent passes); kỳ at 73480 shown as hiệu (kỳ quả hơn -> hiệu quả hơn; both passes hear kỳ); và at 28880 shown as Và (sentence start once Đấy, is hidden); tiền lợi -> tiền lời is built in. UNSURE (verify list): 39940 Nhưng mặt này (likely meant mặt khác; kept as spoken); 57340 mà cho đưa tới các bạn (kept as spoken); 77780 broker (confidence 0.115; one pass heard program); 6240 thẳng thắn (one pass heard thẳng thắng; words.json correct). OPEN FOR THE ORCHESTRATOR: pacing is still mode auto from the prep skeleton; edit-json.md requires off for Daniel footage (not a story-editor field).",
+    "EDITOR BUILD (A3-A4, 2026-10-07): design cards (Daniel's default for footage; selector top pick explainer logged as override), background brand (matted cut-out), pacing off, three flip chapters for the three steps, calm-gentle-study-flow bed from 0 ms. On-screen text keeps to the process; no superlatives or guarantee language (hook avoids 'hiệu quả nhất'; the 54300-60100 sentence is shown as the card 'Khi thấy rõ: Giúp đỡ những chọn lựa / Đưa tới các bạn' without 'tốt/thích hợp nhất'). Wording round 2026-10-07 (orchestrator, compliance notes): closing item 'Broker không hỏi, mình không nói' -> 'Các bạn nói, không cần broker hỏi' (positive action, his words at 76260-78640); compare bank row label 'Thông tin của bạn' -> 'Thông tin khách hiện tại', value 'Có sẵn' kept (value 'Khách hiện tại' failed the preflight 8-character VS-badge rule) (the bank holds your data mainly if you are an existing customer)."
+  ],
+  "remove": [
+    [
+      21000,
+      21560
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "Đấy,",
+      "to": "",
+      "atMs": 28340
+    },
+    {
+      "from": "kỳ",
+      "to": "hiệu",
+      "atMs": 73480
+    },
+    {
+      "from": "và",
+      "to": "Và",
+      "atMs": 28880
+    }
+  ],
+  "post": {
+    "title": "Cách làm việc với mortgage broker",
+    "caption": "Ba việc các bạn nên làm khi làm việc với mortgage broker. Đầu tiên, thẳng thắn chia sẻ những gì các bạn muốn làm và những điều có thể ảnh hưởng tới hồ sơ. Thứ hai, đưa đủ giấy tờ broker đòi hỏi, vì broker phải tìm hiểu nhiều ngân hàng khác nhau. Rồi khi có những chọn lựa trước mặt, hãy hỏi đi sâu về vấn đề. Đừng đợi broker hỏi mới nói, vì điều đó ảnh hưởng trực tiếp tới hồ sơ của các bạn. Nhắn tin cho Daniel nếu các bạn có thắc mắc.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#mortgagebroker",
+      "#vaymuanha",
+      "#hosovay",
+      "#nguoivietuc",
+      "#taichinh"
+    ]
+  }
+}

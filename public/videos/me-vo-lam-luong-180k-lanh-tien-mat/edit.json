@@ -1,0 +1,767 @@
+{
+  "source": "me-vo-lam-luong-180k-lanh-tien-mat",
+  "design": "cards",
+  "background": "brand",
+  "title": "Lương 180K lãnh tiền mặt: làm được không?",
+  "subtitle": "Daniel Nguyen · Finance Hub",
+  "coverFrameMs": 36400,
+  "pacing": {
+    "mode": "off"
+  },
+  "hook": {
+    "big": "LƯƠNG 180K TIỀN MẶT",
+    "sub": "Có thể làm được hay không?"
+  },
+  "keywords": [
+    "tiền mặt",
+    "account",
+    "giấy lương",
+    "bank statement",
+    "AI",
+    "đường tắt",
+    "lo lắng"
+  ],
+  "chapters": [
+    {
+      "atMs": 32520,
+      "title": "Vấn đề ở đâu?",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 67920,
+      "title": "Chứng minh thu nhập",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 140900,
+      "title": "Vì sao mình chia sẻ",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 189720,
+      "title": "Một người bạn",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 208080,
+      "title": "Ngân hàng kiểm tra thế nào",
+      "effect": "pushCut"
+    },
+    {
+      "atMs": 262540,
+      "title": "Thời đại AI",
+      "effect": "pushCut"
+    }
+  ],
+  "stats": [
+    {
+      "atMs": 11340,
+      "durMs": 1600,
+      "big": "660K",
+      "label": "mua một cái nhà"
+    },
+    {
+      "atMs": 13180,
+      "durMs": 1800,
+      "big": "90%",
+      "label": "mượn"
+    },
+    {
+      "atMs": 15660,
+      "durMs": 1500,
+      "big": "180K",
+      "label": "lương"
+    }
+  ],
+  "cues": [
+    {
+      "kind": "points",
+      "fromMs": 5480,
+      "toMs": 11100,
+      "title": "Một người khách gọi hỏi",
+      "items": [
+        {
+          "text": "Mẹ vợ của họ",
+          "atMs": 6040
+        },
+        {
+          "text": "Đang muốn mua một cái nhà",
+          "atMs": 9000
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 19380,
+      "toMs": 28100,
+      "title": "Nhưng mà",
+      "items": [
+        {
+          "text": "Lãnh tiền mặt",
+          "atMs": 20860
+        },
+        {
+          "text": "Tiền không vô account",
+          "atMs": 22300
+        },
+        {
+          "text": "Không chứng minh được lương",
+          "atMs": 24220
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 28720,
+      "toMs": 31600,
+      "name": "thinking-face",
+      "position": "left"
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 36000,
+      "toMs": 38800,
+      "name": "light-bulb",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 41760,
+      "toMs": 49400,
+      "title": "Đang trả lương cho một người",
+      "items": [
+        {
+          "text": "180K",
+          "atMs": 43220
+        },
+        {
+          "text": "Bằng tiền mặt",
+          "atMs": 47460
+        },
+        {
+          "text": "Không có vào account",
+          "atMs": 48520
+        }
+      ]
+    },
+    {
+      "kind": "kinetic",
+      "fromMs": 49540,
+      "toMs": 59200,
+      "kicker": "Điều đó",
+      "struck": [
+        {
+          "text": "Không thể",
+          "atMs": 50760,
+          "strikeMs": 51600
+        }
+      ],
+      "slam": {
+        "text": "Rất là hiếm",
+        "atMs": 54320
+      },
+      "sub": {
+        "text": "Gần như là bằng không",
+        "atMs": 56560
+      }
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 59300,
+      "toMs": 63500,
+      "name": "question",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 70400,
+      "toMs": 82300,
+      "title": "Theo Daniel: nhiều ngân hàng",
+      "items": [
+        {
+          "text": "Không đòi hỏi",
+          "atMs": 72060
+        },
+        {
+          "text": "Đưa bank statement",
+          "atMs": 77420
+        },
+        {
+          "text": "Để chứng minh tiền lương",
+          "atMs": 79640
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 83000,
+      "toMs": 86200,
+      "name": "thinking-face",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 87340,
+      "toMs": 98000,
+      "title": "Ngày xưa",
+      "items": [
+        {
+          "text": "Để chứng minh thu nhập",
+          "atMs": 88840
+        },
+        {
+          "text": "Cần có giấy lương",
+          "atMs": 91840
+        },
+        {
+          "text": "Tiền vào account tương ứng",
+          "atMs": 93960
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 110700,
+      "toMs": 119800,
+      "title": "Theo Daniel, bây giờ",
+      "items": [
+        {
+          "text": "Chủ báo cáo lương lên ATO",
+          "atMs": 110800
+        },
+        {
+          "text": "Lương vào account hay không",
+          "atMs": 117020
+        },
+        {
+          "text": "Không quan trọng",
+          "atMs": 118460
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 121520,
+      "toMs": 129700,
+      "title": "Người kia hỏi",
+      "items": [
+        {
+          "text": "Lãnh lương 180K",
+          "atMs": 122920
+        },
+        {
+          "text": "Không có tiền vào account",
+          "atMs": 128180
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 131260,
+      "toMs": 135400,
+      "title": "Mình thử hỏi",
+      "items": [
+        {
+          "text": "Business nào",
+          "atMs": 132660
+        },
+        {
+          "text": "Có thể làm như vậy?",
+          "atMs": 133980
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 142640,
+      "toMs": 147400,
+      "title": "Thời gian gần đây",
+      "items": [
+        {
+          "text": "Vài lời cầu cứu",
+          "atMs": 143840
+        },
+        {
+          "text": "Qua điện thoại",
+          "atMs": 144500
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 147400,
+      "toMs": 156800,
+      "title": "Mình muốn chia sẻ",
+      "items": [
+        {
+          "text": "Không phải dạy gì cả",
+          "atMs": 147700
+        },
+        {
+          "text": "Để các bạn hiểu rõ hơn",
+          "atMs": 151720
+        },
+        {
+          "text": "Những việc nhạy cảm",
+          "atMs": 155920
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 158280,
+      "toMs": 167800,
+      "title": "Các bạn sẽ",
+      "items": [
+        {
+          "text": "Không có nghe nhiều",
+          "atMs": 158760
+        },
+        {
+          "text": "Khi xảy ra chuyện xấu",
+          "atMs": 164100
+        },
+        {
+          "text": "Người ta không có kể nhau",
+          "atMs": 165400
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 176220,
+      "toMs": 184500,
+      "title": "Khi đang bí và cần",
+      "items": [
+        {
+          "text": "Tìm một giải pháp",
+          "atMs": 178080
+        },
+        {
+          "text": "Lên mạng cầu cứu",
+          "atMs": 180120
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 184640,
+      "toMs": 187500,
+      "name": "exclamation",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 196380,
+      "toMs": 205600,
+      "title": "Người này may mắn hơn",
+      "items": [
+        {
+          "text": "Đã được settle xong xuôi",
+          "atMs": 197800
+        },
+        {
+          "text": "Ngân hàng phát hiện gì đó",
+          "atMs": 201420
+        },
+        {
+          "text": "Không muốn làm việc nữa",
+          "atMs": 203240
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 212340,
+      "toMs": 218000,
+      "title": "Thứ hai: bản thân mình",
+      "items": [
+        {
+          "text": "Làm việc trong ngân hàng",
+          "atMs": 213540
+        },
+        {
+          "text": "Hiểu rõ họ kiểm tra thế nào",
+          "atMs": 215280
+        }
+      ]
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 220040,
+      "toMs": 223000,
+      "name": "light-bulb",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 227660,
+      "toMs": 244000,
+      "title": "Trước thời đại AI",
+      "items": [
+        {
+          "text": "Ngân hàng có người kiểm tra",
+          "atMs": 229580
+        },
+        {
+          "text": "Đòi hỏi chuyên môn sâu",
+          "atMs": 235540
+        },
+        {
+          "text": "Không thể kiểm tra mỗi hồ sơ",
+          "atMs": 240920
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 248490,
+      "toMs": 261800,
+      "title": "Ngày xưa ngân hàng kiểm tra",
+      "items": [
+        {
+          "text": "Hồ sơ random",
+          "atMs": 249920
+        },
+        {
+          "text": "Mỗi tháng, mỗi tuần",
+          "atMs": 254360
+        },
+        {
+          "text": "Chọn vài hồ sơ",
+          "atMs": 258080
+        }
+      ]
+    },
+    {
+      "kind": "compare",
+      "fromMs": 263420,
+      "toMs": 267300,
+      "vsAtMs": 264620,
+      "cards": [
+        {
+          "title": "Ngày xưa",
+          "atMs": 263420,
+          "rows": [
+            {
+              "label": "Kiểm tra",
+              "value": "Random",
+              "tone": "neutral",
+              "atMs": 263800
+            }
+          ]
+        },
+        {
+          "title": "Công nghệ AI",
+          "atMs": 264820,
+          "highlightAtMs": 265560,
+          "rows": [
+            {
+              "label": "Kiểm tra",
+              "value": "Sâu hơn",
+              "tone": "neutral",
+              "atMs": 265560
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 270740,
+      "toMs": 278300,
+      "title": "Bản thân mình",
+      "items": [
+        {
+          "text": "Dùng công cụ của AI",
+          "atMs": 272580
+        },
+        {
+          "text": "Áp dụng trong công việc",
+          "atMs": 277100
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 281080,
+      "toMs": 292900,
+      "title": "Đưa tài liệu",
+      "items": [
+        {
+          "text": "Cho AI xem",
+          "atMs": 282800
+        },
+        {
+          "text": "Tìm điểm không bình thường",
+          "atMs": 285140
+        },
+        {
+          "text": "Kiểm tra sâu hơn",
+          "atMs": 288660
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 293520,
+      "toMs": 303440,
+      "title": "Ví dụ, kiểm tra",
+      "items": [
+        {
+          "text": "Font chữ",
+          "atMs": 294380
+        },
+        {
+          "text": "ABN đăng ký thế nào",
+          "atMs": 299810
+        },
+        {
+          "text": "Có thời gian bao lâu",
+          "atMs": 302080
+        }
+      ]
+    },
+    {
+      "kind": "points",
+      "fromMs": 303440,
+      "toMs": 310300,
+      "title": "Rồi kiểm tra",
+      "items": [
+        {
+          "text": "Giấy thuế",
+          "atMs": 304140
+        },
+        {
+          "text": "Con số trong giấy lương",
+          "atMs": 307160
+        }
+      ]
+    },
+    {
+      "kind": "kinetic",
+      "fromMs": 313320,
+      "toMs": 321800,
+      "kicker": "Thời điểm này",
+      "struck": [
+        {
+          "text": "Đi đường tắt",
+          "atMs": 314640,
+          "strikeMs": 317680
+        }
+      ],
+      "slam": {
+        "text": "Rất là lo lắng",
+        "atMs": 320340
+      }
+    },
+    {
+      "kind": "points",
+      "fromMs": 324240,
+      "toMs": 331000,
+      "title": "Một người khách của mình",
+      "items": [
+        {
+          "text": "Mình đưa lời khuyên",
+          "atMs": 325960
+        },
+        {
+          "text": "Họ cũng không có nghe",
+          "atMs": 327320
+        },
+        {
+          "text": "Điều đó không sao cả",
+          "atMs": 329740
+        }
+      ]
+    },
+    {
+      "kind": "verdict",
+      "fromMs": 337600,
+      "toMs": 340300,
+      "ok": false,
+      "text": "Chuyện đã lỡ rồi"
+    },
+    {
+      "kind": "emoji",
+      "fromMs": 340500,
+      "toMs": 343200,
+      "name": "folded-hands",
+      "position": "left"
+    },
+    {
+      "kind": "points",
+      "fromMs": 346180,
+      "toMs": 352300,
+      "title": "Hy vọng là",
+      "items": [
+        {
+          "text": "Không có quá nhiều",
+          "atMs": 347060
+        },
+        {
+          "text": "Vẫn còn đủ thời gian làm lại",
+          "atMs": 348600
+        }
+      ]
+    }
+  ],
+  "cta": {
+    "question": "Bạn có thắc mắc về chứng minh thu nhập?"
+  },
+  "compliance": {
+    "illustrativeNumbers": true,
+    "conditionsNote": true,
+    "taxNote": true
+  },
+  "post": {
+    "title": "Lương lãnh tiền mặt, có làm được không?",
+    "caption": "Một người khách gọi hỏi: người nhà của họ lãnh lương bằng tiền mặt, không có tiền vào account, và đang muốn mua nhà. Có thể làm được hay không? Daniel chia sẻ góc nhìn của mình về chứng minh thu nhập, về cách ngân hàng kiểm tra hồ sơ ngày xưa và trong thời đại AI, và vì sao ở thời điểm này ai còn nghĩ tới đi đường tắt thì Daniel rất lo lắng. Thành thật với hồ sơ của mình. Nhắn tin cho Daniel nếu các bạn có thắc mắc về chứng minh thu nhập.",
+    "hashtags": [
+      "#finhub",
+      "#vietnamese",
+      "#thunhap",
+      "#hosovay",
+      "#vaymuanha",
+      "#muanha",
+      "#nguoivietuc"
+    ]
+  },
+  "notes": [
+    "STORY EDIT (A2, 2026-10-07). Times are recording ms (words.json).",
+    "SUMMARY: A caller asks whether their mother-in-law (mẹ vợ, NOT 'wife'), an executive assistant said to earn $180K paid in cash with nothing into a bank account, can buy a $660K home borrowing 90%. Daniel says almost no employer pays $180K in cash, so the story itself is the red flag. He explains that payslips plus salary credits used to be the proof; since the ATO's payroll reporting (he says 'One Tax Payroll', i.e. Single Touch Payroll) many lenders no longer need bank statements to prove salary because employers report pay to the ATO each payday. He shares that he is not teaching anything, only sharing: a friend's loan settled, then the bank found something and ended the relationship; as an ex-banker he knows banks once audited only a sample of files (he says '10 or 5 or 10%'), but with AI checking every document (font, ABN registration and age, tax records, payslip figures) is now trivial. Conclusion: anyone still thinking of shortcuts worries him; a client of his ignored his advice and lost money; he hopes viewers who slipped still have time to recover.",
+    "HOOK 1700: 'Mình vừa nhận một cuộc điện thoại của một người khách gọi ... mẹ vợ của họ ... mua một cái nhà là sáu trăm sáu, mượn chín mươi phần trăm, lương ... một trăm tám chục ngàn, executive assistant ... lãnh tiền mặt' (to 28080). Question to viewer 28720.",
+    "TOPIC CHANGES: 32520 Daniel's read (no employer pays 180K in cash); 67920 lender policy: bank statements not needed now; 82620 why: tax/payroll reporting change (ATO); 119420 back to the caller; 140900 why he shares this (not teaching); 189720 story: friend whose settled loan the bank later exited; 208080 ex-banker view: file audits then vs AI now; 293120 what gets checked (font, ABN, tax, payslip); 310640 warning about shortcuts; 322840 own client ignored advice; 339040 close.",
+    "NUMBERS: 11340 'sáu trăm sáu' = $660,000 price; 13180 'chín mươi phần trăm' = 90% → loan 660,000 x 0.9 = $594,000, deposit $66,000 (10%); LVR 90% is above 80% so LMI would normally apply (not said, nothing on screen claims otherwise). 15520 'một trăm tám chục ngàn' / 43000 '180 ngàn' / 123460 '180.000' = $180,000 a year (= $15,000 a month, ~$3,461.54 a week; loan-to-income 594/180 = 3.3x; none of these conversions spoken). 101120 '1-2 năm gần đây' re ATO payroll reporting: was a FLAG (STP began 1 Jul 2018 / 1 Jul 2019, Phase 2 1 Jan 2022, so not 1-2 years); RESOLVED 2026-10-07: Daniel decided CUT, the whole sentence is now in remove [99200,109560]. 247380 '10 hoặc là 5 hoặc 10%': was a FLAG; RESOLVED 2026-10-07: Daniel decided CUT the false start '10 hoặc là' only (remove [247300,248460]); what remains is '5 hoặc 10% của mỗi hồ sơ random' (historical audit rate, still unsourced, spoken as Daniel's ex-banker recollection, never shown on screen). 170260 '1-2 lần' (seen online once or twice): no maths.",
+    "WATCH-WORDS (scripts/check-spoken-phrases.mjs, 1 hit): 269500 'đơn giản' (video 3:31.8; 'cực kỳ đơn giản': describing how easy AI makes checking files, not our offer). Not on the lists but compliance-relevant: 157500 and 186580 'khẳng định' (asserts), 49540-57360 'gần như là bằng không' (video 0:41.3-0:47.2).",
+    "TAX / LENDER-POLICY TALK (for compliance A6.4; src ms → video time after the 2026-10-07 cuts, talk starts at video 0:02.2): REMOVED: 99200-109560 'Nhưng mà sau này khi mà 1-2 năm gần đây chính phủ thay đổi, nhất là ATO, đã có một hệ thống mới gọi là cái One Tax Payroll. Có nghĩa là' (the misnamed STP and the wrong '1-2 năm' timing are no longer spoken). REMAINING: 67920-81740 (video 0:55.8-1:07.0) 'rất là nhiều ngân hàng hiện tại, họ không đòi hỏi ... bank statement để chứng minh tiền lương' (lender-policy claim, undated, unsourced, no lender named); 82620-98440 (1:07.2-1:20.4) 'thời gian gần đây thì luật thuế thay đổi' + the old proof method (payslips and matching salary credits): 'gần đây' is still a vague timing claim, no years spoken; 109610-115220 (1:20.6-1:25.3) 'Bây giờ mỗi lần khi mà người chủ trả lương thì họ sẽ báo cáo lên ATO liền và biết liền' (employer reports each pay to the ATO: accurate description of STP, now unnamed and undated); 115320-119180 (1:25.4-1:28.6) 'bây giờ tiền lương có vào trong account hay không, điều đó không quan trọng' (lender-policy claim: whether salary is credited to an account no longer matters); 244580-250720 (3:12.4-3:16.7) 'ngày xưa ... kiểm tra 5 hoặc 10% của mỗi hồ sơ random' (historical bank audit sampling, unverified); 262540-310540 (3:25.5-4:05.5) AI used to check documents (font, ABN registration and age, tax records, payslip figures). No rate, no named bank, no approval promise. Bank names: none spoken.",
+    "CLIENT DATA: RESOLVED 2026-10-07. Daniel confirmed in chat (2026-10-07) that the cases are de-identified or altered; keep as spoken. Cases: the caller's mother-in-law (executive assistant, $180K cash income, $660K purchase, 90% borrowing; src 1700-28080 and 119420-129780, video 0:02.3-0:24.1 and 1:28.8-1:37.4); a friend's settled loan later exited by the bank (src 189720-204660, video 2:27.8-2:40.5); Daniel's own client who ignored advice and lost money (src 322840-352340, video 4:13.9-4:36.7). No names, suburbs or employers spoken.",
+    "PAPER EDIT (2026-10-07, Daniel's decisions on the flags): remove [99200,109560] = 'Nhưng mà sau này ... One Tax Payroll. Có nghĩa là'. Daniel's span was 99320-108380; the start moved to 99200 so it sits in the silence before 'Nhưng' (onset ~99265, -62 dB at 99200); the end extended to 109560 to also drop the connective 'Có nghĩa là' (real audio 108900-109345), which otherwise pointed back at the cut sentence and made the employer-reporting line read as a restatement of the old payslip method; the join lands in the -52 dB dip before 'Bây' (onset 109610). Joined: '...trong thời gian đó phải tương ứng nhiều hơn. Bây giờ mỗi lần khi mà người chủ trả lương thì họ sẽ báo cáo lên ATO liền và biết liền.' remove [247300,248460] = the false start '10 hoặc là' (real audio 247330-248450); the kept segment ends at frame 7420 (247333, end of the -23..-30 dB trough after 'tra'; frame 7419/247300 was tried and two of four Whisper passes then heard 'kiếm' for 'kiểm tra'); the next starts at 248433 (-36 dB dip before '5'). Joined: 'họ sẽ kiểm tra 5 hoặc 10% của mỗi hồ sơ random'. Still considered and kept: 76380-77420 'đưa giấy,' restart and 224920-227520 'trước thời điểm, nói chính xác là' self-correction (no quiet dip at either edge).",
+    "CAPTION FIXES (context-bound, atMs): văn→bằng 47460 ('trả bằng tiền mặt'); văn→vào 48640 ('không có vào account'); lực→luật 85860 ('luật thuế'); câu/cú→cầu/cứu 143960/144100 and cú,→cứu, 181060 ('cầu cứu'); xếp/đồ→settle/'' 198180/198800 (re-transcription heard 'settle'); sau→sâu 236500; cạn→cặn 238680; French→font 294380 ('font chữ'); APN→ABN 299810; dây→giấy 304140 and 309540; đa→đau 335020 ('đau lòng'); bây→Bây 109610 (sentence start after the 99200-109560 cut).",
+    "WORDS.JSON HAND RETIMES (prep re-run overwrites these): [418] ' account.' endMs 129500→129780; [419] ' Thì' 131780-132140→130280-130700; [420] ' họ' 132140-132500 → text ' mình' 131260-131610, inserted ' thử' 131620-132250 and ' hỏi' 132380-132500 (re-transcribed: 'Thì mình thử hỏi là business nào'); ' Và' 136120-136480→135680-135910; ' thích.' endMs 138380→139200; ' Đó' 148080-148080 (conf 0.07) → text ' Cũng' 147500-147690, inserted ' không' 147700-147840 and ' phải' 147840-147985, ' là' 148080-148080→147990-148080 (Whisper dropped 'Cũng không phải' so the caption read 'mình dạy gì cả', the opposite of what was said); ' AI' endMs 228360→228660; ' chữ,' endMs 295340→295610; ' đó,' endMs 299020→299370; ' APN' startMs 300180→299810. [376] ' bây' 116480-116700→116450-116590; [377] ' giờ' 116700-116700 (zero length, hidden from captions) →116600-116900; [378] ' tiền' startMs 116700→116950. Indices after the inserts. Backup: scratchpad mv_words.before.json.",
+    "WORDS.JSON HAND RETIMES 2026-10-07 (for the removes; prep re-run overwrites these): ' bây' (after 'Có nghĩa là') startMs 109260→109610 (real onset; at 109260 the kept run began inside 'là'); ' 10' (247 s) startMs 247380→247330; ' là' (248 s) endMs 248540→248450 (so the word falls inside the remove span); ' 5' startMs 248540→248490. Added missing words: ' account.' text → ' account', inserted ' hay' 117890-118060 and ' không.' 118060-118210 (confidence 0.5), ' Điều' startMs 118080→118220: Whisper had dropped 'hay không', so the caption read 'bây giờ tiền lương có vào trong account. Điều đó không quan trọng' (salary now goes into the account) instead of 'có vào trong account hay không, điều đó không quan trọng' (whether or not it does, that doesn't matter); 'hay không' heard on three re-transcriptions. Word indices after 383 shift by +2. Backup before this pass: scratchpad mv_words.before-removes.json.",
+    "END CHECK: last word 'lại.' 352120-352340; nothing after it in words.json, so no trailing hallucination to hide.",
+    "VERIFY (lesson a): kept audio spliced from the timeline segments and re-transcribed (large-v3, VAD) at 49.5-58 s, 125.8-150.5 s, 292.9-302 s, 315-323.3 s, 339-353 s: the joins read cleanly and the negation \"Cũng không phải là mình ... gì cả nha\" survives. check-speech-cuts: 0 errors, 22 warnings (fillers/short voiced blips left on purpose).",
+    "VERIFY 2026-10-07 (removes): kept audio spliced from the new timeline segments and re-transcribed with large-v3, one process at a time, two short windows per join. Cut 1: src 90000-99000 + 99000-118500 → '...phải tương ứng nhiều hơn.' | 'bây giờ mỗi lần khi mà người chủ trả lương thì họ sẽ báo cáo lên ATO liền và biết liền cho nên ... account hay không'; 90000-115300 and 95000-119200 agree; no fragment of 'Payroll' or 'là' left. Cut 2 (edge 247333): 'họ sẽ kiểm tra là 5 hoặc 10%' and 'họ sẽ kiểm tra 5 hoặc 10% của mỗi hồ sơ random' (the 'là' in one pass is not a kept word between the edges; windows starting at 246 s made Whisper hallucinate a 'subscribe' outro and were discarded). check-speech-cuts: 0 errors, 23 warnings (the 22 earlier ones plus 247330-247520 'tail clipped', which is the onset of the removed '10', by design). Talk length 274.8 s.",
+    "EDITOR DESIGN (A3/A4, 2026-10-08): design cards, logged with select-template --pick cards --reason \"Daniel's default for footage\" (selector: explainer 6.32, classic 4.43, cards 2.68, confident=false, close call explainer vs classic; put to Daniel in open_questions). Background removed ('brand', foreground.webm present). Pacing off. Music: voice only (a 5-minute serious warning; the last two logged videos, cach-lam-viec and mua-nha, used the calm-gentle-study-flow bed). Six pushCut chapters at pauses >= 0.5 s: 32520 Vấn đề ở đâu?, 67920 Chứng minh thu nhập, 140900 Vì sao mình chia sẻ, 189720 Một người bạn, 208080 Ngân hàng kiểm tra thế nào, 262540 Thời đại AI. A seventh at 322840 ('Một người khách của mình') was dropped: its transition made check-speech-cuts report an onset clip at src 322270-322510 (voice before 'Bản'); words.json is locked, so the chapter went, not the words.",
+    "EDITOR NUMBERS: the three hook figures are spelled out in words.json ('sáu trăm sáu', 'chín mươi phần trăm', 'một trăm tám chục ngàn'), so figuresOf does not see them; they are stats as said: 660K at 11340 (label 'mua một cái nhà'), 90% at 13180 ('mượn'), 180K at 15660 ('lương'). 180K again at 43220 and 123560 is shown inside points cards ('180K', 'Lãnh lương 180K'). No derived figure anywhere (no loan amount, deposit, LVR, LMI, monthly or weekly income). '1-2 lần' (170240) stays an automatic figure. The audit rate '5 hoặc 10%' (248490) is deliberately NOT shown: the points card 'Ngày xưa ngân hàng kiểm tra' (from 248490) covers it so no automatic figure is drawn; it is unsourced (Daniel's ex-banker recollection) and stays spoken only. compliance.illustrativeNumbers true: 660K / 90% / 180K are shown and come from a caller's case Daniel confirmed is de-identified or altered (2026-10-07), so they are an example, not a client's real file. conditionsNote true (lender policy on proof of income is described). taxNote true (tax / ATO payroll reporting is talked about).",
+    "EDITOR COMPLIANCE WORDING: lender-policy lines on screen carry 'Theo Daniel' (69400-82300 'Theo Daniel: nhiều ngân hàng / Không đòi hỏi / Đưa bank statement / Để chứng minh tiền lương'; 115320-119400 'Theo Daniel, bây giờ / Lương vào account hay không / Không quan trọng'). No ATO, STP, 'luật thuế thay đổi', audit rate or 'đơn giản' on screen. The kinetic 'Thời điểm này: Đi đường tắt (struck) -> Rất là lo lắng' keeps the warning framing. 'Không thể' is struck to 'Rất là hiếm / Gần như là bằng không' because Daniel corrects himself the same way (50760-57180).",
+    "EDITOR SIGNATURE MOMENTS: hook LƯƠNG 180K TIỀN MẶT / Có thể làm được hay không? (first 3.5 s); stat count-ups 660K, 90%, 180K (11340-17160); kinetic Không thể -> Rất là hiếm / Gần như là bằng không (49540); points Theo Daniel: nhiều ngân hàng (70400); full-screen compare Ngày xưa (Kiểm tra hồ sơ: Random) vs Công nghệ AI (Kiểm tra hồ sơ: Sâu hơn), 263420-268400, about 5 s, the only time his card slides away; kinetic Thời điểm này: Đi đường tắt -> Rất là lo lắng (313320); red verdict Chuyện đã lỡ rồi (337600); close points Hy vọng là (346180).",
+    "EDITOR LENGTH: with pacing off the talk is 313.5 s and the reel 9742 frames (324.7 s); the story edit's 275 s was not measured with pacing off.",
+    "STORY QC-FIX 1 (2026-10-08): captionFixes added: hide hiếm, @7160 (large-v3 none/neutral prompts hear no word, filler prompt hears em; filler/restart); hờ->họ @14900 (tight passes hear của H / cơ hờ; the syllable 14940-15100 matches the họ at 6960 in pitch, length and abrupt glottal end; same referent as mẹ vợ của họ); hứng hidden @137040 and thích.->interesting. @138620 (3 of 6 large-v3 passes hear rất là, rất là, rất là hứng, ờm, interesting; hứng is the false start at ~138.1-138.4 s, interesting ~138.6-139.4 s).",
+    "STORY WORDS.JSON RETIME (2026-10-08, QC finding 1): \" thích.\" startMs 138140->138620, endMs 139200->139380, and \" hứng\" endMs 138140->138440 (its audio runs to ~138440; check-speech-cuts flagged the tail clipped), so the caption interesting. sits on the spoken English word (RMS: syllables 138620-139380, silence 139400-139900). Re-running prep overwrites this.",
+    "STORY QC-FIX 1 left as spoken (unsure, for Daniel to hear): 43000 giá kỷ niệm (acoustics show only TWO short syllables between người and 180, no s-frication, so giả sử là is not supported); 126020 dư lương; 169140 lau đấu quên qua; 222860 luật chờ (final syllable falls low with no -i glide, chơi not confirmed; one pass hears trời); 267500 khói xét (onset has no s-frication, so not soát; khảo possible); 285940 điểm bất không có bình thường (restart, as spoken); 308960 size (one pass hears sai; words.json also misses words around 309400-310140)."
+  ],
+  "remove": [
+    [
+      99200,
+      109560
+    ],
+    [
+      247300,
+      248460
+    ]
+  ],
+  "captionFixes": [
+    {
+      "from": "văn",
+      "to": "bằng",
+      "atMs": 47460
+    },
+    {
+      "from": "văn",
+      "to": "vào",
+      "atMs": 48640
+    },
+    {
+      "from": "lực",
+      "to": "luật",
+      "atMs": 85860
+    },
+    {
+      "from": "câu",
+      "to": "cầu",
+      "atMs": 143960
+    },
+    {
+      "from": "cú",
+      "to": "cứu",
+      "atMs": 144100
+    },
+    {
+      "from": "cú,",
+      "to": "cứu,",
+      "atMs": 181060
+    },
+    {
+      "from": "xếp",
+      "to": "settle",
+      "atMs": 198180
+    },
+    {
+      "from": "đồ",
+      "to": "",
+      "atMs": 198800
+    },
+    {
+      "from": "sau",
+      "to": "sâu",
+      "atMs": 236500
+    },
+    {
+      "from": "cạn",
+      "to": "cặn",
+      "atMs": 238680
+    },
+    {
+      "from": "French",
+      "to": "font",
+      "atMs": 294380
+    },
+    {
+      "from": "APN",
+      "to": "ABN",
+      "atMs": 299810
+    },
+    {
+      "from": "dây",
+      "to": "giấy",
+      "atMs": 304140
+    },
+    {
+      "from": "dây",
+      "to": "giấy",
+      "atMs": 309540
+    },
+    {
+      "from": "đa",
+      "to": "đau",
+      "atMs": 335020
+    },
+    {
+      "from": "bây",
+      "to": "Bây",
+      "atMs": 109610
+    },
+    {
+      "from": "hiếm,",
+      "to": "",
+      "atMs": 7160
+    },
+    {
+      "from": "hờ",
+      "to": "họ",
+      "atMs": 14900
+    },
+    {
+      "from": "hứng",
+      "to": "",
+      "atMs": 137040
+    },
+    {
+      "from": "thích.",
+      "to": "interesting.",
+      "atMs": 138620
+    }
+  ]
+}
