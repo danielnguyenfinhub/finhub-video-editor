@@ -118,6 +118,10 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 
 `node scripts/check-teams.mjs` fails if a design is in no style team, or an agent a team names has no file.
 
+### Harness: content repurposing team
+
+**Trigger:** when Daniel asks to turn a finished video into other content ("repurpose this video", "blog post from <slug>", "Facebook and Instagram posts from the video", "newsletter section", "presentation from this video"), use the `repurpose-content-team` skill. Its `repurpose-` agents write drafts only, in `_workspace/repurpose/<slug>/` (git-ignored); `video-compliance-reviewer` gives the compliance verdict. Posting, publishing and sending stay with Daniel.
+
 ## Conventions
 
 - Videos are bilingual, Vietnamese + English: see "Language" near the top of this file before writing any on-screen text or captions.

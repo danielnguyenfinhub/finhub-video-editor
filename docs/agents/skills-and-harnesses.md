@@ -54,6 +54,17 @@ Whatever skill is driving (Remotion's, the editor skill, or a scene written by h
 | 2026-10-01 | Initial four teams. New agents: `resource-scout`, `repo-builder`, `bug-hunter`, `gap-analyst`, `repo-fixer`, `workflow-analyst`, `automation-builder`, six style directors. Reused: `code-architect`, `code-reviewer`, `quality-reviewer`, `architecture-auditor`, `pipeline-optimizer`, the `video-*` crew | the four team skills, `config/style-teams.json`, `scripts/check-teams.mjs` (in `npm test`), `team-ground-rules.md`, six recipes under `style-production-teams/references/` | Daniel asked for teams to build, maintain and speed up the repo and to produce each video style |
 | 2026-10-03 | Review pack (maintenance gap 2): Phase 3 picks come from `scripts/review-pack.mjs` (a sheet per family, the frames and questions per design, then the promote commands) | `template-improvement-team` SKILL.md, `scripts/review-pack.mjs` | Daniel: "Build the review pack" |
 
+### Harness: content repurposing team
+
+**Goal:** a finished video becomes a WordPress blog post, a newsletter section, a Facebook post, an Instagram carousel and a presentation outline that say what the video says, cite its sources, and pass an independent review and `video-compliance-reviewer`; drafts only, Daniel posts.
+
+**Trigger:** see AGENTS.md "Harness: content repurposing team" (`repurpose-content-team` skill).
+
+**Change log:**
+| Date | Change | Files | Why |
+|---|---|---|---|
+| 2026-10-17 | Initial team, adapted from harness-100 `04-content-repurposer` (Apache-2.0): `repurpose-source-analyst`, `repurpose-blog-writer` (blog and newsletter), `repurpose-social-copywriter` (Facebook and Instagram; read-only `fb_read`), `repurpose-presentation-builder`, `repurpose-reviewer`; reuses `marketing-manager`'s review and `video-compliance-reviewer`; report-only for its first 7 days | the five agents, `repurpose-content-team`, `repurpose-platform-adaptation`, `repurpose-content-atomization`, `check-teams.mjs` (team list), AGENTS.md trigger, `.gitignore` (`_workspace/`) | Derivative content from each finished video, inside RG 234 |
+
 `.claude/` also holds 18 other subagents in `.claude/agents/` and 7 skills (accessibility, bun-runtime, codebase-onboarding, error-handling, react-patterns, react-performance, search-first) imported from ECC (see `.claude/ECC.md`), and the `ponytail-review`, `ponytail-audit` and `ponytail-debt` skills from ponytail (see `.claude/PONYTAIL.md`). They run only when asked; AGENTS.md, these docs and the Remotion and owner skills win where they conflict.
 
 When upgrading Remotion, re-vendor the skills so guidance matches the installed version:
