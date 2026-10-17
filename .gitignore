@@ -64,3 +64,10 @@ __pycache__/
 /public/businesses/*/agent-*.jpg
 # Prepared listings (photos, voice, script) stay local.
 /public/listings/
+
+# Agent-team scratch and drafts (repurpose-content-team writes _workspace/repurpose/<slug>/)
+_workspace/
+.claude-flow/
+.swarm/
+ruvector.db
+.harnesskit/
