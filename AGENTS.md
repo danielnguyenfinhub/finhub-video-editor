@@ -122,6 +122,10 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 
 **Trigger:** when Daniel asks to turn a finished video into other content ("repurpose this video", "blog post from <slug>", "Facebook and Instagram posts from the video", "newsletter section", "presentation from this video"), use the `repurpose-content-team` skill. Its `repurpose-` agents write drafts only, in `_workspace/repurpose/<slug>/` (git-ignored); `video-compliance-reviewer` gives the compliance verdict. Posting, publishing and sending stay with Daniel.
 
+### Harness: YouTube metadata team
+
+**Trigger:** when Daniel asks for YouTube words or thumbnail ideas for a finished video ("YouTube title for <slug>", "write the YouTube description", "chapters for this video", "tags for YouTube", "thumbnail ideas", "review these titles"), use the `yt-youtube-metadata` skill. Its `yt-` agents write drafts only, in `_workspace/yt/<slug>/` (git-ignored), for `@finhub-au` (`finhub_au`); `yt-reviewer` runs the RG 234 guard over them. Writing chosen copy into `post` stays with the video team; uploading, updating and setting the thumbnail stay with Daniel.
+
 ## Conventions
 
 - Videos are bilingual, Vietnamese + English: see "Language" near the top of this file before writing any on-screen text or captions.
