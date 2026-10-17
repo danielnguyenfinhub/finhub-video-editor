@@ -37,6 +37,9 @@ description: >-
 
 # YouTube metadata team
 
+> **Where this team runs.** Its agents' `tools:` allowlists name the FinHub MCP servers by their claude.ai connector ids (`mcp__MERCURY_CRM_V3__…` and so on), verified against the live Railway servers on 17-Oct-26. They work in Claude Code and claude.ai sessions where those connectors are attached. In Cowork the same servers carry plugin-prefixed ids, so a spawned agent would get no MCP access: run the steps in the main session instead. Steps that read repo files need this repository checked out.
+
+
 **User story:** Daniel finishes a video and gets title options, a description, chapters, tags and thumbnail briefs for `@finhub-au` that say only what the video says, pass the RG 234 guard and a hook scan, and wait in `_workspace/` for him to choose; the chosen words then go into the video's `post` through the video team, and he uploads.
 
 Pattern: two writers (metadata, then thumbnail) → independent review. Ported from harness-100 `01-youtube-production`, its SEO and thumbnail roles only: the strategist and scriptwriter are not ported (the video team plans and writes the video), nor its subtitle file (`scripts/render-video.py` already writes `<slug>.srt`) or image generation. Ground rules: `docs/agents/team-ground-rules.md`.
