@@ -65,6 +65,17 @@ Whatever skill is driving (Remotion's, the editor skill, or a scene written by h
 |---|---|---|---|
 | 2026-10-17 | Initial team, adapted from harness-100 `04-content-repurposer` (Apache-2.0): `repurpose-source-analyst`, `repurpose-blog-writer` (blog and newsletter), `repurpose-social-copywriter` (Facebook and Instagram; read-only `fb_read`), `repurpose-presentation-builder`, `repurpose-reviewer`; reuses `marketing-manager`'s review and `video-compliance-reviewer`; report-only for its first 7 days | the five agents, `repurpose-content-team`, `repurpose-platform-adaptation`, `repurpose-content-atomization`, `check-teams.mjs` (team list), AGENTS.md trigger, `.gitignore` (`_workspace/`) | Derivative content from each finished video, inside RG 234 |
 
+### Harness: YouTube metadata team
+
+**Goal:** a finished video gets title options, a description, chapters, tags and written thumbnail briefs for `@finhub-au` that say only what the video says and pass the RG 234 guard and a hook scan; drafts only, the video team writes the chosen copy into `post` and Daniel uploads.
+
+**Trigger:** see AGENTS.md "Harness: YouTube metadata team" (`yt-youtube-metadata` skill).
+
+**Change log:**
+| Date | Change | Files | Why |
+|---|---|---|---|
+| 2026-10-17 | Initial team, adapted from harness-100 `01-youtube-production` (Apache-2.0), its SEO and thumbnail roles only: `yt-seo-optimizer`, `yt-thumbnail-designer` (written briefs, no image generation), `yt-reviewer` (RG 234 guard from `src/mortgage/compliance.ts` plus a hook-pattern scan); urgency, scarcity, shock-statistic and rate-led hooks removed from the source method; YouTube reads only by the orchestrator (`youtube_ops` / `youtube_analytics_ops` read actions on `finhub_au`), no YouTube tool on any agent; boundary with `video-production-team`, `marketing-manager`, `video-compliance-reviewer` and `repurpose-content-team` in the skill; report-only for its first 7 days | the three agents, `yt-youtube-metadata`, `yt-thumbnail-psychology`, `check-teams.mjs` (team list), AGENTS.md trigger | YouTube search and thumbnail copy per video, inside RG 234 |
+
 `.claude/` also holds 18 other subagents in `.claude/agents/` and 7 skills (accessibility, bun-runtime, codebase-onboarding, error-handling, react-patterns, react-performance, search-first) imported from ECC (see `.claude/ECC.md`), and the `ponytail-review`, `ponytail-audit` and `ponytail-debt` skills from ponytail (see `.claude/PONYTAIL.md`). They run only when asked; AGENTS.md, these docs and the Remotion and owner skills win where they conflict.
 
 When upgrading Remotion, re-vendor the skills so guidance matches the installed version:
