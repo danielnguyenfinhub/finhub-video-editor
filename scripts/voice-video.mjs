@@ -33,7 +33,9 @@
 //     "scenes": [ { "vi": "Vietnamese narration", "en": "English line",
 //                   "footage": "optional 2-5 word English stock search",
 //                   "ai": "optional image description: paid fal.ai fallback,
-//                          used only if the free stock search finds nothing" } ],
+//                          used only if the free stock search finds nothing",
+//                   "style": "optional one-line delivery cue for this take (Gemini only)",
+//                   "pauseAfterMs": optional silence after this scene, 0-2000, default 400 } ],
 //     "post": { "title": "...", "caption": "...", "hashtags": ["#..."] } }
 // How to write one: .claude/skills/vietnamese-finance-video-editor/references/faceless-script.md
 // --dry-run: RG 234 check, fact-ledger check (scripts/facts.mjs) + character count (ElevenLabs bills per character),
@@ -65,7 +67,8 @@ import { aiClip, aiStillsPerScene, stockClips } from "./visuals.mjs";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MODEL_ID = "eleven_v3"; // speaks Vietnamese; eleven_multilingual_v2 doesn't
 const FPS = 30;
-const GAP_MS = 400; // silence between scenes
+const GAP_MS = 400; // silence between scenes (a scene's "pauseAfterMs" overrides it)
+const PAUSE_MAX_MS = 2000;
 const BACKDROP = "0x0B1F3D"; // brand navy; never seen, the design draws its own
 const CLIP_MAX_S = 5; // longest a single stock clip stays on screen
 
@@ -128,7 +131,14 @@ const parsedScenes = script.scenes.map((s, i) => {
   // first. A scene still shows one or the other, never both (OpenMontage).
   if (s.ai && !s.footage)
     fail(`scenes[${i}] has "ai" without "footage": try free stock first (add a footage phrase; "ai" is the paid fallback).`);
+  // Per-scene delivery: idea from OpenMontage voice-performance-director (AGPL-3.0); written fresh, no code copied.
+  if (s.style !== undefined && (typeof s.style !== "string" || !s.style.trim() || s.style.length > 160))
+    fail(`scenes[${i}].style must be one short delivery line (up to 160 characters).`);
+  if (s.pauseAfterMs !== undefined && !Number.isInteger(s.pauseAfterMs))
+    fail(`scenes[${i}].pauseAfterMs must be a whole number of milliseconds.`);
   return {
+    style: s.style?.trim().normalize("NFC") ?? "",
+    gapMs: Math.min(PAUSE_MAX_MS, Math.max(0, s.pauseAfterMs ?? GAP_MS)),
     vi: s.vi.trim().normalize("NFC"),
     en: s.en.trim().normalize("NFC"),
     footage: s.footage?.trim() ?? "",
@@ -141,6 +151,10 @@ const scenes = listing && lang === "en" ? parsedScenes.map((s) => ({ ...s, vi: s
 // AI visuals only fill the gaps. A scene with neither gets the plain navy
 // frame, and its edit.json element holds the stage.
 const withFootage = scenes.some((s) => s.footage || s.ai);
+if (scenes.some((s) => s.style || s.gapMs !== GAP_MS)) {
+  console.log("Delivery (style: Gemini only; pause after each scene):");
+  scenes.forEach((s, i) => console.log(`  ${i + 1}. ${s.style ? `style "${s.style}", ` : ""}pause ${s.gapMs} ms`));
+}
 // Optional post copy for the upload (title, caption ending in a call to
 // action, hashtags); it reaches clients too, so RG 234 scans it below.
 const post = script.post ?? null;
@@ -303,6 +317,8 @@ if (engine === "elevenlabs") {
   // Style goes inline, in Vietnamese; no speed words (they stretch the take).
   const style = listingVoice?.style;
   const STYLE = (typeof style === "object" ? style?.[lang] : style) ?? "Nói với giọng ấm áp, tự tin, tự nhiên: ";
+  // A scene's own cue joins the global prefix before its closing colon; no cue = STYLE unchanged (old caches stay valid).
+  const styleOf = (s) => (s.style ? `${STYLE.replace(/[\s:]+$/, "")}. ${s.style.replace(/[\s:.]+$/, "")}: ` : STYLE);
   const wav = (pcm, rate) => {
     const h = Buffer.alloc(44);
     h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8);
@@ -325,7 +341,7 @@ if (engine === "elevenlabs") {
     writeFileSync(file, readFileSync(tmp));
     rmSync(tmp);
   };
-  const speak = async (text, i) => {
+  const speak = async (prefix, text, i) => {
     let why = "";
     for (const model of models) {
       for (let attempt = 1; attempt <= NO_AUDIO_TRIES; attempt++) {
@@ -333,7 +349,7 @@ if (engine === "elevenlabs") {
           method: "POST",
           headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: STYLE + text }] }],
+            contents: [{ parts: [{ text: prefix + text }] }],
             generationConfig: {
               responseModalities: ["AUDIO"],
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
@@ -354,8 +370,8 @@ if (engine === "elevenlabs") {
     fail(`Gemini TTS scene ${i + 1}: no audio after ${NO_AUDIO_TRIES} tries on each model (${why}).`);
   };
   files = scenes.map((s) => {
-    const hash = sha(`gemini|${voice}|${STYLE}|${say(s.vi)}`);
-    return { audio: join(voiceDir, `${hash}.wav`), align: join(voiceDir, `${hash}.json`), text: say(s.vi) };
+    const hash = sha(`gemini|${voice}|${styleOf(s)}|${say(s.vi)}`);
+    return { audio: join(voiceDir, `${hash}.wav`), align: join(voiceDir, `${hash}.json`), text: say(s.vi), prefix: styleOf(s) };
   });
   const todo = [];
   for (const [i, f] of files.entries()) {
@@ -370,7 +386,7 @@ if (engine === "elevenlabs") {
       todo.push(f);
       continue;
     }
-    writeFileSync(f.audio, await speak(f.text, i));
+    writeFileSync(f.audio, await speak(f.prefix, f.text, i));
     trimSilence(f.audio);
     console.log(`scene ${i + 1}/${files.length}: voiced (${voice})`);
     todo.push(f);
@@ -450,7 +466,7 @@ for (const [i, t] of takes.entries()) {
     cur.endMs = Math.round(offsetMs + en[k] * 1000);
   });
   subtitles.push({ fromMs: Math.round(offsetMs), toMs: Math.round(offsetMs + t.durMs), text: scenes[i].en });
-  offsetMs += t.durMs + GAP_MS;
+  offsetMs += t.durMs + scenes[i].gapMs;
 }
 if (words.length === 0) fail(`${engine} returned no words.`);
 // Captions show the brand as written: the spoken form's words -> "Global RE".
@@ -469,10 +485,10 @@ if (listing && spokenName) {
   }
 }
 
-// Narration: every take padded with GAP_MS of silence, joined in order.
+// Narration: every take padded with its scene's pause (GAP_MS by default), joined in order.
 const narration = join(voiceDir, listing ? `narration-${lang}.wav` : "narration.wav");
 const inputs = takes.flatMap((t) => ["-i", t.audio]);
-const pads = takes.map((_, i) => `[${i}:a]aresample=48000,apad=pad_dur=${GAP_MS / 1000}[a${i}]`).join(";");
+const pads = takes.map((_, i) => `[${i}:a]aresample=48000,apad=pad_dur=${scenes[i].gapMs / 1000}[a${i}]`).join(";");
 const joined = `${takes.map((_, i) => `[a${i}]`).join("")}concat=n=${takes.length}:v=0:a=1[out]`;
 run("ffmpeg", ["-y", "-hide_banner", "-loglevel", "error", ...inputs, "-filter_complex", `${pads};${joined}`, "-map", "[out]", narration], "joining the narration");
 
@@ -499,7 +515,7 @@ if (withFootage) {
   const pieces = []; // { file, seconds }
   try {
     for (const [i, s] of scenes.entries()) {
-      const seconds = (takes[i].durMs + GAP_MS) / 1000;
+      const seconds = (takes[i].durMs + s.gapMs) / 1000;
       if (s.footage) {
         // Free first (Daniel's rule): stock, and the paid AI image only when
         // stock has nothing and the scene gave an "ai" fallback prompt.
