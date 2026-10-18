@@ -243,6 +243,7 @@ Pass the previous team files and the feedback verbatim. Downstream phases re-run
 | Situation | Action |
 |---|---|
 | Agent returns malformed or no JSON, or `failed` | Re-run once with the error; again → stop, report its last 5 lines |
+| Usage limit, auth or permission failure (any agent, voice or image call) | Do not retry: a retry spends the rest of the quota or pays twice for a take. Open the files to see what finished, record it in the team folder, tell Daniel what is left and, for a limit, when it resets |
 | A worker report lacks the `STATUS` / `EVIDENCE` / `BLOCKER` lines, or claims a look it did not take | Ask it once for the lines; still missing → carry the result as `unverified` in the delivery list, never as done |
 | The plan names a beat the editor cannot build (`open_questions`) | Build the beat's rung-1 `fallback`; tell Daniel the element it wanted; no mid-run template change |
 | The marketing plan assigns a task to a role not on the team | Put it on Daniel's verify list as an open question; do not invent an agent |
@@ -360,3 +361,8 @@ re-asked once, then the result is `unverified`. The two new roles:
   ERROR at stills → story-editor adds the words to `words.json` (logged in `notes`) → one render, not two.
 - **Partial re-run:** "QC said the stat covers my face, fix it" → team folder found → editor gets
   `04_qc_stills.json` → video-qc re-checks, marking the finding resolved → render.
+
+## Trigger checks
+
+Should fire: "edit my video" · "I recorded a video about LMI" · "make a video from this RBA announcement" · "faceless video about refinancing" · "what should I make a video about" · "run the video team" · "what's wrong with my video" · "redo the paper edit" · "fix what compliance flagged" · "re-run QC on the stamp duty video".
+Should not fire: "make a kinetic video" (style-production-teams, which then routes here) · "blog post from this video" (repurpose-content-team) · "YouTube title for this video" (yt-youtube-metadata) · "is this script compliant" (video-compliance-review alone) · "check the stills" (video-qc alone) · "make the cards look better" (template-improvement-team) · "Global RE listing video for this folder" (globalre-listing-video) · "why did that render take so long" (dev-efficiency-team) · "upgrade the repo" (upgrade-team) · "post it to YouTube" (Publish phase, only after COMPLETED and Daniel's yes).
