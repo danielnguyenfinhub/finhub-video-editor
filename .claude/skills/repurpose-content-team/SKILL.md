@@ -111,6 +111,7 @@ Vietnamese versions: only when Daniel asks, by handing the approved English draf
 | No finished video for the slug | `blocked`; name the missing file |
 | No transcript | Run from the edit or script; spoken figures become `[missing]` |
 | An agent fails | Retry once; then deliver without that derivative and name it as missing |
+| Usage limit, auth or permission failure | Do not retry; open the files to record what finished, tell Daniel with the reset time; never blind-resend a paid voice or image call |
 | The RG 234 guard will not load | BLOCK from the reviewer; never hand over unscanned drafts |
 | Daniel asks to post it | Stop: RED. Hand over the approved draft and the path; this team has no publish tool |
 

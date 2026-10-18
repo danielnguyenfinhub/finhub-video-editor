@@ -83,7 +83,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-pacing.selftest.mjs`, `check-speech-cuts.selftest.mjs` | The two checks above, on synthetic data | **test** |
 | `check-scripts-index.mjs` | Every file in this folder is listed in this README, and the **test** marks here match `npm test` | **test** |
 | `test-all.mjs` | Every `npm test` step run to the end (the chain stops at the first failure): a table of step, ok/FAIL and seconds, the last 5 lines of each failure; exit 1 if any failed | local |
-| `check-teams.mjs` | Every design is in exactly one style team (`config/style-teams.json`); team agents and skills exist and are wired; AGENTS.md read-list byte counts within 15% of the files; `docs/agents/team-runs.md` rows: `in progress` / `pending` only in the last row | **test** |
+| `check-teams.mjs` | Every design is in exactly one style team (`config/style-teams.json`); team agents and skills exist and are wired; team skills have `## Test scenarios`, `REQUIRE_TRIGGERS` skills `## Trigger checks`; AGENTS.md read-list byte counts within 15% of the files; `docs/agents/team-runs.md` rows: `in progress` / `pending` only in the last row | **test** |
 
 ## Tooling (rarely run)
 | Script | Does |

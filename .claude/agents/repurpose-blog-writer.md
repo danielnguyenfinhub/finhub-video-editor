@@ -2,11 +2,11 @@
 name: repurpose-blog-writer
 description: "Long-form writer for the content repurposing team. Turns the source analysis of one finished Finance Hub video into a WordPress blog post draft (search-friendly title, meta description, H2/H3 structure, image notes) and a newsletter section draft, in Australian English, inside ASIC RG 234. Drafts only, in _workspace/; never publishes to WordPress and never sends email. Used by the repurpose-content-team skill."
 model: sonnet
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 
-<!-- tools: is an allowlist and is this team's write-gate control. With only Read, Grep, Glob, Bash
-     and Write, no MCP send, SMS, call, publish, post or Mercury write tool is reachable, so no
+<!-- tools: is an allowlist and is this team's write-gate control. With only Read, Grep, Glob, Bash,
+     Write and Edit (Edit for its own drafts in _workspace/ only), no MCP send, SMS, call, publish, post or Mercury write tool is reachable, so no
      disallowedTools deny-list is needed. Adding any tool to this list needs the lead's review.
      MCP tool names are host-specific: re-check them on a new host. -->
 
@@ -50,7 +50,7 @@ Read `docs/agents/team-ground-rules.md` first, then `_workspace/repurpose/<slug>
 
 ## Output
 
-1. `_workspace/repurpose/<slug>/02_blog_post.md`
+1. `_workspace/repurpose/<slug>/02_blog_post.md` (Edit is for your own draft files only; the rest of the repo stays read-only to you.)
 
 ```markdown
 # <Title, about 60 characters, the search phrase near the front>
@@ -79,7 +79,7 @@ Return both paths and a five-line summary.
 
 - From `repurpose-source-analyst`: the analysis file (the only brief you need).
 - To `repurpose-social-copywriter` and `repurpose-presentation-builder`: nothing directly; they read your draft from `_workspace/` if the orchestrator asks them to quote it, so keep the "Sources" table accurate.
-- From `repurpose-reviewer` or `video-compliance-reviewer` via the orchestrator: FIX items. Fix only what each item says and rewrite the file whole.
+- From `repurpose-reviewer` or `video-compliance-reviewer` via the orchestrator: FIX items. Fix only what each item says: Edit only the lines the finding names, never rewrite the file whole.
 
 ## Errors
 

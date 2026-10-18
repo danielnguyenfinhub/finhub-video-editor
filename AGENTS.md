@@ -74,9 +74,9 @@ Read list per task, on top of this file. `refs/` is `.claude/skills/vietnamese-f
 
 | Task | Files | Bytes |
 |---|---|---|
-| Mode A edit (existing design, re-edit) | editor `SKILL.md`, `refs/landmines.md`, `refs/edit-json.md`, `refs/corrections.md` | 55,229 |
-| New design (each new talking-head video): Mode A plus | `refs/design-space.md`, `refs/design-architecture.md`, `refs/toolkit.md`, `.claude/elements/CATALOG.md`, remocn index, Craft rules section only (grep ^## Craft rules) | +31,443 = 86,672 |
-| Mode B faceless | `refs/faceless-script.md`, `refs/corrections.md`, `video-production-team` and `video-compliance-review` SKILL.md, the five `video-*` agents | 95,040 |
+| Mode A edit (existing design, re-edit) | editor `SKILL.md`, `refs/landmines.md`, `refs/edit-json.md`, `refs/corrections.md` | 55,681 |
+| New design (each new talking-head video): Mode A plus | `refs/design-space.md`, `refs/design-architecture.md`, `refs/toolkit.md`, `.claude/elements/CATALOG.md`, remocn index, Craft rules section only (grep ^## Craft rules) | +31,443 = 87,124 |
+| Mode B faceless | `refs/faceless-script.md`, `refs/corrections.md`, `video-production-team` and `video-compliance-review` SKILL.md, the five `video-*` agents | 99,069 |
 | Template fix (one existing design) | [designs README](src/designs/README.md), [golden.ts](src/mortgage/golden.ts); corrections by grep only (grep -n '<id>'); prove with node scripts/check-design-figures.mjs --only <id> (header lines 1-32 index its sections; never read its body whole); look with node scripts/review-pack.mjs <slug> --designs <id> | 34,545 |
 | Repo or tooling change | [code-changes](docs/agents/code-changes.md), [project-structure](docs/agents/project-structure.md), [mortgage-reel](docs/agents/mortgage-reel.md) | 8,669 |
 
@@ -104,7 +104,7 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 
 ### Harness: refactor team
 
-**Trigger:** when Daniel asks to refactor, dedupe, audit or speed up this repo ("where are the tokens going", "run the refactor pipeline", "make rendering faster", "did the dedup work"), use the `refactor-team` skill. It runs `architecture-auditor`, `asset-refactorer`, `pipeline-optimizer` and `quality-reviewer` from `.claude/agents/`, measuring with the `repo-audit-tools` skill. A one-line fix needs no team.
+**Trigger:** when Daniel asks to refactor, dedupe or audit the disk and recordings of this repo ("dedupe the recordings", "run the refactor pipeline", "did the dedup work"); token use and render speed ("where are the tokens going", "make rendering faster") go to `dev-efficiency-team`, use the `refactor-team` skill. It runs `architecture-auditor`, `asset-refactorer`, `pipeline-optimizer` and `quality-reviewer` from `.claude/agents/`, measuring with the `repo-audit-tools` skill. A one-line fix needs no team.
 
 ### Harness: repo and style teams
 
@@ -114,7 +114,7 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 |---|---|
 | build or add something to the repo from what exists ("add a design", "bring feature Y over") | `repo-build-team` (Team 1) |
 | keep the repo healthy ("check for bugs", "find gaps and improve it") | `repo-maintenance-team` (Team 2) |
-| work faster or cheaper ("why did that take so long", "save tokens") | `dev-efficiency-team` (Team 3) |
+| work faster or cheaper ("why did that take so long", "save tokens", "where are the tokens going", "make rendering faster") | `dev-efficiency-team` (Team 3) |
 | improve existing templates ("audit the designs", "make cards better", golden-rules check) | `template-improvement-team` (Team 5; creative team, golden rules, design) |
 | a video in a named style, or a batch ("make a kinetic video", "make these three") | `style-production-teams` (Team 4; routes by `config/style-teams.json`, then `video-production-team`) |
 

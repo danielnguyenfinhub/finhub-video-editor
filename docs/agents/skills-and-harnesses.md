@@ -30,7 +30,7 @@ Whatever skill is driving (Remotion's, the editor skill, or a scene written by h
 
 **Goal:** the repo wastes less — duplicated recordings, tokens per session, render minutes — measured before and proved after, with Daniel's recordings moved only by a script he runs himself.
 
-**Trigger:** when Daniel asks to refactor, dedupe, audit or speed up this repo ("where are the tokens going", "run the refactor pipeline", "make rendering faster", "did the dedup work"), use the `refactor-team` skill. It runs `architecture-auditor`, `asset-refactorer`, `pipeline-optimizer` and `quality-reviewer` from `.claude/agents/`, measuring with the `repo-audit-tools` skill. A one-line fix needs no team.
+**Trigger:** when Daniel asks to refactor, dedupe or audit the disk and recordings of this repo ("dedupe the recordings", "run the refactor pipeline", "did the dedup work"); token use and render speed ("where are the tokens going", "make rendering faster") go to `dev-efficiency-team`, use the `refactor-team` skill. It runs `architecture-auditor`, `asset-refactorer`, `pipeline-optimizer` and `quality-reviewer` from `.claude/agents/`, measuring with the `repo-audit-tools` skill. A one-line fix needs no team.
 
 **Change log:**
 | Date | Change | Files | Why |

@@ -3,13 +3,14 @@ name: refactor-team
 description: >-
   Runs the finhub-video refactor team end to end: architecture audit → Daniel approves the
   target layout → asset refactor → independent review → render-speed pass → independent
-  review → summary. Use when Daniel wants this repo leaner or faster with the team: "refactor
-  the video repo", "dedupe the recordings", "where are the tokens going", "run the refactor
-  pipeline", "run the harness", "Phase 1 audit", "make rendering faster", "re-run the audit",
+  review → summary. Use when Daniel wants this repo leaner with the team: "refactor
+  the video repo", "dedupe the recordings", "audit the disk and recordings", "run the refactor
+  pipeline", "run the harness", "Phase 1 audit", "re-run the audit",
   "redo the asset refactor", "fix what the reviewer flagged", "update the refactor from the
   last run", "did the dedup work". For a single code fix, edit directly; use this skill when
-  Daniel wants measurement before a change and an independent check after it. NOT for making
-  videos (video-production-team, vietnamese-finance-video-editor).
+  Daniel wants measurement before a change and an independent check after it. NOT for token use or
+  render speed ("where are the tokens going", "make rendering faster": dev-efficiency-team) or
+  making videos (video-production-team, vietnamese-finance-video-editor).
 ---
 
 # Refactor team

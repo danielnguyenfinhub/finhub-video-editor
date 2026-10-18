@@ -1,7 +1,7 @@
 // Checks the agent teams are wired: every design (src/designs, src/youtube/designs) and the
 // listing reel belongs to exactly one team in config/style-teams.json; each team's director
 // agent and recipe exist; every agent a team skill names exists; every agent file has the
-// frontmatter Claude Code needs; the AGENTS.md read-list byte counts are within 15%; only the last
+// frontmatter Claude Code needs; each team skill has "## Test scenarios" and REQUIRE_TRIGGERS skills "## Trigger checks"; the AGENTS.md read-list byte counts are within 15%; only the last
 // docs/agents/team-runs.md row may be "in progress" / "pending". Run: node scripts/check-teams.mjs (exit 1 and the problems).
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -59,6 +59,13 @@ for (const skill of TEAM_SKILLS) {
   const named = [...table.matchAll(/^\| `([a-z0-9-]+)`/gm)].map((m) => m[1]);
   if (!named.length) problems.push(`${skill}: "The team" table names no agents`);
   for (const a of named) if (!agents.has(a)) problems.push(`${skill}: names agent ${a}, which has no file`);
+  if (!/^## Test scenarios$/m.test(readFileSync(path, "utf8"))) problems.push(`${skill}: SKILL.md lacks "## Test scenarios"`);
+}
+// Skills whose triggers overlap others prove routing with should / should-not prompts.
+const REQUIRE_TRIGGERS = ["upgrade-team", "video-production-team"];
+for (const skill of REQUIRE_TRIGGERS) {
+  const path = at(".claude/skills", skill, "SKILL.md");
+  if (!existsSync(path) || !/^## Trigger checks$/m.test(readFileSync(path, "utf8"))) problems.push(`${skill}: SKILL.md lacks "## Trigger checks"`);
 }
 
 // AGENTS.md "Read list per task" table: each row's Bytes must match the files it lists within 15%,

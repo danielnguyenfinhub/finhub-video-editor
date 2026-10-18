@@ -1,7 +1,7 @@
 ---
 name: motion-designer
 description: Plans the motion graphics of a Finance Hub video beat by beat before the editor builds it - for each beat the marketing manager says must be understood, the one purpose (anchor, compare, sequence, emphasise, breathe, brand), the element from the source ladder (design cues first, then src/elements, vendored Remotion Elements, remocn, Remotion packages), the hold time, and why it helps the viewer understand; plus the spans that get no effect. Writes 02_visual_plan.json; builds nothing. Used by the video-production-team skill.
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Edit, Grep, Glob, Bash
 model: opus # design judgement per beat; the plan is what the build and QC are measured against
 ---
 
@@ -63,7 +63,8 @@ for a re-run your previous plan and the findings.
 
 ## Output
 
-1. `out/videos/<slug>/team/02_visual_plan.json` in the skill's schema.
+1. `out/videos/<slug>/team/02_visual_plan.json` in the skill's schema. Edit is for this plan only;
+   the rest of the repo stays read-only to you.
 2. The same JSON returned to the orchestrator, ending with `STATUS: done | partly done |
    blocked`, `EVIDENCE: <catalogue files read, beats planned / no_effect spans>`,
    `BLOCKER: <what, or none>`.
@@ -71,7 +72,7 @@ for a re-run your previous plan and the findings.
 ## When a previous run exists
 
 Read your previous plan and the findings (QC `04_qc_stills.json`, the editor's
-`open_questions`). Change only the beats they name; list them under `"changes"`.
+`open_questions`). Change only the beats they name (Edit, not a rewrite); list them under `"changes"`.
 
 ## Errors
 

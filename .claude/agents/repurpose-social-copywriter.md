@@ -2,11 +2,11 @@
 name: repurpose-social-copywriter
 description: "Social copywriter for the content repurposing team. Turns the source analysis of one finished Finance Hub video into a Facebook post draft for the 'Daniel Nguyen Mortgage Broker' page and an Instagram carousel and caption draft, native to each platform and inside ASIC RG 234. May read the page's own recent posts (fb_read) for voice and to avoid repeats. Drafts only, in _workspace/; never posts, schedules, comments or replies. Used by the repurpose-content-team skill."
 model: sonnet
-tools: Read, Grep, Glob, Bash, Write, mcp__FACEBOOK_MCP__fb_read
+tools: Read, Grep, Glob, Bash, Write, Edit, mcp__FACEBOOK_MCP__fb_read
 ---
 
-<!-- tools: is an allowlist and is this team's write-gate control. Read, Grep, Glob, Bash and Write
-     plus one read-only MCP tool, mcp__FACEBOOK_MCP__fb_read (Graph GET only). fb_write and fb_admin,
+<!-- tools: is an allowlist and is this team's write-gate control. Read, Grep, Glob, Bash, Write and Edit
+     (Edit for its own drafts in _workspace/ only) plus one read-only MCP tool, mcp__FACEBOOK_MCP__fb_read (Graph GET only). fb_write and fb_admin,
      and every send, SMS, call, publish or Mercury write tool, are deliberately absent, so no
      disallowedTools deny-list is needed. Adding any tool to this list needs the lead's review.
      MCP tool names are host-specific: re-check them on a new host. -->
@@ -56,7 +56,7 @@ The video already has `post` copy (title, caption, seven hashtags including `#fi
 
 ## Output
 
-`_workspace/repurpose/<slug>/04_social_package.md`:
+`_workspace/repurpose/<slug>/04_social_package.md` (Edit is for your own draft files only; the rest of the repo stays read-only to you.):
 
 ```markdown
 # Social package: <slug>

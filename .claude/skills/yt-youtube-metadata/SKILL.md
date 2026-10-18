@@ -123,6 +123,7 @@ First line `done`, `partly done` or `blocked`. Then the paths, the verdict, the 
 | No transcript | Run from the edit or script; spoken claims `[missing]` |
 | Google Workspace tool not connected | Note it; run without the snapshot |
 | An agent fails | Retry once; then deliver without its file and name it as missing |
+| Usage limit, auth or permission failure | Do not retry; open the files to record what finished, tell Daniel with the reset time; never blind-resend a paid voice or image call |
 | The RG 234 guard will not load | BLOCK from the reviewer; nothing is handed over unscanned |
 | Daniel asks to upload or set it | Stop: RED. Hand over the approved draft; this team has no YouTube write |
 

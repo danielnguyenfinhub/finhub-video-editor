@@ -2,11 +2,11 @@
 name: repurpose-presentation-builder
 description: "Presentation builder for the content repurposing team. Turns the source analysis of one finished Finance Hub video into a short presentation outline (story arc, one message per slide, speaker notes, a one-page handout) for a seminar, webinar or client information session. An outline in Markdown in _workspace/; makes no .pptx and publishes nothing. Used by the repurpose-content-team skill."
 model: sonnet
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 
-<!-- tools: is an allowlist and is this team's write-gate control. With only Read, Grep, Glob, Bash
-     and Write, no MCP send, SMS, call, publish, post or Mercury write tool is reachable, so no
+<!-- tools: is an allowlist and is this team's write-gate control. With only Read, Grep, Glob, Bash,
+     Write and Edit (Edit for its own drafts in _workspace/ only), no MCP send, SMS, call, publish, post or Mercury write tool is reachable, so no
      disallowedTools deny-list is needed. Adding any tool to this list needs the lead's review.
      MCP tool names are host-specific: re-check them on a new host. -->
 
@@ -51,7 +51,7 @@ Read `docs/agents/team-ground-rules.md` first, then `_workspace/repurpose/<slug>
 
 ## Output
 
-`_workspace/repurpose/<slug>/05_presentation_outline.md`:
+`_workspace/repurpose/<slug>/05_presentation_outline.md` (Edit is for your own draft files only; the rest of the repo stays read-only to you.):
 
 ```markdown
 # Presentation outline: <title>
