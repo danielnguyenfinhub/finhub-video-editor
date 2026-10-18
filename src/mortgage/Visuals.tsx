@@ -73,7 +73,7 @@ const Shot: React.FC<{
   frameStyle: React.CSSProperties;
 }> = ({ v, reel, from, src, foreground, look, frameStyle }) => {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, fps } = useVideoConfig();
   const opacity = interpolate(
     frame,
     [0, FADE, durationInFrames - FADE, durationInFrames],
@@ -121,6 +121,8 @@ const Shot: React.FC<{
                   key={s.srcFrom}
                   from={s.outFrom + skip - from}
                   durationInFrames={s.outDuration - skip}
+                  premountFor={fps}
+                  name="pip talk"
                 >
                   {/* relative: paint the cut-out above PacedVideo's absolute backdrop. */}
                   <PacedVideo
@@ -163,6 +165,9 @@ export const Visuals: React.FC<{
             key={`${v.mode}${v.atMs}`}
             from={from}
             durationInFrames={Math.max(1, Math.round((v.durMs / 1000) * fps))}
+            // Mount 1 s early so the clip has loaded when it starts (no black flash in Studio).
+            premountFor={fps}
+            name={`${v.mode} ${v.asset}`}
           >
             <Shot
               v={{ ...v, asset: v.asset }}

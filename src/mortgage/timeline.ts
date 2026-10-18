@@ -20,7 +20,8 @@ export type Word = {
 
 // Chapter transitions edit.json can pick. From blurSlide on they are shader
 // transitions (HTML-in-canvas, Chrome 149+, which Remotion's own renderer
-// ships); a Studio browser without it shows them as a fade.
+// ships); a Studio browser without it shows a CSS look-alike
+// (CSS_FALLBACK, src/showcase/htmlInCanvasPresentation.ts).
 export const TRANSITIONS = [
   "fade", "slide", "wipe", "flip", "clockWipe", "iris", "pushCut",
   "blurSlide", "bookFlip", "crossZoom", "crosswarp", "dissolve", "dreamyZoom",

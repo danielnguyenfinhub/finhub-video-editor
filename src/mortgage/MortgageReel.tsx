@@ -25,6 +25,7 @@ import { z } from "zod";
 import { DEFAULT_DESIGN, getDesign } from "../designs";
 import { assertCompliantCopy, assertRateGate } from "./compliance";
 import { recordingPath } from "./recording";
+import { useReevaluateOnChange } from "../useReevaluateOnChange";
 import { ComplianceCard } from "./EndCards";
 import { Visuals } from "./Visuals";
 import {
@@ -87,7 +88,8 @@ export type MortgageReelProps = z.infer<typeof mortgageReelSchema> & {
 const QUICK_FALLBACK = new Set(["editorial", "checklist", "datalab", "kitchen"]);
 
 const fetchJson = async (slug: string, path: string): Promise<unknown> => {
-  const res = await fetch(staticFile(path));
+  // no-store: a Studio re-evaluation (useReevaluateOnChange) must see the edited file.
+  const res = await fetch(staticFile(path), { cache: "no-store" });
   if (!res.ok)
     throw new Error(
       `MortgageReel "${slug}": public/${path} not found (HTTP ${res.status}). ` +
@@ -257,6 +259,10 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({
   safeZones,
 }) => {
   useReelFont();
+  useReevaluateOnChange([
+    `videos/${slug}/edit.json`,
+    recordingPath(slug, reel?.edit.source, "words.json"),
+  ]);
   if (!reel) throw new Error("MortgageReel: calculateMetadata did not run.");
   const { edit, timeline } = reel;
   const design = getDesign(edit.design ?? DEFAULT_DESIGN);

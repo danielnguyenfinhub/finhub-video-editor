@@ -38,7 +38,9 @@ export const LEAD_FRAMES = 6; // the voice starts after this
 const TAIL_FRAMES = 90; // the end card holds after the last word
 
 const fetchJson = async (slug: string, file: string) => {
-  const res = await fetch(staticFile(`listings/${slug}/${file}`));
+  const res = await fetch(staticFile(`listings/${slug}/${file}`), {
+    cache: "no-store", // the Studio re-evaluates on edits (useReevaluateOnChange)
+  });
   if (!res.ok)
     throw new Error(
       `ListingReel "${slug}": public/listings/${slug}/${file} not found (HTTP ${res.status}). ` +

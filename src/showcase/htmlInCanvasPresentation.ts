@@ -1,4 +1,11 @@
 import {fade} from "@remotion/transitions/fade";
+import {flip} from "@remotion/transitions/flip";
+import {slide} from "@remotion/transitions/slide";
+import {emberBurn} from "../elements/remocn/ember-burn";
+import {focusPull} from "../elements/remocn/focus-pull";
+import {pushThrough} from "../elements/remocn/push-through";
+import {whipPan} from "../elements/remocn/whip-pan";
+import {zoomBlur as zoomBlurCss} from "../elements/remocn/zoom-blur";
 import {bookFlip} from "@remotion/transitions/book-flip";
 import {crosswarp} from "@remotion/transitions/crosswarp";
 import {dissolve} from "@remotion/transitions/dissolve";
@@ -18,7 +25,7 @@ import {HtmlInCanvas} from "remotion";
 // browser-level HTML-in-canvas support as the CoreMediaScene/HtmlInCanvas
 // capability check (Chrome 149+), so -- exactly like that scene -- it's
 // only used when HtmlInCanvas.isSupported() confirms the browser can do it,
-// falling back to a plain fade() otherwise rather than throwing mid-render.
+// falling back to a CSS look (CSS_FALLBACK below) otherwise rather than throwing mid-render.
 // It's a canvas-drawn circular reveal -- the same look as the built-in,
 // CSS-based iris() from @remotion/transitions/iris, which FullReel uses and
 // which needs no HtmlInCanvas support. This one exists to show how a custom
@@ -56,26 +63,44 @@ const circleReveal = makeHtmlInCanvasPresentation(circleRevealShader);
 // zoomBlur, zoomInOut and blurSlide. Every one of them is ALSO built with
 // makeHtmlInCanvasPresentation() internally (see each's source under
 // packages/transitions/src/presentations/), so they all need the exact
-// same Chrome 149+ HTML-in-canvas support as the custom circle reveal above --
-// this one shared helper wraps any such presentation factory with the same
-// isSupported()-gated fallback to fade(), rather than repeating the same
-// three-line check twelve times.
+// same Chrome 149+ HTML-in-canvas support as the custom circle reveal above.
+// Where it's missing, each falls back to the closest CSS-only look
+// (transform/opacity/filter) in this one table: remocn ports in
+// src/elements/remocn/, installed CSS presentations, fade() where nothing fits.
+// Durations are the caller's timing, unchanged.
+const CSS_FALLBACK = {
+  circleReveal: () => fade(), // iris() matches but needs width/height
+  bookFlip: () => flip(),
+  crossZoom: () => pushThrough(),
+  crosswarp: () => fade(),
+  dissolve: () => fade(),
+  dreamyZoom: () => zoomBlurCss({blur: 8}),
+  filmBurn: () => emberBurn(),
+  linearBlur: () => focusPull(),
+  ripple: () => fade(),
+  swap: () => slide(),
+  zoomBlur: () => zoomBlurCss(),
+  zoomInOut: () => zoomBlurCss({blur: 0}),
+  blurSlide: () => whipPan(),
+};
+
 const orFallback = <TPassedProps extends Record<string, unknown>>(
   presentation: (props: TPassedProps) => TransitionPresentation<TPassedProps>,
   props: TPassedProps,
+  name: keyof typeof CSS_FALLBACK,
 ) => (): TransitionPresentation<Record<string, unknown>> =>
-  (HtmlInCanvas.isSupported() ? presentation(props) : fade()) as TransitionPresentation<Record<string, unknown>>;
+  (HtmlInCanvas.isSupported() ? presentation(props) : CSS_FALLBACK[name]()) as TransitionPresentation<Record<string, unknown>>;
 
-export const canvasCircleRevealOrFallback = orFallback(circleReveal, {});
-export const bookFlipOrFallback = orFallback(bookFlip, {});
-export const crossZoomOrFallback = orFallback(crossZoom, {});
-export const crosswarpOrFallback = orFallback(crosswarp, {});
-export const dissolveOrFallback = orFallback(dissolve, {});
-export const dreamyZoomOrFallback = orFallback(dreamyZoom, {});
-export const filmBurnOrFallback = orFallback(filmBurn, {});
-export const linearBlurOrFallback = orFallback(linearBlur, {});
-export const rippleOrFallback = orFallback(ripple, {});
-export const swapOrFallback = orFallback(swap, {});
-export const zoomBlurOrFallback = orFallback(zoomBlur, {});
-export const zoomInOutOrFallback = orFallback(zoomInOut, {});
-export const blurSlideOrFallback = orFallback(blurSlide, {});
+export const canvasCircleRevealOrFallback = orFallback(circleReveal, {}, "circleReveal");
+export const bookFlipOrFallback = orFallback(bookFlip, {}, "bookFlip");
+export const crossZoomOrFallback = orFallback(crossZoom, {}, "crossZoom");
+export const crosswarpOrFallback = orFallback(crosswarp, {}, "crosswarp");
+export const dissolveOrFallback = orFallback(dissolve, {}, "dissolve");
+export const dreamyZoomOrFallback = orFallback(dreamyZoom, {}, "dreamyZoom");
+export const filmBurnOrFallback = orFallback(filmBurn, {}, "filmBurn");
+export const linearBlurOrFallback = orFallback(linearBlur, {}, "linearBlur");
+export const rippleOrFallback = orFallback(ripple, {}, "ripple");
+export const swapOrFallback = orFallback(swap, {}, "swap");
+export const zoomBlurOrFallback = orFallback(zoomBlur, {}, "zoomBlur");
+export const zoomInOutOrFallback = orFallback(zoomInOut, {}, "zoomInOut");
+export const blurSlideOrFallback = orFallback(blurSlide, {}, "blurSlide");
