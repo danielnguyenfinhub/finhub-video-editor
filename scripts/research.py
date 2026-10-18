@@ -22,7 +22,7 @@ from a page saved with `read` and is cited in facts.json by that file's name.
 Output goes to out/ (not committed: the saved pages are other people's work):
 out/research/ for trending, out/videos/<slug>/research/ for the rest.
 
-Needs: python -m pip install yt-dlp feedparser
+Needs: python -m pip install "yt-dlp[default]" feedparser   ([default] brings yt-dlp-ejs, which YouTube needs)
 """
 
 from __future__ import annotations
@@ -40,6 +40,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import date, datetime
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Callable
 
@@ -62,6 +63,11 @@ NEWS_EN = ["RBA cash rate", "home loan interest rates Australia", "first home bu
 NEWS_VI = ['"lãi suất" "Úc"', '"RBA"']
 YOUTUBE_VI = ["lãi suất Úc", "vay mua nhà Úc", "mua nhà ở Úc"]
 SUBREDDITS = ["AusFinance", "AusProperty", "FirstHomeBuyers", "AusPropertyChat"]
+# yt-dlp's Python API enables only deno as YouTube's JS runtime; Daniel's PC has Node, not Deno,
+# so formats and subtitles can go missing. Enable both: yt-dlp uses the highest-priority one
+# installed (deno, then node). Shape checked in yt-dlp 2026.08.19 YoutubeDL.py (js_runtimes).
+# Idea from Agent-Reach (MIT), agent_reach/channels/youtube.py:26-44 and cli.py:587-601.
+YDL = {"quiet": True, "no_warnings": True, "js_runtimes": {"deno": {}, "node": {}}}
 
 # Entity grounding: a story counts only if its title names Australia (or an Australian
 # institution, bank or city) as a whole word, or it comes from a .au site. Google matches
@@ -189,7 +195,7 @@ def youtube(query: str, days: int, n: int = 30, dated: int = 5) -> tuple[list[di
     # sp = YouTube's "upload date: this week / this month" filter.
     sp = "&sp=EgIIAw%253D%253D" if days <= 7 else "&sp=EgIIBA%253D%253D" if days <= 31 else ""
     url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}{sp}"
-    with yt_dlp.YoutubeDL({"quiet": True, "extract_flat": True, "no_warnings": True, "playlistend": n}) as y:
+    with yt_dlp.YoutubeDL({**YDL, "extract_flat": True, "playlistend": n}) as y:
         entries = y.extract_info(url, download=False)["entries"]
     vi = bool(VI_LETTERS.search(query))
     found = [{"title": e.get("title", ""), "channel": e.get("channel") or "", "views": e.get("view_count") or 0,
@@ -198,7 +204,7 @@ def youtube(query: str, days: int, n: int = 30, dated: int = 5) -> tuple[list[di
     vids = sorted((v for v in found if grounded({"title": f"{v['title']} {v['channel']}"}) and (not vi or VI_LETTERS.search(v["title"]))),
                   key=lambda v: v["views"], reverse=True)
     today = date.today()
-    with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "skip_download": True}) as y:
+    with yt_dlp.YoutubeDL({**YDL, "skip_download": True}) as y:
         for v in vids[:dated]:
             try:
                 info = y.extract_info(v["link"], download=False, process=False)
@@ -352,7 +358,8 @@ def url_problem(url: str) -> str | None:
     """Why a URL must not be fetched (by r.jina.ai or yt-dlp), or None: only http(s) to a
     public address. The host is resolved, so "localhost", 10.x, 169.254.169.254 (cloud
     metadata) and spellings like http://2130706433/ (= 127.0.0.1) are all refused.
-    ponytail: checks the name once; a redirect or DNS rebinding to a private host is not
+    `read`'s local fallback also runs it on every redirect (GuardedRedirect).
+    ponytail: checks the name, not the connection, so DNS rebinding to a private host is not
     caught. Pin the resolved address if a real attack shows up."""
     u = urllib.parse.urlparse(url)
     if u.scheme not in ("http", "https") or not u.hostname:
@@ -369,30 +376,129 @@ def url_problem(url: str) -> str | None:
     return None
 
 
+# Local fallback for `read` when r.jina.ai is down or rate-limited. Ideas and the noise-tag
+# list from Scrapling (BSD-3-Clause, github.com/D4Vinci/Scrapling): browser-like headers,
+# scrapling/engines/static.py:167-185; body text without noise tags, scrapling/core/shell.py:589-594,614-647.
+PAGE_HEADERS = {**BROWSER_UA, "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-AU,en;q=0.9,vi;q=0.8", "Referer": "https://www.google.com/"}
+MAX_PAGE = 5 * 1024 * 1024  # bytes read from a page; the rest is dropped (and the saved file says so)
+
+
+class GuardedRedirect(urllib.request.HTTPRedirectHandler):
+    """Follows at most 5 redirects, each only after url_problem() clears its Location."""
+    max_redirections = 5
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if problem := url_problem(newurl):
+            raise urllib.error.URLError(f"redirect refused: {problem}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+class BodyText(HTMLParser):
+    """Visible text of <body>: script/style/noscript/svg/template/iframe/nav/footer/header and <head> dropped."""
+    SKIP = {"head", "script", "style", "noscript", "svg", "template", "iframe", "nav", "footer", "header"}
+    BLOCK = {"p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "section", "article",
+             "blockquote", "pre", "table", "ul", "ol", "dd", "dt", "figcaption", "main"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.skip = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "body":
+            self.skip = 0  # an unclosed <head> must not swallow the page
+        elif tag in self.SKIP:
+            self.skip += 1
+        elif tag in self.BLOCK:
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in self.SKIP:
+            self.skip = max(0, self.skip - 1)
+        elif tag in self.BLOCK:
+            self.parts.append("\n")
+
+    def handle_data(self, data):
+        if not self.skip:
+            self.parts.append(re.sub(r"\s+", " ", data))  # as a browser shows it; ponytail: <pre> loses its lines
+
+
+def html_text(html: str) -> str:
+    parser = BodyText()
+    parser.feed(html)
+    parser.close()
+    lines = (" ".join(line.split()) for line in "".join(parser.parts).splitlines())
+    return "\n".join(line for line in lines if line)
+
+
+def fetch_page(url: str, timeout: int = 30) -> tuple[str, bool]:
+    """The page's body text, fetched directly (redirects guarded, size capped), and whether it was cut."""
+    opener = urllib.request.build_opener(GuardedRedirect)
+    with opener.open(urllib.request.Request(url, headers=PAGE_HEADERS), timeout=timeout) as r:
+        kind = r.headers.get_content_type()
+        if kind not in ("text/html", "application/xhtml+xml", "text/plain"):
+            raise ValueError(f"{kind} isn't a web page (the local fallback reads HTML only)")
+        raw = r.read(MAX_PAGE + 1)
+        body = raw[:MAX_PAGE].decode(r.headers.get_content_charset() or "utf-8", errors="replace")
+    return (body if kind == "text/plain" else html_text(body)), len(raw) > MAX_PAGE
+
+
+def jina(url: str) -> str:
+    """r.jina.ai's Markdown; one retry after a 429 or 5xx (idea: Scrapling's retries, BSD-3-Clause)."""
+    for attempt in (1, 2):
+        try:
+            return fetch(f"https://r.jina.ai/{url}", timeout=60).decode("utf-8")
+        except urllib.error.HTTPError as err:
+            if attempt == 2 or not (err.code == 429 or err.code >= 500):
+                raise
+            time.sleep(5)
+    raise AssertionError("unreachable")
+
+
 def cmd_read(url: str, slug: str) -> None:
     if problem := url_problem(url):
         raise SystemExit(problem)
     if "news.google.com" in url:
         raise SystemExit("Google News links can't be read: open the story at the publisher (or the RBA/ABS/lender page).")
     try:
-        text = fetch(f"https://r.jina.ai/{url}", timeout=60).decode("utf-8")
-    except Exception as err:
-        raise SystemExit(f"Couldn't read {url}: {err}. Try again later, or save the page from the browser.") from err
+        text, via = jina(url), "r.jina.ai (Markdown)"
+    except Exception as jina_err:
+        print(f"r.jina.ai failed ({jina_err}); fetching the page directly ...", flush=True)
+        try:
+            text, cut = fetch_page(url)
+        except Exception as err:
+            raise SystemExit(f"Couldn't read {url}: r.jina.ai: {jina_err}; direct: {err}. "
+                             "Try again later, or save the page from the browser.") from err
+        via = (f"direct fetch, body text only, no Markdown (r.jina.ai failed: {str(jina_err)[:80]})"
+               + (f"; cut at {MAX_PAGE // 1048576} MB" if cut else ""))
     path = ROOT / "out" / "videos" / slug / "research" / page_name(url)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f"Source: {url}\nFetched: {stamp()}\n\n{text}", encoding="utf-8")
-    print(f"{path.relative_to(ROOT)}  ({len(text.split()):,} words). Cite it in facts.json as doc \"{path.name}\".")
+    path.write_text(f"Source: {url}\nFetched: {stamp()}\nVia: {via}\n\n{text}", encoding="utf-8")
+    print(f"{path.relative_to(ROOT)}  ({len(text.split()):,} words, via {via.split(' ')[0]}). "
+          f"Cite it in facts.json as doc \"{path.name}\".")
+
+
+CUE = re.compile(r"(?:(\d+):)?(\d{2}):(\d{2})[.,]\d{3}\s+-->")
 
 
 def vtt_text(vtt: str) -> str:
-    """Subtitle file → plain text: no header, timings or tags, auto-sub repeats removed."""
+    """Subtitle file → one '[mm:ss] text' line per caption line, as whisper_text writes (so a quote
+    can be found again in the video): no header, tags or notes, auto-sub rolling repeats removed.
+    Cue timing as in claude-video (MIT), skills/watch/scripts/transcribe.py:24-89."""
     lines: list[str] = []
+    last, start = "", None
     for line in vtt.splitlines():
-        line = re.sub(r"<[^>]+>", "", line).strip()
-        if not line or "-->" in line or line.startswith(("WEBVTT", "Kind:", "Language:", "NOTE")):
+        if m := CUE.match(line.strip()):
+            h, mm, ss = m.groups()
+            start = int(h or 0) * 60 + int(mm), int(ss)
             continue
-        if not lines or lines[-1] != line:
-            lines.append(line)
+        line = re.sub(r"<[^>]+>", "", line).strip()
+        if not line:
+            start = None  # a blank line ends the cue; header, NOTE and STYLE blocks never have one
+        elif start and line != last:
+            lines.append(f"[{start[0]:02d}:{start[1]:02d}] {line}")
+            last = line
     return "\n".join(lines)
 
 
@@ -421,7 +527,7 @@ def cmd_transcript(url: str, slug: str, lang: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
     trust_windows_store_for_curl(ROOT / "out")
     # One language: asking for a second track (YouTube's machine translation) got a 429.
-    opts = {"quiet": True, "no_warnings": True, "noprogress": True, "skip_download": True, "writesubtitles": True,
+    opts = {**YDL, "noprogress": True, "skip_download": True, "writesubtitles": True,
             "writeautomaticsub": True, "subtitleslangs": [lang], "subtitlesformat": "vtt",
             "outtmpl": str(out / "yt-%(id)s.%(ext)s")}
     try:
@@ -454,7 +560,7 @@ def download_audio(url: str, out: Path, video_id: str) -> Path:
     """The smallest audio stream, as yt-dlp saves it (m4a/webm; faster-whisper decodes both)."""
     import yt_dlp
 
-    opts = {"quiet": True, "no_warnings": True, "noprogress": True, "format": "ba/bestaudio/best",
+    opts = {**YDL, "noprogress": True, "format": "ba/bestaudio/best",
             "outtmpl": str(out / f"yt-{video_id}.%(ext)s")}
     try:
         with yt_dlp.YoutubeDL(opts) as y:
@@ -492,7 +598,29 @@ def whisper_text(audio: Path, lang: str) -> str:
 def selftest() -> None:
     vtt = ("WEBVTT\nKind: captions\n\n00:00:01.000 --> 00:00:02.000\n<c>lãi suất</c> tăng\n\n"
            "00:00:02.000 --> 00:00:03.000\nlãi suất tăng\nthêm 0,25%\n")
-    assert vtt_text(vtt) == "lãi suất tăng\nthêm 0,25%", vtt_text(vtt)
+    assert vtt_text(vtt) == "[00:01] lãi suất tăng\n[00:02] thêm 0,25%", vtt_text(vtt)
+    # YouTube auto-subs: each cue repeats the previous line, plus 10 ms cues; hours become minutes.
+    yt = ("WEBVTT\nKind: captions\nLanguage: vi\n\nNOTE a note\nmore\n\n1\n01:02:03.500 --> 01:02:05.000 align:start\n"
+          "<00:00:01.000><c>ngân</c><c> hàng</c>\n\n01:02:05.000 --> 01:02:05.010\nngân hàng\n\n"
+          "00:00:59.000 --> 00:01:01.000\nngân hàng\ncho vay\n")
+    assert vtt_text(yt) == "[62:03] ngân hàng\n[00:59] cho vay", vtt_text(yt)
+    # read's local fallback: body text only, noise tags dropped, entities decoded.
+    page = ("<html><head><title>T</title><script>x=1</script><style>p{}</style></head><body><header>Menu</header>"
+            "<nav>Home</nav><h1>Cash rate</h1><p>RBA holds at <b>3.60%</b> &amp; waits.</p><svg><text>icon</text></svg>"
+            "<noscript>enable JS</noscript><div>Next  meeting:\n  Nov</div><footer>© RBA</footer></body></html>")
+    assert html_text(page) == "Cash rate\nRBA holds at 3.60% & waits.\nNext meeting: Nov", html_text(page)
+    assert html_text("<head><title>x</title><body><p>kept</p>") == "kept"  # unclosed <head>
+    # ... and its redirect guard: a Location to a private host or another scheme is refused, a public one followed.
+    g, req = GuardedRedirect(), urllib.request.Request("https://1.1.1.1/a")
+    for bad in ("http://169.254.169.254/latest/meta-data/", "http://127.0.0.1/", "file:///etc/passwd"):
+        try:
+            g.redirect_request(req, None, 302, "Found", {}, bad)
+            raise AssertionError(f"redirect to {bad} followed")
+        except urllib.error.URLError as err:
+            assert "redirect refused" in str(err.reason), err
+    assert g.redirect_request(req, None, 302, "Found", {}, "https://1.0.0.1/b").full_url == "https://1.0.0.1/b"
+    assert GuardedRedirect.max_redirections == 5
+    assert YDL["js_runtimes"] == {"deno": {}, "node": {}}
     assert page_name("https://www.rba.gov.au/media-releases/2026/mr-26-19.html") == \
         "www-rba-gov-au-media-releases-2026-mr-26-19-html.md"
     # Grounding: whole words, so "ký ức" isn't "Úc"; a .au site counts; US/UK stories don't.
