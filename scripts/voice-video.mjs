@@ -52,7 +52,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { repoTmp } from "./tmp-dir.mjs";
+import { bundleTs, repoTmp } from "./tmp-dir.mjs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkFacts, readLedger } from "./facts.mjs";
@@ -160,10 +160,11 @@ if (listing) {
 // reach clients just like on-screen copy. compliance.ts is bundled because Node
 // can't follow its extensionless TS imports.
 const bundleDir = repoTmp("voice-");
-run(process.execPath, [
-  join(ROOT, "node_modules/esbuild/bin/esbuild"), join(ROOT, "src/mortgage/compliance.ts"),
-  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", `--outdir=${bundleDir}`,
-], "bundling compliance.ts");
+try {
+  bundleTs([join(ROOT, "src/mortgage/compliance.ts")], { outdir: bundleDir, logLevel: "silent" });
+} catch (err) {
+  fail(`bundling compliance.ts failed: ${err.message.slice(-600)}`);
+}
 const { assertCompliantCopy } = await import(
   new URL(`file:///${join(bundleDir, "compliance.mjs").replace(/\\/g, "/")}`)
 );

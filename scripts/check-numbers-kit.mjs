@@ -5,18 +5,14 @@
 // kinetic cue's text does. Also the RG 234 scan itself: NFD text, odd
 // whitespace and captionFixes[].to (round 2 maintain fixes C1, C2), and the
 // advisory spoken-phrase scan (check-spoken-phrases.mjs) on synthetic words.
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { repoTmp } from "./tmp-dir.mjs";
+import { bundleTs, repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const dir = repoTmp("numbers-kit-");
-execFileSync(process.execPath, [
-  "node_modules/esbuild/bin/esbuild", "src/mortgage/schema.ts", "src/mortgage/compliance.ts",
-  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", "--log-level=warning",
-  `--outdir=${dir}`,
-]);
+bundleTs(["src/mortgage/schema.ts", "src/mortgage/compliance.ts"], { logLevel: "warning", outdir: dir });
 const { editSchema, onScreenCopy } = await import(pathToFileURL(join(dir, "schema.mjs")).href);
 const { assertCompliantCopy } = await import(pathToFileURL(join(dir, "compliance.mjs")).href);
 

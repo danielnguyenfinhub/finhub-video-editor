@@ -10,4 +10,6 @@ For code changes (scripts, the MortgageReel core, tooling):
 - Shortest correct diff, fewest files, deletion over addition. No abstraction, config or boilerplate nobody asked for.
 - Never cut input validation at trust boundaries, error handling that prevents data loss, security, accessibility, or anything explicitly requested. Non-trivial logic still gets a check.
 - After changing shared code or the core (`golden.ts`, `classic/Panel` or `Cues`, `hookText`, anything several designs import), run `node scripts/stills-diff.mjs <slug>` and look at what changed in the designs you did not mean to touch.
+- `npm test` stops at the first failing step; `node scripts/test-all.mjs` runs every step and lists all failures at once.
+- A script that bundles `.ts` for Node uses `bundleTs` from `scripts/tmp-dir.mjs`, never `node node_modules/esbuild/bin/esbuild` (a native binary on Linux/macOS).
 - Report in a few lines: what changed and what was skipped. Explain at length only when asked.

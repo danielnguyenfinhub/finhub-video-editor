@@ -4,21 +4,16 @@
 // with a slug it also prints what that video's captions would produce, and
 // every card, cue or caption page shown for less than its reading time. scripts/brief.mjs imports
 // the exports below; the checks run only when this file is the entry point.
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { repoTmp } from "./tmp-dir.mjs";
+import { bundleTs, repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // golden.ts imports sibling .ts files without extensions (Bundler resolution),
 // which Node's type stripping cannot follow, so bundle it first.
 const bundle = join(repoTmp("golden-"), "golden.mjs");
-execFileSync(process.execPath, [
-  "node_modules/esbuild/bin/esbuild", "src/mortgage/golden.ts", "src/mortgage/timeline.ts",
-  "src/mortgage/captionPages.ts",
-  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", "--log-level=warning",
-  `--outdir=${join(bundle, "..")}`,
-], { cwd: join(import.meta.dirname, "..") }); // the paths above are the repo's, from any working folder
+bundleTs(["src/mortgage/golden.ts", "src/mortgage/timeline.ts", "src/mortgage/captionPages.ts"],
+  { logLevel: "warning", outdir: join(bundle, "..") }); // the paths above are the repo's, from any working folder
 const url = (p) => new URL(`file:///${p.replace(/\\/g, "/")}`);
 export const { figuresOf, lenderMentionsOf, faceHiddenOf, CUTAWAY_MAX_MS, READING, readingMs, readingFloor, saidKind, HOOK_FRAMES } =
   await import(url(bundle));

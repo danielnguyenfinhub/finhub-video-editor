@@ -82,6 +82,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `timeline.selftest.mjs` | Pins what `timeline.ts` does: cuts, pacing, chapter overlap, time maps | **test** |
 | `check-pacing.selftest.mjs`, `check-speech-cuts.selftest.mjs` | The two checks above, on synthetic data | **test** |
 | `check-scripts-index.mjs` | Every file in this folder is listed in this README, and the **test** marks here match `npm test` | **test** |
+| `test-all.mjs` | Every `npm test` step run to the end (the chain stops at the first failure): a table of step, ok/FAIL and seconds, the last 5 lines of each failure; exit 1 if any failed | local |
 | `check-teams.mjs` | Every design is in exactly one style team (`config/style-teams.json`); team agents and skills exist and are wired; AGENTS.md read-list byte counts within 15% of the files; `docs/agents/team-runs.md` rows: `in progress` / `pending` only in the last row | **test** |
 
 ## Tooling (rarely run)
@@ -90,6 +91,6 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `vendor-skills.mjs`, `vendor-elements.mjs`, `build-chat-skill.mjs` | Re-vendor Remotion skills and the Elements library; build the claude.ai skill zip. |
 | `generate-sample-media.mjs`, `fetch-noto-emoji.mjs` | Regenerate sample clips; fetch Noto animated emoji. |
 | `renderer-apis.mjs` | Exercises the Node-side Remotion APIs that cannot run inside a scene. |
-| `tmp-dir.mjs` | Temp folders inside the repo (`node_modules/.cache/finhub-tmp`) so esbuild bundles resolve `remotion`; use it instead of `os.tmpdir()`. Removed when the process exits (`{ keep: true }` to keep one); folders a killed process left are pruned after 2 h. |
+| `tmp-dir.mjs` | Temp folders inside the repo (`node_modules/.cache/finhub-tmp`) so esbuild bundles resolve `remotion`; use it instead of `os.tmpdir()`. Removed when the process exits (`{ keep: true }` to keep one); folders a killed process left are pruned after 6 h. `bundleTs(entries, options)` bundles `.ts` to `.mjs` there with esbuild's JS API (`node node_modules/esbuild/bin/esbuild` is a native binary on Linux/macOS). |
 | `third_party/` | Licence text for borrowed code (HyperFrames, Apache-2.0). |
 | `fixtures/` | Media-free fixtures: `schema-probe/` is a video `check-schema.mjs` accepts with no recording (quick mode), for the CI probe step. |
