@@ -38,8 +38,20 @@ for (const f of agentFiles) {
   if (!new RegExp(`^name: ${f.replace(/\.md$/, "")}$`, "m").test(fm)) problems.push(`.claude/agents/${f}: name differs from the file name`);
 }
 
+// The desktop plugin (.claude-plugin/plugin.json) lists agents file by file (the manifest takes no
+// folder for agents), so a new agent must be added there too; every skill it ships must parse.
+const plugin = JSON.parse(readFileSync(at(".claude-plugin/plugin.json"), "utf8"));
+const listed = new Set(plugin.agents.map((p) => p.replace("./.claude/agents/", "")));
+for (const f of agentFiles) if (!listed.has(f)) problems.push(`.claude-plugin/plugin.json: agents lacks ./.claude/agents/${f}`);
+for (const f of listed) if (!agentFiles.includes(f)) problems.push(`.claude-plugin/plugin.json: lists ${f}, which has no file`);
+for (const d of readdirSync(at(plugin.skills))) {
+  const p = at(plugin.skills, d, "SKILL.md");
+  const fm = existsSync(p) ? readFileSync(p, "utf8").replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "" : "";
+  for (const key of ["name", "description"]) if (!new RegExp(`^${key}:`, "m").test(fm)) problems.push(`${plugin.skills}${d}/SKILL.md: frontmatter lacks ${key}`);
+}
+
 // Each team skill lists its agents as `agent-name` in backticks inside its "## The team" table.
-const TEAM_SKILLS = ["repo-build-team", "repo-maintenance-team", "dev-efficiency-team", "style-production-teams", "template-improvement-team", "repurpose-content-team", "yt-youtube-metadata"];
+const TEAM_SKILLS = ["repo-build-team", "repo-maintenance-team", "dev-efficiency-team", "style-production-teams", "template-improvement-team", "repurpose-content-team", "yt-youtube-metadata", "upgrade-team"];
 for (const skill of TEAM_SKILLS) {
   const path = at(".claude/skills", skill, "SKILL.md");
   if (!existsSync(path)) { problems.push(`missing skill ${skill}`); continue; }

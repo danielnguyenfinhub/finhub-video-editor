@@ -1,0 +1,82 @@
+{
+  "name": "finhub-video",
+  "version": "1.0.0",
+  "description": "Daniel Nguyen (Finance Hub) video editor: the bilingual Vietnamese + English video teams, editing skills and a local MCP server for prep, checks, stills and renders on this PC.",
+  "author": {
+    "name": "Daniel Nguyen"
+  },
+  "repository": "https://github.com/danielnguyenfinhub/finhub-video-editor",
+  "license": "UNLICENSED",
+  "keywords": [
+    "remotion",
+    "video",
+    "mortgage",
+    "vietnamese"
+  ],
+  "skills": "./.claude/skills/",
+  "agents": [
+    "./.claude/agents/a11y-architect.md",
+    "./.claude/agents/architect.md",
+    "./.claude/agents/architecture-auditor.md",
+    "./.claude/agents/asset-refactorer.md",
+    "./.claude/agents/automation-builder.md",
+    "./.claude/agents/bug-hunter.md",
+    "./.claude/agents/build-error-resolver.md",
+    "./.claude/agents/code-architect.md",
+    "./.claude/agents/code-explorer.md",
+    "./.claude/agents/code-reviewer.md",
+    "./.claude/agents/code-simplifier.md",
+    "./.claude/agents/comment-analyzer.md",
+    "./.claude/agents/creative-director.md",
+    "./.claude/agents/design-critic.md",
+    "./.claude/agents/faceless-data-director.md",
+    "./.claude/agents/faceless-explainer-director.md",
+    "./.claude/agents/gap-analyst.md",
+    "./.claude/agents/golden-rules-auditor.md",
+    "./.claude/agents/listing-director.md",
+    "./.claude/agents/marketing-manager.md",
+    "./.claude/agents/motion-designer.md",
+    "./.claude/agents/performance-optimizer.md",
+    "./.claude/agents/pipeline-optimizer.md",
+    "./.claude/agents/planner.md",
+    "./.claude/agents/pr-test-analyzer.md",
+    "./.claude/agents/quality-reviewer.md",
+    "./.claude/agents/react-build-resolver.md",
+    "./.claude/agents/react-reviewer.md",
+    "./.claude/agents/refactor-cleaner.md",
+    "./.claude/agents/repo-builder.md",
+    "./.claude/agents/repo-fixer.md",
+    "./.claude/agents/repurpose-blog-writer.md",
+    "./.claude/agents/repurpose-presentation-builder.md",
+    "./.claude/agents/repurpose-reviewer.md",
+    "./.claude/agents/repurpose-social-copywriter.md",
+    "./.claude/agents/repurpose-source-analyst.md",
+    "./.claude/agents/resource-scout.md",
+    "./.claude/agents/security-reviewer.md",
+    "./.claude/agents/sibling-repo-analyst.md",
+    "./.claude/agents/silent-failure-hunter.md",
+    "./.claude/agents/talkinghead-data-director.md",
+    "./.claude/agents/talkinghead-story-director.md",
+    "./.claude/agents/template-improver.md",
+    "./.claude/agents/type-design-analyzer.md",
+    "./.claude/agents/typescript-reviewer.md",
+    "./.claude/agents/video-compliance-reviewer.md",
+    "./.claude/agents/video-editor.md",
+    "./.claude/agents/video-qc.md",
+    "./.claude/agents/video-script-writer.md",
+    "./.claude/agents/video-story-editor.md",
+    "./.claude/agents/workflow-analyst.md",
+    "./.claude/agents/youtube-director.md",
+    "./.claude/agents/yt-reviewer.md",
+    "./.claude/agents/yt-seo-optimizer.md",
+    "./.claude/agents/yt-thumbnail-designer.md"
+  ],
+  "mcpServers": {
+    "finhub-video": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/finhub-video-server.mjs"
+      ]
+    }
+  }
+}

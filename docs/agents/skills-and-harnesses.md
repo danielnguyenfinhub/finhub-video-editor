@@ -76,6 +76,17 @@ Whatever skill is driving (Remotion's, the editor skill, or a scene written by h
 |---|---|---|---|
 | 2026-10-17 | Initial team, adapted from harness-100 `01-youtube-production` (Apache-2.0), its SEO and thumbnail roles only: `yt-seo-optimizer`, `yt-thumbnail-designer` (written briefs, no image generation), `yt-reviewer` (RG 234 guard from `src/mortgage/compliance.ts` plus a hook-pattern scan); urgency, scarcity, shock-statistic and rate-led hooks removed from the source method; YouTube reads only by the orchestrator (`youtube_ops` / `youtube_analytics_ops` read actions on `finhub_au`), no YouTube tool on any agent; boundary with `video-production-team`, `marketing-manager`, `video-compliance-reviewer` and `repurpose-content-team` in the skill; report-only for its first 7 days | the three agents, `yt-youtube-metadata`, `yt-thumbnail-psychology`, `check-teams.mjs` (team list), AGENTS.md trigger | YouTube search and thumbnail copy per video, inside RG 234 |
 
+### Harness: upgrade team
+
+**Goal:** one run turns this repo's bugs and gaps and the sibling repos' useful features into a verified, licence-checked backlog Daniel picks from, then builds and reviews the picks; everything a cloud session cannot prove is tagged for his PC. The harness ships as a desktop plugin with a local MCP server ([plugin-and-mcp](plugin-and-mcp.md)).
+
+**Trigger:** see AGENTS.md "Harness: upgrade team" (`upgrade-team` skill).
+
+**Change log:**
+| Date | Change | Files | Why |
+|---|---|---|---|
+| 2026-10-18 | Initial team (harness v2, mixed mode): new `sibling-repo-analyst` (one per sibling repo, licence and local-only tags); Workflow for find plus two-refuter verify; reuses `bug-hunter`, `gap-analyst`, `resource-scout`, `code-architect`, `repo-builder`, `repo-fixer`, `security-reviewer`, `quality-reviewer`. Same day: `mcp/finhub-video-server.mjs` (six tools over existing scripts; publishing, cloning and moving recordings kept off) and `.claude-plugin/` shipping the whole harness; `check-teams.mjs` checks the plugin's agent list | `upgrade-team` SKILL.md and `references/sibling-repos.md`, `sibling-repo-analyst`, `mcp/`, `.mcp.json`, `.claude-plugin/`, `check-mcp.mjs`, `check-teams.mjs`, `package.json`, AGENTS.md, `plugin-and-mcp.md` | Daniel: a team that upgrades the editor, fixes bugs and gaps, using the sibling repos as sources; the repo connects as an MCP server and installs as a desktop plugin; editing stays local. Six sibling repos had never been mined |
+
 `.claude/` also holds 18 other subagents in `.claude/agents/` and 7 skills (accessibility, bun-runtime, codebase-onboarding, error-handling, react-patterns, react-performance, search-first) imported from ECC (see `.claude/ECC.md`), and the `ponytail-review`, `ponytail-audit` and `ponytail-debt` skills from ponytail (see `.claude/PONYTAIL.md`). They run only when asked; AGENTS.md, these docs and the Remotion and owner skills win where they conflict.
 
 When upgrading Remotion, re-vendor the skills so guidance matches the installed version:
