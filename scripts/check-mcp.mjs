@@ -1,5 +1,6 @@
 // Self-check for mcp/finhub-video-server.mjs: it starts over stdio, lists exactly the six tools,
-// answers list_designs and video_status, and refuses a slug that could reach outside the repo.
+// answers list_designs and video_status, and refuses a slug that could reach outside the repo
+// (preflight and still; still takes a slug so it renders the video being edited).
 // Renders nothing. Run: node scripts/check-mcp.mjs
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -27,6 +28,13 @@ try {
   for (const composition of ["x; echo", "--help"]) {
     const r = await client.callTool({ name: "still", arguments: { composition, frame: 0 } });
     assert.ok(r.isError, `still refuses composition ${JSON.stringify(composition)}`);
+  }
+  const still = tools.find((t) => t.name === "still");
+  assert.ok(still.inputSchema.properties.slug, "still takes a slug, so it renders the video being edited, not the default");
+  for (const bad of ["../etc", "a/b"]) {
+    const r = await client.callTool({ name: "still", arguments: { composition: "MortgageReel", frame: 0, slug: bad } });
+    // The validation message, not just isError: a bad slug that reached Remotion would fail too, later.
+    assert.ok(r.isError && /Input validation error.*at slug/.test(r.content[0].text), `still refuses slug ${JSON.stringify(bad)}`);
   }
   const flag = await client.callTool({ name: "research", arguments: { mode: "topic", query: "--days=99999", slug: "x" } });
   assert.ok(flag.isError, "research refuses a query that reads as a flag");
