@@ -5,6 +5,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { dirname, join } from "node:path";
 import { nextOf, preflightTimeoutMs, readinessOf } from "./video-status.mjs";
+import { reviewHash } from "./publish-post.mjs";
 
 const root = repoTmp("video-status-");
 const put = (p, body) => {
@@ -102,4 +103,34 @@ const schemaS = Number(/^const SCHEMA_TIMEOUT_S = (\d+);/m.exec(readFileSync(joi
 assert.ok(preflightTimeoutMs() >= (schemaS + 60) * 1000, `readiness waits ${preflightTimeoutMs()} ms; preflight gives check-schema ${schemaS} s`);
 assert.match(readinessOf.toString(), /preflight\.mjs"\), slug\], \{ cwd: root, timeout: preflightTimeoutMs\(\) \}/, "readiness must use preflightTimeoutMs");
 
-console.log("video-status ok (pipeline A, quick mode, pipeline B, readiness)");
+// U4: a PASS is frozen to the inputs it reviewed (inputsHash); a change after it makes it stale, not done.
+put("public/videos/h/edit.json", { background: "vignette", cues: ["a"], post: { title: "t" } });
+for (const [f, body] of [["00_intake.md", "A"], ["01_story_edit.json", { status: "ok", flags: [] }], ["03_editor_report.json", { status: "success" }]])
+  put(`out/videos/h/team/${f}`, body);
+put("out/videos/h/team/04_qc_stills.json", { verdict: "PASS", inputsHash: reviewHash(root, "h", "qc") });
+assert.equal(next("h").stage, "render (video-editor A7.1 / B5.4)", "fresh QC PASS is done");
+assert.deepEqual(next("h").warnings, []);
+put("public/videos/h/edit.json", { background: "vignette", cues: ["a"], post: { title: "t2" } });
+assert.equal(next("h").stage, "render (video-editor A7.1 / B5.4)", "post copy is not on screen: QC stays fresh");
+put("public/videos/h/edit.json", { background: "vignette", cues: ["b"], post: { title: "t2" } });
+assert.equal(next("h").stage, "QC stills (video-qc)", "on-screen change after QC PASS: stale");
+assert.match(next("h").halt?.stale ?? "", /re-run QC .*changed/);
+put("out/videos/h/team/04_qc_stills.json", { verdict: "PASS" });
+assert.equal(next("h").stage, "render (video-editor A7.1 / B5.4)", "no inputsHash (older run): accepted");
+assert.match(next("h").warnings.join(), /no inputsHash/);
+put("out/videos/h/team/04_compliance_final.json", { verdict: "PASS", inputsHash: reviewHash(root, "h", "compliance") });
+assert.equal(next("h").stage, "render (video-editor A7.1 / B5.4)", "fresh compliance PASS is done");
+put("public/videos/h/edit.json", { background: "vignette", cues: ["b"], post: { title: "t3" } });
+assert.match(next("h").halt?.stale ?? "", /re-run compliance .*post/, "post change after compliance PASS: stale");
+
+// U10: the FIX-loop round limit survives a resumed session: content 2 rounds, cosmetic 1.
+put("out/videos/h/team/04_compliance_final.json", { verdict: "FIX", round: 1, findings: [{ severity: "FIX" }] });
+assert.equal(next("h").halt, null, "content FIX after 1 round: loop again");
+put("out/videos/h/team/04_compliance_final.json", { verdict: "FIX", round: 2, findings: [{ severity: "FIX" }] });
+assert.match(next("h").halt?.gate ?? "", /^rounds exhausted, Daniel decides/);
+put("out/videos/h/team/04_compliance_final.json", { verdict: "FIX", round: 1, findings: [{ severity: "FIX", kind: "cosmetic" }] });
+assert.match(next("h").halt?.gate ?? "", /^rounds exhausted, Daniel decides/, "cosmetic: 1 round");
+put("out/videos/h/team/04_compliance_final.json", { verdict: "FIX", findings: [{ severity: "FIX" }] });
+assert.equal(next("h").halt, null, "no round (older run): loop as before");
+
+console.log("video-status ok (pipeline A, quick mode, pipeline B, readiness, inputsHash, rounds)");

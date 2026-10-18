@@ -5,10 +5,12 @@
 //   node scripts/publish-post.mjs <slug> plan
 //   node scripts/publish-post.mjs <slug> stage                      copy the three files into config/publish.json drive.syncDir
 //   node scripts/publish-post.mjs <slug> mark <step> [key=value..]  record a step (approved text="Daniel: yes")
+//   node scripts/publish-post.mjs <slug> hash qc|compliance         the inputsHash a reviewer stamps in its verdict JSON
+import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { OUTPUT_DIR, topicFileName } from "./publish-video.mjs";
+import { hashInputs, OUTPUT_DIR, topicFileName, videoInputs } from "./publish-video.mjs";
 import { assertSlug } from "./listing-prep.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
@@ -28,23 +30,50 @@ export const driveNames = (topic, date) => {
 export const nextStep = (steps) => STEPS.find((s) => !steps[s]) ?? "done";
 
 const json = (p) => JSON.parse(readFileSync(p, "utf8"));
+
+/** The `inputsHash` a reviewer stamps (idea: harness orchestrator-template, freeze reviewed artefacts by hash).
+ *  qc: the on-screen inputs (hashInputs: edit.json and script.json without "post", words.json). compliance: edit.json
+ *  and script.json whole, "post" included. words.json is left out of compliance: Pipeline B voices after the script
+ *  review, and its words follow the locked script. */
+export const reviewHash = (root, slug, kind) => {
+  const pub = join(root, "public"), dir = join(pub, "videos", slug);
+  if (kind === "qc") return hashInputs(videoInputs(dir, pub));
+  const text = (p) => { try { return JSON.stringify(json(p)); } catch { return existsSync(p) ? readFileSync(p, "utf8") : ""; } };
+  return createHash("sha256").update(JSON.stringify(["edit.json", "script.json"].map((f) => text(join(dir, f))))).digest("hex");
+};
+
+/** A reviewer's verdict JSON (team/<name>) plus `stale` (a PASS whose inputsHash no longer matches) and `warn`
+ *  (a PASS with no inputsHash: older runs, accepted). null when the file is missing or broken. */
+export const reviewOf = (root, slug, name) => {
+  let j;
+  try { j = json(join(root, "out", "videos", slug, "team", name)); } catch { return null; }
+  const kind = name.includes("compliance") ? "compliance" : "qc";
+  const pass = j.verdict === "PASS";
+  const changed = kind === "qc" ? "the on-screen inputs (edit.json, script.json or words.json)" : "the on-screen copy or the post (edit.json or script.json)";
+  const stale = pass && j.inputsHash && j.inputsHash !== reviewHash(root, slug, kind) ? `re-run ${kind === "qc" ? "QC" : "compliance"} (${name}): ${changed} changed after its PASS` : null;
+  const warn = pass && !j.inputsHash ? `${name}: PASS has no inputsHash (older run), accepted; a change since the review is not detected` : null;
+  return { ...j, stale, warn };
+};
+
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Sydney" }).format(new Date());
 
-export function plan(slug) {
+export function plan(slug, root = ROOT) {
   assertSlug(slug);
-  const dir = join(ROOT, "out", "videos", slug), team = join(dir, "team"), ledgerPath = join(team, "07_published.json");
+  const dir = join(root, "out", "videos", slug), team = join(dir, "team"), ledgerPath = join(team, "07_published.json");
   const ledger = existsSync(ledgerPath) ? json(ledgerPath) : { slug, date: today(), steps: {} };
-  const cfg = json(join(ROOT, "config", "publish.json"));
-  const edit = ["edit.json", "script.json"].map((f) => join(ROOT, "public", "videos", slug, f)).find(existsSync);
+  const cfg = json(join(root, "config", "publish.json"));
+  const edit = ["edit.json", "script.json"].map((f) => join(root, "public", "videos", slug, f)).find(existsSync);
   const title = edit && json(edit).post?.title;
-  const stop = [];
+  const stop = [], warnings = [];
   if (!title) stop.push("no post.title in edit.json/script.json");
   const topic = title ? topicFileName(title) : slug;
   const files = { video: join(OUTPUT_DIR, `${topic}.mp4`), caption: join(OUTPUT_DIR, `${topic} - caption.txt`), thumbnail: join(dir, "thumbnail.png") };
   for (const [k, p] of Object.entries(files)) if (!existsSync(p)) stop.push(`missing ${k}: ${p}`);
   for (const f of ["04_compliance_final.json", "02_compliance_script.json"]) {
-    const p = join(team, f);
-    if (existsSync(p) && json(p).verdict !== "PASS") stop.push(`${f} verdict is ${json(p).verdict}, not PASS`);
+    const r = reviewOf(root, slug, f);
+    if (r && r.verdict !== "PASS") stop.push(`${f} verdict is ${r.verdict}, not PASS`);
+    else if (r?.stale) stop.push(r.stale);
+    else if (r?.warn) warnings.push(r.warn);
   }
   if (!existsSync(join(team, "04_compliance_final.json"))) stop.push("04_compliance_final.json missing: run the compliance reviewer's final stage first");
   if (!cfg.drive.syncDir) stop.push("config/publish.json drive.syncDir is null: set the Google Drive for Desktop folder that syncs to the upload folder");
@@ -52,10 +81,16 @@ export function plan(slug) {
   const next = nextStep(ledger.steps);
   if (next !== "approved" && !ledger.steps.approved) stop.push("no approval recorded");
   const blocked = (NEEDS[next] ?? []).filter((n) => !ledger.steps[n]);
-  return { slug, topic, date: ledger.date, names: driveNames(topic, ledger.date), files, cfg, ledgerPath, ledger, next, stop, blocked };
+  return { slug, topic, date: ledger.date, names: driveNames(topic, ledger.date), files, cfg, ledgerPath, ledger, next, stop, warnings, blocked };
 }
 
 function main([slug, cmd, ...rest]) {
+  if (cmd === "hash") {
+    assertSlug(slug);
+    if (!["qc", "compliance"].includes(rest[0])) { console.error("usage: publish-post.mjs <slug> hash qc|compliance"); return 2; }
+    console.log(reviewHash(ROOT, slug, rest[0]));
+    return 0;
+  }
   const p = plan(slug);
   if (cmd === "plan") {
     const { cfg, ledger, ...show } = p;
@@ -75,7 +110,7 @@ function main([slug, cmd, ...rest]) {
     if (missing.length) { console.error(`${step} needs ${missing.join(", ")} first`); return 2; }
     return mark(p, step, kv);
   }
-  console.error("usage: publish-post.mjs <slug> plan|stage|mark <step> [key=value..]");
+  console.error("usage: publish-post.mjs <slug> plan|stage|mark <step> [key=value..]|hash qc|compliance");
   return 2;
 }
 const ledger_ok = (p, s) => p.ledger.steps[s] || (console.error(`${s} not recorded: Daniel's yes for this video comes first`), false);

@@ -175,6 +175,15 @@ preflight runs the last two before every render. Post-render QC verifies the ren
   reviewers again in parallel, marking earlier findings resolved or open. **CONTENT** findings (compliance, dropped or
   changed speech or meaning, wrong numbers) get up to **2 rounds**; **COSMETIC** ones (pacing, small text, caption
   spelling) get **1**, then what is still open goes on Daniel's verify list, not into another loop.
+- **Rounds live in the verdict file, not the chat.** Each reviewer writes `"round"`: the fix rounds already applied
+  (0 on the first review, +1 on each re-review after a fix); a QC finding that is only cosmetic carries
+  `"kind": "cosmetic"`. A FIX with `round` at the limit makes `video-status` say `rounds exhausted, Daniel decides`,
+  so a resumed session does not restart at round 1.
+- **A PASS is frozen to what was reviewed.** Every verdict file carries `"inputsHash"`, printed by
+  `node scripts/publish-post.mjs <slug> hash qc` (QC: edit.json/script.json without `post`, words.json) or
+  `node scripts/publish-post.mjs <slug> hash compliance` (edit.json and script.json with `post`), run after the last
+  check. Inputs changed since → `video-status` shows the stage as stale ("re-run QC/compliance") and `publish-post`
+  refuses it. A PASS without `inputsHash` (older runs) is accepted with a warning.
 - A fix that touches timing, cues or cuts is re-checked with the three scripts before the reviewers re-run, and they
   re-check only the changed spots. After ANY `words.json` or cut change, re-run `check-speech-cuts`.
 - An agent list that says a stage is cut off or missing its report file: re-run that stage.
@@ -238,7 +247,7 @@ Pass the previous team files and the feedback verbatim. Downstream phases re-run
 | The plan names a beat the editor cannot build (`open_questions`) | Build the beat's rung-1 `fallback`; tell Daniel the element it wanted; no mid-run template change |
 | The marketing plan assigns a task to a role not on the team | Put it on Daniel's verify list as an open question; do not invent an agent |
 | `clips.json` changed after the matte was made | The matte is stale: ask Daniel to run matte.html again on the assembly; never render the old `foreground.webm` |
-| Rounds used up (2 content, 1 cosmetic) and a finding is open | Stop the loop; show Daniel the open finding |
+| Rounds used up (2 content, 1 cosmetic; `video-status` says `rounds exhausted, Daniel decides`) and a finding is open | Stop the loop; show Daniel the open finding |
 | `check-schema` or `check-speech-cuts` fails | Fix the cause (text, cut, `words.json`); never loosen the schema or add an exemption; no render |
 | QC and compliance, or reviewer and author, disagree | Don't pick a side; show Daniel both, rule cited |
 | Any agent or document reveals client data | **Stop everything.** Tell Daniel what and where; never anonymise |
