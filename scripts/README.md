@@ -89,6 +89,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | Script | Does |
 |---|---|
 | `vendor-skills.mjs`, `vendor-elements.mjs`, `build-chat-skill.mjs` | Re-vendor Remotion skills and the Elements library; build the claude.ai skill zip. |
+| `vendor-remocn.mjs` | Adds each remocn entry's `len` and first `avoid:` line to `.claude/elements/remocn/CATALOG.md` from a sibling remocn checkout; `--check` exits 1 if stale. Manual (reads ../remocn-remotion-resoure), not in npm test. |
 | `generate-sample-media.mjs`, `fetch-noto-emoji.mjs` | Regenerate sample clips; fetch Noto animated emoji. |
 | `renderer-apis.mjs` | Exercises the Node-side Remotion APIs that cannot run inside a scene. |
 | `tmp-dir.mjs` | Temp folders inside the repo (`node_modules/.cache/finhub-tmp`) so esbuild bundles resolve `remotion`; use it instead of `os.tmpdir()`. Removed when the process exits (`{ keep: true }` to keep one); folders a killed process left are pruned after 6 h. `bundleTs(entries, options)` bundles `.ts` to `.mjs` there with esbuild's JS API (`node node_modules/esbuild/bin/esbuild` is a native binary on Linux/macOS). |
