@@ -16,6 +16,7 @@ npm run test:py       # the Python checks CI runs; run it (with npm test) after 
 npm run research -- trending   # what's trending for a faceless video (runbook B1.0; also topic/read/transcript)
 npm run listing -- "<folder>"  # Global RE listing video: prep a folder from "3 - GLOBAL RE LISTINGS" (docs/agents/listing-video.md)
 npx remotion render   # render a composition to a video file
+npm run mcp           # the repo's MCP server (stdio); normally started by .mcp.json or the plugin (docs/agents/plugin-and-mcp.md)
 ```
 
 Rendering and Studio need Node.js and a Chrome/Chromium download; they work in Claude Code, Claude Cowork and local terminals, but not in claude.ai chat.
@@ -59,6 +60,7 @@ The rest of the guide is in `docs/agents/`; read a file only when the task needs
 | Rendering environments without a GPU, What this sandbox can't do | [rendering-without-gpu](docs/agents/rendering-without-gpu.md) |
 | Third-party API keys | [api-keys](docs/agents/api-keys.md) |
 | Skills, harness change logs | [skills-and-harnesses](docs/agents/skills-and-harnesses.md) |
+| Desktop plugin, MCP server (`mcp/`, `.claude-plugin/`, `.mcp.json`) | [plugin-and-mcp](docs/agents/plugin-and-mcp.md) |
 | Decisions waiting on Daniel (defaults, costs) | [open-decisions](docs/agents/open-decisions.md) |
 | Elements (`.claude/elements/`, remocn) | [elements](docs/agents/elements.md) |
 | Starter templates | [starters](docs/agents/starters.md) |
@@ -125,6 +127,10 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 ### Harness: YouTube metadata team
 
 **Trigger:** when Daniel asks for YouTube words or thumbnail ideas for a finished video ("YouTube title for <slug>", "write the YouTube description", "chapters for this video", "tags for YouTube", "thumbnail ideas", "review these titles"), use the `yt-youtube-metadata` skill. Its `yt-` agents write drafts only, in `_workspace/yt/<slug>/` (git-ignored), for `@finhub-au` (`finhub_au`); `yt-reviewer` runs the RG 234 guard over them. Writing chosen copy into `post` stays with the video team; uploading, updating and setting the thumbnail stay with Daniel.
+
+### Harness: upgrade team
+
+**Trigger:** when Daniel asks to upgrade the repo as a whole ("upgrade the repo", "what can we take from the sibling repos", "add what's missing and fix the gaps", "run team 8"), including follow-ups ("only Scrapling", "build U3", "continue the upgrade run"), use the `upgrade-team` skill. It runs `bug-hunter`, `gap-analyst` and one `sibling-repo-analyst` per repo cloned next to this one as a Workflow, has each candidate verified twice against the code, gives Daniel one ranked backlog to pick from, then builds with Team 1 and Team 2 agents and has `quality-reviewer` check it. Local only: what needs a render is tagged `verify on PC`.
 
 ## Conventions
 

@@ -1,0 +1,17 @@
+{
+  "name": "finhub-video-editor",
+  "owner": {
+    "name": "Daniel Nguyen"
+  },
+  "metadata": {
+    "description": "Finance Hub video editor plugin, for Daniel's PC."
+  },
+  "plugins": [
+    {
+      "name": "finhub-video",
+      "description": "Daniel Nguyen (Finance Hub) video editor: the bilingual Vietnamese + English video teams, editing skills and a local MCP server for prep, checks, stills and renders on this PC.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "finhub-video": {
+      "command": "node",
+      "args": ["mcp/finhub-video-server.mjs"]
+    }
+  }
+}
