@@ -6,6 +6,8 @@
 // the OAuth sign-in in mcp/oauth.mjs (claude.ai connectors: a 401 starts it, Daniel pastes MCP_TOKEN
 // once and the connector then sends a signed access token). Without MCP_TOKEN the server refuses to start.
 //   MCP_TOKEN=... PORT=8080 node mcp/http.mjs        GET /health answers without the token.
+//   npm run mcp:pc  (node mcp/http.mjs --all): every tool, for the PC connector behind a tunnel
+//   (docs/agents/plugin-and-mcp.md "PC connector"); renders and stills run on that PC.
 import { timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -18,6 +20,7 @@ if (TOKEN.length < 24) {
   process.exit(1);
 }
 const oauth = makeOAuth(TOKEN);
+const ALL = process.argv.includes("--all");
 const same = (a) => Buffer.byteLength(a) === Buffer.byteLength(TOKEN) && timingSafeEqual(Buffer.from(a), Buffer.from(TOKEN));
 
 const authorised = (req, path) => {
@@ -47,7 +50,7 @@ createServer(async (req, res) => {
   // The WWW-Authenticate header points an OAuth client (claude.ai) at the sign-in metadata.
   if (!authorised(req, path)) return res.writeHead(401, { "www-authenticate": oauth.challenge(req) }).end();
   // Stateless: a fresh server and transport per request, nothing kept between calls.
-  const server = makeServer({ remote: true });
+  const server = makeServer({ remote: !ALL, http: true });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true, maxRequestBodySize: 16 * 1024 });
   res.on("close", () => {
     transport.close();
@@ -60,4 +63,4 @@ createServer(async (req, res) => {
     console.error(err);
     if (!res.headersSent) res.writeHead(500).end();
   }
-}).listen(Number(process.env.PORT ?? 8080), () => console.log(`finhub-video MCP over HTTP on :${process.env.PORT ?? 8080}`));
+}).listen(Number(process.env.PORT ?? 8080), () => console.log(`finhub-video MCP over HTTP on :${process.env.PORT ?? 8080} (${ALL ? "every tool" : "light tools"})`));

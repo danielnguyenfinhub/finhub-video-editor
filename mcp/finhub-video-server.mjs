@@ -68,7 +68,9 @@ const node = (script, args, timeoutMs = 120_000) => run(process.execPath, ["--no
 
 // remote: the Railway HTTP mode (mcp/http.mjs) has no footage, Remotion or ffmpeg, so it keeps only the
 // tools that need none of them: list_designs and research (trending, topic, comments).
-export const makeServer = ({ remote = false } = {}) => {
+// http: served over HTTP (mcp/http.mjs), so the caller can't open files on this machine: still also
+// returns the picture and research returns the files it wrote.
+export const makeServer = ({ remote = false, http = remote } = {}) => {
   const server = new McpServer({ name: "finhub-video", version: "1.0.0" });
   const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
   const localTool = remote ? () => {} : server.registerTool.bind(server);
@@ -113,6 +115,7 @@ export const makeServer = ({ remote = false } = {}) => {
       const props = slug || safeZones ? [`--props=${JSON.stringify({ slug, safeZones })}`, "--gl=angle"] : [];
       const r = await run(process.execPath, [REMOTION, "still", composition, file, `--frame=${frame}`, "--scale=0.5", ...props], 600_000);
       if (!r.isError) r.content.unshift({ type: "text", text: `still: ${join(ROOT, file)}` });
+      if (!r.isError && http) r.content.push({ type: "image", mimeType: "image/png", data: readFileSync(join(ROOT, file)).toString("base64") });
       return r;
     }),
   );
@@ -138,7 +141,7 @@ export const makeServer = ({ remote = false } = {}) => {
     },
     ({ mode, query, slug }) => {
       const call = (args, ms) => run(PYTHON, [join(ROOT, "scripts/research.py"), ...args], ms);
-      const py = (args, ms = 300_000) => (remote ? capped(() => call(args, ms).then(withFiles)) : call(args, ms));
+      const py = (args, ms = 300_000) => (http ? capped(() => call(args, ms).then(withFiles)) : call(args, ms));
       if (mode === "trending") return py(["trending"]);
       if (!query || !slug) return { ...text(`${mode} needs query and slug`), isError: true };
       if (mode === "topic") return py(["topic", query, "--slug", slug]);

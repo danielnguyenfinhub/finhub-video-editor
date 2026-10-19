@@ -25,6 +25,20 @@ Kept off on purpose, so no tool call can do them without Daniel in the chat: pos
 
 Clients that can send a header (Claude Desktop, Claude Code) can still use `Authorization: Bearer <MCP_TOKEN>`, or the URL `…/mcp/<token>`, which puts the token in Railway's request logs. `check-mcp.mjs` proves the token gate, the tool list and the whole sign-in round trip.
 
+### PC connector (every tool from claude.ai)
+
+The Railway connector has only the light tools: editing needs the footage, Remotion, Chromium and ffmpeg on Daniel's PC. `npm run mcp:pc` runs the same HTTP server on the PC with every tool (`video_status`, `preflight`, `still`, `render_video`, `research` with `watch`, `list_designs`), behind the same OAuth sign-in. Over HTTP, `still` also returns the frame as a picture, so it shows in the chat. One render or still at a time; publishing, voice cloning and moving recordings stay off, as for every MCP mode.
+
+One-time setup on the PC (Windows):
+
+1. In the repo folder, create `.env` (git-ignored) with `MCP_TOKEN=` a new random value, different from Railway's (`openssl rand -hex 32`, or a password manager), and `PORT=8787`.
+2. Install Tailscale (tailscale.com/download), sign in, then in a terminal: `tailscale funnel --bg 8787`. It prints a fixed address `https://<pc-name>.<tailnet>.ts.net`. Funnel is free, opens no router port and keeps the same address; a cloudflared quick tunnel changes address every run, and ngrok's free tier puts a warning page in front of the sign-in page.
+3. `npm run mcp:pc`. Check `https://<pc-name>.<tailnet>.ts.net/health` says `ok`.
+4. claude.ai, Settings, Connectors, Add custom connector: name `FinHub Video Editor (PC)`, URL `https://<pc-name>.<tailnet>.ts.net/mcp`, OAuth fields empty. Paste the PC's `MCP_TOKEN` on the sign-in page.
+5. To start it at log-in: Task Scheduler, Create Task, trigger "At log on", action `npm` with arguments `run mcp:pc` and "Start in" the repo folder. Funnel (`--bg`) already survives restarts.
+
+The connector works while the PC is on and `mcp:pc` runs; otherwise claude.ai shows it as unavailable and the Railway connector still answers `list_designs` and `research`. Changing the PC's `MCP_TOKEN` signs that connector out. Stop exposing the PC with `tailscale funnel --bg off` (or `tailscale funnel reset`).
+
 ## The desktop plugin
 
 `.claude-plugin/plugin.json` ships the whole harness without copying it: `skills` points at `.claude/skills/`, `agents` lists every `.claude/agents/*.md` file by name (the manifest takes no folder for agents; `check-teams.mjs` fails when an agent file and the list differ), and it has no `mcpServers`: the MCP tools come from the folder's `.mcp.json` (above). `.claude-plugin/marketplace.json` makes the repo its own marketplace (the pattern from the sibling `claude-video` repo).
