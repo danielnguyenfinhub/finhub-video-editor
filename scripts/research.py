@@ -671,8 +671,10 @@ def cmd_watch(url: str, slug: str, lang: str) -> None:
 # comments / audience: what viewers ask. Idea from Agent-Reach (MIT, skill/references/video.md:
 # yt-dlp comments, best-effort) and harness-100's 93-feedback-analyzer (Apache-2.0, idea only).
 def anonymise(comments: list[dict] | None) -> list[dict]:
-    """Only what was said and how many liked it, most liked first: no name, id, avatar or channel link."""
-    kept = [{"text": (c.get("text") or "").strip(), "like_count": c.get("like_count") or 0} for c in comments or []]
+    """Only what was said and how many liked it, most liked first: no name, id, avatar or channel link,
+    and no @handle a reply opens with (another viewer's name)."""
+    kept = [{"text": re.sub(r"^(?:@\S+\s*)+", "", (c.get("text") or "").strip()), "like_count": c.get("like_count") or 0}
+            for c in comments or []]
     return sorted((c for c in kept if c["text"]), key=lambda c: c["like_count"], reverse=True)
 
 
@@ -814,6 +816,9 @@ def selftest() -> None:
     anon = anonymise(raw)
     assert [c["text"] for c in anon] == ["Vay bao nhiêu được?", "Lãi suất cố định hay thả nổi?", "ok"], anon
     assert all(set(c) == {"text", "like_count"} for c in anon) and anonymise(None) == []
+    # A reply opens with the other viewer's @handle: dropped, the question kept; a reply that is only a handle is dropped.
+    assert [c["text"] for c in anonymise([{"text": "@NguyenVanA @b.c  Có cần 20% không?", "like_count": 1},
+                                          {"text": "@NguyenVanA", "like_count": 5}])] == ["Có cần 20% không?"]
     for bad in ("http://1.1.1.1/x", "file:///etc/passwd"):
         try:
             public_https(bad)
