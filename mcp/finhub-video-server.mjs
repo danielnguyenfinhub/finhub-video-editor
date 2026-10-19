@@ -238,7 +238,7 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         "Sound for a video, all paid: the first call returns a quote and a confirm code (nothing spent); show Daniel the cost and call again with confirm. " +
         "voice: narrate public/videos/<slug>/script.json (scripts/voice-video.mjs; the quote is its --dry-run with the RG 234 and fact checks; engine google (default) or elevenlabs). " +
         "music (prompt, seconds 10-300): an instrumental bed; sfx (prompt, seconds 0.5-30): a sound effect (both ElevenLabs, saved to public/videos/<slug>/assets/). " +
-        "transcribe (file inside public/videos/<slug>/, lang): OpenAI Whisper word timings to out/. Voice cloning is not here.",
+        "transcribe (file inside public/videos/<slug>/, lang, engine): word timings to out/; engine local (default) is free faster-whisper on this PC and needs no confirm, elevenlabs uploads the file to ElevenLabs Scribe (paid, quote first). Voice cloning is not here.",
       inputSchema: {
         action: z.enum(["voice", "music", "sfx", "transcribe"]),
         slug,
@@ -246,7 +246,7 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         seconds: z.number().min(0.5).max(300).optional(),
         file: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").regex(/^[^\x00-\x1f\x7f]*$/).optional(),
         lang: z.enum(["vi", "en"]).optional(),
-        engine: z.enum(["google", "elevenlabs"]).optional(),
+        engine: z.enum(["google", "elevenlabs", "local"]).optional(),
         confirm,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
@@ -259,7 +259,9 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         );
       }
       if (action === "transcribe" ? !file : !prompt || !seconds) return err(action === "transcribe" ? "transcribe needs file" : `${action} needs prompt and seconds`);
-      const args = action === "transcribe" ? { file, slug, lang } : { prompt, seconds, slug };
+      if (action === "transcribe" && engine === "google") return err('transcribe engine is "local" or "elevenlabs"');
+      if (action === "transcribe" && engine !== "elevenlabs") return heavy(`transcribe ${slug}`, () => prov("transcribe", { file, slug, lang, engine: "local" }, [], 30 * 60_000).then(withFiles));
+      const args = action === "transcribe" ? { file, slug, lang, engine } : { prompt, seconds, slug };
       return paid("audio", { action, ...args }, confirm, () => prov(action, args, ["--quote"]), () => capped(() => prov(action, args).then(withFiles)));
     },
   );
@@ -272,14 +274,14 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         (remote ? "): Pixabay and Pexels candidates (links, licence), nothing downloaded. Free." : ", slug, need 1-5): free Pixabay/Pexels clips, CLIP-ranked, saved to the library and the video's footage; ") +
         (remote
           ? ""
-          : "library (term, kind?): what public/library already has (reuse before buying); image (prompt, slug, provider fal|xai|openai, n 1-4): an AI still in the house style, Gemini picks the best of n; paid: the first call quotes, call again with confirm after Daniel agrees."),
+          : "library (term, kind?): what public/library already has (reuse before buying); image (prompt, slug, provider fal|xai, n 1-4): an AI still in the house style, Gemini picks the best of n; paid: the first call quotes, call again with confirm after Daniel agrees."),
       inputSchema: {
         action: z.enum(remote ? ["stock"] : ["stock", "library", "image"]),
         term: z.string().min(1).max(100).regex(/^[\p{L}\p{N}][\p{L}\p{N} ,'&]*$/u, "words only").optional(),
         slug: slug.optional(),
         need: z.number().int().min(1).max(5).optional(),
         prompt: prompt.optional(),
-        provider: z.enum(["fal", "xai", "openai"]).optional(),
+        provider: z.enum(["fal", "xai"]).optional(),
         n: z.number().int().min(1).max(4).optional(),
         kind: z.enum(["stock-video", "stock-image", "ai-image", "own-footage", "music"]).optional(),
         confirm,

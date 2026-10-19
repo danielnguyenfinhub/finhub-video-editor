@@ -7,8 +7,9 @@
 //   translate  {text, to: "vi"|"en"}            DeepSeek, Gemini if DeepSeek fails
 //   music      {prompt, seconds, slug}          ElevenLabs music, instrumental bed (mp3)
 //   sfx        {prompt, seconds, slug}          ElevenLabs sound effect (mp3)
-//   transcribe {file, slug, lang?}              OpenAI whisper-1 word timings, file inside the video's folder
-//   image      {prompt, slug, provider?, n?}    fal FLUX (default), xAI Grok Imagine or OpenAI; Gemini picks the best of n
+//   transcribe {file, slug, lang?, engine?}     word timings for a file inside the video's folder: local faster-whisper
+//                                               (default, free, stays on the PC) or ElevenLabs Scribe (paid upload)
+//   image      {prompt, slug, provider?, n?}    fal FLUX (default) or xAI Grok Imagine; Gemini picks the best of n
 //   stock      {term, slug?, need?, download?}  Pixabay then Pexels; download=false only lists (remote mode)
 //
 // --quote prints the estimate and calls nothing. A real run appends what it spent to
@@ -16,7 +17,7 @@
 // (mcp/finhub-video-server.mjs, `paid`). Written files are printed one per line,
 // out/ text files first so the MCP can attach them.
 // FINHUB_FAKE_PROVIDERS=1 answers every call with a canned response (scripts/check-mcp.mjs).
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -32,10 +33,9 @@ for (const f of [".env.local", ".env"]) if (existsSync(join(ROOT, f))) process.l
 // US$ per unit, as the providers bill. Checked 19/10/2026; ESTIMATES, the ledger keeps actuals where the API reports them.
 //   Perplexity: sonar $1/M tokens + $5 per 1,000 requests (low context); a live call reported US$0.0035.
 //   ElevenLabs: sound effects $0.12/min, music $0.15/min (API pricing page, July 2026 snapshot; unverified live).
-//   OpenAI: whisper-1 $0.006/min; gpt-image medium 1024x1536 $0.063 (gpt-image-1 rate; the newer model's rate is unverified).
+//   ElevenLabs Scribe speech-to-text $0.22/h (elevenlabs.io/pricing/api). Local faster-whisper is free.
 //   xAI: grok-imagine-image $0.02 (its /v1/image-generation-models price). fal FLUX dev about $0.03 (visuals.mjs).
-const PRICE = { ask: 0.006, askDeep: 0.03, translate: 0.002, sfxPerS: 0.002, musicPerS: 0.0025, whisperPerMin: 0.006, fal: 0.03, xai: 0.02, openai: 0.063 };
-const OPENAI_IMAGE = () => process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5";
+const PRICE = { ask: 0.006, askDeep: 0.03, translate: 0.002, sfxPerS: 0.002, musicPerS: 0.0025, scribePerH: 0.22, fal: 0.03, xai: 0.02 };
 const XAI_IMAGE = () => process.env.XAI_IMAGE_MODEL ?? "grok-imagine-image";
 
 const fail = (msg) => {
@@ -159,40 +159,52 @@ const ops = {
   },
   transcribe: {
     // A file inside public/videos/<slug>/ only: the MCP caller names it, so it must not reach anything else.
-    file: ({ file, slug }) => {
+    file: ({ file, slug, engine }) => {
       const dir = videoDir(slug) + sep;
       const p = resolve(dir, String(file ?? ""));
       // realpath too: a symlink inside the folder must not reach outside it.
       if (!p.startsWith(dir) || !existsSync(p) || !statSync(p).isFile() || !realpathSync(p).startsWith(realpathSync(dir) + sep))
         fail(`transcribe: "${file}" is not a file inside public/videos/${slug}/.`);
-      if (statSync(p).size > 25 * 1024 * 1024) fail("transcribe: the file is over OpenAI's 25 MB limit; send the audio (voice/narration.wav or an mp3) instead.");
+      // An upload is paid by the hour, not the byte, but a video file is mostly picture: send the audio.
+      if (engine === "elevenlabs" && statSync(p).size > 100 * 1024 * 1024) fail("transcribe: over 100 MB; send the audio (voice/narration.wav or an mp3) instead.");
       return p;
     },
     quote: (a) => {
       const p = ops.transcribe.file(a);
+      if ((a.engine ?? "local") === "local") return 0;
       let s = 60;
       try {
         s = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", p], { encoding: "utf8" }).trim()) || 60;
-      } catch {} // not media ffprobe can read: quote a minute, OpenAI will refuse it anyway
-      return Math.max(0.006, (s / 60) * PRICE.whisperPerMin);
+      } catch {} // not media ffprobe can read: quote a minute, ElevenLabs will refuse it anyway
+      return Math.max(0.01, (s / 3600) * PRICE.scribePerH);
     },
     run: async (a) => {
       const p = ops.transcribe.file(a);
+      const name = `transcribe-${basename(p).replace(/\.[^.]+$/, "")}.json`;
+      if ((a.engine ?? "local") === "local") {
+        // faster-whisper large-v3 in the Python voice-video.mjs uses for caption timings.
+        const out = outFile(a.slug, name, "");
+        const python = process.env.WHISPER_PYTHON ?? (process.platform === "win32" ? "python" : "python3");
+        const r = spawnSync(python, [join(ROOT, "scripts", "omnivoice-tts.py"), "transcribe", p, out, ...(a.lang ? [a.lang] : [])], { stdio: ["ignore", "ignore", "inherit"], env: { ...process.env, PYTHONIOENCODING: "utf-8" } });
+        if (r.status !== 0) fail(`local transcription failed (exit ${r.status ?? r.error?.message}); it needs faster-whisper in ${python} (WHISPER_PYTHON), as voice-video.mjs does. engine "elevenlabs" uploads it instead.`);
+        return [out];
+      }
       const form = new FormData();
       form.append("file", new Blob([readFileSync(p)]), basename(p));
-      form.append("model", "whisper-1");
-      form.append("response_format", "verbose_json");
-      form.append("timestamp_granularities[]", "word");
-      if (a.lang) form.append("language", a.lang);
-      const res = await fetch("https://api.openai.com/v1/audio/transcriptions", { method: "POST", headers: { Authorization: `Bearer ${key("OPENAI_API_KEY")}` }, body: form });
-      if (!res.ok) fail(`OpenAI transcription: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
+      form.append("model_id", "scribe_v1");
+      form.append("timestamps_granularity", "word");
+      if (a.lang) form.append("language_code", a.lang);
+      const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", { method: "POST", headers: { "xi-api-key": key("ELEVENLABS_API_KEY") }, body: form });
+      if (!res.ok) fail(`ElevenLabs speech-to-text: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
       const body = await res.json();
-      ledger("transcribe", ((body.duration ?? 60) / 60) * PRICE.whisperPerMin, a.slug, basename(p));
-      return [outFile(a.slug, `transcribe-${basename(p).replace(/\.[^.]+$/, "")}.json`, JSON.stringify({ text: body.text, language: body.language, duration: body.duration, words: body.words ?? [] }, null, 1))];
+      const words = (body.words ?? []).filter((w) => w.type === "word").map((w) => ({ word: w.text, start: w.start, end: w.end }));
+      const duration = words.at(-1)?.end ?? 60;
+      ledger("transcribe", Math.max(0.01, (duration / 3600) * PRICE.scribePerH), a.slug, basename(p));
+      return [outFile(a.slug, name, JSON.stringify({ text: body.text, language: body.language_code, duration, words }, null, 1))];
     },
   },
   image: {
-    quote: (a) => (PRICE[a.provider ?? "fal"] ?? fail("image: provider is fal, xai or openai.")) * Math.min(4, Math.max(1, a.n ?? 1)),
+    quote: (a) => (["fal", "xai"].includes(a.provider ?? "fal") ? PRICE[a.provider ?? "fal"] : fail("image: provider is fal or xai.")) * Math.min(4, Math.max(1, a.n ?? 1)),
     run: async ({ prompt, slug, provider = "fal", n = 1 }) => {
       n = Math.min(4, Math.max(1, n));
       const dir = assets(slug);
@@ -201,12 +213,8 @@ const ops = {
       if (provider === "fal") {
         ({ file, meta } = await generateStill(prompt, Number.parseInt(hash(prompt).slice(0, 6), 16), dir, { candidates: n }));
       } else {
-        const full = `${prompt}. ${AI_STYLE}`;
-        const [url, apiKey, body] =
-          provider === "xai"
-            ? ["https://api.x.ai/v1/images/generations", key("XAI_API_KEY"), { model: XAI_IMAGE(), prompt: full, n, response_format: "b64_json", aspect_ratio: "9:16" }]
-            : ["https://api.openai.com/v1/images/generations", key("OPENAI_API_KEY"), { model: OPENAI_IMAGE(), prompt: full, n, size: "1024x1536", quality: "medium" }];
-        const data = (await (await post(url, { Authorization: `Bearer ${apiKey}` }, body, `${provider} image`)).json()).data ?? [];
+        const body = { model: XAI_IMAGE(), prompt: `${prompt}. ${AI_STYLE}`, n, response_format: "b64_json", aspect_ratio: "9:16" };
+        const data = (await (await post("https://api.x.ai/v1/images/generations", { Authorization: `Bearer ${key("XAI_API_KEY")}` }, body, "xai image")).json()).data ?? [];
         const files = data.map((d, k) => {
           const f = join(dir, `${provider}-${hash(prompt)}-${k}.part.${/jpe?g/.test(d.mime_type ?? "") ? "jpg" : "png"}`);
           writeFileSync(f, Buffer.from(d.b64_json ?? fail(`${provider} image: no image data.`), "base64"));
@@ -222,7 +230,7 @@ const ops = {
           } catch {} // keep the first, as visuals.mjs does
         for (const [k, f] of files.entries()) if (k !== pick) rmSync(f, { force: true });
         file = files[pick];
-        const model = provider === "xai" ? XAI_IMAGE() : OPENAI_IMAGE();
+        const model = XAI_IMAGE();
         meta = { provider, model, prompt, licence: `AI-generated image (${provider}, model ${model}); provider terms apply`, ...(files.length > 1 ? { candidates: files.length, pick: pick + 1, judge: why } : {}) };
       }
       const entry = add(file, { ...meta, kind: "ai-image", keywords: { en: [prompt] }, usedIn: [slug] });
@@ -257,7 +265,7 @@ if (process.env.FINHUB_FAKE_PROVIDERS === "1") {
     if (u.includes("perplexity")) return json({ choices: [{ message: { content: "fake answer [1]" } }], search_results: [{ title: "RBA", url: "https://www.rba.gov.au/", date: "2026-10-01" }], usage: { cost: { total_cost: 0.0035 } } });
     if (u.includes("deepseek")) return json({ choices: [{ message: { content: "bản dịch giả" } }] });
     if (u.includes("generativelanguage")) return json({ candidates: [{ content: { parts: [{ text: "bản dịch giả" }] } }] });
-    if (u.includes("transcriptions")) return json({ text: "xin chào", language: "vi", duration: 1.2, words: [{ word: "xin", start: 0, end: 0.4 }] });
+    if (u.includes("speech-to-text")) return json({ text: "xin chào", language_code: "vi", words: [{ text: "xin", type: "word", start: 0, end: 0.4 }] });
     if (u.includes("images/generations")) return json({ data: [{ b64_json: png.toString("base64") }] });
     if (u.includes("fal.run")) return json({ images: [{ url: "https://fake.invalid/a.png" }] });
     if (u.includes("fake.invalid")) return new Response(png);
@@ -278,7 +286,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
   if (process.argv.includes("--quote")) {
     const q = ops[op].quote(args);
-    console.log(`quote: ${usd(q)}${op === "transcribe" ? ` (uploads public/videos/${args.slug}/${args.file} to OpenAI; a client recording needs Daniel's OK for that)` : ""}`);
+    console.log(`quote: ${usd(q)}${op === "transcribe" && args.engine === "elevenlabs" ? ` (uploads public/videos/${args.slug}/${args.file} to ElevenLabs; a client recording needs Daniel's OK for that)` : ""}`);
   } else {
     if (op !== "stock" && spentToday() >= DAILY_CAP) fail(`daily spend cap reached (US$${DAILY_CAP} in 24 h, out/spend-ledger.jsonl); raise FINHUB_DAILY_CAP_USD or wait.`);
     // out/ text files first (the MCP attaches those), then media paths.

@@ -4,7 +4,7 @@
 // Renders nothing. Run: node scripts/check-mcp.mjs
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { connect } from "node:net";
 import { networkInterfaces } from "node:os";
@@ -83,6 +83,16 @@ try {
   assert.ok(again.isError && /refused/.test(again.content[0].text), "a code works once");
   const escape = await client.callTool({ name: "audio", arguments: { action: "transcribe", slug: testSlug, file: "../../../package.json" } });
   assert.ok(escape.isError && /not a file inside/.test(escape.content[0].text), "transcribe refuses a file outside the video's folder");
+  const stt = { action: "transcribe", slug: testSlug, file: "tone.txt", engine: "elevenlabs" };
+  mkdirSync(join(root, "public", "videos", testSlug), { recursive: true });
+  writeFileSync(join(root, "public", "videos", testSlug, "tone.txt"), "x");
+  const sttQuote = await client.callTool({ name: "audio", arguments: stt });
+  const sttCode = /confirm: "([^"]+)"/.exec(sttQuote.content[0].text)?.[1];
+  assert.ok(sttCode && /uploads .*ElevenLabs/.test(sttQuote.content[0].text), "ElevenLabs transcription quotes first and says it uploads the file");
+  const sttRun = await client.callTool({ name: "audio", arguments: { ...stt, confirm: sttCode } });
+  assert.ok(!sttRun.isError && /transcribe-tone\.json/.test(sttRun.content[0].text), "the confirmed transcription writes word timings");
+  const openaiImage = await client.callTool({ name: "visuals", arguments: { action: "image", prompt: "x", slug: testSlug, provider: "openai" } });
+  assert.ok(openaiImage.isError, "OpenAI images are gone (fal and xAI only)");
   const ask = await client.callTool({ name: "research", arguments: { mode: "ask", query: "RBA cash rate?" } });
   assert.ok(!ask.isError && /out\/research\/ask-/.test(ask.content[0].text), "research ask writes a cited answer");
   const tr = await client.callTool({ name: "research", arguments: { mode: "translate", query: "Hello", to: "vi" } });

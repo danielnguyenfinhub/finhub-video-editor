@@ -6,6 +6,7 @@ project's: that venv holds torch (CPU), omnivoice and faster-whisper.
 
   python omnivoice-tts.py clone <ref.wav> "<exact transcript>" <voice.pt>
   python omnivoice-tts.py speak <jobs.json> <voice.pt> [num_step]
+  python omnivoice-tts.py transcribe <media> <out.json> [lang]   (scripts/providers.mjs: free, on this PC)
 
 jobs.json: [{"text": "...", "wav": "<out .wav>", "align": "<out .json>"}]
 Each align file matches ElevenLabs' with-timestamps alignment
@@ -293,6 +294,17 @@ def align(jobs_path: str) -> None:
         fail(f"take(s) {cut} end before the script does (the voice service cut them short). Re-run to voice them again.")
 
 
+def transcribe(media: str, out: str, lang: str | None = None) -> None:
+    """Word timings for one file, the shape providers.mjs writes for every engine."""
+    from faster_whisper import WhisperModel
+
+    whisper = WhisperModel("large-v3", device="cpu", compute_type="int8")
+    segments, info = whisper.transcribe(media, language=lang, word_timestamps=True)
+    words = [{"word": w.word.strip(), "start": round(w.start, 3), "end": round(w.end, 3)} for s in segments for w in (s.words or [])]
+    Path(out).write_text(json.dumps({"text": " ".join(w["word"] for w in words), "language": info.language,
+                                     "duration": round(info.duration, 3), "words": words}, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 def selftest() -> None:
     """Timing logic only (no model): matched words keep Whisper's times, missed
     ones share the gap by length, and alignment has one entry per character."""
@@ -341,6 +353,8 @@ if __name__ == "__main__":
         clone_from(args[1], args[2])
     elif len(args) == 4 and args[0] == "clone":
         clone(args[1], args[2], args[3])
+    elif len(args) in (3, 4) and args[0] == "transcribe":
+        transcribe(args[1], args[2], args[3] if len(args) == 4 else None)
     elif len(args) in (3, 4) and args[0] == "speak":
         speak(args[1], args[2], int(args[3]) if len(args) == 4 else 32)
     else:
