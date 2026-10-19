@@ -19,7 +19,11 @@ Kept off on purpose, so no tool call can do them without Daniel in the chat: pos
 
 ### Remote mode (Railway)
 
-`mcp/http.mjs` serves the same server over Streamable HTTP for claude.ai web and the phone app, with only the tools that need no footage, Remotion or ffmpeg: `list_designs` and `research` (`trending`, `topic`, `comments`; their out/ files come back in the answer). `railway.json` builds `mcp/Dockerfile` (Node 24, the two MCP packages, Python with yt-dlp and feedparser) and checks `GET /health`. Every call needs the Railway variable `MCP_TOKEN` (24+ characters): `Authorization: Bearer <token>`, or the URL `https://<railway domain>/mcp/<token>` for a connector that cannot send a header. Without it the server will not start. `check-mcp.mjs` proves the token gate and the tool list.
+`mcp/http.mjs` serves the same server over Streamable HTTP for claude.ai web and the phone app, with only the tools that need no footage, Remotion or ffmpeg: `list_designs` and `research` (`trending`, `topic`, `comments`; their out/ files come back in the answer). `railway.json` builds `mcp/Dockerfile` (Node 24, the two MCP packages, Python with yt-dlp and feedparser) and checks `GET /health`. Without the Railway variable `MCP_TOKEN` (24+ characters) the server will not start.
+
+**Connect from claude.ai:** add a custom connector with the URL `https://finhub-video-editor-production.up.railway.app/mcp` and leave the OAuth Client ID and secret empty. claude.ai opens a sign-in page (`mcp/oauth.mjs`): paste `MCP_TOKEN` there once. The connector then keeps a 1-hour access token and a 30-day refresh token; changing `MCP_TOKEN` in Railway signs every connector out. This is the MCP authorization flow (OAuth 2.1 with PKCE and dynamic client registration), stateless: client ids, codes and tokens are signed with a key derived from `MCP_TOKEN`, so nothing is stored. Only the claude.ai connector callback and localhost callbacks can register, and 10 wrong tokens from one address lock the sign-in page for 15 minutes.
+
+Clients that can send a header (Claude Desktop, Claude Code) can still use `Authorization: Bearer <MCP_TOKEN>`, or the URL `…/mcp/<token>`, which puts the token in Railway's request logs. `check-mcp.mjs` proves the token gate, the tool list and the whole sign-in round trip.
 
 ## The desktop plugin
 
