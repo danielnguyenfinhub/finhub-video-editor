@@ -63,4 +63,5 @@ createServer(async (req, res) => {
     console.error(err);
     if (!res.headersSent) res.writeHead(500).end();
   }
-}).listen(Number(process.env.PORT ?? 8080), () => console.log(`finhub-video MCP over HTTP on :${process.env.PORT ?? 8080} (${ALL ? "every tool" : "light tools"})`));
+// --all (the PC) listens on loopback only: the tunnel reaches it there, the LAN and café wifi do not.
+}).listen(Number(process.env.PORT ?? 8080), ALL ? "127.0.0.1" : undefined, () => console.log(`finhub-video MCP over HTTP on :${process.env.PORT ?? 8080} (${ALL ? "every tool" : "light tools"})`));

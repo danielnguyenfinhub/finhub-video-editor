@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { connect } from "node:net";
+import { networkInterfaces } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -151,7 +152,10 @@ try {
   const badStill = await full.callTool({ name: "still", arguments: { composition: "MortgageReel", frame: 0, slug: "../etc" } });
   assert.ok(badStill.isError, "PC connector still refuses a bad slug");
   await full.close();
-  console.log("check-mcp pc: --all serves every tool behind the token");
+  // Loopback only: this machine's LAN address must not reach it (the tunnel connects on 127.0.0.1).
+  const lan = Object.values(networkInterfaces()).flat().find((n) => n.family === "IPv4" && !n.internal)?.address;
+  if (lan) assert.equal(await fetch(`http://${lan}:${pcPort}/health`).then(() => "open", () => "closed"), "closed", `--all must not answer on ${lan}`);
+  console.log(`check-mcp pc: --all serves every tool behind the token, on loopback only${lan ? "" : " (no LAN address to try)"}`);
 } finally {
   pc.kill();
 }
