@@ -22,5 +22,7 @@ COPY src/designs ./src/designs
 RUN find src/designs -type f ! -name template.json -delete
 
 ENV PYTHON=python3 NODE_ENV=production
+# research.py writes under out/; the rest of /app stays root-owned and read-only to the server.
+RUN mkdir -p out && chown node:node out
 USER node
 CMD ["node", "mcp/http.mjs"]

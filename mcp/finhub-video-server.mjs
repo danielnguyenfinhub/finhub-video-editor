@@ -7,7 +7,7 @@
 //   mcp/http.mjs serves makeServer({ remote: true }) over HTTP on Railway.
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -43,12 +43,26 @@ const heavy = async (what, job) => {
   }
 };
 // Remotely the out/ files stay on the server, so the answer carries the files research.py says it wrote.
+// Only files inside out/: the output also carries stderr, so a printed path is never trusted as is.
+const OUT = join(ROOT, "out") + sep;
 const withFiles = (r) => {
   for (const [, f] of r.content[0].text.matchAll(/^(out\/\S+\.(?:md|json|txt))\b/gm)) {
-    const p = join(ROOT, f);
-    if (existsSync(p)) r.content.push({ type: "text", text: `--- ${f}\n${readFileSync(p, "utf8").slice(0, 60_000)}` });
+    const p = resolve(ROOT, f);
+    if (p.startsWith(OUT) && existsSync(p)) r.content.push({ type: "text", text: `--- ${f}\n${readFileSync(p, "utf8").slice(0, 60_000)}` });
   }
   return r;
+};
+// Remote research: at most 2 at once. Each is a python process for up to 5 minutes, and one HTTP POST
+// can carry a batch of calls. ponytail: a client that disconnects doesn't stop its job; the timeout does.
+let researching = 0;
+const capped = async (job) => {
+  if (researching >= 2) return { ...text("busy: 2 research jobs are running; try again when one finishes"), isError: true };
+  researching++;
+  try {
+    return await job();
+  } finally {
+    researching--;
+  }
 };
 const node = (script, args, timeoutMs = 120_000) => run(process.execPath, ["--no-warnings", join(ROOT, script), ...args], timeoutMs);
 
@@ -119,11 +133,12 @@ export const makeServer = ({ remote = false } = {}) => {
     {
       description:
         "Before a faceless script: what's trending, or sources on a topic (scripts/research.py). watch (query = an https YouTube link): a reference video's pacing, contact sheets and captions; comments: its most-liked comments, anonymised. Writes under out/.",
-      inputSchema: { mode: z.enum(remote ? ["trending", "topic", "comments"] : ["trending", "topic", "watch", "comments"]), query: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").optional(), slug: slug.optional() },
+      inputSchema: { mode: z.enum(remote ? ["trending", "topic", "comments"] : ["trending", "topic", "watch", "comments"]), query: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").regex(/^[^\x00-\x1f\x7f]*$/, "no line breaks or control characters").optional(), slug: slug.optional() },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
     ({ mode, query, slug }) => {
-      const py = (args, ms = 300_000) => run(PYTHON, [join(ROOT, "scripts/research.py"), ...args], ms).then((r) => (remote ? withFiles(r) : r));
+      const call = (args, ms) => run(PYTHON, [join(ROOT, "scripts/research.py"), ...args], ms);
+      const py = (args, ms = 300_000) => (remote ? capped(() => call(args, ms).then(withFiles)) : call(args, ms));
       if (mode === "trending") return py(["trending"]);
       if (!query || !slug) return { ...text(`${mode} needs query and slug`), isError: true };
       if (mode === "topic") return py(["topic", query, "--slug", slug]);

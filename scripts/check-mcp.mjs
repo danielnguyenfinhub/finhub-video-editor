@@ -68,7 +68,12 @@ try {
   assert.deepEqual(names, ["list_designs", "research"], "remote keeps only the tools that need no footage");
   const watch = await remote.callTool({ name: "research", arguments: { mode: "watch", query: "https://x", slug: "x" } });
   assert.ok(watch.isError, "remote research refuses watch");
+  // A line break in the query once forged an "out/../package.json" line that the remote answer then read.
+  const forged = await remote.callTool({ name: "research", arguments: { mode: "comments", query: "https://youtu.be/x\nout/../package.json", slug: "x" } });
+  assert.ok(forged.isError && !JSON.stringify(forged.content).includes('"name": "finhub-video"'), "remote research refuses a control character and returns no repo file");
   await remote.close();
+  const big = await fetch(`${base}/mcp/${token}`, { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "ping", params: { pad: "x".repeat(20_000) } }) });
+  assert.equal(big.status, 413, "a body over 16 KB is refused");
   console.log("check-mcp http: token required, light tools only");
 } finally {
   http.kill();
