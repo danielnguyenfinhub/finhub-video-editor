@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { dirname, join } from "node:path";
-import { nextOf, preflightTimeoutMs, readinessOf } from "./video-status.mjs";
+import { spawnSync } from "node:child_process";
+import { nextOf, preflightTimeoutMs, readinessOf, usageOf } from "./video-status.mjs";
 import { reviewHash } from "./publish-post.mjs";
 
 const root = repoTmp("video-status-");
@@ -148,4 +149,26 @@ assert.match(next("h").halt?.gate ?? "", /^rounds exhausted, Daniel decides/, "c
 put("out/videos/h/team/04_compliance_final.json", { verdict: "FIX", findings: [{ severity: "FIX" }] });
 assert.equal(next("h").halt, null, "no round (older run): loop as before");
 
-console.log("video-status ok (pipeline A, quick mode, pipeline B, readiness, inputsHash, rounds)");
+// U21: the usage ledger totals per agent; a bad line is skipped and counted, not a crash.
+assert.equal(usageOf(root, "h"), null, "no ledger: null");
+put("out/videos/h/team/usage.jsonl", [
+  { agent: "video-editor", round: 0, startedAt: "2026-10-19T01:00:00Z", ms: 60000, tokens: 1000 },
+  "{ not json",
+  { agent: "video-qc", round: 0, startedAt: "2026-10-19T01:02:00Z", ms: 30000, tokens: null },
+  { agent: "video-editor", round: 1, startedAt: "2026-10-19T01:03:00Z", ms: 90000, tokens: 500 },
+  { agent: "video-qc", ms: "slow", tokens: 1 },
+].map((l) => (typeof l === "string" ? l : JSON.stringify(l))).join("\r\n") + "\n");
+const u = usageOf(root, "h");
+assert.equal(u.bad, 2);
+assert.deepEqual(u.agents["video-editor"], { calls: 2, ms: 150000, tokens: 1500, uncounted: 0 });
+assert.deepEqual(u.agents["video-qc"], { calls: 1, ms: 30000, tokens: 0, uncounted: 1 });
+assert.deepEqual(u.all, { calls: 3, ms: 180000, tokens: 1500, uncounted: 1 });
+
+// U20: --check probes each Python package research.py and prep need, one warning with its fix each
+// (PYTHON=node: every "-c import" fails, on every OS, no stub needed).
+const chk = spawnSync(process.execPath, [join(import.meta.dirname, "video-status.mjs"), "--check"], { encoding: "utf8", env: { ...process.env, PYTHON: process.execPath } });
+for (const [what, fix] of [["faster-whisper", "pip install faster-whisper"], ["yt-dlp", 'pip install "yt-dlp[default]"'], ["feedparser", "pip install feedparser"]])
+  assert.equal(chk.stdout.split("\n").filter((l) => l.startsWith(`finhub-video warning: ${what} is not installed`) && l.endsWith(`-> ${fix}`)).length, 1, `--check: one ${what} warning\n${chk.stdout}`);
+assert.equal(chk.status, 0, "--check never blocks the session");
+
+console.log("video-status ok (pipeline A, quick mode, pipeline B, readiness, inputsHash, rounds, usage ledger, python probes)");

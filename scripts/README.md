@@ -28,7 +28,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `export-chapters.mjs` | Prints a YouTube/Facebook chapter list timed on the output. |
 | `promote-design.mjs` | Promotes a proven design to a reusable template (checks, then registers). `--browser <path>` / `FINHUB_BROWSER`: stills in an installed headless shell (`--gl=swangle`). The faceless fixture without media gets voice-video's no-footage placeholders (navy `source.mp4`, transparent cut-out, VP9; `scratch-public.mjs`): navy where faceless-test has stock footage, so a sandbox pass proves the render, not the look over footage (the log says SANDBOX PICTURE); the talking-head fixture without its recording and matte is INCOMPLETE, a failure, never promoted. |
 | `report-promotion-drift.mjs` | Report only (exit 0, writes nothing): each promoted design's commits since the commit that set its `promoted` value (its folder plus every shared file its index imports, e.g. `golden.ts`, `classic/Cues.tsx`); a shallow clone says "no history". |
-| `video-status.mjs` | Where each video's team run stands, read from the files the production team writes. |
+| `video-status.mjs` | Where each video's team run stands, read from the files the production team writes; with a slug, also the per-agent totals of `team/usage.jsonl`. |
 
 ## Faceless videos (voice, visuals, facts)
 | Script | Does |
@@ -58,7 +58,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-caption-pages.mjs [slug]` | `captionPages.ts` | **test** |
 | `check-sweep.mjs` | `sweep-render.mjs` frame budget and parsing; `--out` only inside `out/`; end to end when ffmpeg is on PATH | **test** |
 | `check-mcp.mjs` | `mcp/finhub-video-server.mjs` starts, lists exactly its six tools (none that publishes or clones), answers, and refuses unsafe slugs and composition ids | **test** |
-| `check-video-status.mjs` | `video-status.mjs` on synthetic runs | **test** |
+| `check-video-status.mjs` | `video-status.mjs` on synthetic runs, the `team/usage.jsonl` totals (bad lines counted) and `--check`'s Python package probes (`PYTHON=node` fakes them missing) | **test** |
 | `vendor-remocn.mjs` | Adds each remocn entry's `len` and first `avoid:` line to `.claude/elements/remocn/CATALOG.md` from a sibling remocn checkout; `--check` exits 1 if stale. The real run is manual (reads ../remocn-remotion-resoure); `--selftest` (offline CRLF frontmatter and catalog fixtures) is in npm test. | **test** |
 | `check-tmp-dir.mjs` | `tmp-dir.mjs` removes each folder when its process exits, also on an uncaught error or unhandled rejection; `keep: true` keeps it | **test** |
 | `sandbox-facts.mjs [--probe]` | What this machine can do, once per team run: node/npm/python versions, ffmpeg/ffprobe, the installed headless shell, the still probe (only with `--probe`), remotion.media and fonts.gstatic.com from Node, recordings present, git depth, CI. Writes `out/teams/sandbox-facts.md` (`--selftest`: the formatting) | **test** |

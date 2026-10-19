@@ -20,7 +20,7 @@ Find the improvements that make the next video better or faster to edit, the rep
    - the `ponytail-debt` skill: shortcuts whose "when to upgrade" has arrived;
    - `docs/audit/wiring-gaps.md` and `sibling-repos-review.md`: items not yet marked implemented;
    - `node scripts/video-status.mjs`: runs stuck, repeat failures;
-   - designs with `uses: 0` and no `promoted` (unproven), and `config/selector.json` (UNTUNED: needs ~10 selections);
+   - designs with no `promoted` (unproven; `public/videos/design-log.json` says which were used), and `config/selector.json` (UNTUNED: needs ~10 selections);
    - `package.json` `@remotion/*` packages that no file in `src/mortgage`, `src/designs`, `src/listing` imports.
 3. For each gap: the evidence, the smallest fix, the effort (small / medium / large), the payback (which videos improve, by how much, or "unmeasured"), and whether it needs Daniel's decision.
 4. No render possible here (ground rule 5, probe first)? Rank from code and previews and mark look claims "not viewed".

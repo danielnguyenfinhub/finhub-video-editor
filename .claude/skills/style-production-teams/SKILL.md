@@ -60,7 +60,7 @@ For a faceless team, give the director's card limits to `video-script-writer` be
 
 ## Phase 2 — Produce
 
-Invoke the `video-production-team` skill's flow from the step after design selection, passing the brief as the design decision: its Phase 0, prep, paper edit or script, compliance, script lock, voice (the orchestrator holds the paid-call gate), build, QC ‖ compliance, render, verify list. For Global RE use `globalre-listing-video`'s pipeline instead, with `video-qc` and a compliance review briefed with the real-estate rules.
+Invoke the `video-production-team` skill's flow from the step after design selection, passing the brief as the design decision: its Phase 0, prep, paper edit or script, compliance, script lock, voice (the orchestrator holds the paid-call gate and appends `team/usage.jsonl` per agent call), build, QC ‖ compliance, render, verify list. For Global RE use `globalre-listing-video`'s pipeline instead, with `video-qc` and a compliance review briefed with the real-estate rules.
 
 ## Phase 3 — Learn
 

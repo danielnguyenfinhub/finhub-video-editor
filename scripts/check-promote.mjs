@@ -17,7 +17,7 @@ const manifest = (id, over = {}) => ({
   id, intents: ["explain"], dataShapes: ["narrative"], grammar: {}, skinAxes: {},
   aspects: ["9:16"], languages: ["vi"], maxChars: { vi: 40, en: 0 }, minHoldMs: 1500,
   facePolicy: "face-optional", renderCost: "low", preview: join(dir, "preview.png"),
-  uses: 5, lastUsed: "2026-01-01", ...over,
+  ...over,
 });
 
 put("preview.png", "not really a png");
@@ -44,7 +44,7 @@ put("bad/index.tsx", [
 ].join("\n"));
 // Registered, but template.json has no facePolicy and a mistyped cueRoom.
 put("partial/index.tsx", 'export const partial = { id: "partial", copy: ["PHẦN"] };\n');
-const { facePolicy, ...noFace } = manifest("partial", { cueRoom: "yes" });
+const { facePolicy, ...noFace } = manifest("partial", { cueRoom: "yes", promotedNote: "kept" });
 put("partial/template.json", JSON.stringify(noFace, null, 2));
 // Everything in order: promotes.
 put("good/index.tsx", [
@@ -89,7 +89,7 @@ const partial = await promote("partial", opts);
 check("partial: missing field named", partial.failures.some((f) => f === 'template.json: missing field "facePolicy"'), partial.failures.join(" | "));
 check("partial: mistyped cueRoom named", partial.failures.some((f) => f.startsWith('template.json: field "cueRoom"')), partial.failures.join(" | "));
 check("partial: registered", !partial.failures.some((f) => f.startsWith("registered")), partial.failures.join(" | "));
-check("partial: not promoted", !partial.promoted && readFileSync(join(dir, "partial", "template.json"), "utf8").includes('"uses": 5'));
+check("partial: not promoted", !partial.promoted && readFileSync(join(dir, "partial", "template.json"), "utf8").includes('"promotedNote": "kept"'));
 
 // The union exemption is narrow: text that starts with | or & but sits in JSX is still on screen.
 for (const [code, want] of [
@@ -106,7 +106,7 @@ const good = await promote("good", opts);
 check("good: no copy failure from a type union", !good.failures.some((f) => f.startsWith("copy: ")), good.failures.join(" | "));
 check("good: promoted", good.promoted, good.failures.join(" | "));
 const saved = JSON.parse(readFileSync(join(dir, "good", "template.json"), "utf8"));
-check("good: uses 0, lastUsed null", saved.uses === 0 && saved.lastUsed === null, JSON.stringify(saved));
+check("good: no uses/lastUsed (U22: the design-log records use)", !("uses" in saved) && !("lastUsed" in saved), JSON.stringify(saved));
 check("good: promoted date written", /^\d{4}-\d{2}-\d{2}$/.test(saved.promoted ?? ""), JSON.stringify(saved));
 check("partial: no promoted date", !readFileSync(join(dir, "partial", "template.json"), "utf8").includes('"promoted"'));
 check("good: in the selector pool", loadManifests(dir).some((t) => t.id === "good"));
@@ -116,13 +116,13 @@ check("oddcopy: unreadable copy fails RG 234", odd.failures.some((f) => f.starts
 check("oddcopy: not promoted", !odd.promoted && !readFileSync(join(dir, "oddcopy", "template.json"), "utf8").includes('"promoted"'));
 
 // A pool check that fails (a sibling's broken template.json) writes nothing: the manifest
-// once said promoted (uses 0) while the CLI printed NOT promoted.
-writeFileSync(join(dir, "good", "template.json"), JSON.stringify({ ...saved, uses: 7, promoted: "2026-01-02" }, null, 2));
+// once said promoted while the CLI printed NOT promoted.
+writeFileSync(join(dir, "good", "template.json"), JSON.stringify({ ...saved, promotedNote: "kept", promoted: "2026-01-02" }, null, 2));
 put("broken/template.json", "{ not json");
 const again = await promote("good", opts);
 check("pool failure named", again.failures.some((f) => f.startsWith("pool: ")), again.failures.join(" | "));
 const kept = JSON.parse(readFileSync(join(dir, "good", "template.json"), "utf8"));
-check("pool failure: manifest unchanged", !again.promoted && kept.uses === 7 && kept.promoted === "2026-01-02", JSON.stringify(kept));
+check("pool failure: manifest unchanged", !again.promoted && kept.promotedNote === "kept" && kept.promoted === "2026-01-02", JSON.stringify(kept));
 
 // report-promotion-drift.mjs (P1, run 4): its pure parts. A shallow clone's cut-off commit looks like it
 // set every line, so an anchor on it is "no history", never "unchanged".

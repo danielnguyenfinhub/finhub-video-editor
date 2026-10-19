@@ -263,6 +263,8 @@ Before voicing (B3.1) or any AI image, state count and US$: Gemini Charon (defau
 limits (50 pro + 100 flash); ElevenLabs is billed per character (say the count); OmniVoice is local and free (~20×
 real time); fal FLUX is about US$0.03 an image, only where free stock (Pixabay → Pexels) and the library miss.
 Pipeline A normally costs US$0 (no downloads; a library miss is listed, not bought). Log every paid call in `06_delivery.md`.
+After every agent call, append one line to `team/usage.jsonl`: `{"agent","round","startedAt","ms","tokens"}`
+(`tokens` null when not shown); `video-status <slug>` totals it per agent.
 
 ## Deliver — one verify list for both pipelines
 

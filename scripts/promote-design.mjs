@@ -6,8 +6,8 @@
 //   brand colours only (a literal must be white/black at any alpha or a colour
 //   src/brand/theme.ts defines, unless the line says `// theme-exempt: <why>`) ·
 //   text colour on its own background at WCAG 3.0 or better (check-contrast.mjs).
-// Only when all pass: template.json gets "promoted": "<YYYY-MM-DD>", uses 0,
-// lastUsed null (and the preview path), and the selector's pool is re-read to
+// Only when all pass: template.json gets "promoted": "<YYYY-MM-DD>" (and the
+// preview path; use is recorded in public/videos/design-log.json, not here), and the selector's pool is re-read to
 // confirm the design is in it. The selector ranks promoted designs first.
 //   node scripts/promote-design.mjs <id> [--public-dir <dir>] [--designs-dir <dir>] [--browser <path>] [--skip-lint] [--dry-run]
 // --dry-run runs every check and writes nothing. --browser (or FINHUB_BROWSER): an installed
@@ -297,8 +297,6 @@ export async function promote(id, opts = {}) {
   // Promote: the pool check runs on the promoted manifest first; nothing is written unless it passes.
   const dest = join(dir, "preview.png");
   if (renderedPreview) t.preview = relative(root, dest).replace(/\\/g, "/");
-  t.uses = 0;
-  t.lastUsed = null;
   t.promoted = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local (Sydney) date
   delete t.promotedNote; // a grandfather note no longer applies once it has passed
   let pool = [];
@@ -341,5 +339,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     console.log(`promote ${id}: NOT promoted, ${failures.length} failed check(s)`);
     process.exit(1);
   }
-  console.log(args.includes("--dry-run") ? `promote ${id}: would promote (dry run)` : `promote ${id}: promoted (promoted today, uses 0, lastUsed null)`);
+  console.log(args.includes("--dry-run") ? `promote ${id}: would promote (dry run)` : `promote ${id}: promoted (promoted today)`);
 }
