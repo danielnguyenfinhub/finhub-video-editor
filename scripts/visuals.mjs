@@ -29,7 +29,7 @@ const MIN_WIDTH = 720; // cropped to 1080x1920 later; below this looks soft
 const FPS = 30;
 // Appended to every AI prompt so stills share one look (on-brand, no text,
 // nobody identifiable: nothing that could pass for a real client).
-const AI_STYLE =
+export const AI_STYLE =
   "photorealistic editorial photo, soft natural light, cool navy and warm amber tones, shallow depth of field, vertical 9:16 composition, no text, no logos, no watermark, people seen from behind or out of focus";
 export const AI_MODEL = "fal-ai/flux/dev"; // ~US$0.03 per image (OpenMontage's estimate)
 // Stills generated per AI scene; Gemini picks the best (ViMax's BestImageSelector,
@@ -189,6 +189,16 @@ const reusable = (hits) => hits.filter((h) => h.match !== "stem");
 // AI images carry no licence from fal.ai; record what they are, invent nothing.
 export const aiLicence = (model) => `AI-generated image (fal.ai, model ${model}); provider terms apply`;
 
+// Search only, nothing downloaded (the MCP's remote mode, where files would stay on
+// the server): both providers' candidates in word-match order, best first.
+export const searchStock = async (term, dir) => {
+  const out = [];
+  for (const [provider, key] of [[pixabay, process.env.PIXABAY_API_KEY], [pexels, process.env.PEXELS_API_KEY]])
+    if (key) out.push(...(await provider(term, key, dir)));
+  if (!process.env.PIXABAY_API_KEY && !process.env.PEXELS_API_KEY) throw new Error("Neither PIXABAY_API_KEY nor PEXELS_API_KEY is set.");
+  return out;
+};
+
 // Library first; on a miss `fetchStock` (the network; the check swaps in a
 // stub) downloads, and every clip goes into the library. Returns paths.
 // ponytail: a hit with fewer clips than `need` repeats them rather than
@@ -219,7 +229,7 @@ export const parseJudge = (text, n) => {
 // answers with an index. Judges what ViMax's BestImageSelector judges: the
 // subject as described, the house style, nothing that looks like a real client,
 // no text or borders. Returns { best, why } or null (the caller keeps the first).
-const judgeStills = async (files, prompt) => {
+export const judgeStills = async (files, prompt) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
   const parts = files.map((f) => ({ inlineData: { mimeType: "image/jpeg", data: readFileSync(f).toString("base64") } }));

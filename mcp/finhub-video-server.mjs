@@ -1,12 +1,14 @@
 // The repo's own MCP server (stdio): the editing scripts as tools for Claude Desktop, Cowork and
 // Claude Code on Daniel's PC. Every tool runs a script that already exists; nothing here edits a
-// video itself. Kept off on purpose: publishing (YouTube, Facebook, Drive), voice cloning and
+// video itself or reads an API key (scripts/providers.mjs does). Paid calls go through `paid`: a quote
+// first, the real call only with the confirm code that quote returned. Kept off on purpose: publishing (YouTube, Facebook, Drive), voice cloning and
 // moving recordings stay chat-run behind Daniel's yes (docs/agents/plugin-and-mcp.md).
 //
 //   node mcp/finhub-video-server.mjs        (npm run mcp; registered in .mcp.json, not in the plugin)
 //   mcp/http.mjs serves makeServer({ remote: true }) over HTTP on Railway.
 import { execFile, spawn } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync } from "node:fs";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -78,9 +80,45 @@ const capped = async (job) => {
   }
 };
 const node = (script, args, timeoutMs = 120_000) => run(process.execPath, ["--no-warnings", join(ROOT, script), ...args], timeoutMs);
+// The paid APIs (scripts/providers.mjs; keys are read there, never here).
+const prov = (op, args, extra = [], ms = 300_000) => node("scripts/providers.mjs", [op, "--json", JSON.stringify(args), ...extra], ms);
+
+// Spend gate: a paid call without `confirm` only quotes (nothing is spent) and returns a code
+// bound to this tool, these exact arguments and that quote, good for 15 minutes and once. The
+// caller shows Daniel the cost and calls again with the code. The key lives in this process only,
+// so a restart voids every code. ponytail: used codes are kept in memory for the process life.
+const GATE = randomBytes(32);
+const usedCodes = new Set();
+const mac = (tool, args, quote, exp) => createHmac("sha256", GATE).update(JSON.stringify([tool, args, quote, exp])).digest("base64url").slice(0, 24);
+const paid = async (tool, args, confirm, quote, job) => {
+  const q = await quote();
+  if (q.isError) return q;
+  const said = q.content[0].text.replace(/^exit 0\n/, "");
+  if (!confirm) {
+    const exp = Date.now() + 15 * 60_000;
+    return text(`${said}\n\nNothing was spent. Show Daniel this cost; only after he agrees, call ${tool} again with the same arguments and confirm: "${exp}.${mac(tool, args, said, exp)}" (valid 15 minutes, once).`);
+  }
+  // One spelling of the expiry only ("0" + exp or "+exp" would be a fresh Set entry), and spent codes keyed on the MAC.
+  const [e, got = ""] = String(confirm).split(".");
+  const exp = Number(e);
+  const want = mac(tool, args, said, exp);
+  if (String(exp) !== e || !(exp > Date.now()) || usedCodes.has(got) || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want)))
+    return { ...text("confirm code refused: expired, already used, or for other arguments or a changed quote. Call without confirm for a fresh quote."), isError: true };
+  usedCodes.add(got);
+  return job();
+};
+const YOUTUBE = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"]);
+const isYoutube = (u) => {
+  try {
+    const url = new URL(u);
+    return url.protocol === "https:" && YOUTUBE.has(url.hostname);
+  } catch {
+    return false;
+  }
+};
 
 // remote: the Railway HTTP mode (mcp/http.mjs) has no footage, Remotion or ffmpeg, so it keeps only the
-// tools that need none of them: list_designs and research (trending, topic, comments).
+// tools that need none of them: list_designs, research (all but watch) and visuals (stock search only).
 // http: served over HTTP (mcp/http.mjs), so the caller can't open files on this machine: still also
 // returns the picture and research returns the files it wrote.
 export const makeServer = ({ remote = false, http = remote } = {}) => {
@@ -144,23 +182,128 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
     ({ slug }) => heavy(`render ${slug}`, () => run(PYTHON, [join(ROOT, "scripts/render-video.py"), slug], 2 * 60 * 60_000)),
   );
 
+  const err = (t) => ({ ...text(t), isError: true });
+  // Over HTTP a job is capped and its out/ files come back in the answer.
+  const light = (job) => (http ? capped(() => job().then(withFiles)) : job());
+
   server.registerTool(
     "research",
     {
       description:
-        "Before a faceless script: what's trending, or sources on a topic (scripts/research.py). watch (query = an https YouTube link): a reference video's pacing, contact sheets and captions; comments: its most-liked comments, anonymised. Writes under out/.",
-      inputSchema: { mode: z.enum(remote ? ["trending", "topic", "comments"] : ["trending", "topic", "watch", "comments"]), query: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").regex(/^[^\x00-\x1f\x7f]*$/, "no line breaks or control characters").optional(), slug: slug.optional() },
+        "Before and while writing a video (scripts/research.py, scripts/providers.mjs). trending; topic (query, slug): sources on a topic; ask (query = a question): a cited web answer (Perplexity, about US$0.005; deep=true for sonar-pro, which quotes first and needs confirm); " +
+        "translate (query = one line, to = vi|en): narration translation that keeps every number; read (query = an http(s) page, slug): the page as Markdown; transcript (query = a YouTube link, slug): its captions; " +
+        (remote ? "" : "watch (query = a YouTube link, slug): a reference video's pacing, contact sheets and captions; ") +
+        "comments (YouTube link, slug): most-liked comments, anonymised; audience (query = a YouTube channel link): what its viewers ask. Writes under out/.",
+      inputSchema: {
+        mode: z.enum(remote ? ["trending", "topic", "ask", "translate", "read", "transcript", "comments", "audience"] : ["trending", "topic", "ask", "translate", "read", "transcript", "watch", "comments", "audience"]),
+        query: z.string().min(1).max(2000).regex(/^[^-]/, "must not start with -").regex(/^[^\x00-\x1f\x7f]*$/, "no line breaks or control characters").optional(),
+        slug: slug.optional(),
+        to: z.enum(["vi", "en"]).optional(),
+        deep: z.boolean().optional(),
+        confirm: z.string().max(80).optional(),
+      },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
-    ({ mode, query, slug }) => {
+    ({ mode, query, slug, to, deep, confirm }) => {
       const call = (args, ms) => run(PYTHON, [join(ROOT, "scripts/research.py"), ...args], ms);
-      const py = (args, ms = 300_000) => (http ? capped(() => call(args, ms).then(withFiles)) : call(args, ms));
+      const py = (args, ms = 300_000) => light(() => call(args, ms));
       if (mode === "trending") return py(["trending"]);
-      if (!query || !slug) return { ...text(`${mode} needs query and slug`), isError: true };
+      if (!query) return err(`${mode} needs query`);
+      if (mode === "ask") {
+        const args = { question: query, slug, deep: Boolean(deep) };
+        // sonar-pro costs about 6x sonar: quote first, like the other paid calls.
+        return deep ? paid("research", { mode, ...args }, confirm, () => prov("ask", args, ["--quote"]), () => light(() => prov("ask", args))) : light(() => prov("ask", args));
+      }
+      // No withFiles: the translation is model output, and a line in it could name another out/ file.
+      if (mode === "translate") return to ? (http ? capped(() => prov("translate", { text: query, to })) : prov("translate", { text: query, to })) : err("translate needs to = vi or en");
+      if (mode === "audience") return isYoutube(query) ? py(["audience", query]) : err("audience needs query = an https YouTube channel link");
+      if (!slug) return err(`${mode} needs query and slug`);
       if (mode === "topic") return py(["topic", query, "--slug", slug]);
-      if (!query.startsWith("https://")) return { ...text(`${mode} needs query = an https:// link`), isError: true };
+      if (mode === "read") return /^https?:\/\//.test(query) ? py(["read", query, "--slug", slug]) : err("read needs query = an http(s) link");
+      // yt-dlp follows redirects itself, so only YouTube links (research.py's public_https).
+      if (!isYoutube(query)) return err(`${mode} needs query = an https YouTube link`);
+      if (mode === "transcript") return py(["transcript", query, "--slug", slug]);
       // watch downloads (480p, 20 min cap) and runs an ffmpeg sweep: one heavy job at a time.
       return mode === "watch" ? heavy(`watch ${slug}`, () => py(["watch", query, "--slug", slug], 1_800_000)) : py(["comments", query, "--slug", slug]);
+    },
+  );
+
+  const prompt = z.string().min(1).max(500).regex(/^[^-]/, "must not start with -").regex(/^[^\x00-\x1f\x7f]*$/, "no line breaks or control characters");
+  const confirm = z.string().max(80).optional();
+
+  localTool(
+    "audio",
+    {
+      description:
+        "Sound for a video, all paid: the first call returns a quote and a confirm code (nothing spent); show Daniel the cost and call again with confirm. " +
+        "voice: narrate public/videos/<slug>/script.json (scripts/voice-video.mjs; the quote is its --dry-run with the RG 234 and fact checks; engine google (default) or elevenlabs). " +
+        "music (prompt, seconds 10-300): an instrumental bed; sfx (prompt, seconds 0.5-30): a sound effect (both ElevenLabs, saved to public/videos/<slug>/assets/). " +
+        "transcribe (file inside public/videos/<slug>/, lang, engine): word timings to out/; engine local (default) is free faster-whisper on this PC and needs no confirm, elevenlabs uploads the file to ElevenLabs Scribe (paid, quote first). Voice cloning is not here.",
+      inputSchema: {
+        action: z.enum(["voice", "music", "sfx", "transcribe"]),
+        slug,
+        prompt: prompt.optional(),
+        seconds: z.number().min(0.5).max(300).optional(),
+        file: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").regex(/^[^\x00-\x1f\x7f]*$/).optional(),
+        lang: z.enum(["vi", "en"]).optional(),
+        engine: z.enum(["google", "elevenlabs", "local"]).optional(),
+        confirm,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    ({ action, slug, prompt, seconds, file, lang, engine, confirm }) => {
+      if (action === "voice") {
+        const eng = engine ? ["--engine", engine] : [];
+        return paid("audio", { action, slug, engine }, confirm, () => node("scripts/voice-video.mjs", [slug, "--dry-run", ...eng], 600_000), () =>
+          heavy(`voice ${slug}`, () => node("scripts/voice-video.mjs", [slug, ...eng], 60 * 60_000)),
+        );
+      }
+      if (action === "transcribe" ? !file : !prompt || !seconds) return err(action === "transcribe" ? "transcribe needs file" : `${action} needs prompt and seconds`);
+      if (action === "transcribe" && engine === "google") return err('transcribe engine is "local" or "elevenlabs"');
+      if (action === "transcribe" && engine !== "elevenlabs") return heavy(`transcribe ${slug}`, () => prov("transcribe", { file, slug, lang, engine: "local" }, [], 30 * 60_000).then(withFiles));
+      const args = action === "transcribe" ? { file, slug, lang, engine } : { prompt, seconds, slug };
+      return paid("audio", { action, ...args }, confirm, () => prov(action, args, ["--quote"]), () => capped(() => prov(action, args).then(withFiles)));
+    },
+  );
+
+  server.registerTool(
+    "visuals",
+    {
+      description:
+        "Pictures and footage for a video. stock (term = 2-5 English words" +
+        (remote ? "): Pixabay and Pexels candidates (links, licence), nothing downloaded. Free." : ", slug, need 1-5): free Pixabay/Pexels clips, CLIP-ranked, saved to the library and the video's footage; ") +
+        (remote
+          ? ""
+          : "library (term, kind?): what public/library already has (reuse before buying); image (prompt, slug, provider fal|xai, n 1-4): an AI still in the house style, Gemini picks the best of n; paid: the first call quotes, call again with confirm after Daniel agrees."),
+      inputSchema: {
+        action: z.enum(remote ? ["stock"] : ["stock", "library", "image"]),
+        term: z.string().min(1).max(100).regex(/^[\p{L}\p{N}][\p{L}\p{N} ,'&]*$/u, "words only").optional(),
+        slug: slug.optional(),
+        need: z.number().int().min(1).max(5).optional(),
+        prompt: prompt.optional(),
+        provider: z.enum(["fal", "xai"]).optional(),
+        n: z.number().int().min(1).max(4).optional(),
+        kind: z.enum(["stock-video", "stock-image", "ai-image", "own-footage", "music"]).optional(),
+        confirm,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    ({ action, term, slug, need, prompt, provider = "fal", n = 1, kind, confirm }) => {
+      if (action === "stock") {
+        if (!term || (!remote && !slug)) return err(remote ? "stock needs term" : "stock needs term and slug (clips go into the library and the video's footage)");
+        return light(() => prov("stock", { term, slug, need, download: !remote }));
+      }
+      if (action === "library") return term ? node("scripts/library.mjs", ["find", ...term.split(/\s+/), ...(kind ? ["--kind", kind] : [])]) : err("library needs term");
+      if (!prompt || !slug) return err("image needs prompt and slug");
+      const args = { prompt, slug, provider, n };
+      return paid("visuals", { action, ...args }, confirm, () => prov("image", args, ["--quote"]), async () => {
+        const r = await capped(() => prov("image", args));
+        const made = r.isError ? null : r.content[0].text.trim().split("\n").at(-1);
+        const p = made && resolve(ROOT, made);
+        if (http && p?.startsWith(join(ROOT, "public", "library") + sep) && existsSync(p) && statSync(p).size < 5_000_000)
+          r.content.push({ type: "image", mimeType: /\.jpe?g$/i.test(p) ? "image/jpeg" : "image/png", data: readFileSync(p).toString("base64") });
+        return r;
+      });
     },
   );
 
