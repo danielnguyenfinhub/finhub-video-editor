@@ -69,6 +69,11 @@ const MODEL_ID = "eleven_v3"; // speaks Vietnamese; eleven_multilingual_v2 doesn
 const FPS = 30;
 const GAP_MS = 400; // silence between scenes (a scene's "pauseAfterMs" overrides it)
 const PAUSE_MAX_MS = 2000;
+/** A scene's pause after it: GAP_MS when unset, else clamped to 0..PAUSE_MAX_MS; null when not whole milliseconds. */
+const gapOf = (ms) => (ms === undefined ? GAP_MS : Number.isInteger(ms) ? Math.min(PAUSE_MAX_MS, Math.max(0, ms)) : null);
+/** Gemini's inline prefix: a scene's own cue joins the global STYLE before its closing colon; no cue = STYLE unchanged
+ *  (it is in the take's cache key, so old caches stay valid). */
+const styleWith = (STYLE, cue) => (cue ? `${STYLE.replace(/[\s:]+$/, "")}. ${cue.replace(/[\s:.]+$/, "")}: ` : STYLE);
 const BACKDROP = "0x0B1F3D"; // brand navy; never seen, the design draws its own
 const CLIP_MAX_S = 5; // longest a single stock clip stays on screen
 
@@ -87,6 +92,15 @@ const run = (cmd, args, what) => {
 
 const USAGE = "usage: node scripts/voice-video.mjs <slug> [--listing [--lang vi|en]] [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>]";
 const argv = process.argv.slice(2);
+if (argv[0] === "--selftest") {
+  const S = "Nói với giọng ấm áp, tự tin, tự nhiên: ";
+  for (const cue of ["", undefined]) if (styleWith(S, cue) !== S) fail(`selftest: no style must keep STYLE (cache key), got "${styleWith(S, cue)}"`);
+  if (styleWith(S, "calm.") !== "Nói với giọng ấm áp, tự tin, tự nhiên. calm: ") fail(`selftest: style cue joins STYLE, got "${styleWith(S, "calm.")}"`);
+  for (const [ms, want] of [[undefined, GAP_MS], [5000, 2000], [-5, 0], [700, 700], [1.5, null], ["400", null]])
+    if (gapOf(ms) !== want) fail(`selftest: pauseAfterMs ${ms} -> ${gapOf(ms)}, want ${want}`);
+  console.log("voice-video selftest ok");
+  process.exit(0);
+}
 const slug = argv.find((a, k) => !a.startsWith("--") && !["--engine", "--voice", "--lang"].includes(argv[k - 1]));
 if (!slug) fail(USAGE);
 assertSlug(slug);
@@ -134,11 +148,11 @@ const parsedScenes = script.scenes.map((s, i) => {
   // Per-scene delivery: idea from OpenMontage voice-performance-director (AGPL-3.0); written fresh, no code copied.
   if (s.style !== undefined && (typeof s.style !== "string" || !s.style.trim() || s.style.length > 160))
     fail(`scenes[${i}].style must be one short delivery line (up to 160 characters).`);
-  if (s.pauseAfterMs !== undefined && !Number.isInteger(s.pauseAfterMs))
-    fail(`scenes[${i}].pauseAfterMs must be a whole number of milliseconds.`);
+  const gapMs = gapOf(s.pauseAfterMs);
+  if (gapMs === null) fail(`scenes[${i}].pauseAfterMs must be a whole number of milliseconds.`);
   return {
     style: s.style?.trim().normalize("NFC") ?? "",
-    gapMs: Math.min(PAUSE_MAX_MS, Math.max(0, s.pauseAfterMs ?? GAP_MS)),
+    gapMs,
     vi: s.vi.trim().normalize("NFC"),
     en: s.en.trim().normalize("NFC"),
     footage: s.footage?.trim() ?? "",
@@ -317,8 +331,7 @@ if (engine === "elevenlabs") {
   // Style goes inline, in Vietnamese; no speed words (they stretch the take).
   const style = listingVoice?.style;
   const STYLE = (typeof style === "object" ? style?.[lang] : style) ?? "Nói với giọng ấm áp, tự tin, tự nhiên: ";
-  // A scene's own cue joins the global prefix before its closing colon; no cue = STYLE unchanged (old caches stay valid).
-  const styleOf = (s) => (s.style ? `${STYLE.replace(/[\s:]+$/, "")}. ${s.style.replace(/[\s:.]+$/, "")}: ` : STYLE);
+  const styleOf = (s) => styleWith(STYLE, s.style);
   const wav = (pcm, rate) => {
     const h = Buffer.alloc(44);
     h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8);

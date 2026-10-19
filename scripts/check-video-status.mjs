@@ -123,6 +123,21 @@ assert.equal(next("h").stage, "render (video-editor A7.1 / B5.4)", "fresh compli
 put("public/videos/h/edit.json", { background: "vignette", cues: ["b"], post: { title: "t3" } });
 assert.match(next("h").halt?.stale ?? "", /re-run compliance .*post/, "post change after compliance PASS: stale");
 
+// R1 (upgrade run 1): the script-stage compliance PASS covers script.json only; voicing (edit.json, words.json)
+// and the editor's later edit.json changes do not make it stale. A script.json change does.
+put("public/videos/p/script.json", { scenes: [{ vi: "a", en: "a" }], post: { title: "T" } });
+for (const f of ["00_intake.md", "01_writer_notes.md", "02_script_lock.md"]) put(`out/videos/p/team/${f}`, "x");
+put("out/videos/p/team/02_compliance_script.json", { verdict: "PASS", inputsHash: reviewHash(root, "p", "compliance-script") });
+const before = next("p").stage;
+put("public/videos/p/words.json", []);
+put("public/videos/p/edit.json", { design: "faceless", subtitles: [] });
+put("public/videos/p/edit.json", { design: "faceless", subtitles: ["edited"] });
+assert.notEqual(next("p").stage, "compliance, script", "02 PASS stays done after edit.json and words.json appear");
+assert.equal(next("p").halt?.stale, undefined);
+assert.equal(before, "voice (B3)");
+put("public/videos/p/script.json", { scenes: [{ vi: "b", en: "b" }], post: { title: "T" } });
+assert.match(next("p").halt?.stale ?? "", /re-run compliance \(02_compliance_script\.json\)/, "script change after 02 PASS: stale");
+
 // U10: the FIX-loop round limit survives a resumed session: content 2 rounds, cosmetic 1.
 put("out/videos/h/team/04_compliance_final.json", { verdict: "FIX", round: 1, findings: [{ severity: "FIX" }] });
 assert.equal(next("h").halt, null, "content FIX after 1 round: loop again");

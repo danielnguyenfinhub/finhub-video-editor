@@ -27,7 +27,7 @@ const unquote = (s) => {
 const pages = new Map();
 for (const file of readdirSync(join(src, "content/docs"), { recursive: true })) {
   if (!file.endsWith(".mdx")) continue;
-  const fm = readFileSync(join(src, "content/docs", file), "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1];
+  const fm = readFileSync(join(src, "content/docs", file), "utf8").replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---/)?.[1];
   const name = fm?.match(/^component:\s*(\S+)/m)?.[1];
   if (!name) continue;
   const avoid = fm.match(/^avoidWhen:\s*\n\s+-\s+(.+)$/m)?.[1];
@@ -35,7 +35,9 @@ for (const file of readdirSync(join(src, "content/docs"), { recursive: true })) 
 }
 if (!pages.size) { console.error(`no component pages under ${src}/content/docs`); process.exit(1); }
 
-const before = readFileSync(catalogPath, "utf8");
+// A Windows checkout may have CRLF files: read with LF, write the catalog back with the line endings it had.
+const raw = readFileSync(catalogPath, "utf8"), eol = raw.includes("\r\n") ? "\r\n" : "\n";
+const before = raw.replace(/\r\n/g, "\n");
 const entry = /^- \*\*.+?\*\* \(`components\/remocn\/(?:templates\/([\w-]+)\/|([\w-]+)\.tsx`)/;
 const known = new Set([...before.matchAll(/(?:components\/remocn|lib\/remocn[\w-]*)\/(?:templates\/([\w-]+)\/|([\w-]+)\.tsx?\b)/g)].map((m) => m[1] ?? m[2]));
 const bad = [];
@@ -57,5 +59,5 @@ const after = before.split("\n").map((line) => {
 if (bad.length) { console.error(`avoidWhen substitutes not in CATALOG.md:\n  ${bad.join("\n  ")}`); process.exit(1); }
 if (after === before) { console.log(`remocn catalog up to date (${joined} entries joined)`); process.exit(0); }
 if (check) { console.error("CATALOG.md is out of date: run node scripts/vendor-remocn.mjs"); process.exit(1); }
-writeFileSync(catalogPath, after);
+writeFileSync(catalogPath, after.replace(/\n/g, eol));
 console.log(`CATALOG.md updated (${joined} entries joined of ${pages.size} remocn pages)`);

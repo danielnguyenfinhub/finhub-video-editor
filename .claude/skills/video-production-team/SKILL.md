@@ -181,8 +181,9 @@ preflight runs the last two before every render. Post-render QC verifies the ren
   so a resumed session does not restart at round 1.
 - **A PASS is frozen to what was reviewed.** Every verdict file carries `"inputsHash"`, printed by
   `node scripts/publish-post.mjs <slug> hash qc` (QC: edit.json/script.json without `post`, words.json) or
-  `node scripts/publish-post.mjs <slug> hash compliance` (edit.json and script.json with `post`), run after the last
-  check. Inputs changed since → `video-status` shows the stage as stale ("re-run QC/compliance") and `publish-post`
+  `node scripts/publish-post.mjs <slug> hash compliance` (final stage: edit.json and script.json with `post`) or
+  `node scripts/publish-post.mjs <slug> hash compliance-script` (02 script stage: script.json with `post` only), run
+  after the last check. Inputs changed since → `video-status` shows the stage as stale ("re-run QC/compliance") and `publish-post`
   refuses it. A PASS without `inputsHash` (older runs) is accepted with a warning.
 - A fix that touches timing, cues or cuts is re-checked with the three scripts before the reviewers re-run, and they
   re-check only the changed spots. After ANY `words.json` or cut change, re-run `check-speech-cuts`.

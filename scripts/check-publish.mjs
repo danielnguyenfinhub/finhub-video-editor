@@ -421,6 +421,13 @@ assert.equal(nextStep(Object.fromEntries(["approved", "staged", "drive", "youtub
   w(final, { verdict: "PASS" });
   assert.deepEqual(stale(), [], "no inputsHash (older run): accepted");
   assert.match(plan("s", r).warnings.join(), /no inputsHash/);
+  // R2: a caption (words.json) edit after QC and compliance PASS: the compliance hash leaves words.json out, QC's does not.
+  w("public/videos/s/words.json", [{ text: "ok", startMs: 0, endMs: 1 }]);
+  w("out/videos/s/team/05_qc_render.json", { verdict: "PASS", inputsHash: reviewHash(r, "s", "qc") });
+  w(final, { verdict: "PASS", inputsHash: reviewHash(r, "s", "compliance") });
+  assert.deepEqual(plan("s", r).stop.filter((x) => /re-run/.test(x)), [], "fresh QC and compliance PASS");
+  w("public/videos/s/words.json", [{ text: "changed caption", startMs: 0, endMs: 1 }]);
+  assert.match(plan("s", r).stop.join(), /re-run QC \(05_qc_render\.json\)/, "words.json edit after both PASSes: refused");
   rmSync(r, { recursive: true, force: true });
 }
 
