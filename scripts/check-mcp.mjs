@@ -69,6 +69,11 @@ try {
     const r = await client.callTool({ name: "audio", arguments: { ...sfx, confirm } });
     assert.ok(r.isError && /refused/.test(r.content[0].text), `a forged code is refused (${confirm.slice(0, 6)}...)`);
   }
+  const [exp, macPart] = code.split(".");
+  for (const respelt of [`0${exp}.${macPart}`, `+${exp}.${macPart}`]) {
+    const r = await client.callTool({ name: "audio", arguments: { ...sfx, confirm: respelt } });
+    assert.ok(r.isError && /refused/.test(r.content[0].text), `a respelt expiry is refused (${respelt.slice(0, 2)}...)`);
+  }
   const other = await client.callTool({ name: "audio", arguments: { ...sfx, seconds: 9, confirm: code } });
   assert.ok(other.isError && /refused/.test(other.content[0].text), "a code is bound to the arguments it was quoted for");
   const made = await client.callTool({ name: "audio", arguments: { ...sfx, confirm: code } });

@@ -98,11 +98,13 @@ const paid = async (tool, args, confirm, quote, job) => {
     const exp = Date.now() + 15 * 60_000;
     return text(`${said}\n\nNothing was spent. Show Daniel this cost; only after he agrees, call ${tool} again with the same arguments and confirm: "${exp}.${mac(tool, args, said, exp)}" (valid 15 minutes, once).`);
   }
-  const [exp, got = ""] = String(confirm).split(".");
-  const want = mac(tool, args, said, Number(exp));
-  if (!(Number(exp) > Date.now()) || usedCodes.has(confirm) || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want)))
+  // One spelling of the expiry only ("0" + exp or "+exp" would be a fresh Set entry), and spent codes keyed on the MAC.
+  const [e, got = ""] = String(confirm).split(".");
+  const exp = Number(e);
+  const want = mac(tool, args, said, exp);
+  if (String(exp) !== e || !(exp > Date.now()) || usedCodes.has(got) || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want)))
     return { ...text("confirm code refused: expired, already used, or for other arguments or a changed quote. Call without confirm for a fresh quote."), isError: true };
-  usedCodes.add(confirm);
+  usedCodes.add(got);
   return job();
 };
 const YOUTUBE = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"]);
@@ -188,7 +190,7 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
     "research",
     {
       description:
-        "Before and while writing a video (scripts/research.py, scripts/providers.mjs). trending; topic (query, slug): sources on a topic; ask (query = a question): a cited web answer (Perplexity, about US$0.005; deep=true for sonar-pro); " +
+        "Before and while writing a video (scripts/research.py, scripts/providers.mjs). trending; topic (query, slug): sources on a topic; ask (query = a question): a cited web answer (Perplexity, about US$0.005; deep=true for sonar-pro, which quotes first and needs confirm); " +
         "translate (query = one line, to = vi|en): narration translation that keeps every number; read (query = an http(s) page, slug): the page as Markdown; transcript (query = a YouTube link, slug): its captions; " +
         (remote ? "" : "watch (query = a YouTube link, slug): a reference video's pacing, contact sheets and captions; ") +
         "comments (YouTube link, slug): most-liked comments, anonymised; audience (query = a YouTube channel link): what its viewers ask. Writes under out/.",
@@ -198,16 +200,22 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         slug: slug.optional(),
         to: z.enum(["vi", "en"]).optional(),
         deep: z.boolean().optional(),
+        confirm: z.string().max(80).optional(),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
-    ({ mode, query, slug, to, deep }) => {
+    ({ mode, query, slug, to, deep, confirm }) => {
       const call = (args, ms) => run(PYTHON, [join(ROOT, "scripts/research.py"), ...args], ms);
       const py = (args, ms = 300_000) => light(() => call(args, ms));
       if (mode === "trending") return py(["trending"]);
       if (!query) return err(`${mode} needs query`);
-      if (mode === "ask") return light(() => prov("ask", { question: query, slug, deep: Boolean(deep) }));
-      if (mode === "translate") return to ? light(() => prov("translate", { text: query, to })) : err("translate needs to = vi or en");
+      if (mode === "ask") {
+        const args = { question: query, slug, deep: Boolean(deep) };
+        // sonar-pro costs about 6x sonar: quote first, like the other paid calls.
+        return deep ? paid("research", { mode, ...args }, confirm, () => prov("ask", args, ["--quote"]), () => light(() => prov("ask", args))) : light(() => prov("ask", args));
+      }
+      // No withFiles: the translation is model output, and a line in it could name another out/ file.
+      if (mode === "translate") return to ? (http ? capped(() => prov("translate", { text: query, to })) : prov("translate", { text: query, to })) : err("translate needs to = vi or en");
       if (mode === "audience") return isYoutube(query) ? py(["audience", query]) : err("audience needs query = an https YouTube channel link");
       if (!slug) return err(`${mode} needs query and slug`);
       if (mode === "topic") return py(["topic", query, "--slug", slug]);

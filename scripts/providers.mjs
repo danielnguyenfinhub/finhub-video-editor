@@ -18,7 +18,7 @@
 // FINHUB_FAKE_PROVIDERS=1 answers every call with a canned response (scripts/check-mcp.mjs).
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -52,11 +52,29 @@ const assets = (slug) => {
   return d;
 };
 const outFile = (slug, name, text) => {
+  if (slug && !slugOk(slug)) fail(`slug "${slug}" is not a valid video slug.`);
   const d = slug ? join(ROOT, "out", "videos", slug, "research") : join(ROOT, "out", "research");
   mkdirSync(d, { recursive: true });
   const f = join(d, name);
   writeFileSync(f, text);
   return f;
+};
+// Daily cap on what real runs may spend, summed from the ledger (24 h). A runaway loop of cheap
+// ungated calls (ask, translate) stops here. ponytail: Railway's disk resets on deploy, so there it
+// counts since the last deploy.
+const DAILY_CAP = Number(process.env.FINHUB_DAILY_CAP_USD ?? 10);
+const spentToday = () => {
+  const f = join(ROOT, "out", "spend-ledger.jsonl");
+  if (!existsSync(f)) return 0;
+  const since = Date.now() - 86_400_000;
+  return readFileSync(f, "utf8").split("\n").reduce((sum, l) => {
+    try {
+      const r = JSON.parse(l);
+      return Date.parse(r.at) > since ? sum + (r.usd ?? 0) : sum;
+    } catch {
+      return sum;
+    }
+  }, 0);
 };
 const ledger = (op, usd, slug, note) => {
   mkdirSync(join(ROOT, "out"), { recursive: true });
@@ -144,7 +162,9 @@ const ops = {
     file: ({ file, slug }) => {
       const dir = videoDir(slug) + sep;
       const p = resolve(dir, String(file ?? ""));
-      if (!p.startsWith(dir) || !existsSync(p) || !statSync(p).isFile()) fail(`transcribe: "${file}" is not a file inside public/videos/${slug}/.`);
+      // realpath too: a symlink inside the folder must not reach outside it.
+      if (!p.startsWith(dir) || !existsSync(p) || !statSync(p).isFile() || !realpathSync(p).startsWith(realpathSync(dir) + sep))
+        fail(`transcribe: "${file}" is not a file inside public/videos/${slug}/.`);
       if (statSync(p).size > 25 * 1024 * 1024) fail("transcribe: the file is over OpenAI's 25 MB limit; send the audio (voice/narration.wav or an mp3) instead.");
       return p;
     },
@@ -228,6 +248,7 @@ const ops = {
 };
 
 // Canned answers for the checks: the real code paths run, nothing leaves the machine.
+if (process.env.FINHUB_FAKE_PROVIDERS === "1" && process.env.RAILWAY_ENVIRONMENT) fail("FINHUB_FAKE_PROVIDERS is set on Railway; remove it.");
 if (process.env.FINHUB_FAKE_PROVIDERS === "1") {
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
   globalThis.fetch = async (url) => {
@@ -255,8 +276,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     fail("--json must be a JSON object.");
   }
   if (process.argv.includes("--quote")) {
-    console.log(`quote: ${usd(ops[op].quote(args))}`);
+    const q = ops[op].quote(args);
+    console.log(`quote: ${usd(q)}${op === "transcribe" ? ` (uploads public/videos/${args.slug}/${args.file} to OpenAI; a client recording needs Daniel's OK for that)` : ""}`);
   } else {
+    if (op !== "stock" && spentToday() >= DAILY_CAP) fail(`daily spend cap reached (US$${DAILY_CAP} in 24 h, out/spend-ledger.jsonl); raise FINHUB_DAILY_CAP_USD or wait.`);
     // out/ text files first (the MCP attaches those), then media paths.
     const files = (await ops[op].run(args)).map((f) => rel(resolve(ROOT, f)));
     for (const f of files.sort((a, b) => Number(!a.startsWith("out/")) - Number(!b.startsWith("out/")))) console.log(f);
