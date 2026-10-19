@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { connect } from "node:net";
+import { networkInterfaces } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -134,4 +135,27 @@ try {
   console.log("check-mcp oauth: register, PKCE sign-in, single-use code, refresh, forged tokens refused");
 } finally {
   http.kill();
+}
+
+// The PC connector (npm run mcp:pc = http.mjs --all): every tool over HTTP, behind the same sign-in.
+const pcPort = 19000 + Math.floor(Math.random() * 1000);
+const pc = spawn(process.execPath, [join(root, "mcp/http.mjs"), "--all"], { cwd: root, env: { ...process.env, MCP_TOKEN: token, PORT: String(pcPort) }, stdio: "ignore" });
+try {
+  const pcBase = `http://127.0.0.1:${pcPort}`;
+  for (let i = 0; i < 100 && !(await fetch(`${pcBase}/health`).then((r) => r.ok, () => false)); i++) await new Promise((r) => setTimeout(r, 100));
+  assert.equal((await fetch(`${pcBase}/mcp`, { method: "POST" })).status, 401, "PC connector: no token, 401");
+  const full = new Client({ name: "check-mcp-pc", version: "1.0.0" });
+  await full.connect(new StreamableHTTPClientTransport(new URL(`${pcBase}/mcp`), { requestInit: { headers: { authorization: `Bearer ${token}` } } }));
+  const fullTools = (await full.listTools()).tools;
+  assert.deepEqual(fullTools.map((t) => t.name).sort(), ["list_designs", "preflight", "render_video", "research", "still", "video_status"], "--all serves every tool");
+  assert.ok(fullTools.find((t) => t.name === "research").inputSchema.properties.mode.enum.includes("watch"), "--all keeps research watch");
+  const badStill = await full.callTool({ name: "still", arguments: { composition: "MortgageReel", frame: 0, slug: "../etc" } });
+  assert.ok(badStill.isError, "PC connector still refuses a bad slug");
+  await full.close();
+  // Loopback only: this machine's LAN address must not reach it (the tunnel connects on 127.0.0.1).
+  const lan = Object.values(networkInterfaces()).flat().find((n) => n.family === "IPv4" && !n.internal)?.address;
+  if (lan) assert.equal(await fetch(`http://${lan}:${pcPort}/health`).then(() => "open", () => "closed"), "closed", `--all must not answer on ${lan}`);
+  console.log(`check-mcp pc: --all serves every tool behind the token, on loopback only${lan ? "" : " (no LAN address to try)"}`);
+} finally {
+  pc.kill();
 }

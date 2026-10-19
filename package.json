@@ -101,6 +101,7 @@
     "research": "python scripts/research.py",
     "video-status": "node scripts/video-status.mjs",
     "mcp": "node mcp/finhub-video-server.mjs",
+    "mcp:pc": "node --env-file-if-exists=.env mcp/http.mjs --all",
     "sweep": "node scripts/sweep-render.mjs",
     "music-start": "node scripts/music-start.mjs",
     "listing": "node --no-warnings scripts/listing-prep.mjs",

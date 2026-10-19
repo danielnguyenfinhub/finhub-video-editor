@@ -103,6 +103,7 @@ export const makeOAuth = (token) => {
     return `${proto}://${host}`;
   };
   // The rightmost x-forwarded-for entry is the one Railway's proxy added; the leftmost is the client's to write.
+  // Behind a tunnel that adds none (the PC connector), every attempt is 127.0.0.1: the lock is then global.
   const ipOf = (req) => String(req.headers["x-forwarded-for"] ?? "").split(",").pop().trim() || req.socket.remoteAddress || "?";
 
   // A refresh keeps the first sign-in's end date (e0): 30 days after pasting MCP_TOKEN, sign in again.
@@ -142,7 +143,7 @@ export const makeOAuth = (token) => {
 input[type=password]{width:100%;padding:.6rem;font-size:1rem;box-sizing:border-box}button{margin-top:1rem;padding:.6rem 1.2rem;font-size:1rem}p.e{color:#b00020}</style></head>
 <body><h1>Finance Hub video tools</h1><p>A Claude connector (${esc(new URL(p.get("redirect_uri")).host)}) asks to use the Finance Hub video tools.</p>
 <p><strong>Only continue if you clicked Connect in your own Claude account just now.</strong> If someone sent you this link, close the page.</p>
-<p>Paste the <code>MCP_TOKEN</code> from Railway (finhub-video-editor, Variables).</p>
+<p>Paste this server's <code>MCP_TOKEN</code>: from Railway (finhub-video-editor, Variables), or from <code>.env</code> on the PC for the PC connector.</p>
 ${error ? `<p class="e">${esc(error)}</p>` : ""}<form method="post" action="/authorize">${hidden}
 <label for="t">MCP_TOKEN</label><input id="t" type="password" name="mcp_token" autocomplete="current-password" required autofocus>
 <button type="submit">Connect</button></form></body></html>`);
@@ -216,7 +217,7 @@ ${error ? `<p class="e">${esc(error)}</p>` : ""}<form method="post" action="/aut
       }
       if (!tokenOk(p.get("mcp_token"))) {
         failed(ip);
-        page(res, 401, p, "That is not the MCP_TOKEN set in Railway.");
+        page(res, 401, p, "That is not this server's MCP_TOKEN.");
         return true;
       }
       const code = sign("code", { c: a.cid, r: a.redirect, ch: a.challenge, j: b64(randomBytes(12)) }, CODE_S);

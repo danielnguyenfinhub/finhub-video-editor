@@ -5,7 +5,7 @@
 //
 //   node mcp/finhub-video-server.mjs        (npm run mcp; registered in .mcp.json, not in the plugin)
 //   mcp/http.mjs serves makeServer({ remote: true }) over HTTP on Railway.
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -21,17 +21,30 @@ const TAIL = 40; // the repo's tail -n habit: the error is at the end
 const slug = z.string().refine(slugOk, "lowercase letters, digits, '.', '_' or '-', no '/' or '..'");
 const text = (t) => ({ content: [{ type: "text", text: t }] });
 
-// No shell: arguments go to the program as a list, so a slug or query cannot run a command.
+// No shell (spawn without shell): arguments go to the program as a list, so a slug or query cannot run a command.
+// The timeout kills the whole process tree: a plain kill leaves Remotion's ffmpeg and Chromium (or
+// yt-dlp's ffmpeg) running, holding the output open, and the next heavy job would overlap them.
+// ponytail: off Windows the job gets its own process group, so Ctrl-C on the server doesn't reach it.
 const run = (cmd, args, timeoutMs) =>
-  new Promise((done) =>
-    execFile(cmd, args, { cwd: ROOT, timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024, windowsHide: true }, (err, stdout, stderr) => {
-      const out = `${stdout}${stderr}`.trim().split("\n").slice(-TAIL).join("\n");
-      const code = err ? (err.killed ? "timed out" : `exit ${err.code ?? 1}`) : "exit 0";
-      done({ content: [{ type: "text", text: `${code}\n${out}` }], isError: Boolean(err) });
-    }),
-  );
+  new Promise((done) => {
+    let timedOut = false;
+    const buf = { stdout: "", stderr: "" };
+    const child = spawn(cmd, args, { cwd: ROOT, windowsHide: true, detached: process.platform !== "win32" });
+    for (const k of ["stdout", "stderr"]) child[k].on("data", (d) => (buf[k] = (buf[k] + d).slice(-1_000_000)));
+    const timer = setTimeout(() => {
+      timedOut = true;
+      if (process.platform === "win32") execFile("taskkill", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true }, () => {});
+      else try { process.kill(-child.pid, "SIGKILL"); } catch {} // already gone
+    }, timeoutMs);
+    const finish = (code) => {
+      clearTimeout(timer);
+      const out = `${buf.stdout}${buf.stderr}`.trim().split("\n").slice(-TAIL).join("\n");
+      done({ content: [{ type: "text", text: `${timedOut ? "timed out" : `exit ${code}`}\n${out}` }], isError: timedOut || code !== 0 });
+    };
+    child.on("error", (err) => finish(err.code)); // e.g. ENOENT: python not on PATH
+    child.on("close", (code, signal) => finish(code ?? signal));
+  });
 // One render or still at a time: parallel calls would fight for the CPU and write the same out/ folder.
-// ponytail: on Windows a timeout kills only the direct child (ffmpeg or Chromium may linger); add taskkill /T if that bites.
 let busy = null;
 const heavy = async (what, job) => {
   if (busy) return { ...text(`busy: ${busy} is still running; try again when it finishes`), isError: true };
@@ -52,11 +65,11 @@ const withFiles = (r) => {
   }
   return r;
 };
-// Remote research: at most 2 at once. Each is a python process for up to 5 minutes, and one HTTP POST
-// can carry a batch of calls. ponytail: a client that disconnects doesn't stop its job; the timeout does.
+// Over HTTP, research, preflight and video_status: at most 2 at once. Each is a process for up to
+// 5-10 minutes, and one HTTP POST can carry a batch of calls. ponytail: a client that disconnects doesn't stop its job; the timeout does.
 let researching = 0;
 const capped = async (job) => {
-  if (researching >= 2) return { ...text("busy: 2 research jobs are running; try again when one finishes"), isError: true };
+  if (researching >= 2) return { ...text("busy: 2 jobs are running; try again when one finishes"), isError: true };
   researching++;
   try {
     return await job();
@@ -68,7 +81,9 @@ const node = (script, args, timeoutMs = 120_000) => run(process.execPath, ["--no
 
 // remote: the Railway HTTP mode (mcp/http.mjs) has no footage, Remotion or ffmpeg, so it keeps only the
 // tools that need none of them: list_designs and research (trending, topic, comments).
-export const makeServer = ({ remote = false } = {}) => {
+// http: served over HTTP (mcp/http.mjs), so the caller can't open files on this machine: still also
+// returns the picture and research returns the files it wrote.
+export const makeServer = ({ remote = false, http = remote } = {}) => {
   const server = new McpServer({ name: "finhub-video", version: "1.0.0" });
   const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
   const localTool = remote ? () => {} : server.registerTool.bind(server);
@@ -80,7 +95,7 @@ export const makeServer = ({ remote = false } = {}) => {
       inputSchema: { slug: slug.optional() },
       annotations: readOnly,
     },
-    ({ slug }) => node("scripts/video-status.mjs", slug ? [slug] : []),
+    ({ slug }) => (http ? capped(() => node("scripts/video-status.mjs", slug ? [slug] : [])) : node("scripts/video-status.mjs", slug ? [slug] : [])),
   );
 
   localTool(
@@ -90,7 +105,7 @@ export const makeServer = ({ remote = false } = {}) => {
       inputSchema: { slug },
       annotations: readOnly,
     },
-    ({ slug }) => node("scripts/preflight.mjs", [slug], 600_000),
+    ({ slug }) => (http ? capped(() => node("scripts/preflight.mjs", [slug], 600_000)) : node("scripts/preflight.mjs", [slug], 600_000)),
   );
 
   localTool(
@@ -113,6 +128,7 @@ export const makeServer = ({ remote = false } = {}) => {
       const props = slug || safeZones ? [`--props=${JSON.stringify({ slug, safeZones })}`, "--gl=angle"] : [];
       const r = await run(process.execPath, [REMOTION, "still", composition, file, `--frame=${frame}`, "--scale=0.5", ...props], 600_000);
       if (!r.isError) r.content.unshift({ type: "text", text: `still: ${join(ROOT, file)}` });
+      if (!r.isError && http) r.content.push({ type: "image", mimeType: "image/png", data: readFileSync(join(ROOT, file)).toString("base64") });
       return r;
     }),
   );
@@ -138,7 +154,7 @@ export const makeServer = ({ remote = false } = {}) => {
     },
     ({ mode, query, slug }) => {
       const call = (args, ms) => run(PYTHON, [join(ROOT, "scripts/research.py"), ...args], ms);
-      const py = (args, ms = 300_000) => (remote ? capped(() => call(args, ms).then(withFiles)) : call(args, ms));
+      const py = (args, ms = 300_000) => (http ? capped(() => call(args, ms).then(withFiles)) : call(args, ms));
       if (mode === "trending") return py(["trending"]);
       if (!query || !slug) return { ...text(`${mode} needs query and slug`), isError: true };
       if (mode === "topic") return py(["topic", query, "--slug", slug]);
