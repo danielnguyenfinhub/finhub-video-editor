@@ -31,6 +31,7 @@ import { Visuals } from "./Visuals";
 import {
   DEFAULT_CTA_QUESTION,
   DEFAULT_SUBTITLE,
+  designReelOf,
   onScreenCopy,
   parseEdit,
   type EditJson,
@@ -281,9 +282,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({
   const quick = edit.background === "vignette";
   // `page` cues are drawn by the core (Visuals); a design never sees one.
   const pages = (edit.cues ?? []).some((c) => c.kind === "page");
-  const designReel = pages
-    ? { ...reel, edit: { ...edit, cues: edit.cues?.filter((c) => c.kind !== "page") } }
-    : reel;
+  const designReel = designReelOf(reel);
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       <TransitionSeries>

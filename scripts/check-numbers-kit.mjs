@@ -5,6 +5,7 @@
 // kinetic cue's text does. Also the RG 234 scan itself: NFD text, odd
 // whitespace and captionFixes[].to (round 2 maintain fixes C1, C2), and the
 // advisory spoken-phrase scan (check-spoken-phrases.mjs) on synthetic words.
+// Page cues: designs get designReelOf(reel) (no page), and YouTubeReel refuses them.
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { bundleTs, repoTmp } from "./tmp-dir.mjs";
@@ -13,7 +14,7 @@ import { pathToFileURL } from "node:url";
 
 const dir = repoTmp("numbers-kit-");
 bundleTs(["src/mortgage/schema.ts", "src/mortgage/compliance.ts"], { logLevel: "warning", outdir: dir });
-const { editSchema, onScreenCopy } = await import(pathToFileURL(join(dir, "schema.mjs")).href);
+const { editSchema, onScreenCopy, designReelOf, refusePageCues } = await import(pathToFileURL(join(dir, "schema.mjs")).href);
 const { assertCompliantCopy } = await import(pathToFileURL(join(dir, "compliance.mjs")).href);
 
 let failed = 0;
@@ -63,6 +64,21 @@ for (const [why, bad, at] of [
 ]) {
   e = issues(edit([bad]));
   check(`page cue with ${why} fails at ${at}`, e.some((m) => m.startsWith(at)), e.join(" | "));
+}
+// Designs never see a page cue (MortgageReel draws it in Visuals), and YouTubeReel refuses one.
+{
+  const parsed = editSchema.parse(edit([page, { ...change, rateType: "cash" }]));
+  const kinds = designReelOf({ edit: parsed, timeline: {} }).edit.cues.map((c) => c.kind);
+  check("designReelOf drops the page cue and keeps the rest", kinds.join() === "change", kinds.join());
+  const src = readFileSync("src/mortgage/MortgageReel.tsx", "utf8");
+  const props = [...src.matchAll(/<design\.\w+\s+reel=\{(\w+)\}/g)].map((m) => m[1]);
+  check("MortgageReel hands every design designReelOf(reel)",
+    /designReel = designReelOf\(reel\)/.test(src) && props.length >= 3 && props.every((p) => p === "designReel"), props.join());
+  let msg = "";
+  try { refusePageCues(parsed, "x"); } catch (err) { msg = err.message; }
+  check("refusePageCues names the page cue", msg.includes('cues[0] is a "page" cue'), msg || "not refused");
+  check("refusePageCues passes an edit without one", refusePageCues(editSchema.parse(edit([{ ...trend, rateType: "cash" }])), "x") !== undefined);
+  check("YouTubeReel refuses page cues", /refusePageCues\(\s*parseEdit\(/.test(readFileSync("src/youtube/YouTubeReel.tsx", "utf8")));
 }
 
 for (const slug of ["_test-numbers-kit", "_test-numbers-kit-faceless"]) {

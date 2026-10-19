@@ -376,6 +376,30 @@ export const parseEdit = (json: unknown, slug: string): EditJson => {
   return r.data;
 };
 
+// `page` cues are drawn by the core (Visuals); a design never sees one.
+export const designReelOf = (reel: Reel): Reel =>
+  reel.edit.cues?.some((c) => c.kind === "page")
+    ? {
+        ...reel,
+        edit: {
+          ...reel.edit,
+          cues: reel.edit.cues.filter((c) => c.kind !== "page"),
+        },
+      }
+    : reel;
+
+// YouTubeReel has no page layer and no YouTube design draws one, so it refuses
+// a `page` cue instead of dropping it.
+export const refusePageCues = (edit: EditJson, slug: string): EditJson => {
+  const i = (edit.cues ?? []).findIndex((c) => c.kind === "page");
+  if (i >= 0)
+    throw new Error(
+      `YouTubeReel "${slug}": cues[${i}] is a "page" cue, which only the vertical MortgageReel draws. ` +
+        `Remove it from public/videos/${slug}/edit.json to render the YouTube version.`,
+    );
+  return edit;
+};
+
 // Every string edit.json puts on screen, keyed by the field name an exemption
 // must use ("title", "hook", "chapters", "stats", "cues[3]", "cta", ...).
 export const onScreenCopy = (edit: EditJson): Record<string, string[]> => {
