@@ -32,6 +32,7 @@ import {
   DEFAULT_CTA_QUESTION,
   DEFAULT_SUBTITLE,
   parseEdit,
+  refusePageCues,
   type Reel,
 } from "../mortgage/schema";
 import { KEYWORDS, useReelFont } from "../mortgage/style";
@@ -74,7 +75,10 @@ export const calculateYouTubeReelMetadata: CalculateMetadataFunction<
   const { slug } = props;
   const design = getYouTubeDesign(props.design ?? DEFAULT_YT_DESIGN);
   const editJson = await fetchJson(slug, `videos/${slug}/edit.json`);
-  const { source, exemptions } = parseEdit(editJson, slug);
+  const { source, exemptions } = refusePageCues(
+    parseEdit(editJson, slug),
+    slug,
+  );
   const words = await fetchJson(
     slug,
     recordingPath(slug, source, "words.json"),
