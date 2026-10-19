@@ -225,3 +225,24 @@ All nine sibling repos were read by one `sibling-repo-analyst` each, alongside `
 **Not picked, kept for a later run:** U19 OPEN-2, U20 AGENT-REACH-3, U21 PAPER-3, U22 G4, U23 G8, U24 CV-3, U25 CV-2, U26 OPEN-3, U27 AGENT-REACH-2, U28 H100-2, U29 G6, U30 G5, U31 REMOCN-3.
 
 **Dropped by the refuters:** SCRAP-2, SCRAP-4, PAPER-1, HARN-3.
+
+## Upgrade run 2 (19 October 2026, upgrade-team)
+
+Daniel picked all 12 items that run 1 had left unbuilt (U19 to U31; U25 and U26 were built as one). Each was checked again against main before it was built. A Railway deployment of the repo had failed at build, so it was fixed in the same run: the MCP server now has an HTTP mode for Railway. An independent quality review and a security review covered the whole run; every blocking finding, and the optional findings that had a real path to a failure, were fixed (PRs 154 and 155).
+
+| U | Source | Built | Licence |
+|---|---|---|---|
+| U19 | OPEN-2 | Voice chain on TTS narration in voice-video.mjs (high-pass, presence lift, light compression, limiter; `--no-chain` to A/B) | AGPL-3.0: idea only, written fresh |
+| U20 | AGENT-REACH-3 | `video-status --check` warns when yt_dlp or feedparser is missing | MIT (pattern only) |
+| U21 | PAPER-3 | Per-agent time and tokens in `team/usage.jsonl`, totals in video-status | MIT (idea) |
+| U22 | G4 | `uses`/`lastUsed` removed from template.json (the design-log is the record of use) | n/a |
+| U23 | G8 | One shared `src/elements/saidRoom.ts` for six designs (stills unchanged) | n/a |
+| U24 | CV-3 | `sweep-render --start/--end` focus window | MIT (port with attribution) |
+| U25+26 | CV-2, OPEN-3 | `research.py watch`: a reference video's pacing (cuts per minute, mean shot, first cut), contact sheets and captions | MIT glue; AGPL-3.0 pacing idea only |
+| U27 | AGENT-REACH-2 | `research.py comments`: most-liked comments, text and likes only, reply @handles removed | MIT (idea) |
+| U28 | H100-2 | `research.py audience` plus the "Audience questions" step in yt-youtube-metadata | Apache-2.0 (idea) |
+| U29 | G6 / OD-22 | The 11 standalone remotion-* skills removed; the remotion-best-practices router is the only copy | n/a |
+| U30 | G5 | `select-template.mjs --report`; weights unchanged until Daniel answers OD-29 on his PC | n/a |
+| U31 | REMOCN-3 | `page` cue: a long page scrolled on remocn's tilted stage (vertical video only; YouTubeReel refuses it) | MIT (port with attribution) |
+
+**Railway:** `railway.json` builds `mcp/Dockerfile`, which runs `mcp/http.mjs`. That serves `list_designs` and `research` (trending, topic, comments) behind `MCP_TOKEN`, with research files kept under `out/`, YouTube links only, at most 2 research jobs at once and a 16 KB body cap.
