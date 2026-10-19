@@ -231,6 +231,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const panel = faceHiddenOf(cueReel, FPS);
   check("cue panel counted as face-hidden", panel.cueMs > 2000 && panel.totalMs === panel.cueMs && panel.tooLong.length === 0, JSON.stringify(panel));
   check("cueRoom design: panels not counted", faceHiddenOf(cueReel, FPS, { cueRoom: true }).totalMs === 0);
+  const pageReel = reelOf(w, { cues: [{ kind: "page", fromMs: 2000, toMs: 5000, asset: "library/pages/x.png", width: 1000, height: 8000 }] });
+  check("page cue: face-hidden even in a cueRoom design", faceHiddenOf(pageReel, FPS, { cueRoom: true }).totalMs > 2000);
 
   // Reading-time floor: NFC length (a decomposed "ộ" counts once), the number
   // minimum, a short stat stretched into free time, a cue boxed in by the next

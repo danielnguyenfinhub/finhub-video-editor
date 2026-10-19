@@ -28,6 +28,7 @@ import { LenderLogo } from "../../mortgage/LenderLogo";
 import type { Lender } from "../../mortgage/lenders";
 import { outFrameOf, type EditJson, type Reel } from "../../mortgage/schema";
 import { FONT, clamp, emphasised, enter } from "../../mortgage/style";
+import { saidRoom } from "../../elements/saidRoom";
 import { yieldToCompare } from "../../elements/yieldToCompare";
 import { BIG_R, GAUGE_R, GLASS, HOME, SKY, useFontReady } from "./Space";
 
@@ -35,14 +36,6 @@ import { BIG_R, GAUGE_R, GLASS, HOME, SKY, useFontReady } from "./Space";
 // SAFE.bottom. Both grow upward.
 export const CAPTION_BOTTOM = 1352;
 const CAPTION_SIZE = 54;
-// The said word's scale grows it past its layout box and into the space to
-// its neighbours ("ThángHai"). Every word keeps a fixed side margin of half
-// that overflow (width about 0.6 em a character); with the neighbour's half
-// the space stays about as wide as said, and the line never reflows.
-// ponytail: width estimated from the character count; measure it with
-// measureText if a caption font ever differs much from 0.6 em a character.
-const saidRoom = (scale: number, text: string) =>
-  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
 const INNER = BIG_R * 2 - 40; // widest text inside the core
 
 const ease = (x: number) => 1 - (1 - x) ** 3;

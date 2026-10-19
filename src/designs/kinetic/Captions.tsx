@@ -17,6 +17,7 @@ import {
 import { SAFE } from "../../mortgage/golden";
 import { PagedCaptions } from "../../mortgage/PagedCaptions";
 import { outFrameOf, type Reel } from "../../mortgage/schema";
+import { saidRoom } from "../../elements/saidRoom";
 import { FONT, clamp, emphasised } from "../../mortgage/style";
 import {
   CAP_BUSY_BOTTOM,
@@ -36,14 +37,8 @@ const BUSY_MAX = 60;
 const LINE = 1.18;
 const GHOST = 0.35;
 const SLAM = 1.12; // a said word's scale as it lands
-// The slam grows a word past its layout box and into the space to its
-// neighbours ("ThángHai"). Every word keeps a fixed side margin of half that
-// overflow (width about 0.6 em a character); with the neighbour's half the
-// space stays about as wide as said, and the line never reflows. The fit
-// below measures the text that much narrower. ponytail: width estimated
-// from the character count; measure with measureText if that proves off.
-const saidRoom = (scale: number, text: string) =>
-  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
+// The slam grows a word into its saidRoom margin ("ThángHai"); the fit below
+// measures the text that much narrower.
 const FIT_W = SAFE_W / (1 + (SLAM - 1) / 2);
 
 // The surface text sits on at talk frame g: the block, or the slab under it

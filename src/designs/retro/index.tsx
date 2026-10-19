@@ -53,20 +53,13 @@ import {
   printShadow,
   useFontReady,
 } from "./Print";
+import { saidRoom } from "../../elements/saidRoom";
 import { ChapterRibbons, EnglishStrip } from "./Bands";
 import { ENGLISH_ROOM, STAGE, STAGE_W, StageLayer } from "./Stage";
 
 const RAMP_FRAMES = 8;
 const BIG = 70;
 const POP = 1.16; // a said word's pop, at its peak
-// The said word's scale grows it past its layout box and into the space to
-// its neighbours ("ThángHai"). Every word keeps a fixed side margin of half
-// that overflow (width about 0.6 em a character); with the neighbour's half
-// the space stays about as wide as said, and the line never reflows.
-// ponytail: width estimated from the character count; measure it with
-// measureText if a caption font ever differs much from 0.6 em a character.
-const saidRoom = (scale: number, text: string) =>
-  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
 const SMALL = 50;
 // The caption ribbon's bottom edge: mid-stage when the stage is free, just
 // above the English strip while something holds the stage.

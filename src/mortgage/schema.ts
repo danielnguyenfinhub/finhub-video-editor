@@ -143,8 +143,28 @@ const trend = z
     path: ["rateType"],
   });
 
+const libraryPath = z
+  .string()
+  .regex(
+    /^library\/([a-z0-9_-]+\/)*[a-z0-9_-]+\.[a-z0-9]+$/,
+    'a file under public/library/, e.g. "library/stock-video/house__pexels__1a2b3c4d.mp4" (lowercase, no "..")',
+  );
+
+// A long page (a fact sheet, a policy page) scrolled top to bottom on a tilted
+// screen (src/elements/remocn/stage.tsx), drawn by the core like a cutaway:
+// full frame, Daniel hidden, captions on top. asset: an image under
+// public/library/; width/height: its pixel size.
+const page = z.strictObject({
+  kind: z.literal("page"),
+  ...span,
+  asset: libraryPath,
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+
 const cue = z
   .discriminatedUnion("kind", [
+    page,
     kinetic,
     compare,
     bars,
@@ -164,12 +184,6 @@ const cue = z
 // asset is a file under public/library/, or {find} keywords that
 // `node scripts/library.mjs resolve <slug>` rewrites to one before rendering.
 export const VISUAL_MODES = ["cutaway", "pip", "overlay"] as const;
-const libraryPath = z
-  .string()
-  .regex(
-    /^library\/([a-z0-9_-]+\/)*[a-z0-9_-]+\.[a-z0-9]+$/,
-    'a file under public/library/, e.g. "library/stock-video/house__pexels__1a2b3c4d.mp4" (lowercase, no "..")',
-  );
 const visual = z.strictObject({
   mode: z.enum(VISUAL_MODES),
   atMs: ms,
@@ -395,6 +409,7 @@ export const onScreenCopy = (edit: EditJson): Record<string, string[]> => {
       case "venn":
         return [c.left, c.right, c.label];
       case "emoji":
+      case "page":
         return [];
       case "lenders":
         return [c.title ?? ""];

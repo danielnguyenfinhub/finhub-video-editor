@@ -27,6 +27,7 @@ string in this folder (catalog samples, built-in text) through the RG 234 guard.
 | `CaptionBox` | boxed captions, the word being said lit in amber (takes `words.json` words) | `createTikTokStyleCaptions` (`@remotion/captions`) |
 | `SocialHandle` | "follow us" pill with the logo | `Img`, `spring` |
 | `keepUnits` (helper, not rendered) | headline text whose wrap never splits a number from its word ("3 lần") or a two-word finance unit ("cơ bản"): no-break spaces | none |
+| `saidRoom` (helper, not rendered) | side margin in em that keeps the space beside a scaled said caption word ("ThángHai"); char-count estimate | none |
 | `ProgressBar` | reels-style progress bar | `useVideoConfig` |
 | `ReviewStamp` | "draft" watermark + burnt-in timecode for review copies | `useCurrentFrame` |
 | `Particles` | seeded drifting particles | `random` |

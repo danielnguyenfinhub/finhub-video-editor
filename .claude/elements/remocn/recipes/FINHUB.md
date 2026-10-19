@@ -39,6 +39,10 @@ never replaces the locked core (cuts, captions, compliance card).
 not remocn's `animated-line-chart`. Counters stay as they are (`rolling-number` and
 `number-wheel` are integer-only).
 
+**Page cue is live** (edit.json cue `page`): `stage` is vendored in `src/elements/remocn/stage.tsx`
+and drawn by the core (`src/mortgage/Visuals.tsx`), full cover like a cutaway. A screenshot of a
+lender page needs permission.
+
 ## Overrides — these beat the recipes
 
 - **Canvas**: recipes assume 1280×720 16:9. FinHub is 1080×1920 @ 30 fps, 4:5-safe

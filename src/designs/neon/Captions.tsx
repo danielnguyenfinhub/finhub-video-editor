@@ -15,6 +15,7 @@ import {
 } from "remotion";
 import { brand } from "../../brand/theme";
 import { CaptionZone, PagedCaptions } from "../../mortgage/PagedCaptions";
+import { saidRoom } from "../../elements/saidRoom";
 import type { Reel } from "../../mortgage/schema";
 import { emphasised, FONT, reelFontReady } from "../../mortgage/style";
 
@@ -24,14 +25,8 @@ const SIZE = 72;
 // ~3 syllables a page: short enough to read at a glance, long enough to read
 // as a phrase, not a syllable.
 const COMBINE_MS = 700;
-// The said word pops to POP and grows past its box into the space beside it
-// ("ThángHai"). Every word keeps a fixed side margin of half that overflow
-// (about 0.6 em a character), so the space stays and the line never reflows.
-// ponytail: width estimated from the character count; measure it with
-// measureText if the caption font ever differs much from 0.6 em a character.
+// The said word pops to POP; saidRoom keeps the space beside it ("ThángHai").
 const POP = 1.18;
-const saidRoom = (scale: number, text: string) =>
-  +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
 
 const Page: React.FC<{ page: TikTokPage; keywords: string[] }> = ({
   page,

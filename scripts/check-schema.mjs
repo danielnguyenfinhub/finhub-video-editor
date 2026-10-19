@@ -1,7 +1,7 @@
 // The one supported schema check for a talking-head / faceless MortgageReel:
 //   node scripts/check-schema.mjs <slug> [--public-dir <dir>]
 // Runs MortgageReel's calculateMetadata (parseEdit schema, assertCompliantCopy,
-// the rate gate, missing cut-out / visuals) exactly as a render would, and
+// the rate gate, missing cut-out / visuals / page images) exactly as a render would, and
 // prints "MortgageReel <slug>: <frames> frames (<seconds> s)"; exit 0 ok, 1 on
 // any error (its first 5 lines). `npx remotion compositions --props=...` fails
 // for every talking-head slug: ListingReel gets the same props and throws when
@@ -62,6 +62,7 @@ try {
     recordingPath(slug, edit.source, "words.json"),
     recordingPath(slug, edit.source, "foreground.webm"),
     ...(edit.visuals ?? []).flatMap((v) => (typeof v.asset === "string" ? [v.asset] : [])),
+    ...(edit.cues ?? []).flatMap((c) => (c.kind === "page" && typeof c.asset === "string" ? [c.asset] : [])),
   ];
   const place = (from, rel) => {
     const to = join(tmp, "public", rel);

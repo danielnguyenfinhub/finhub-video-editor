@@ -164,11 +164,14 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
 > = async ({ props }) => {
   const { slug, design, safeZones } = props;
   const editJson = await fetchJson(slug, `videos/${slug}/edit.json`);
-  const { source, visuals, background } = parseEdit(editJson, slug);
+  const { source, visuals, cues, background } = parseEdit(editJson, slug);
   const cutOutPath = recordingPath(slug, source, "foreground.webm");
-  const assets = (visuals ?? []).flatMap((v) =>
-    typeof v.asset === "string" ? [v.asset] : [],
-  );
+  const assets = [
+    ...(visuals ?? []).flatMap((v) =>
+      typeof v.asset === "string" ? [v.asset] : [],
+    ),
+    ...(cues ?? []).flatMap((c) => (c.kind === "page" ? [c.asset] : [])),
+  ];
   const [words, cutOut, ...found] = await Promise.all([
     fetchJson(slug, recordingPath(slug, source, "words.json")),
     // Quick mode and room mode need no cut-out; not asking keeps a 404 out of the log.
@@ -180,8 +183,8 @@ export const calculateMortgageReelMetadata: CalculateMetadataFunction<
   const missing = assets.filter((_, i) => !(found[i] as Response).ok);
   if (missing.length)
     throw new Error(
-      `MortgageReel "${slug}": visuals point at files that aren't in public/: ${missing.join(", ")}. ` +
-        `Add them with \`node scripts/library.mjs add\` or change the visual.`,
+      `MortgageReel "${slug}": visuals or page cues point at files that aren't in public/: ${missing.join(", ")}. ` +
+        `Add them with \`node scripts/library.mjs add\` or change the asset.`,
     );
   // Golden rule: the background is always removed, so the cut-out must exist,
   // unless edit.json opts out ("background": "vignette" or "room").
@@ -276,6 +279,11 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({
   // Quick mode: the full frame is opaque and would hide a Behind layer, so it
   // draws on top of Daniel instead (under the Overlay).
   const quick = edit.background === "vignette";
+  // `page` cues are drawn by the core (Visuals); a design never sees one.
+  const pages = (edit.cues ?? []).some((c) => c.kind === "page");
+  const designReel = pages
+    ? { ...reel, edit: { ...edit, cues: edit.cues?.filter((c) => c.kind !== "page") } }
+    : reel;
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       <TransitionSeries>
@@ -310,7 +318,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({
                     // (frame 0 = first word) inside this segment's sequence.
                     <Sequence from={-seg.outFrom} layout="none">
                       <design.Behind
-                        reel={reel}
+                        reel={designReel}
                         keywords={keywords}
                         talkFrames={talk}
                         src={src}
@@ -351,7 +359,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({
       {edit.music ? (
         <Music music={edit.music} captions={timeline.captions} />
       ) : null}
-      {edit.visuals?.length ? (
+      {edit.visuals?.length || pages ? (
         <Sequence
           from={TALK_START_FRAME}
           durationInFrames={talk - OUTRO_TRANSITION}
@@ -372,7 +380,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({
           layout="none"
         >
           <design.Behind
-            reel={reel}
+            reel={designReel}
             keywords={keywords}
             talkFrames={talk}
             src={src}
@@ -386,7 +394,7 @@ export const MortgageReel: React.FC<MortgageReelProps> = ({
         layout="none"
       >
         <design.Overlay
-          reel={reel}
+          reel={designReel}
           keywords={keywords}
           talkFrames={talk}
           src={src}
