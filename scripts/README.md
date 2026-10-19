@@ -59,6 +59,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-sweep.mjs` | `sweep-render.mjs` frame budget and parsing; `--out` only inside `out/`; end to end when ffmpeg is on PATH | **test** |
 | `check-mcp.mjs` | `mcp/finhub-video-server.mjs` starts, lists exactly its six tools (none that publishes or clones), answers, and refuses unsafe slugs and composition ids | **test** |
 | `check-video-status.mjs` | `video-status.mjs` on synthetic runs | **test** |
+| `vendor-remocn.mjs` | Adds each remocn entry's `len` and first `avoid:` line to `.claude/elements/remocn/CATALOG.md` from a sibling remocn checkout; `--check` exits 1 if stale. The real run is manual (reads ../remocn-remotion-resoure); `--selftest` (offline CRLF frontmatter and catalog fixtures) is in npm test. | **test** |
 | `check-tmp-dir.mjs` | `tmp-dir.mjs` removes each folder when its process exits, also on an uncaught error or unhandled rejection; `keep: true` keeps it | **test** |
 | `sandbox-facts.mjs [--probe]` | What this machine can do, once per team run: node/npm/python versions, ffmpeg/ffprobe, the installed headless shell, the still probe (only with `--probe`), remotion.media and fonts.gstatic.com from Node, recordings present, git depth, CI. Writes `out/teams/sandbox-facts.md` (`--selftest`: the formatting) | **test** |
 | `faceless-still.mjs <slug> <design> [--frame n] [--production]` (flags anywhere, `--flag=value` too; `--selftest`: the argument parsing) | A MortgageReel still of a faceless video with no recording: scratch public dir, `"background": "vignette"`, black VP9 placeholder `source.mp4` (`scratch-public.mjs`); the repo is untouched. `--production`: the navy picture and transparent cut-out, so a talking-head design renders too (no face: the look over Daniel still needs his PC) | **test** |
@@ -90,7 +91,6 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | Script | Does |
 |---|---|
 | `vendor-skills.mjs`, `vendor-elements.mjs`, `build-chat-skill.mjs` | Re-vendor Remotion skills and the Elements library; build the claude.ai skill zip. |
-| `vendor-remocn.mjs` | Adds each remocn entry's `len` and first `avoid:` line to `.claude/elements/remocn/CATALOG.md` from a sibling remocn checkout; `--check` exits 1 if stale. Manual (reads ../remocn-remotion-resoure), not in npm test. |
 | `generate-sample-media.mjs`, `fetch-noto-emoji.mjs` | Regenerate sample clips; fetch Noto animated emoji. |
 | `renderer-apis.mjs` | Exercises the Node-side Remotion APIs that cannot run inside a scene. |
 | `tmp-dir.mjs` | Temp folders inside the repo (`node_modules/.cache/finhub-tmp`) so esbuild bundles resolve `remotion`; use it instead of `os.tmpdir()`. Removed when the process exits (`{ keep: true }` to keep one); folders a killed process left are pruned after 6 h. `bundleTs(entries, options)` bundles `.ts` to `.mjs` there with esbuild's JS API (`node node_modules/esbuild/bin/esbuild` is a native binary on Linux/macOS). |

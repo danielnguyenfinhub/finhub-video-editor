@@ -59,7 +59,7 @@ export const reviewOf = (root, slug, name) => {
 
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Sydney" }).format(new Date());
 
-export function plan(slug, root = ROOT) {
+export function plan(slug, root = ROOT, outDir = OUTPUT_DIR) {
   assertSlug(slug);
   const dir = join(root, "out", "videos", slug), team = join(dir, "team"), ledgerPath = join(team, "07_published.json");
   const ledger = existsSync(ledgerPath) ? json(ledgerPath) : { slug, date: today(), steps: {} };
@@ -69,7 +69,7 @@ export function plan(slug, root = ROOT) {
   const stop = [], warnings = [];
   if (!title) stop.push("no post.title in edit.json/script.json");
   const topic = title ? topicFileName(title) : slug;
-  const files = { video: join(OUTPUT_DIR, `${topic}.mp4`), caption: join(OUTPUT_DIR, `${topic} - caption.txt`), thumbnail: join(dir, "thumbnail.png") };
+  const files = { video: join(outDir, `${topic}.mp4`), caption: join(outDir, `${topic} - caption.txt`), thumbnail: join(dir, "thumbnail.png") };
   for (const [k, p] of Object.entries(files)) if (!existsSync(p)) stop.push(`missing ${k}: ${p}`);
   for (const f of ["04_compliance_final.json", "02_compliance_script.json", "05_qc_render.json", "04_qc_stills.json"]) {
     const r = reviewOf(root, slug, f);

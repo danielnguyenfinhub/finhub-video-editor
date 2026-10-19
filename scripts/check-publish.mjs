@@ -428,6 +428,14 @@ assert.equal(nextStep(Object.fromEntries(["approved", "staged", "drive", "youtub
   assert.deepEqual(plan("s", r).stop.filter((x) => /re-run/.test(x)), [], "fresh QC and compliance PASS");
   w("public/videos/s/words.json", [{ text: "changed caption", startMs: 0, endMs: 1 }]);
   assert.match(plan("s", r).stop.join(), /re-run QC \(05_qc_render\.json\)/, "words.json edit after both PASSes: refused");
+  // R5: QC PASS from an older run (no inputsHash) and a render whose stamp no longer matches: the render-stale stop refuses.
+  w("out/videos/s/team/05_qc_render.json", { verdict: "PASS" });
+  const fin = join(r, "finished");
+  mkdirSync(fin);
+  writeFileSync(join(fin, "T.mp4"), "v");
+  writeFileSync(join(fin, "T.inputs"), "hash-of-an-older-edit");
+  assert.doesNotMatch(plan("s", r, fin).stop.join(), /re-run QC \(/, "older QC verdict: no hash stop");
+  assert.match(plan("s", r, fin).stop.join(), /T\.mp4 is stale: its on-screen inputs changed.*Re-render/, "stale render: refused");
   rmSync(r, { recursive: true, force: true });
 }
 
