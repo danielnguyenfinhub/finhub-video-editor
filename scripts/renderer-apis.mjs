@@ -588,7 +588,7 @@ await step("renderer getSilentParts()", async () => {
 });
 
 // Mediabunny reads a local file in Node with FilePathSource. The bundled
-// remotion-multimedia skill's Node example uses FileSource, which 1.56.1
+// remotion-best-practices/remotion-multimedia guide's Node example uses FileSource, which 1.56.1
 // doesn't export (BlobSource takes a File or Blob). See docs/findings.md.
 await step("mediabunny Input + FilePathSource", async () => {
   const input = new Input({formats: ALL_FORMATS, source: new FilePathSource(join(publicDir, "sample-clip-tone.webm"))});

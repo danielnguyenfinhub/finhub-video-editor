@@ -26,7 +26,7 @@ untouched until he runs the migration himself.
 |---|---|---|
 | `architecture-auditor` | measures, ranks, proposes the layout and each change's blast radius | `repo-audit-tools` skill |
 | `asset-refactorer` | resolver, schema, every caller, docs, migration script (dry run only) | `references/asset-contract.md` |
-| `pipeline-optimizer` | timed render-speed changes, one at a time | `remotion-render` skill plus measured evidence |
+| `pipeline-optimizer` | timed render-speed changes, one at a time | `remotion-best-practices/remotion-render` guide plus measured evidence |
 | `quality-reviewer` | independent PASS / FIX / BLOCK after the refactor and after the speed pass | its own file |
 
 **Execution mode: subagents**, called in sequence with the Agent tool (`subagent_type` = the

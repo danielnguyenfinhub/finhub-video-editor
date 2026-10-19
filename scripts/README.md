@@ -11,7 +11,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `recordings.py` | Where a video's recording files live (the Python copy of `src/mortgage/recording.ts`). |
 | `reframe.py` | Finds the face in a landscape or square recording so the 9:16 proxy crops around it. |
 | `brief.mjs` | What a video is about, as numbers the template selector scores. |
-| `select-template.mjs` | Ranks the designs for one video and writes the top 3 with reasons. |
+| `select-template.mjs` | Ranks the designs for one video and writes the top 3 with reasons; `--report` compares each `selection.json` top pick with the design made. |
 | `music-start.mjs` | Where a music track gets going, so `edit.json` `music.startMs` can skip its intro. |
 | `migrate-assets.py` | Moves each recording into `public/recordings/<id>/` (the asset contract). |
 | `migrate-footage-to-library.mjs` | Imports per-slug `voice/footage/` files into the source library. |
@@ -75,7 +75,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `check-captions.mjs`, `check-caption-fixes.mjs` | Shared caption layer; caption slip fixes in `timeline.ts` | **test** |
 | `check-contrast.mjs --selftest` | Text legibility of every design, after its own ratio and chart-fill self-test | **test** |
 | `check-text-size.mjs [id ...]` | Ratchet: `fontSize` literals under `MIN_TEXT_PX` (30 px, about 11 pt on a phone) may not exceed `config/text-size-baseline.json` per design; `--update-baseline` lowers it (with design ids: only theirs); ternary (also in parentheses) and multi-line values are read, comments and `12 * scale` are not, a built-in fixture fails the run if the scanner finds nothing; sizes computed at run time are not seen; promote-design prints the count | **test** |
-| `check-selector.mjs` | `select-template.mjs` ranking; every design has a manifest; nothing fits = a stop, not `pick: null` | **test** |
+| `check-selector.mjs` | `select-template.mjs` ranking; every design has a manifest; nothing fits = a stop, not `pick: null`; `--report` agreement on a two-video fixture | **test** |
 | `check-element-copy.mjs` | RG 234 scan of text in `src/elements/` | **test** |
 | `check-facts.mjs`, `check-visuals.mjs` | `facts.mjs`; the AI judge's pure parts, the stock relevance guard, the fal.ai call buying `aiStillsPerScene()` stills, `AI_CANDIDATES` parsing, and a `voice-video --dry-run` (from a temp copy with a fixture `.env.local`) whose `spend-estimate.json` counts scenes x stills | **test** |
 | `check-listing-compliance.mjs`, `check-listing-prep.mjs` | Listing compliance rules and the price-line floor ("$1.2 million", also in the copy and listing.txt); listing parsing; CLI slugs (`assertSlug`) against every real folder, and every slug entry point still calls it | **test** |
@@ -90,7 +90,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 ## Tooling (rarely run)
 | Script | Does |
 |---|---|
-| `vendor-skills.mjs`, `vendor-elements.mjs`, `build-chat-skill.mjs` | Re-vendor Remotion skills and the Elements library; build the claude.ai skill zip. |
+| `vendor-skills.mjs`, `vendor-elements.mjs`, `build-chat-skill.mjs` | Re-vendor the Remotion skills (the `remotion-best-practices` router only) and the Elements library; build the claude.ai skill zip. |
 | `generate-sample-media.mjs`, `fetch-noto-emoji.mjs` | Regenerate sample clips; fetch Noto animated emoji. |
 | `renderer-apis.mjs` | Exercises the Node-side Remotion APIs that cannot run inside a scene. |
 | `tmp-dir.mjs` | Temp folders inside the repo (`node_modules/.cache/finhub-tmp`) so esbuild bundles resolve `remotion`; use it instead of `os.tmpdir()`. Removed when the process exits (`{ keep: true }` to keep one); folders a killed process left are pruned after 6 h. `bundleTs(entries, options)` bundles `.ts` to `.mjs` there with esbuild's JS API (`node node_modules/esbuild/bin/esbuild` is a native binary on Linux/macOS). |

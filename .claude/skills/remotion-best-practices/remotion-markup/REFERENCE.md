@@ -356,3 +356,7 @@ This goes for `@remotion/*` packages, `mediabunny`, `@mediabunny/*`, `zod`, and 
 When a visual check is useful, open the [Remotion Studio](../remotion-studio/REFERENCE.md) for an interactive preview.
 
 You can also use [Rendering](../remotion-render/REFERENCE.md) to inspect one or several frames as images.
+
+## Background removal (AI video matting)
+
+For chroma-key (green/blue screen) removal, use `colorKey()` from [effects.md](effects.md). For removing the background from footage that has **no** green screen — an AI segmentation model cutting out the subject — see [video-matting.md](video-matting.md).

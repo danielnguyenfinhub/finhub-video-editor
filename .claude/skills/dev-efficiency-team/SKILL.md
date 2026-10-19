@@ -23,7 +23,7 @@ Pattern: measure → decide → change one thing → re-measure (pipeline with a
 | `workflow-analyst` | per-phase baseline of a run and of agent sessions, ranked cuts | `repo-audit-tools` skill |
 | `architecture-auditor` | tokens and disk by file and folder (reused from refactor-team) | `repo-audit-tools` skill |
 | `automation-builder` | early checks, scripts, hooks, tighter prompts and read lists | `docs/agents/code-changes.md` |
-| `pipeline-optimizer` | render speed with timings (reused from refactor-team) | `remotion-render` skill |
+| `pipeline-optimizer` | render speed with timings (reused from refactor-team) | `remotion-best-practices/remotion-render` guide |
 | `quality-reviewer` | independent PASS / FIX / BLOCK that nothing broke and the savings are real | its own file |
 
 **Execution mode: subagents in sequence**, with the two measuring agents in parallel in Phase 1. Reviewer starts clean.

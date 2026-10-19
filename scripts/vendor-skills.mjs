@@ -1,18 +1,22 @@
 // Copies the official Remotion agent skills into .claude/skills as a
 // symlink-free tree, so the folder works on Windows checkouts and can be
-// zipped for upload to claude.ai without duplicated content.
+// zipped for upload to claude.ai without duplicated content. Only the
+// remotion-best-practices router is kept (OD-22): its upstream symlinks to the
+// sibling skills are copied as real folders inside it, and the standalone
+// remotion-* copies are removed, not vendored.
 //
 // Usage: node scripts/vendor-skills.mjs [path-to-skills-source]
 // Default source is ../remotion/packages/skills/skills: a Remotion checkout
 // next to this project, at the Remotion version being upgraded to.
 
 import {
-  cpSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
@@ -32,17 +36,6 @@ if (!existsSync(join(source, "remotion-best-practices", "SKILL.md"))) {
   process.exit(1);
 }
 
-const copyWithoutSymlinks = (src, dst) => {
-  mkdirSync(dst, { recursive: true });
-  for (const entry of readdirSync(src, { withFileTypes: true })) {
-    if (entry.isSymbolicLink()) continue;
-    const from = join(src, entry.name);
-    const to = join(dst, entry.name);
-    if (entry.isDirectory()) copyWithoutSymlinks(from, to);
-    else cpSync(from, to);
-  }
-};
-
 // Replace only the skills Remotion ships, so the project's own skills in
 // .claude/skills (vietnamese-finance-video-editor) survive re-vendoring.
 const skillNames = new Set(
@@ -53,7 +46,17 @@ const skillNames = new Set(
 for (const name of skillNames) {
   rmSync(join(target, name), { recursive: true, force: true });
 }
-copyWithoutSymlinks(source, target);
+// cpSync's `dereference` leaves nested symlinks as links (Node 22), so walk.
+const copyDereferenced = (src, dst) => {
+  mkdirSync(dst, { recursive: true });
+  for (const name of readdirSync(src)) {
+    const from = join(src, name);
+    if (statSync(from).isDirectory()) copyDereferenced(from, join(dst, name));
+    else copyFileSync(from, join(dst, name));
+  }
+};
+const router = "remotion-best-practices";
+copyDereferenced(join(source, router), join(target, router));
 
 const markdownFiles = (dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -63,10 +66,10 @@ const markdownFiles = (dir) =>
   });
 
 // Upstream skills link to sibling skills through symlinks named after the
-// skill (e.g. remotion-best-practices/remotion-create -> ../remotion-create).
-// Without the symlinks, point those links at the real sibling directory.
+// skill. Without the symlinks, point a link that does not resolve at the
+// router's copy of that skill.
 const linkPattern =
-  /\]\((?:\.\/)?(remotion-[a-z0-9-]+)\/([^)#\s]*)(#[^)\s]*)?\)/g;
+  /\]\(((?:\.\.?\/)*)(remotion-[a-z0-9-]+)\/([^)#\s]*)(#[^)\s]*)?\)/g;
 let rewritten = 0;
 const broken = [];
 
@@ -75,11 +78,15 @@ for (const file of markdownFiles(target)) {
   const original = readFileSync(file, "utf8");
   const updated = original.replace(
     linkPattern,
-    (match, skill, rest, hash = "") => {
-      if (!skillNames.has(skill) || existsSync(join(fileDir, skill))) {
+    (match, up, skill, rest, hash = "") => {
+      if (
+        !skillNames.has(skill) ||
+        existsSync(resolve(fileDir, `${up}${skill}/${rest}`))
+      ) {
         return match;
       }
-      const toSibling = relative(fileDir, join(target, skill))
+      const home = join(target, router, skill === router ? "" : skill);
+      const toSibling = relative(fileDir, home)
         .split(sep)
         .join("/");
       rewritten++;
@@ -98,7 +105,7 @@ for (const file of markdownFiles(target)) {
 }
 
 console.log(
-  `Vendored ${skillNames.size} skills into ${relative(projectRoot, target)} (${rewritten} sibling links rewritten).`,
+  `Vendored ${router} (${skillNames.size} upstream skills) into ${relative(projectRoot, target)} (${rewritten} sibling links rewritten).`,
 );
 if (broken.length > 0) {
   console.error("Broken relative links:\n  " + broken.join("\n  "));

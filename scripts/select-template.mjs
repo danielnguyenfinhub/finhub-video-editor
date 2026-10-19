@@ -2,6 +2,7 @@
 // out/videos/<slug>/selection.json (it runs brief.mjs first).
 //   node scripts/select-template.mjs <slug> [--public-dir <dir>]   (passed on to brief.mjs)
 //   node scripts/select-template.mjs <slug> --pick <id> --reason "<why>"   (Daniel's override)
+//   node scripts/select-template.mjs --report   (top pick vs the design made, before tuning the weights)
 // Hard filters (aspect, language, card length per kind, face) drop a design
 // outright; the rest are scored with config/selector.json (untuned weights):
 //   intent·IntentMatch + shape·DataShapeFit + comp·ComprehensionPrior
@@ -136,8 +137,38 @@ export const overrideOf = (pick, reason, { ranked, dropped }, manifests) => ({
   ...(!manifests.find((t) => t.id === pick)?.promoted && { unproven: unprovenWhy(pick) }),
 });
 
+// Selector top pick vs the design made (design-log, else edit.json), per out/videos/<slug>/selection.json.
+export function selectorReport({
+  videosDir = join(root, "out", "videos"),
+  publicVideos = join(root, "public", "videos"),
+  log = readJson(join(root, "public", "videos", "design-log.json")),
+} = {}) {
+  const last = log.at(-1)?.design;
+  let streak = 0;
+  while (last && log.at(-1 - streak)?.design === last) streak++;
+  const slugs = existsSync(videosDir) ? readdirSync(videosDir).filter((s) => existsSync(join(videosDir, s, "selection.json"))) : [];
+  const rows = slugs.map((slug) => {
+    const top = readJson(join(videosDir, slug, "selection.json")).top?.[0]?.id ?? null;
+    const edit = join(publicVideos, slug, "edit.json");
+    const made = log.findLast((e) => e.slug === slug)?.design ?? (existsSync(edit) ? readJson(edit).design : null) ?? null;
+    return { slug, top, made };
+  });
+  const compared = rows.filter((r) => r.top && r.made);
+  const agree = compared.filter((r) => r.top === r.made).length;
+  const rate = compared.length ? Math.round((100 * agree) / compared.length) : null;
+  const lines = [
+    `videos with a selection: ${rows.length}`,
+    ...(rows.length ? [] : [`no selection.json under ${videosDir}: run this on the PC that made the videos`]),
+    ...rows.map((r) => `  ${r.slug}: selector ${r.top ?? "-"}, made ${r.made ?? "unknown"}${r.top && r.made ? (r.top === r.made ? "" : "  (differs)") : ""}`),
+    `agreement: ${rate === null ? "n/a" : `${agree}/${compared.length} (${rate}%)`}`,
+    `current streak: ${streak} × ${last ?? "-"} (design-log)`,
+  ];
+  return { rows, agree, compared: compared.length, rate, streak, last, lines };
+}
+
 function main() {
   const [slug, ...rest] = process.argv.slice(2);
+  if (slug === "--report") return console.log(selectorReport().lines.join("\n"));
   if (!slug) throw new Error('Usage: node scripts/select-template.mjs <slug> [--public-dir <dir>] [--pick <id> --reason "<why>"]');
   assertSlug(slug);
   const flag = (name) => {
