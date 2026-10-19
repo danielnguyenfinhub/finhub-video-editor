@@ -14,6 +14,7 @@ const ACCESS_S = 60 * 60;
 const REFRESH_S = 30 * 24 * 60 * 60;
 const CODE_S = 5 * 60;
 const MAX_FAILS = 10; // wrong MCP_TOKEN tries per IP per 15 minutes
+const MAX_FAILS_ALL = 100; // and from all addresses together
 const FAIL_WINDOW_MS = 15 * 60_000;
 
 const b64 = (b) => Buffer.from(b).toString("base64url");
@@ -77,32 +78,39 @@ export const makeOAuth = (token) => {
   };
 
   const usedCodes = new Map(); // jti -> exp: a code works once
-  const fails = new Map(); // ip -> { n, since }
-  const blocked = (ip) => {
-    const f = fails.get(ip);
-    if (f && Date.now() - f.since > FAIL_WINDOW_MS) fails.delete(ip);
-    return (fails.get(ip)?.n ?? 0) >= MAX_FAILS;
+  const fails = new Map(); // ip -> { n, since }; key "*" counts every address together
+  const over = (k, max) => {
+    const f = fails.get(k);
+    if (f && Date.now() - f.since > FAIL_WINDOW_MS) fails.delete(k);
+    return (fails.get(k)?.n ?? 0) >= max;
   };
+  const blocked = (ip) => over(ip, MAX_FAILS) || over("*", MAX_FAILS_ALL);
   const failed = (ip) => {
-    const f = fails.get(ip) ?? { n: 0, since: Date.now() };
-    f.n++;
-    fails.set(ip, f);
-    if (fails.size > 10_000) fails.clear();
+    for (const k of [ip, "*"]) {
+      const f = fails.get(k) ?? { n: 0, since: Date.now() };
+      f.n++;
+      fails.set(k, f);
+    }
+    if (fails.size > 10_000) for (const k of fails.keys()) if (k !== "*") fails.delete(k);
   };
 
   const base = (req) => {
     if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL.replace(/\/$/, "");
     const host = /^[a-z0-9.-]+(:\d+)?$/i.test(req.headers.host ?? "") ? req.headers.host : "localhost";
-    const proto = String(req.headers["x-forwarded-proto"] ?? "").split(",")[0].trim() === "https" ? "https" : "http";
+    // Railway terminates TLS: https unless this is a local run (check-mcp, Claude Desktop on the PC).
+    const local = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
+    const proto = !local || String(req.headers["x-forwarded-proto"] ?? "").split(",")[0].trim() === "https" ? "https" : "http";
     return `${proto}://${host}`;
   };
-  const ipOf = (req) => String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim() || req.socket.remoteAddress || "?";
+  // The rightmost x-forwarded-for entry is the one Railway's proxy added; the leftmost is the client's to write.
+  const ipOf = (req) => String(req.headers["x-forwarded-for"] ?? "").split(",").pop().trim() || req.socket.remoteAddress || "?";
 
-  const tokens = (cid) => ({
+  // A refresh keeps the first sign-in's end date (e0): 30 days after pasting MCP_TOKEN, sign in again.
+  const tokens = (cid, e0 = now() + REFRESH_S) => ({
     access_token: sign("access", { c: cid }, ACCESS_S),
     token_type: "Bearer",
     expires_in: ACCESS_S,
-    refresh_token: sign("refresh", { c: cid }, REFRESH_S),
+    refresh_token: sign("refresh", { c: cid, e0 }, Math.max(1, e0 - now())),
   });
 
   // The /authorize request, checked the same way on GET (show the form) and POST (sign in).
@@ -132,7 +140,9 @@ export const makeOAuth = (token) => {
       .end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Finance Hub video tools: sign in</title><style>body{font:16px system-ui,sans-serif;max-width:26rem;margin:4rem auto;padding:0 1rem;color:#111;background:#fff}
 input[type=password]{width:100%;padding:.6rem;font-size:1rem;box-sizing:border-box}button{margin-top:1rem;padding:.6rem 1.2rem;font-size:1rem}p.e{color:#b00020}</style></head>
-<body><h1>Finance Hub video tools</h1><p>Paste the <code>MCP_TOKEN</code> from Railway (finhub-video-editor, Variables) to connect Claude.</p>
+<body><h1>Finance Hub video tools</h1><p>A Claude connector (${esc(new URL(p.get("redirect_uri")).host)}) asks to use the Finance Hub video tools.</p>
+<p><strong>Only continue if you clicked Connect in your own Claude account just now.</strong> If someone sent you this link, close the page.</p>
+<p>Paste the <code>MCP_TOKEN</code> from Railway (finhub-video-editor, Variables).</p>
 ${error ? `<p class="e">${esc(error)}</p>` : ""}<form method="post" action="/authorize">${hidden}
 <label for="t">MCP_TOKEN</label><input id="t" type="password" name="mcp_token" autocomplete="current-password" required autofocus>
 <button type="submit">Connect</button></form></body></html>`);
@@ -230,7 +240,8 @@ ${error ? `<p class="e">${esc(error)}</p>` : ""}<form method="post" action="/aut
         if (!code) return bad("unknown or expired code"), true;
         if (usedCodes.has(code.j)) return bad("code already used"), true;
         if (p.get("client_id") !== code.c || p.get("redirect_uri") !== code.r) return bad("client_id or redirect_uri does not match"), true;
-        if (b64(sha(p.get("code_verifier") ?? "")) !== code.ch) return bad("PKCE code_verifier does not match"), true;
+        const verifier = p.get("code_verifier") ?? "";
+        if (!/^[A-Za-z0-9._~-]{43,128}$/.test(verifier) || b64(sha(verifier)) !== code.ch) return bad("PKCE code_verifier does not match"), true;
         for (const [j, exp] of usedCodes) if (exp < now()) usedCodes.delete(j);
         usedCodes.set(code.j, code.exp);
         json(res, 200, tokens(code.c));
@@ -238,8 +249,8 @@ ${error ? `<p class="e">${esc(error)}</p>` : ""}<form method="post" action="/aut
       }
       if (p.get("grant_type") === "refresh_token") {
         const r = open("refresh", p.get("refresh_token"));
-        if (!r || (p.has("client_id") && p.get("client_id") !== r.c)) return bad("unknown or expired refresh_token"), true;
-        json(res, 200, tokens(r.c));
+        if (!r || !(r.e0 > now()) || (p.has("client_id") && p.get("client_id") !== r.c)) return bad("unknown or expired refresh_token"), true;
+        json(res, 200, tokens(r.c, r.e0));
         return true;
       }
       json(res, 400, { error: "unsupported_grant_type" });

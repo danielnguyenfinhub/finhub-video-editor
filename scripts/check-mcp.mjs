@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { connect } from "node:net";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -76,6 +77,17 @@ try {
   const big = await fetch(`${base}/mcp/${token}`, { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "ping", params: { pad: "x".repeat(20_000) } }) });
   assert.equal(big.status, 413, "a body over 16 KB is refused");
   console.log("check-mcp http: token required, light tools only");
+
+  // A malformed request line once made new URL throw outside any try and killed the process.
+  const raw = await new Promise((done) => {
+    const sock = connect(port, "127.0.0.1", () => sock.end("GET //[ HTTP/1.1\r\nHost: x\r\n\r\n"));
+    let got = "";
+    sock.on("data", (d) => (got += d));
+    sock.on("close", () => done(got));
+    sock.on("error", () => done(got));
+  });
+  assert.match(raw, /^HTTP\/1\.1 400/, "a malformed URL gets 400");
+  assert.ok((await fetch(`${base}/health`)).ok, "the server is still up after a malformed URL");
 
   // OAuth sign-in (mcp/oauth.mjs), the way claude.ai runs it: 401 -> metadata -> register -> authorize -> token.
   const unauth = await fetch(`${base}/mcp`, { method: "POST" });

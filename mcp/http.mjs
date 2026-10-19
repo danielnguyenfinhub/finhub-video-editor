@@ -26,8 +26,15 @@ const authorised = (req, path) => {
   return path.startsWith("/mcp/") && same(path.slice(5));
 };
 
+// A malformed request line (GET //[) makes new URL throw: answer 400, never let it reach the process.
+process.on("unhandledRejection", (err) => console.error(err));
 createServer(async (req, res) => {
-  const path = new URL(req.url ?? "/", "http://x").pathname;
+  let path;
+  try {
+    path = new URL(req.url ?? "/", "http://x").pathname;
+  } catch {
+    return res.writeHead(400).end();
+  }
   if (path === "/health") return res.writeHead(200, { "content-type": "text/plain" }).end("ok");
   try {
     if (await oauth.handle(req, res, path)) return;
