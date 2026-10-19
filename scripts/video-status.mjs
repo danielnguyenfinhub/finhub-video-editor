@@ -10,6 +10,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { assertSlug } from "./listing-prep.mjs";
+import { reviewOf } from "./publish-post.mjs";
 
 // The shared recording resolver. Not loaded for --check (no slug): that hook must print nothing when
 // ready, and Node warns on importing a .ts file from this package.
@@ -23,13 +24,19 @@ const readJson = (p) => {
   }
 };
 
-// A stage's check returns true (done), false (the next round does it), or
-// { gate } (Daniel decides; the loop stops) / { stop } (blocked; the loop stops).
-const verdictOf = (file, what) => {
-  const j = readJson(file);
+// A stage's check returns true (done), { warn } (done, with a warning), false (the next round does it), { stale }
+// (a PASS made before its inputs changed: re-run), or { gate } (Daniel decides; the loop stops) / { stop } (blocked).
+// FIX-loop limit (SKILL.md "FIX / BLOCK loop"): `round` = fix rounds already applied (0 on the first review);
+// 2 for content findings, 1 when every finding is "kind": "cosmetic". Idea: paperclip execution-recovery-attempt.
+export const ROUND_LIMIT = { content: 2, cosmetic: 1 };
+const verdictOf = (root, slug, name, what) => {
+  const j = reviewOf(root, slug, name);
   if (!j) return false;
-  if (j.verdict === "PASS") return true;
+  if (j.verdict === "PASS") return j.stale ? { stale: j.stale } : j.warn ? { warn: j.warn } : true;
+  const file = join(root, "out/videos", slug, "team", name);
   if (j.verdict === "BLOCK") return { stop: `${what} BLOCK: see ${file}` };
+  const limit = j.findings?.length && j.findings.every((f) => f.kind === "cosmetic") ? ROUND_LIMIT.cosmetic : ROUND_LIMIT.content;
+  if (Number.isInteger(j.round) && j.round >= limit) return { gate: `rounds exhausted, Daniel decides: ${what} FIX after ${j.round} round(s) (limit ${limit}); open findings in ${file}` };
   return false; // FIX: the next round sends the findings to their owner and re-checks
 };
 
@@ -40,7 +47,7 @@ export const stagesFor = (root, slug) => {
   const edit = readJson(video("edit.json")) ?? {};
   const pipeline = has(video("script.json")) ? "B" : "A";
   const build = { id: "build (video-editor)", done: () => readJson(team("03_editor_report.json"))?.status === "success" };
-  const qcStills = { id: "QC stills (video-qc)", done: () => verdictOf(team("04_qc_stills.json"), "QC") };
+  const qcStills = { id: "QC stills (video-qc)", done: () => verdictOf(root, slug, "04_qc_stills.json", "QC") };
   const render = { id: "render (video-editor A7.1 / B5.4)", done: () => has(join(root, "out/videos", slug, `${slug}.mp4`)) };
   const ends = [
     { id: "deliver (06_delivery.md)", done: () => has(team("06_delivery.md")) },
@@ -52,12 +59,12 @@ export const stagesFor = (root, slug) => {
     return { pipeline, stages: [
       intake,
       { id: "script (video-script-writer)", done: () => has(team("01_writer_notes.md")) },
-      { id: "compliance, script", done: () => verdictOf(team("02_compliance_script.json"), "Compliance") },
+      { id: "compliance, script", done: () => verdictOf(root, slug, "02_compliance_script.json", "Compliance") },
       { id: "script lock (B2.5)", done: () => has(team("02_script_lock.md")) || { gate: "Daniel approves each scene's VI/EN words and the cost (B2.5)" } },
       { id: "voice (B3)", done: () => has(video("words.json")) },
       build,
       qcStills,
-      { id: "compliance, final", done: () => verdictOf(team("04_compliance_final.json"), "Compliance") },
+      { id: "compliance, final", done: () => verdictOf(root, slug, "04_compliance_final.json", "Compliance") },
       render,
       ...ends,
     ] };
@@ -74,27 +81,28 @@ export const stagesFor = (root, slug) => {
     } },
     build,
     qcStills,
-    { id: "compliance, final (if run)", done: () => !has(team("04_compliance_final.json")) || verdictOf(team("04_compliance_final.json"), "Compliance") },
+    { id: "compliance, final (if run)", done: () => !has(team("04_compliance_final.json")) || verdictOf(root, slug, "04_compliance_final.json", "Compliance") },
     { id: "matte (Daniel starts it)", done: () => edit.background === "vignette" || has(matte) || { gate: `no cut-out yet (${matte}): Daniel starts the matte, or opts into quick mode` } },
     render,
-    { id: "QC render (video-qc)", done: () => verdictOf(team("05_qc_render.json"), "QC render") },
+    { id: "QC render (video-qc)", done: () => verdictOf(root, slug, "05_qc_render.json", "QC render") },
     ...ends,
   ] };
 };
 
-// The first stage not done: { pipeline, done: [ids], stage, halt }.
+// The first stage not done: { pipeline, done: [ids], stage, halt, warnings }.
 export const nextOf = (root, slug) => {
   const { pipeline, stages } = stagesFor(root, slug);
-  const done = [];
+  const done = [], warnings = [];
   for (const stage of stages) {
     const r = stage.done();
-    if (r === true) {
+    if (r === true || r?.warn) {
+      if (r.warn) warnings.push(r.warn);
       done.push(stage.id);
       continue;
     }
-    return { pipeline, done, stage: stage.id, halt: r || null };
+    return { pipeline, done, stage: stage.id, halt: r || null, warnings };
   }
-  return { pipeline, done, stage: null, halt: null };
+  return { pipeline, done, stage: null, halt: null, warnings };
 };
 
 const run = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: "utf8", timeout: 30000, ...opts });
@@ -142,7 +150,7 @@ const board = (root) => {
   if (!slugs.length) return console.log("No team runs yet.");
   for (const s of slugs) {
     const n = nextOf(root, s);
-    const state = !n.stage ? "complete" : n.halt?.gate ? `WAITING: ${n.halt.gate}` : n.halt?.stop ? `STOPPED: ${n.halt.stop}` : `next: ${n.stage}`;
+    const state = !n.stage ? "complete" : n.halt?.gate ? `WAITING: ${n.halt.gate}` : n.halt?.stop ? `STOPPED: ${n.halt.stop}` : n.halt?.stale ? `next: ${n.halt.stale}` : `next: ${n.stage}`;
     console.log(`${s.padEnd(22)} ${n.pipeline}  ${n.done.length} done  ${state}`);
   }
 };
@@ -170,9 +178,11 @@ const main = () => {
   for (const i of ready.items) console.log(`  ${i.level}: ${i.problem} -> ${i.fix}`);
   const n = nextOf(root, slug);
   console.log(`${slug} (pipeline ${n.pipeline}) done: ${n.done.join(", ") || "nothing yet"}`);
+  for (const w of n.warnings) console.log(`  warning: ${w}`);
   if (!n.stage) console.log("COMPLETE");
   else if (n.halt?.gate) console.log(`WAITING for Daniel: ${n.halt.gate}`);
   else if (n.halt?.stop) console.log(`STOPPED: ${n.halt.stop}`);
+  else if (n.halt?.stale) console.log(`next: ${n.stage}: ${n.halt.stale}`);
   else console.log(`next: ${n.stage}`);
 };
 

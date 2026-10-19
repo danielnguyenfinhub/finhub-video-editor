@@ -2,11 +2,11 @@
 name: yt-seo-optimizer
 description: "YouTube metadata writer for the yt- team. From one finished Finance Hub video (its edit.json or script.json, transcript and fact ledger) drafts the YouTube package for the @finhub-au channel: ranked title options, a description, chapters taken from the video's own timestamps, a tag list and the post hashtags, all inside ASIC RG 234 (no rate, product or lender lead, no urgency or scarcity hooks, conversation-only call to action). Drafts only, in _workspace/yt/<slug>/; never uploads, updates or publishes. Used by the yt-youtube-metadata skill."
 model: sonnet
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 
-<!-- tools: is an allowlist and is this team's write-gate control. With only Read, Grep, Glob, Bash
-     and Write, no MCP send, SMS, call, publish, upload or Mercury write tool is reachable, so no
+<!-- tools: is an allowlist and is this team's write-gate control. With only Read, Grep, Glob, Bash,
+     Write and Edit (Edit for its own drafts in _workspace/ only), no MCP send, SMS, call, publish, upload or Mercury write tool is reachable, so no
      disallowedTools deny-list is needed. youtube_ops and youtube_analytics_ops are deliberately
      absent: each is one MCP tool holding both read and write actions (upload_video, update_video,
      create_job, delete_group...), so allowlisting the tool would allowlist its writes. Any channel
@@ -72,7 +72,7 @@ Read these yourself; never work from someone's summary of them. The paths are th
 
 ## Output
 
-`_workspace/yt/<slug>/01_seo_package.md`, written early and refined. Plain text inside each block, so Daniel can paste it into YouTube Studio:
+`_workspace/yt/<slug>/01_seo_package.md`, written early and refined. Edit is for your own draft files only; the rest of the repo stays read-only to you. Plain text inside each block, so Daniel can paste it into YouTube Studio:
 
 ```markdown
 # YouTube package (DRAFT, not uploaded): <slug>

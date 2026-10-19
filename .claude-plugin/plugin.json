@@ -1,7 +1,7 @@
 {
   "name": "finhub-video",
   "version": "1.0.0",
-  "description": "Daniel Nguyen (Finance Hub) video editor: the bilingual Vietnamese + English video teams, editing skills and a local MCP server for prep, checks, stills and renders on this PC.",
+  "description": "Daniel Nguyen (Finance Hub) video editor: the bilingual Vietnamese + English video teams, editing skills and agents. The MCP tools (prep, checks, stills, renders) come from opening the repo folder (.mcp.json).",
   "author": {
     "name": "Daniel Nguyen"
   },
@@ -70,13 +70,5 @@
     "./.claude/agents/yt-reviewer.md",
     "./.claude/agents/yt-seo-optimizer.md",
     "./.claude/agents/yt-thumbnail-designer.md"
-  ],
-  "mcpServers": {
-    "finhub-video": {
-      "command": "node",
-      "args": [
-        "${CLAUDE_PLUGIN_ROOT}/mcp/finhub-video-server.mjs"
-      ]
-    }
-  }
+  ]
 }

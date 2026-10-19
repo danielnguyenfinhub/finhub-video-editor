@@ -8,9 +8,8 @@
 //
 // voice-video.mjs --listing runs it before voicing, listing-render.py before
 // rendering. There is no exemption list on purpose: rewrite the line.
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { repoTmp } from "./tmp-dir.mjs";
+import { bundleTs, repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -33,10 +32,7 @@ export const loadChecker = async () => {
       "export const check = makeListingChecker(rules);",
     ].join("\n"),
   );
-  execFileSync(process.execPath, [
-    join(ROOT, "node_modules/esbuild/bin/esbuild"), join(dir, "entry.ts"),
-    "--bundle", "--format=esm", "--platform=node", `--outfile=${join(dir, "entry.mjs")}`,
-  ], { stdio: ["ignore", "pipe", "pipe"] });
+  bundleTs([join(dir, "entry.ts")], { outfile: join(dir, "entry.mjs"), logLevel: "silent" });
   const mod = await import(pathToFileURL(join(dir, "entry.mjs")).href);
   return { ...mod, hasRules };
 };

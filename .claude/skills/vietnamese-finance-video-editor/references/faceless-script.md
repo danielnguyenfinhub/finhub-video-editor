@@ -57,6 +57,16 @@ Every factual claim a scene makes, spoken or on screen, traces to the source doc
 
 Write a faithful, plain translation of that scene. It appears under the captions for the whole scene, so keep it to about 20 words or fewer.
 
+## Delivery (`scenes[].style`, `scenes[].pauseAfterMs`, both optional)
+
+<!-- idea from OpenMontage voice-performance-director (AGPL-3.0); written fresh, no code copied -->
+Most scenes need neither; the global voice style and the 400 ms gap carry them.
+
+- **`style`**: one short delivery cue for that scene's take, up to 160 characters, Vietnamese is fine: `"chậm lại, nhấn vào con số"`, `"nhẹ nhàng, trấn an"`, `"hào hứng hơn"`. It joins the global style prompt for that scene only, and only that scene is re-voiced when it changes. **One delivery idea per scene**: a list of adjectives makes the take wander. No speed words (they stretch the take). Gemini only: OmniVoice and ElevenLabs take no style prompt and ignore it. If Gemini reads the cue aloud, the timing step deletes the take and asks for a re-run; shorten the cue.
+- **`pauseAfterMs`**: silence after the scene, a whole number of ms, clamped to 0-2000 (default 400). Use it for a beat before the payoff: 500-800 ms on the scene **before** the key figure or a reversal ("nhưng...", "thực ra..."). One beat per turn, never stacked pauses on consecutive scenes; 0 joins two scenes that are one thought. Works with every engine and in listings.
+
+`--dry-run` prints each scene's style and pause when any scene sets one.
+
 ## Pick each scene's visual first (Daniel's rule, 25/09/2026)
 
 Remotion elements explain; Pexels footage only fills the gaps. Decide the visual for every scene before writing its footage phrase:

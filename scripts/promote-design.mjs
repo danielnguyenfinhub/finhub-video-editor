@@ -31,6 +31,7 @@ import { COLOUR, checkDesign, describe as describeContrast, hexOf } from "./chec
 import { MANIFEST_FIELDS, OPTIONAL_FIELDS, loadManifests } from "./select-template.mjs";
 import { MIN_TEXT_PX, smallText } from "./check-text-size.mjs";
 import { browserArgs, scratchPublic } from "./scratch-public.mjs";
+import { bundleTs } from "./tmp-dir.mjs";
 import { recordingPath } from "../src/mortgage/recording.ts";
 
 const root = join(import.meta.dirname, "..");
@@ -118,10 +119,7 @@ const loadCopy = (dir, id) => {
   const outfile = join(outDir, `${id}-design.mjs`);
   const entry = ["index.tsx", "index.ts"].map((f) => join(dir, f)).find(existsSync);
   if (!entry) throw new Error(`no index.tsx in ${relative(root, dir)}`);
-  execFileSync(process.execPath, [
-    join(root, "node_modules", "esbuild", "bin", "esbuild"), entry, "--bundle", "--format=esm",
-    "--platform=node", "--packages=external", "--jsx=automatic", `--outfile=${outfile}`, "--log-level=error",
-  ], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
+  bundleTs([entry], { packages: "external", jsx: "automatic", outfile, logLevel: "silent" }); // was --log-level=error, piped
   return import(`${pathToFileURL(outfile).href}?t=${Date.now()}`).then((m) => {
     const d = m[id] ?? Object.values(m).find((v) => v?.id === id);
     if (!d) throw new Error(`index does not export a Design with id "${id}"`);

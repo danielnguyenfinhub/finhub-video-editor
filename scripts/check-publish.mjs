@@ -397,12 +397,46 @@ assert.equal(topicFileName("com1.x"), "com1 video.x");
 assert.equal(topicFileName("Con cái"), "Con cái");
 
 // publish-post.mjs: the Drive file names follow the folder's existing ASCII pattern; the ledger order holds the gates.
-import { asciiSlug, driveNames, nextStep } from "./publish-post.mjs";
+import { asciiSlug, driveNames, nextStep, plan, reviewHash } from "./publish-post.mjs";
 assert.equal(asciiSlug("Đừng tin tất cả những gì mình chia sẻ nhé"), "Dung-tin-tat-ca-nhung-gi-minh-chia-se-nhe");
 assert.equal(driveNames("Cách làm việc với mortgage broker", "2026-10-08").caption, "2026-10-08_Cach-lam-viec-voi-mortgage-broker_Caption.txt");
 assert.equal(nextStep({}), "approved");
 assert.equal(nextStep({ approved: 1, staged: 1, drive: 1 }), "youtube");
 assert.equal(nextStep({ approved: 1, staged: 1, drive: 1, youtube: 1, thumbnail: 1, public: 1, facebook: 1 }), "moved");
 assert.equal(nextStep(Object.fromEntries(["approved", "staged", "drive", "youtube", "thumbnail", "public", "facebook", "moved"].map((k) => [k, 1]))), "done");
+
+// U4: publish-post refuses a compliance PASS made before the copy or the post changed (inputsHash).
+{
+  const r = repoTmp("publish-post-");
+  const w = (p, body) => { mkdirSync(join(r, p, ".."), { recursive: true }); writeFileSync(join(r, p), JSON.stringify(body)); };
+  w("config/publish.json", { drive: { syncDir: "x" }, youtube: { containsSyntheticMedia: false, paidProductPlacement: false } });
+  w("public/videos/s/edit.json", { cues: ["a"], post: { title: "T", caption: "c" } });
+  const final = "out/videos/s/team/04_compliance_final.json";
+  const stale = () => plan("s", r).stop.filter((x) => /re-run compliance/.test(x));
+  w(final, { verdict: "PASS", inputsHash: reviewHash(r, "s", "compliance") });
+  assert.deepEqual(stale(), [], "fresh PASS: no stale stop");
+  assert.deepEqual(plan("s", r).warnings, []);
+  w("public/videos/s/edit.json", { cues: ["a"], post: { title: "T", caption: "c changed" } });
+  assert.match(stale().join(), /04_compliance_final\.json.*post/, "post changed after PASS: refused");
+  w(final, { verdict: "PASS" });
+  assert.deepEqual(stale(), [], "no inputsHash (older run): accepted");
+  assert.match(plan("s", r).warnings.join(), /no inputsHash/);
+  // R2: a caption (words.json) edit after QC and compliance PASS: the compliance hash leaves words.json out, QC's does not.
+  w("public/videos/s/words.json", [{ text: "ok", startMs: 0, endMs: 1 }]);
+  w("out/videos/s/team/05_qc_render.json", { verdict: "PASS", inputsHash: reviewHash(r, "s", "qc") });
+  w(final, { verdict: "PASS", inputsHash: reviewHash(r, "s", "compliance") });
+  assert.deepEqual(plan("s", r).stop.filter((x) => /re-run/.test(x)), [], "fresh QC and compliance PASS");
+  w("public/videos/s/words.json", [{ text: "changed caption", startMs: 0, endMs: 1 }]);
+  assert.match(plan("s", r).stop.join(), /re-run QC \(05_qc_render\.json\)/, "words.json edit after both PASSes: refused");
+  // R5: QC PASS from an older run (no inputsHash) and a render whose stamp no longer matches: the render-stale stop refuses.
+  w("out/videos/s/team/05_qc_render.json", { verdict: "PASS" });
+  const fin = join(r, "finished");
+  mkdirSync(fin);
+  writeFileSync(join(fin, "T.mp4"), "v");
+  writeFileSync(join(fin, "T.inputs"), "hash-of-an-older-edit");
+  assert.doesNotMatch(plan("s", r, fin).stop.join(), /re-run QC \(/, "older QC verdict: no hash stop");
+  assert.match(plan("s", r, fin).stop.join(), /T\.mp4 is stale: its on-screen inputs changed.*Re-render/, "stale render: refused");
+  rmSync(r, { recursive: true, force: true });
+}
 
 console.log("publish ok");

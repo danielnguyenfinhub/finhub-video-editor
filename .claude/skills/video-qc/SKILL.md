@@ -110,13 +110,16 @@ tile times:
 
 ```json
 {"slug": "", "stage": "stills | render", "verdict": "PASS | FIX | BLOCK",
+ "round": 0, "inputsHash": "output of: node scripts/publish-post.mjs <slug> hash qc",
  "checks": {"schema": "passed | failed: <msg>", "speech_cuts": "", "pacing": "", "golden": "", "captions": "", "cut_list": "", "retranscribe": ""},
  "stills": [{"frame": 0, "ms": 0, "moment": "cover | hook | … | compliance card", "path": "", "ok": true}],
  "findings": [{"severity": "BLOCK | FIX", "evidence": "frame 1234 still qc/f1234.png | 01:02.3",
-   "what": "", "fix": "the exact change", "owner": "story-editor | editor | writer"}],
+   "what": "", "fix": "the exact change", "owner": "story-editor | editor | writer", "kind": "content | cosmetic"}],
  "verify_for_daniel": [], "previous_findings": [{"what": "", "status": "resolved | open"}]}
 ```
 
 **Write the report file early**: a draft verdict as soon as the main checks are done, then refine
 and overwrite it, so a cut-off session loses nothing. A re-run reads the previous report first and
-keeps `previous_findings`, marking each earlier finding resolved or open.
+keeps `previous_findings`, marking each earlier finding resolved or open. `round`: fix rounds already applied (0 on
+the first review, +1 per re-review). `kind`: `cosmetic` for pacing, small text, caption spelling; else `content`.
+`inputsHash`: run the command after your last check, so a later change to the inputs makes this PASS stale.

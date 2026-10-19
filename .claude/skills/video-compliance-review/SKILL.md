@@ -68,13 +68,19 @@ Inputs: `public/videos/<slug>/edit.json` (including its `visuals`), the design i
 ## Report (`02_compliance_script.json` / `04_compliance_final.json`)
 
 Write the report file early: a draft verdict as soon as the main checks are done, then refine and
-overwrite it, so a cut-off session loses nothing. A re-run keeps `previous_findings` with status.
+overwrite it, so a cut-off session loses nothing. A re-run keeps `previous_findings` with status. `round`: fix rounds
+already applied (0 on the first review, +1 per re-review). `inputsHash`: run the command after your last check; it
+covers the on-screen copy and the `post`, so a later edit of either makes this PASS stale and `publish-post` refuses it.
+Script stage (`02_compliance_script.json`): stamp `hash compliance-script` instead (script.json only; voicing and the
+editor write edit.json later). Final stage: `hash compliance`.
 
 ```json
 {
   "slug": "string",
   "stage": "script | final",
   "verdict": "PASS | FIX | BLOCK",
+  "round": 0,
+  "inputsHash": "output of: node scripts/publish-post.mjs <slug> hash compliance (final) | hash compliance-script (script)",
   "guard": "passed | failed: <message>",
   "findings": [
     {"severity": "BLOCK | FIX", "where": "scene 3 | 00:42.1 | edit.json cues[2] | still cover.png",

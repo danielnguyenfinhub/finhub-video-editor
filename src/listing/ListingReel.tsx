@@ -23,6 +23,7 @@ import {
 } from "remotion";
 import { z } from "zod";
 import { useReelFont } from "../mortgage/style";
+import { useReevaluateOnChange } from "../useReevaluateOnChange";
 import { AddressScene } from "./AddressScene";
 import { AgentCard } from "./AgentCard";
 import { Captions } from "./Captions";
@@ -194,6 +195,11 @@ export const ListingReel: React.FC<ListingReelProps> = ({
 }) => {
   useReelFont();
   useSerifFont();
+  useReevaluateOnChange(
+    ["listing.json", "script.json", `words-${lang}.json`, `timeline-${lang}.json`].map(
+      (f) => `listings/${slug}/${f}`,
+    ),
+  );
   if (!slug || !data)
     return (
       <AbsoluteFill

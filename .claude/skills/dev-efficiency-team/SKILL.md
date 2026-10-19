@@ -5,7 +5,7 @@ description: >-
   session lose time and tokens (phases, retries, re-reads, re-renders), then cuts them - earlier
   checks, scripts for repeated steps, tighter read lists, faster renders - keeping each change only
   if the number moves. Use when Daniel says "make production quicker", "why did this take so long",
-  "save tokens", "where is the time going", "work more efficiently", "run the efficiency team",
+  "save tokens", "where are the tokens going", "make rendering faster", "where is the time going", "work more efficiently", "run the efficiency team",
   "team 3". NOT for deduping recordings only (refactor-team), bugs (repo-maintenance-team), or
   making a video (video-production-team).
 ---

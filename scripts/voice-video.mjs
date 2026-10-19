@@ -33,7 +33,9 @@
 //     "scenes": [ { "vi": "Vietnamese narration", "en": "English line",
 //                   "footage": "optional 2-5 word English stock search",
 //                   "ai": "optional image description: paid fal.ai fallback,
-//                          used only if the free stock search finds nothing" } ],
+//                          used only if the free stock search finds nothing",
+//                   "style": "optional one-line delivery cue for this take (Gemini only)",
+//                   "pauseAfterMs": optional silence after this scene, 0-2000, default 400 } ],
 //     "post": { "title": "...", "caption": "...", "hashtags": ["#..."] } }
 // How to write one: .claude/skills/vietnamese-finance-video-editor/references/faceless-script.md
 // --dry-run: RG 234 check, fact-ledger check (scripts/facts.mjs) + character count (ElevenLabs bills per character),
@@ -52,7 +54,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { repoTmp } from "./tmp-dir.mjs";
+import { bundleTs, repoTmp } from "./tmp-dir.mjs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkFacts, readLedger } from "./facts.mjs";
@@ -65,7 +67,13 @@ import { aiClip, aiStillsPerScene, stockClips } from "./visuals.mjs";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MODEL_ID = "eleven_v3"; // speaks Vietnamese; eleven_multilingual_v2 doesn't
 const FPS = 30;
-const GAP_MS = 400; // silence between scenes
+const GAP_MS = 400; // silence between scenes (a scene's "pauseAfterMs" overrides it)
+const PAUSE_MAX_MS = 2000;
+/** A scene's pause after it: GAP_MS when unset, else clamped to 0..PAUSE_MAX_MS; null when not whole milliseconds. */
+const gapOf = (ms) => (ms === undefined ? GAP_MS : Number.isInteger(ms) ? Math.min(PAUSE_MAX_MS, Math.max(0, ms)) : null);
+/** Gemini's inline prefix: a scene's own cue joins the global STYLE before its closing colon; no cue = STYLE unchanged
+ *  (it is in the take's cache key, so old caches stay valid). */
+const styleWith = (STYLE, cue) => (cue ? `${STYLE.replace(/[\s:]+$/, "")}. ${cue.replace(/[\s:.]+$/, "")}: ` : STYLE);
 const BACKDROP = "0x0B1F3D"; // brand navy; never seen, the design draws its own
 const CLIP_MAX_S = 5; // longest a single stock clip stays on screen
 
@@ -84,6 +92,15 @@ const run = (cmd, args, what) => {
 
 const USAGE = "usage: node scripts/voice-video.mjs <slug> [--listing [--lang vi|en]] [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>]";
 const argv = process.argv.slice(2);
+if (argv[0] === "--selftest") {
+  const S = "Nói với giọng ấm áp, tự tin, tự nhiên: ";
+  for (const cue of ["", undefined]) if (styleWith(S, cue) !== S) fail(`selftest: no style must keep STYLE (cache key), got "${styleWith(S, cue)}"`);
+  if (styleWith(S, "calm.") !== "Nói với giọng ấm áp, tự tin, tự nhiên. calm: ") fail(`selftest: style cue joins STYLE, got "${styleWith(S, "calm.")}"`);
+  for (const [ms, want] of [[undefined, GAP_MS], [5000, 2000], [-5, 0], [700, 700], [1.5, null], ["400", null]])
+    if (gapOf(ms) !== want) fail(`selftest: pauseAfterMs ${ms} -> ${gapOf(ms)}, want ${want}`);
+  console.log("voice-video selftest ok");
+  process.exit(0);
+}
 const slug = argv.find((a, k) => !a.startsWith("--") && !["--engine", "--voice", "--lang"].includes(argv[k - 1]));
 if (!slug) fail(USAGE);
 assertSlug(slug);
@@ -128,7 +145,14 @@ const parsedScenes = script.scenes.map((s, i) => {
   // first. A scene still shows one or the other, never both (OpenMontage).
   if (s.ai && !s.footage)
     fail(`scenes[${i}] has "ai" without "footage": try free stock first (add a footage phrase; "ai" is the paid fallback).`);
+  // Per-scene delivery: idea from OpenMontage voice-performance-director (AGPL-3.0); written fresh, no code copied.
+  if (s.style !== undefined && (typeof s.style !== "string" || !s.style.trim() || s.style.length > 160))
+    fail(`scenes[${i}].style must be one short delivery line (up to 160 characters).`);
+  const gapMs = gapOf(s.pauseAfterMs);
+  if (gapMs === null) fail(`scenes[${i}].pauseAfterMs must be a whole number of milliseconds.`);
   return {
+    style: s.style?.trim().normalize("NFC") ?? "",
+    gapMs,
     vi: s.vi.trim().normalize("NFC"),
     en: s.en.trim().normalize("NFC"),
     footage: s.footage?.trim() ?? "",
@@ -141,6 +165,10 @@ const scenes = listing && lang === "en" ? parsedScenes.map((s) => ({ ...s, vi: s
 // AI visuals only fill the gaps. A scene with neither gets the plain navy
 // frame, and its edit.json element holds the stage.
 const withFootage = scenes.some((s) => s.footage || s.ai);
+if (scenes.some((s) => s.style || s.gapMs !== GAP_MS)) {
+  console.log("Delivery (style: Gemini only; pause after each scene):");
+  scenes.forEach((s, i) => console.log(`  ${i + 1}. ${s.style ? `style "${s.style}", ` : ""}pause ${s.gapMs} ms`));
+}
 // Optional post copy for the upload (title, caption ending in a call to
 // action, hashtags); it reaches clients too, so RG 234 scans it below.
 const post = script.post ?? null;
@@ -160,10 +188,11 @@ if (listing) {
 // reach clients just like on-screen copy. compliance.ts is bundled because Node
 // can't follow its extensionless TS imports.
 const bundleDir = repoTmp("voice-");
-run(process.execPath, [
-  join(ROOT, "node_modules/esbuild/bin/esbuild"), join(ROOT, "src/mortgage/compliance.ts"),
-  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", `--outdir=${bundleDir}`,
-], "bundling compliance.ts");
+try {
+  bundleTs([join(ROOT, "src/mortgage/compliance.ts")], { outdir: bundleDir, logLevel: "silent" });
+} catch (err) {
+  fail(`bundling compliance.ts failed: ${err.message.slice(-600)}`);
+}
 const { assertCompliantCopy } = await import(
   new URL(`file:///${join(bundleDir, "compliance.mjs").replace(/\\/g, "/")}`)
 );
@@ -302,6 +331,7 @@ if (engine === "elevenlabs") {
   // Style goes inline, in Vietnamese; no speed words (they stretch the take).
   const style = listingVoice?.style;
   const STYLE = (typeof style === "object" ? style?.[lang] : style) ?? "Nói với giọng ấm áp, tự tin, tự nhiên: ";
+  const styleOf = (s) => styleWith(STYLE, s.style);
   const wav = (pcm, rate) => {
     const h = Buffer.alloc(44);
     h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8);
@@ -324,7 +354,7 @@ if (engine === "elevenlabs") {
     writeFileSync(file, readFileSync(tmp));
     rmSync(tmp);
   };
-  const speak = async (text, i) => {
+  const speak = async (prefix, text, i) => {
     let why = "";
     for (const model of models) {
       for (let attempt = 1; attempt <= NO_AUDIO_TRIES; attempt++) {
@@ -332,7 +362,7 @@ if (engine === "elevenlabs") {
           method: "POST",
           headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: STYLE + text }] }],
+            contents: [{ parts: [{ text: prefix + text }] }],
             generationConfig: {
               responseModalities: ["AUDIO"],
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
@@ -353,8 +383,8 @@ if (engine === "elevenlabs") {
     fail(`Gemini TTS scene ${i + 1}: no audio after ${NO_AUDIO_TRIES} tries on each model (${why}).`);
   };
   files = scenes.map((s) => {
-    const hash = sha(`gemini|${voice}|${STYLE}|${say(s.vi)}`);
-    return { audio: join(voiceDir, `${hash}.wav`), align: join(voiceDir, `${hash}.json`), text: say(s.vi) };
+    const hash = sha(`gemini|${voice}|${styleOf(s)}|${say(s.vi)}`);
+    return { audio: join(voiceDir, `${hash}.wav`), align: join(voiceDir, `${hash}.json`), text: say(s.vi), prefix: styleOf(s) };
   });
   const todo = [];
   for (const [i, f] of files.entries()) {
@@ -369,7 +399,7 @@ if (engine === "elevenlabs") {
       todo.push(f);
       continue;
     }
-    writeFileSync(f.audio, await speak(f.text, i));
+    writeFileSync(f.audio, await speak(f.prefix, f.text, i));
     trimSilence(f.audio);
     console.log(`scene ${i + 1}/${files.length}: voiced (${voice})`);
     todo.push(f);
@@ -449,7 +479,7 @@ for (const [i, t] of takes.entries()) {
     cur.endMs = Math.round(offsetMs + en[k] * 1000);
   });
   subtitles.push({ fromMs: Math.round(offsetMs), toMs: Math.round(offsetMs + t.durMs), text: scenes[i].en });
-  offsetMs += t.durMs + GAP_MS;
+  offsetMs += t.durMs + scenes[i].gapMs;
 }
 if (words.length === 0) fail(`${engine} returned no words.`);
 // Captions show the brand as written: the spoken form's words -> "Global RE".
@@ -468,10 +498,10 @@ if (listing && spokenName) {
   }
 }
 
-// Narration: every take padded with GAP_MS of silence, joined in order.
+// Narration: every take padded with its scene's pause (GAP_MS by default), joined in order.
 const narration = join(voiceDir, listing ? `narration-${lang}.wav` : "narration.wav");
 const inputs = takes.flatMap((t) => ["-i", t.audio]);
-const pads = takes.map((_, i) => `[${i}:a]aresample=48000,apad=pad_dur=${GAP_MS / 1000}[a${i}]`).join(";");
+const pads = takes.map((_, i) => `[${i}:a]aresample=48000,apad=pad_dur=${scenes[i].gapMs / 1000}[a${i}]`).join(";");
 const joined = `${takes.map((_, i) => `[a${i}]`).join("")}concat=n=${takes.length}:v=0:a=1[out]`;
 run("ffmpeg", ["-y", "-hide_banner", "-loglevel", "error", ...inputs, "-filter_complex", `${pads};${joined}`, "-map", "[out]", narration], "joining the narration");
 
@@ -498,7 +528,7 @@ if (withFootage) {
   const pieces = []; // { file, seconds }
   try {
     for (const [i, s] of scenes.entries()) {
-      const seconds = (takes[i].durMs + GAP_MS) / 1000;
+      const seconds = (takes[i].durMs + s.gapMs) / 1000;
       if (s.footage) {
         // Free first (Daniel's rule): stock, and the paid AI image only when
         // stock has nothing and the scene gave an "ai" fallback prompt.

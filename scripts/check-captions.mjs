@@ -3,9 +3,8 @@
 // Proves CaptionZone never ends below SAFE.bottom, and that no design under
 // src/designs carries its own copy of the pager (captionPages + the
 // "durationMs + <tail>" Sequence loop) instead of <PagedCaptions>.
-import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
-import { repoTmp } from "./tmp-dir.mjs";
+import { bundleTs, repoTmp } from "./tmp-dir.mjs";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -13,12 +12,8 @@ const root = join(import.meta.dirname, "..");
 // PagedCaptions imports golden.ts, whose sibling imports have no extension
 // (Bundler resolution): bundle it first, as check-golden.mjs does.
 const out = repoTmp("captions-");
-execFileSync(process.execPath, [
-  join(root, "node_modules/esbuild/bin/esbuild"),
-  join(root, "src/mortgage/PagedCaptions.tsx"), join(root, "src/mortgage/golden.ts"),
-  "--bundle", "--format=esm", "--platform=node", "--packages=external", "--jsx=automatic",
-  "--out-extension:.js=.mjs", `--outdir=${out}`, "--log-level=warning",
-]);
+bundleTs([join(root, "src/mortgage/PagedCaptions.tsx"), join(root, "src/mortgage/golden.ts")],
+  { packages: "external", jsx: "automatic", outdir: out, logLevel: "warning" });
 const { captionZoneBottom } = await import(pathToFileURL(join(out, "PagedCaptions.mjs")).href);
 const { SAFE } = await import(pathToFileURL(join(out, "golden.mjs")).href);
 

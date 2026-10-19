@@ -25,9 +25,8 @@
 // chapter/points cards for long stretches; Daniel accepted that on
 // 30/09/2026 -> for cards and a talk > 180 s the gaps print as INFO
 // ("accepted exception") and do not fail.
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync } from "node:fs";
-import { repoTmp } from "./tmp-dir.mjs";
+import { bundleTs, repoTmp } from "./tmp-dir.mjs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { recordingPath } from "../src/mortgage/recording.ts";
@@ -40,12 +39,8 @@ const CARDS_LONG_TALK_MS = 180000;
 // The .ts sources import siblings without extensions: bundle them for Node
 // (as check-golden.mjs does), once per run.
 const lib = repoTmp("pacing-");
-execFileSync(process.execPath, [
-  join(ROOT, "node_modules/esbuild/bin/esbuild"),
-  "src/designs/cards/Plan.ts", "src/mortgage/golden.ts", "src/mortgage/timeline.ts", "src/mortgage/schema.ts",
-  "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", "--log-level=error",
-  "--outbase=src", `--outdir=${lib}`,
-], { cwd: ROOT });
+bundleTs(["src/designs/cards/Plan.ts", "src/mortgage/golden.ts", "src/mortgage/timeline.ts", "src/mortgage/schema.ts"],
+  { logLevel: "error", outbase: "src", outdir: lib });
 const imp = (p) => import(pathToFileURL(join(lib, p)).href);
 const { planOf } = await imp("designs/cards/Plan.mjs");
 const { figuresOf, lenderMentionsOf, readingMs, readingFloor, HOOK_FRAMES } = await imp("mortgage/golden.mjs");

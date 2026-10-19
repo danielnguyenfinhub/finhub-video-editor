@@ -26,10 +26,9 @@
 // --stale-ok; a render that did not finish (stamp "rendering") is never published. "post" is upload copy, so fixing it never needs a re-render.
 // render-video.py runs this after every render.
 //   node scripts/publish-video.mjs <slug> --inputs-hash [--public-dir <dir>]   (render-video.py's stamp)
-import { execFileSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { repoTmp } from "./tmp-dir.mjs";
+import { bundleTs, repoTmp } from "./tmp-dir.mjs";
 import { basename, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { assertSlug } from "./listing-prep.mjs";
@@ -270,10 +269,7 @@ export const buildCaption = (post, broker, c) => {
 /** compliance.ts bundled to plain JS (Node can't load its TS directly). */
 export const loadCompliance = async () => {
   const dir = repoTmp("publish-");
-  execFileSync(process.execPath, [
-    join(ROOT, "node_modules/esbuild/bin/esbuild"), join(ROOT, "src/mortgage/compliance.ts"),
-    "--bundle", "--format=esm", "--platform=node", "--out-extension:.js=.mjs", `--outdir=${dir}`,
-  ], { stdio: ["ignore", "pipe", "pipe"] });
+  bundleTs([join(ROOT, "src/mortgage/compliance.ts")], { outdir: dir, logLevel: "silent" });
   return import(pathToFileURL(join(dir, "compliance.mjs")).href);
 };
 

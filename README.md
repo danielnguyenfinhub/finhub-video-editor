@@ -283,7 +283,7 @@ This project is set up for all three Claude surfaces:
 
 **Claude Cowork** (desktop app): open this repository's folder as the working folder. Cowork reads the same `CLAUDE.md` and `.claude/skills/` and can run the preview and render commands.
 
-**Desktop plugin and MCP tools** (on your PC): `/plugin install finhub-video --marketplace danielnguyenfinhub/finhub-video-editor` adds the teams and the `finhub-video` MCP tools (status, preflight, stills, render, research, designs). Details: [docs/agents/plugin-and-mcp.md](docs/agents/plugin-and-mcp.md).
+**Desktop plugin and MCP tools** (on your PC): `/plugin install finhub-video --marketplace danielnguyenfinhub/finhub-video-editor` adds the skills and teams; the `finhub-video` MCP tools (status, preflight, stills, render, research, designs) come from opening this folder (`.mcp.json`). Details: [docs/agents/plugin-and-mcp.md](docs/agents/plugin-and-mcp.md).
 
 **Claude Chat** (claude.ai): chat has no filesystem, so upload the bundled skill instead. Build `remotion-video-skill.zip`, then upload it under claude.ai **Settings → Capabilities → Skills**:
 

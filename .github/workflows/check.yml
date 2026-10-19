@@ -18,8 +18,13 @@ jobs:
         with: { node-version: 24, cache: npm }
       - run: npm ci --no-audit --no-fund
       - run: npm run lint
+      # npm test on Linux too: scripts bundle with esbuild's JS API (bundleTs in scripts/tmp-dir.mjs),
+      # not `node node_modules/esbuild/bin/esbuild`, which is the native binary off Windows.
+      - run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
+      - run: npm test
+        env: { FINHUB_GL: swangle }
   checks:
-    # Windows, like the pipeline: scripts run `node node_modules/esbuild/bin/esbuild`, which is a native binary on Linux.
+    # Windows, like the pipeline (Daniel's PC). The lint job runs npm test on Linux as well.
     runs-on: windows-latest
     # Checks bundle into scripts/tmp-dir.mjs (node_modules/.cache/finhub-tmp), so `remotion`
     # resolves on any OS. TEMP/TMP stay inside the workspace for anything else that writes there.

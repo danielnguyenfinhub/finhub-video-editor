@@ -3,7 +3,7 @@
 // video itself. Kept off on purpose: publishing (YouTube, Facebook, Drive), voice cloning and
 // moving recordings stay chat-run behind Daniel's yes (docs/agents/plugin-and-mcp.md).
 //
-//   node mcp/finhub-video-server.mjs        (npm run mcp; registered in .mcp.json and the plugin)
+//   node mcp/finhub-video-server.mjs        (npm run mcp; registered in .mcp.json, not in the plugin)
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -69,14 +69,22 @@ server.registerTool(
 server.registerTool(
   "still",
   {
-    description: "One frame of a composition as a half-scale PNG in out/mcp/ (cheap to look at). Returns the file path; open it to view.",
-    inputSchema: { composition: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]*$/), frame: z.number().int().min(0).max(100_000) },
+    description:
+      "One frame of a composition as a half-scale PNG in out/mcp/ (cheap to look at). Pass slug for the video being edited (without it the composition's default video renders) and safeZones to draw the SAFE band and FACE box (checking only). Returns the file path; open it to view.",
+    inputSchema: {
+      composition: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]*$/),
+      frame: z.number().int().min(0).max(100_000),
+      slug: slug.optional(),
+      safeZones: z.boolean().optional(),
+    },
     annotations: { ...readOnly, readOnlyHint: false },
   },
-  ({ composition, frame }) => heavy(`still ${composition}`, async () => {
+  ({ composition, frame, slug, safeZones }) => heavy(`still ${composition}`, async () => {
     mkdirSync(join(ROOT, "out/mcp"), { recursive: true });
-    const file = join("out/mcp", `${composition}-${frame}.png`);
-    const r = await run(process.execPath, [REMOTION, "still", composition, file, `--frame=${frame}`, "--scale=0.5"], 600_000);
+    const file = join("out/mcp", `${composition}${slug ? `-${slug}` : ""}-${frame}.png`);
+    // As runbook A6.2: the video's props and --gl=angle.
+    const props = slug || safeZones ? [`--props=${JSON.stringify({ slug, safeZones })}`, "--gl=angle"] : [];
+    const r = await run(process.execPath, [REMOTION, "still", composition, file, `--frame=${frame}`, "--scale=0.5", ...props], 600_000);
     if (!r.isError) r.content.unshift({ type: "text", text: `still: ${join(ROOT, file)}` });
     return r;
   }),

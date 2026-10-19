@@ -198,3 +198,30 @@ wrong stock hit, a dead run from a missing dependency).
 
 Sources: the three repos at `/home/user/{claude-video,ViMax,OpenMontage}` and this checkout
 at commit `70a9a34`, read 28 September 2026.
+
+## Upgrade run 1 (18 October 2026, upgrade-team)
+
+All nine sibling repos were read by one `sibling-repo-analyst` each, alongside `bug-hunter` and `gap-analyst`. Every candidate was checked by two refuters against the code: 33 of 37 survived. Daniel picked 16, plus 2 automatic fixes. The full backlog, with reasons for the dropped ones, is in `out/teams/upgrade/02_backlog.md` (git-ignored); this section is the record.
+
+**Licences:** OpenMontage is **AGPL-3.0**: its ideas only, never its code (U8 was written fresh). remocn is MIT, and its reactbits-derived code must never be ported. Scrapling is BSD-3-Clause. Agent-Reach, paperclip and claude-video are MIT. harness and harness-100 are Apache-2.0. Remotion is under its own licence (see `docs/agents/mediabunny-and-licence.md`).
+
+| U | Source | Ported | Licence |
+|---|---|---|---|
+| U4 | HARN-1 | Freeze reviewed artefacts by hash: QC/compliance verdicts record the inputs hash; video-status and publish-post treat a PASS on changed inputs as stale | Apache-2.0 (practice only, no code) |
+| U5 | REMOTION-1 | Re-run calculateMetadata in Studio when edit.json / words.json change (watchStaticFile + reevaluateComposition) | Remotion licence (owner on the free tier |
+| U6 | H100-1 | VI-EN finance glossary + do-not-translate list + MQM-lite pass for the English subtitles line | Apache-2.0 (port with attribution |
+| U7 | REMOCN-1 | CSS-only remocn transitions as the fallback for finhub's 12 HtmlInCanvas chapter transitions (instead of fade) | MIT (port with attribution) |
+| U8 | OPEN-1 | Per-scene delivery for TTS narration: optional style line and pauseAfterMs per script.json scene | AGPL-3.0: idea only, no code |
+| U9 | REMOTION-2 | premountFor (plus name) on the B-roll and pip Sequences in Visuals | Remotion licence (owner on the free tier |
+| U10 | PAPER-2 | FIX-loop round count saved in the reviewer JSON, with a gate when the rounds run out | MIT (port with attribution) |
+| U12 | AGENT-REACH-1 | Turn on Node as yt-dlp's JS runtime and install yt-dlp-ejs in research.py | MIT (idea plus a yt-dlp option |
+| U13 | SCRAP-1+SCRAP-3 | Local fallback for research.py read when Jina fails (direct GET with browser headers, body only, noise tags dropped, stdlib html.parser to text) | BSD-3-Clause: port with attribution |
+| U14 | HARN-2 | No retry for usage-limit, auth or permission failures; record what finished and the reset time; never blind-resend a paid voice/image call | Apache-2.0 (practice only) |
+| U15 | CV-1 | Timestamped caption transcripts in research.py transcript | MIT, port with attribution |
+| U16 | HARN-3 | Give Edit to agents that fix their own artefacts in FIX rounds (motion-designer, repurpose writers, yt writers) | Apache-2.0 (practice only) |
+| U17 | HARN-4 | Trigger checks (10 should-fire, 10 near-miss) for video-production-team, overlap cleanup between refactor-team and dev-efficiency-team, and a check-teams assertion that team skills keep Test scenarios and Trigger checks | Apache-2.0 (practice only) |
+| U18 | REMOCN-2 | Restore length (own-motion frames) and first avoidWhen (with a named substitute) in the remocn CATALOG via a vendor-remocn.mjs re-sync script with a substitute-exists check | MIT (port with attribution) |
+
+**Not picked, kept for a later run:** U19 OPEN-2, U20 AGENT-REACH-3, U21 PAPER-3, U22 G4, U23 G8, U24 CV-3, U25 CV-2, U26 OPEN-3, U27 AGENT-REACH-2, U28 H100-2, U29 G6, U30 G5, U31 REMOCN-3.
+
+**Dropped by the refuters:** SCRAP-2, SCRAP-4, PAPER-1, HARN-3.
