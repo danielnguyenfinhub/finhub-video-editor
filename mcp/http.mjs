@@ -30,7 +30,7 @@ createServer(async (req, res) => {
   if (!authorised(req, path)) return res.writeHead(401).end();
   // Stateless: a fresh server and transport per request, nothing kept between calls.
   const server = makeServer({ remote: true });
-  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true, maxRequestBodySize: 16 * 1024 });
   res.on("close", () => {
     transport.close();
     server.close();

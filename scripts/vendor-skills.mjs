@@ -38,9 +38,14 @@ if (!existsSync(join(source, "remotion-best-practices", "SKILL.md"))) {
 
 // Replace only the skills Remotion ships, so the project's own skills in
 // .claude/skills (vietnamese-finance-video-editor) survive re-vendoring.
+// Only remotion-* names: pointed at .claude/skills itself, it once removed every project skill.
+if (source === target) {
+  console.error("The source is this project's own .claude/skills; pass Remotion's packages/skills/skills.");
+  process.exit(1);
+}
 const skillNames = new Set(
   readdirSync(source, { withFileTypes: true })
-    .filter((e) => e.isDirectory())
+    .filter((e) => e.isDirectory() && e.name.startsWith("remotion-"))
     .map((e) => e.name),
 );
 for (const name of skillNames) {

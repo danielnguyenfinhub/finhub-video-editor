@@ -601,10 +601,17 @@ def whisper_text(audio: Path, lang: str) -> str:
     return "\n".join(lines)
 
 
+YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
+
+
 def public_https(url: str) -> None:
-    """watch/comments/audience: an https link to a public site only (url_problem, plus the scheme)."""
-    if not url.startswith("https://"):
-        raise SystemExit(f"{url}: only https:// links.")
+    """watch/comments/audience: an https YouTube link only. yt-dlp follows redirects itself, so a
+    first-hop check (url_problem) can't stop a public link bouncing to a private host; YouTube only can.
+    The link is never echoed: a control character in it could forge an out/ path line in the output."""
+    if any(ord(c) < 32 or ord(c) == 127 for c in url):
+        raise SystemExit("The link has a control character (a line break?); paste it again.")
+    if not url.startswith("https://") or urllib.parse.urlsplit(url).hostname not in YOUTUBE_HOSTS:
+        raise SystemExit("Only https:// YouTube links (youtube.com, youtu.be).")
     if problem := url_problem(url):
         raise SystemExit(problem)
 
@@ -635,7 +642,7 @@ def cmd_watch(url: str, slug: str, lang: str) -> None:
     trust_windows_store_for_curl(ROOT / "out")
     ref = out / "ref.mp4"
     ref.unlink(missing_ok=True)
-    opts = {**YDL, "noprogress": True, "format": "bv*[height<=480]+ba/b[height<=480]", "merge_output_format": "mp4",
+    opts = {**YDL, "noprogress": True, "noplaylist": True, "format": "bv*[height<=480]+ba/b[height<=480]", "merge_output_format": "mp4",
             "max_filesize": MAX_REF_BYTES, "outtmpl": str(out / "ref.%(ext)s"),
             "match_filter": yt_dlp.utils.match_filter_func(f"duration <= {MAX_REF_S} & !is_live")}
     try:
@@ -664,15 +671,17 @@ def cmd_watch(url: str, slug: str, lang: str) -> None:
 # comments / audience: what viewers ask. Idea from Agent-Reach (MIT, skill/references/video.md:
 # yt-dlp comments, best-effort) and harness-100's 93-feedback-analyzer (Apache-2.0, idea only).
 def anonymise(comments: list[dict] | None) -> list[dict]:
-    """Only what was said and how many liked it, most liked first: no name, id, avatar or channel link."""
-    kept = [{"text": (c.get("text") or "").strip(), "like_count": c.get("like_count") or 0} for c in comments or []]
+    """Only what was said and how many liked it, most liked first: no name, id, avatar or channel link,
+    and no @handle a reply opens with (another viewer's name)."""
+    kept = [{"text": re.sub(r"^(?:@\S+\s*)+", "", (c.get("text") or "").strip()), "like_count": c.get("like_count") or 0}
+            for c in comments or []]
     return sorted((c for c in kept if c["text"]), key=lambda c: c["like_count"], reverse=True)
 
 
 def fetch_comments(url: str, n: int) -> list[dict]:
     import yt_dlp
 
-    opts = {**YDL, "skip_download": True, "getcomments": True,
+    opts = {**YDL, "skip_download": True, "getcomments": True, "noplaylist": True,
             "extractor_args": {"youtube": {"max_comments": [str(n)]}}}
     with yt_dlp.YoutubeDL(opts) as y:  # download=True with skip_download: comments are fetched in process_info
         info = y.extract_info(url, download=True)
@@ -715,6 +724,15 @@ def cmd_audience(channel: str, videos: int, n: int) -> None:
 
 
 def selftest() -> None:
+    # public_https: YouTube only, and no control character (a "\nout/../x.json" line forged the MCP's file list).
+    for bad in ("https://nonexistent.invalid/\nout/../package.json", "https://example.com/v", "http://youtu.be/x",
+                "https://youtube.com.evil.example/v"):
+        try:
+            public_https(bad)
+            raise AssertionError(f"public_https let {bad!r} through")
+        except SystemExit as err:
+            assert "\n" not in str(err) and "out/" not in str(err), err
+            assert "\n" in bad or "YouTube" in str(err), f"{bad!r} refused, but not as non-YouTube: {err}"
     vtt = ("WEBVTT\nKind: captions\n\n00:00:01.000 --> 00:00:02.000\n<c>lãi suất</c> tăng\n\n"
            "00:00:02.000 --> 00:00:03.000\nlãi suất tăng\nthêm 0,25%\n")
     assert vtt_text(vtt) == "[00:01] lãi suất tăng\n[00:02] thêm 0,25%", vtt_text(vtt)
@@ -798,6 +816,9 @@ def selftest() -> None:
     anon = anonymise(raw)
     assert [c["text"] for c in anon] == ["Vay bao nhiêu được?", "Lãi suất cố định hay thả nổi?", "ok"], anon
     assert all(set(c) == {"text", "like_count"} for c in anon) and anonymise(None) == []
+    # A reply opens with the other viewer's @handle: dropped, the question kept; a reply that is only a handle is dropped.
+    assert [c["text"] for c in anonymise([{"text": "@NguyenVanA @b.c  Có cần 20% không?", "like_count": 1},
+                                          {"text": "@NguyenVanA", "like_count": 5}])] == ["Có cần 20% không?"]
     for bad in ("http://1.1.1.1/x", "file:///etc/passwd"):
         try:
             public_https(bad)

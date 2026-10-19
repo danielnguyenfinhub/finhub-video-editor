@@ -116,17 +116,18 @@ check("0.1 gap is a close call", !near.confident && /gap 0\.1/.test(near.closeCa
 check("2-point gap is confident", confidenceOf([{ id: "a", score: 6 }, { id: "b", score: 4 }]).confident);
 check("a single candidate is confident", confidenceOf([{ id: "a", score: 1 }]).confident);
 
-// --report: one selection agrees with the design made, one does not -> 50%; the streak is the log's tail.
+// --report: two selections agree with the design made, one does not -> 67% (2 of 3, so an inverted
+// comparison, 1 of 3, fails); the streak is the log's tail.
 const scratch = mkdtempSync(join(tmpdir(), "selector-report-"));
-for (const [slug, top] of [["a", "cards"], ["b", "classic"]]) {
+for (const [slug, top] of [["a", "cards"], ["b", "classic"], ["c", "cards"]]) {
   mkdirSync(join(scratch, slug));
   writeFileSync(join(scratch, slug, "selection.json"), JSON.stringify({ slug, top: [{ id: top }] }));
 }
-const log = [{ slug: "x", design: "classic" }, { slug: "a", design: "cards" }, { slug: "b", design: "cards" }];
+const log = [{ slug: "x", design: "classic" }, { slug: "a", design: "cards" }, { slug: "b", design: "cards" }, { slug: "c", design: "cards" }];
 const rep = selectorReport({ videosDir: scratch, publicVideos: scratch, log });
 rmSync(scratch, { recursive: true });
-check("--report: 1 of 2 agree = 50%", rep.rate === 50 && rep.compared === 2 && rep.rows.length === 2, rep.lines.join(" | "));
-check("--report: streak 2 x cards", rep.streak === 2 && rep.last === "cards", `${rep.streak} ${rep.last}`);
+check("--report: 2 of 3 agree = 67%", Math.round(rep.rate) === 67 && rep.compared === 3 && rep.rows.length === 3, rep.lines.join(" | "));
+check("--report: streak 3 x cards", rep.streak === 3 && rep.last === "cards", `${rep.streak} ${rep.last}`);
 const none = selectorReport({ videosDir: join(scratch, "missing"), log });
 check("--report: no selections says so", none.rows.length === 0 && none.rate === null && /no selection\.json/.test(none.lines.join("\n")), none.lines.join(" | "));
 
