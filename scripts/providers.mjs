@@ -42,7 +42,7 @@ const fail = (msg) => {
   console.error(msg);
   process.exit(1);
 };
-const key = (name) => process.env[name] || fail(`${name} is not set in .env.local.`);
+const key = (name) => process.env[name] || (process.env.FINHUB_FAKE_PROVIDERS === "1" ? "fake" : fail(`${name} is not set in .env.local.`));
 const hash = (s) => createHash("sha1").update(s).digest("hex").slice(0, 10);
 const rel = (p) => relative(ROOT, p).replace(/\\/g, "/");
 const videoDir = (slug) => (slugOk(slug ?? "") ? join(ROOT, "public", "videos", slug) : fail(`slug "${slug}" is not a valid video slug.`));
@@ -256,6 +256,7 @@ if (process.env.FINHUB_FAKE_PROVIDERS === "1") {
     const json = (b) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
     if (u.includes("perplexity")) return json({ choices: [{ message: { content: "fake answer [1]" } }], search_results: [{ title: "RBA", url: "https://www.rba.gov.au/", date: "2026-10-01" }], usage: { cost: { total_cost: 0.0035 } } });
     if (u.includes("deepseek")) return json({ choices: [{ message: { content: "bản dịch giả" } }] });
+    if (u.includes("generativelanguage")) return json({ candidates: [{ content: { parts: [{ text: "bản dịch giả" }] } }] });
     if (u.includes("transcriptions")) return json({ text: "xin chào", language: "vi", duration: 1.2, words: [{ word: "xin", start: 0, end: 0.4 }] });
     if (u.includes("images/generations")) return json({ data: [{ b64_json: png.toString("base64") }] });
     if (u.includes("fal.run")) return json({ images: [{ url: "https://fake.invalid/a.png" }] });
