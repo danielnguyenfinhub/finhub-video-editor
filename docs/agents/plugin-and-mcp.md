@@ -12,10 +12,14 @@ Part of the project guide; [AGENTS.md](../../AGENTS.md) routes here. Everything 
 | `preflight` | `scripts/preflight.mjs <slug>` | nothing |
 | `still` | `remotion still <composition> out/mcp/<composition>[-<slug>]-<frame>.png --scale=0.5`; with `slug` and/or `safeZones` also `--props='{"slug":…,"safeZones":true}' --gl=angle` as runbook A6.2 (no `slug` = the composition's default video) | `out/mcp/` |
 | `render_video` | `python scripts/render-video.py <slug>` (only after Daniel asks to render, preflight first) | `out/videos/<slug>/`, `2 - FINISHED VIDEOS/` |
-| `research` | `python scripts/research.py trending` or `topic "<query>" --slug <slug>` | `out/` |
+| `research` | `python scripts/research.py trending`, `topic "<query>" --slug <slug>`, `watch <https-url> --slug <slug>` (one at a time, like `still`) or `comments <https-url> --slug <slug>`; watch/comments refuse a query that is not `https://` | `out/` |
 | `list_designs` | reads `src/designs/*/template.json` | nothing |
 
 Kept off on purpose, so no tool call can do them without Daniel in the chat: posting or staging for YouTube, Facebook or Drive (`publish-post.mjs`), voice cloning (AGENTS.md "Language"), moving recordings (ground rule 3). Safety: slugs go through `slugOk` from `scripts/listing-prep.mjs`, composition ids must be letters, digits and dashes, and every script runs through `execFile` with an argument list (no shell) from the repo root. Python is `python` (as `npm run test:py`); set `PYTHON` if yours is `python3`.
+
+### Remote mode (Railway)
+
+`mcp/http.mjs` serves the same server over Streamable HTTP for claude.ai web and the phone app, with only the tools that need no footage, Remotion or ffmpeg: `list_designs` and `research` (`trending`, `topic`, `comments`; their out/ files come back in the answer). `railway.json` builds `mcp/Dockerfile` (Node 24, the two MCP packages, Python with yt-dlp and feedparser) and checks `GET /health`. Every call needs the Railway variable `MCP_TOKEN` (24+ characters): `Authorization: Bearer <token>`, or the URL `https://<railway domain>/mcp/<token>` for a connector that cannot send a header. Without it the server will not start. `check-mcp.mjs` proves the token gate and the tool list.
 
 ## The desktop plugin
 

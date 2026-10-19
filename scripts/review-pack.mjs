@@ -227,7 +227,7 @@ const selftest = () => {
   const card = pickFrames(yr).find((x) => x.what.includes("year card"));
   assert.equal(card?.frame, TALK_START_FRAME + yf.find((f) => f.big === "2026").fromFrame + 15, `year card at the year figure ${JSON.stringify(card)}`);
   // promote: verdicts, and a design that did not render gets no command
-  for (const [status, log, want] of [[0, "promote cards: promoted (promoted today, uses 0, lastUsed null)", true], [1, "promote cards: promoted", false],
+  for (const [status, log, want] of [[0, "promote cards: promoted (promoted today)", true], [1, "promote cards: promoted", false],
     [0, "note Mode A SKIPPED\npromote cards: promoted", false], [0, "FAIL still A: INCOMPLETE\npromote cards: promoted", false],
     [0, "promote cards: would promote (dry run)", false], [0, "promote cardsx: promoted", false], [0, "", false]])
     assert.equal(promotedOf("cards", status, log), want, `verdict ${status} ${JSON.stringify(log)}`);

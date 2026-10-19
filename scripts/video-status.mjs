@@ -3,7 +3,7 @@
 // a readiness check before spending tokens. Nothing here calls Claude or changes a file.
 //
 //   node scripts/video-status.mjs            every video: where it stands
-//   node scripts/video-status.mjs <slug>     readiness (with fixes), what's done, what's next
+//   node scripts/video-status.mjs <slug>     readiness (with fixes), what's done, usage per agent, what's next
 //   node scripts/video-status.mjs --check    environment only; silent when ready (the SessionStart hook)
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -106,6 +106,7 @@ export const nextOf = (root, slug) => {
 };
 
 const run = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: "utf8", timeout: 30000, ...opts });
+const PYTHON = process.env.PYTHON ?? "python"; // as npm run test:py and the MCP server call it
 
 // Preflight gives check-schema SCHEMA_TIMEOUT_S, then runs the cut and pacing checks: wait that long
 // plus a margin, or a slow but valid video reads "blocked: ETIMEDOUT". preflight.mjs runs its checks
@@ -122,7 +123,7 @@ export const readinessOf = (root, slug) => {
   const items = [];
   const add = (level, problem, fix) => items.push({ level, problem, fix });
   if (run("ffmpeg", ["-version"]).error) add("blocked", "ffmpeg is missing (prep and render need it)", "install ffmpeg and add it to PATH");
-  if (run("python", ["--version"]).error) add("warning", "python is missing (prep, render and voicing scripts)", "install Python 3");
+  if (run(PYTHON, ["--version"]).error) add("warning", "python is missing (prep, render and voicing scripts)", "install Python 3");
   if (run("git", ["status", "--porcelain"], { cwd: root }).stdout?.trim())
     add("warning", "uncommitted changes (the team's intake stops on them)", "commit them, or tell Claude to go ahead");
   const edit = readJson(join(root, "public/videos", slug, "edit.json"));
@@ -143,6 +144,37 @@ export const readinessOf = (root, slug) => {
   return { level, items };
 };
 
+// Per-agent usage ledger (idea from paperclip cost_events, MIT): the orchestrator appends one line per agent
+// call to team/usage.jsonl, {"agent","round","startedAt","ms","tokens"} (tokens null when not shown).
+// A bad line is skipped and counted, never a crash. null when there is no ledger.
+export const usageOf = (root, slug) => {
+  const p = join(root, "out/videos", slug, "team", "usage.jsonl");
+  if (!existsSync(p)) return null;
+  const agents = {}, all = { calls: 0, ms: 0, tokens: 0, uncounted: 0 };
+  let bad = 0;
+  for (const line of readFileSync(p, "utf8").split("\n")) {
+    if (!line.trim()) continue;
+    let e;
+    try {
+      e = JSON.parse(line);
+    } catch {
+      e = null;
+    }
+    if (typeof e?.agent !== "string" || !Number.isFinite(e.ms) || !(e.tokens == null || Number.isFinite(e.tokens))) {
+      bad++;
+      continue;
+    }
+    for (const t of [(agents[e.agent] ??= { calls: 0, ms: 0, tokens: 0, uncounted: 0 }), all]) {
+      t.calls++;
+      t.ms += e.ms;
+      if (e.tokens == null) t.uncounted++;
+      else t.tokens += e.tokens;
+    }
+  }
+  return { agents, all, bad };
+};
+const usageLine = (t) => `${t.calls} call(s), ${(t.ms / 60000).toFixed(1)} min, ${t.tokens} tokens${t.uncounted ? ` (${t.uncounted} call(s) not counted)` : ""}`;
+
 // Every video with a team run, one line each (idea from HKUDS/OpenHarness).
 const board = (root) => {
   const dir = join(root, "out/videos");
@@ -162,8 +194,13 @@ const board = (root) => {
 const check = (root) => {
   const items = readinessOf(root, "").items.filter((i) => !i.problem.startsWith("uncommitted"));
   if (!existsSync(join(root, "node_modules", "remotion"))) items.push({ level: "blocked", problem: "node_modules is missing", fix: "npm i" });
-  if (run("python", ["-c", "import faster_whisper"]).status !== 0)
-    items.push({ level: "warning", problem: "faster-whisper is not installed (prep-video.py and research.py transcript need it)", fix: "pip install faster-whisper" });
+  // One import probe per Python package, each with its fix (idea from Agent-Reach doctor.py, MIT).
+  for (const [mod, problem, fix] of [
+    ["faster_whisper", "faster-whisper is not installed (prep-video.py and research.py transcript need it)", "pip install faster-whisper"],
+    ["yt_dlp", "yt-dlp is not installed (research.py YouTube search, transcript, watch, comments and audience need it)", 'pip install "yt-dlp[default]"'],
+    ["feedparser", "feedparser is not installed (research.py news and Reddit need it)", "pip install feedparser"],
+  ])
+    if (run(PYTHON, ["-c", `import ${mod}`]).status !== 0) items.push({ level: "warning", problem, fix });
   for (const i of items) console.log(`finhub-video ${i.level}: ${i.problem} -> ${i.fix}`);
 };
 
@@ -179,6 +216,11 @@ const main = () => {
   const n = nextOf(root, slug);
   console.log(`${slug} (pipeline ${n.pipeline}) done: ${n.done.join(", ") || "nothing yet"}`);
   for (const w of n.warnings) console.log(`  warning: ${w}`);
+  const u = usageOf(root, slug);
+  if (u) {
+    console.log(`usage: ${usageLine(u.all)}${u.bad ? `; ${u.bad} bad line(s) in team/usage.jsonl skipped` : ""}`);
+    for (const [a, t] of Object.entries(u.agents)) console.log(`  ${a}: ${usageLine(t)}`);
+  }
   if (!n.stage) console.log("COMPLETE");
   else if (n.halt?.gate) console.log(`WAITING for Daniel: ${n.halt.gate}`);
   else if (n.halt?.stop) console.log(`STOPPED: ${n.halt.stop}`);

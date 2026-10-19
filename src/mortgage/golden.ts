@@ -493,7 +493,7 @@ export const isCuePanel = (c: Cue): boolean => c.kind !== "emoji";
 export type FaceHidden = {
   totalMs: number; // face-hidden time on the talk timeline
   longestMs: number; // longest single face-hidden stretch
-  cueMs: number; // of which: cue panels (0 when the design makes room)
+  cueMs: number; // of which: cue panels and pages (pages only when the design makes room)
   tooLong: { atMs: number; durMs: number }[]; // cutaways over CUTAWAY_MAX_MS
   overNumbers: { atMs: number; big: string }[]; // cutaways covering a number
 };
@@ -512,13 +512,14 @@ export const faceHiddenOf = (
     const a = v.mode === "cutaway" ? out(v.atMs) : null;
     return a === null ? [] : [{ v, a, b: a + v.durMs }];
   });
-  const cues = cueRoom
-    ? []
-    : (reel.edit.cues ?? []).filter(isCuePanel).flatMap((c) => {
-        const a = out(c.fromMs);
-        const b = out(c.toMs);
-        return a === null || b === null ? [] : [{ a, b }];
-      });
+  // A `page` cue covers the whole frame: face-hidden even when the design makes room.
+  const cues = (reel.edit.cues ?? [])
+    .filter((c) => c.kind === "page" || (!cueRoom && isCuePanel(c)))
+    .flatMap((c) => {
+      const a = out(c.fromMs);
+      const b = out(c.toMs);
+      return a === null || b === null ? [] : [{ a, b }];
+    });
   // Overlapping cutaways and panels are one stretch of hidden face.
   const merged: [number, number][] = [];
   for (const { a, b } of [...cut, ...cues].sort((x, y) => x.a - y.a)) {

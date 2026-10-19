@@ -40,14 +40,12 @@ export const MANIFEST_FIELDS = {
   facePolicy: ["face-required", "face-optional", "faceless"],
   renderCost: Object.keys(readJson(join(root, "config", "selector.json")).cost),
   preview: "string|null",
-  uses: "number",
-  lastUsed: "string|null",
   promoted: "string", // YYYY-MM-DD promote-design.mjs passed it; absent = unproven
   promotedNote: "string",
   cueRoom: "boolean", // the design moves Daniel aside for a cue (src/mortgage/cueRoom.ts, designs README)
 };
-// Fields a manifest may leave out (promotion writes the first four).
-export const OPTIONAL_FIELDS = ["uses", "lastUsed", "promoted", "promotedNote", "cueRoom"];
+// Fields a manifest may leave out (promotion writes "promoted" and removes "promotedNote").
+export const OPTIONAL_FIELDS = ["promoted", "promotedNote", "cueRoom"];
 
 // Kinds of on-screen text; brief.mjs measures each separately (longestCard.vi).
 export const KINDS = ["hook", "chapter", "stat", "cue"];

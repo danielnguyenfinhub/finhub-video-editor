@@ -294,10 +294,16 @@ for (const [name, text] of Object.entries(hookTexts)) {
 }
 
 // (e) said-word scale keeps the word space; kinetic fits to the narrower width.
+const { saidRoom } = await bundle("src/elements/saidRoom.ts");
+const oldRoom = (scale, text) => +(((scale - 1) / 4) * 0.6 * text.trim().length).toFixed(3);
+const roomCases = [[1.12, "Tháng"], [1.18, " Hai "], [1.06, "lãi suất"], [1.16, ""], [1.07, "4,1%"]];
+const roomOff = roomCases.filter(([s, t]) => saidRoom(s, t) !== oldRoom(s, t));
+check("elements/saidRoom.ts: equals the per-design char-count formula it replaced", roomOff.length === 0 && saidRoom(1.12, "Tháng") > 0,
+  roomOff.map(([s, t]) => `${s},"${t}" -> ${saidRoom(s, t)} (was ${oldRoom(s, t)})`).join("; ") || `${roomCases.length} inputs`);
 for (const file of ["journey/Captions.tsx", "orbit/Stage.tsx", "isometric/Captions.tsx", "retro/index.tsx", "kinetic/Captions.tsx", "neon/Captions.tsx"]) {
-  const { js, env } = code(file);
-  const room = typeof env.saidRoom === "function" ? env.saidRoom(1.12, "Tháng") : 0;
-  check(`${file}: said word keeps a saidRoom margin`, room > 0 && /margin:`[^`]*saidRoom\(/.test(js), `saidRoom(1.12, "Tháng") = ${room}`);
+  const src = readFileSync(join(ROOT, "src", "designs", file), "utf8");
+  const { js } = code(file);
+  check(`${file}: said word keeps a saidRoom margin`, src.includes('import { saidRoom } from "../../elements/saidRoom";') && /margin:`[^`]*saidRoom\(/.test(js), "imports elements/saidRoom, used in margin");
 }
 {
   // newsroom's amber box reaches PAD_X past the said word: every word keeps half of it as a margin.

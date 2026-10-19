@@ -2,7 +2,7 @@
 // reads, so the whole talking-head pipeline (cuts, RG 234, captions, auto
 // charts, bank logos, outro, render-video.py) runs unchanged.
 //
-//   node scripts/voice-video.mjs <slug> [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>]
+//   node scripts/voice-video.mjs <slug> [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>] [--no-chain]
 //   node scripts/voice-video.mjs <slug> --listing [--lang vi|en] [--dry-run]    (Global RE listing; npm run listing-voice)
 //
 // --listing: a Global RE listing (docs/agents/listing-video.md). Reads
@@ -50,6 +50,13 @@
 //   edit.json               a starter if missing (design "faceless"); if it
 //                           exists, only its `subtitles` are refreshed
 //
+// Voice chain: the joined narration gets VOICE_CHAIN (rumble cut, a 2 dB presence
+// lift, gentle 2:1 compression, a peak limiter with no auto-gain); loudness stays
+// render-video.py's one loudnorm stage. --no-chain skips it, to A/B by ear. The
+// takes are cached raw, and narration.wav is rebuilt on every run, so a chain
+// change never reuses a stale file. Idea from OpenMontage
+// skills/creative/sound-design.md (AGPL-3.0); written fresh, no code copied.
+//
 // The API key is read here only (see AGENTS.md "Third-party API keys").
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -76,6 +83,12 @@ const gapOf = (ms) => (ms === undefined ? GAP_MS : Number.isInteger(ms) ? Math.m
 const styleWith = (STYLE, cue) => (cue ? `${STYLE.replace(/[\s:]+$/, "")}. ${cue.replace(/[\s:.]+$/, "")}: ` : STYLE);
 const BACKDROP = "0x0B1F3D"; // brand navy; never seen, the design draws its own
 const CLIP_MAX_S = 5; // longest a single stock clip stays on screen
+const VOICE_CHAIN = "highpass=f=80,equalizer=f=3000:t=q:w=1:g=2,acompressor=threshold=-18dB:ratio=2:attack=5:release=120,alimiter=limit=0.95:level=disabled";
+const chainOf = (args) => (args.includes("--no-chain") ? "" : VOICE_CHAIN);
+/** The narration graph: each take resampled and padded with its pause, joined in order, then the chain (if any). */
+const narrationGraph = (gapsMs, chain) =>
+  `${gapsMs.map((g, i) => `[${i}:a]aresample=48000,apad=pad_dur=${g / 1000}[a${i}]`).join(";")};` +
+  `${gapsMs.map((_, i) => `[a${i}]`).join("")}concat=n=${gapsMs.length}:v=0:a=1${chain ? `,${chain}` : ""}[out]`;
 
 const fail = (msg) => {
   console.error(`voice-video: ${msg}`);
@@ -90,7 +103,7 @@ const run = (cmd, args, what) => {
   }
 };
 
-const USAGE = "usage: node scripts/voice-video.mjs <slug> [--listing [--lang vi|en]] [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>]";
+const USAGE = "usage: node scripts/voice-video.mjs <slug> [--listing [--lang vi|en]] [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>] [--no-chain]";
 const argv = process.argv.slice(2);
 if (argv[0] === "--selftest") {
   const S = "Nói với giọng ấm áp, tự tin, tự nhiên: ";
@@ -98,6 +111,12 @@ if (argv[0] === "--selftest") {
   if (styleWith(S, "calm.") !== "Nói với giọng ấm áp, tự tin, tự nhiên. calm: ") fail(`selftest: style cue joins STYLE, got "${styleWith(S, "calm.")}"`);
   for (const [ms, want] of [[undefined, GAP_MS], [5000, 2000], [-5, 0], [700, 700], [1.5, null], ["400", null]])
     if (gapOf(ms) !== want) fail(`selftest: pauseAfterMs ${ms} -> ${gapOf(ms)}, want ${want}`);
+  const g = narrationGraph([400, 0], chainOf(["s"]));
+  const want = "[0:a]aresample=48000,apad=pad_dur=0.4[a0];[1:a]aresample=48000,apad=pad_dur=0[a1];[a0][a1]concat=n=2:v=0:a=1," +
+    "highpass=f=80,equalizer=f=3000:t=q:w=1:g=2,acompressor=threshold=-18dB:ratio=2:attack=5:release=120,alimiter=limit=0.95:level=disabled[out]";
+  if (g !== want) fail(`selftest: voice chain graph\n  got  ${g}\n  want ${want}`);
+  const raw = narrationGraph([400, 0], chainOf(["s", "--no-chain"]));
+  if (raw !== want.replace(`,${VOICE_CHAIN}`, "") || /highpass|alimiter/.test(raw)) fail(`selftest: --no-chain must skip the chain, got ${raw}`);
   console.log("voice-video selftest ok");
   process.exit(0);
 }
@@ -498,12 +517,12 @@ if (listing && spokenName) {
   }
 }
 
-// Narration: every take padded with its scene's pause (GAP_MS by default), joined in order.
+// Narration: every take padded with its scene's pause (GAP_MS by default), joined in order, then the voice chain.
 const narration = join(voiceDir, listing ? `narration-${lang}.wav` : "narration.wav");
 const inputs = takes.flatMap((t) => ["-i", t.audio]);
-const pads = takes.map((_, i) => `[${i}:a]aresample=48000,apad=pad_dur=${scenes[i].gapMs / 1000}[a${i}]`).join(";");
-const joined = `${takes.map((_, i) => `[a${i}]`).join("")}concat=n=${takes.length}:v=0:a=1[out]`;
-run("ffmpeg", ["-y", "-hide_banner", "-loglevel", "error", ...inputs, "-filter_complex", `${pads};${joined}`, "-map", "[out]", narration], "joining the narration");
+const chain = chainOf(argv);
+if (!chain) console.log("--no-chain: narration left raw (no voice chain).");
+run("ffmpeg", ["-y", "-hide_banner", "-loglevel", "error", ...inputs, "-filter_complex", narrationGraph(scenes.map((s) => s.gapMs), chain), "-map", "[out]", narration], "joining the narration");
 
 // A listing stops here: ListingReel reads narration.wav, words.json and the
 // per-scene timeline; no footage, source.mp4, cut-out or edit.json.

@@ -1,4 +1,4 @@
-// Check for the numbers-kit cues (change, trend) in src/mortgage/schema.ts.
+// Check for the numbers-kit cues (change, trend) and the page cue in src/mortgage/schema.ts.
 // Run: node scripts/check-numbers-kit.mjs (exit 1 on failure). Proves the
 // rateType and advertised-rate refines, swapAtMs bounds, the test edits
 // parse, and that the new cue strings reach the RG 234 guard exactly as a
@@ -50,6 +50,20 @@ e = issues(edit([{ ...trend, rateType: "advertised" }]));
 check('trend rateType "advertised" without compliance.advertisedRate fails', e.some((m) => m.includes("compliance.advertisedRate")), e.join(" | "));
 e = issues(edit([{ ...change, rateType: "advertised" }], { compliance: { advertisedRate } }));
 check("the same edit with compliance.advertisedRate passes", e.length === 0, e.join(" | "));
+
+// The `page` cue: a library image and its pixel size; no on-screen copy of its own.
+const page = { kind: "page", fromMs: 1000, toMs: 9000, asset: "library/pages/sample-page.png", width: 1265, height: 10022 };
+e = issues(edit([page]));
+check("page cue with a library image and its size passes", e.length === 0 && onScreenCopy(editSchema.parse(edit([page])))["cues[0]"].length === 0, e.join(" | "));
+for (const [why, bad, at] of [
+  ["an asset outside public/library/", { ...page, asset: "../lender/page.png" }, "cues.0.asset"],
+  ["no height", { ...page, height: undefined }, "cues.0.height"],
+  ["toMs before fromMs", { ...page, toMs: 500 }, "cues.0"],
+  ["an unknown field", { ...page, src: "x.png" }, "cues.0"],
+]) {
+  e = issues(edit([bad]));
+  check(`page cue with ${why} fails at ${at}`, e.some((m) => m.startsWith(at)), e.join(" | "));
+}
 
 for (const slug of ["_test-numbers-kit", "_test-numbers-kit-faceless"]) {
   e = issues(JSON.parse(readFileSync(`public/videos/${slug}/edit.json`, "utf8")));

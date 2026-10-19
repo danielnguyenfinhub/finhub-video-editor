@@ -43,7 +43,5 @@
   "facePolicy": "face-required",
   "cueRoom": true,
   "renderCost": "low",
-  "preview": null,
-  "uses": 0,
-  "lastUsed": null
+  "preview": null
 }

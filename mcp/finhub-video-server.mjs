@@ -4,8 +4,9 @@
 // moving recordings stay chat-run behind Daniel's yes (docs/agents/plugin-and-mcp.md).
 //
 //   node mcp/finhub-video-server.mjs        (npm run mcp; registered in .mcp.json, not in the plugin)
+//   mcp/http.mjs serves makeServer({ remote: true }) over HTTP on Railway.
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -41,96 +42,116 @@ const heavy = async (what, job) => {
     busy = null;
   }
 };
+// Remotely the out/ files stay on the server, so the answer carries the files research.py says it wrote.
+const withFiles = (r) => {
+  for (const [, f] of r.content[0].text.matchAll(/^(out\/\S+\.(?:md|json|txt))\b/gm)) {
+    const p = join(ROOT, f);
+    if (existsSync(p)) r.content.push({ type: "text", text: `--- ${f}\n${readFileSync(p, "utf8").slice(0, 60_000)}` });
+  }
+  return r;
+};
 const node = (script, args, timeoutMs = 120_000) => run(process.execPath, ["--no-warnings", join(ROOT, script), ...args], timeoutMs);
 
-const server = new McpServer({ name: "finhub-video", version: "1.0.0" });
-const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
+// remote: the Railway HTTP mode (mcp/http.mjs) has no footage, Remotion or ffmpeg, so it keeps only the
+// tools that need none of them: list_designs and research (trending, topic, comments).
+export const makeServer = ({ remote = false } = {}) => {
+  const server = new McpServer({ name: "finhub-video", version: "1.0.0" });
+  const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
+  const localTool = remote ? () => {} : server.registerTool.bind(server);
 
-server.registerTool(
-  "video_status",
-  {
-    description: "Where each video's team run stands, or for one slug: readiness, what's done, what's next. Reads only.",
-    inputSchema: { slug: slug.optional() },
-    annotations: readOnly,
-  },
-  ({ slug }) => node("scripts/video-status.mjs", slug ? [slug] : []),
-);
-
-server.registerTool(
-  "preflight",
-  {
-    description: "The checks a render must pass first (edit.json mistakes, check-schema, speech cuts, pacing). Run before render_video.",
-    inputSchema: { slug },
-    annotations: readOnly,
-  },
-  ({ slug }) => node("scripts/preflight.mjs", [slug], 600_000),
-);
-
-server.registerTool(
-  "still",
-  {
-    description:
-      "One frame of a composition as a half-scale PNG in out/mcp/ (cheap to look at). Pass slug for the video being edited (without it the composition's default video renders) and safeZones to draw the SAFE band and FACE box (checking only). Returns the file path; open it to view.",
-    inputSchema: {
-      composition: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]*$/),
-      frame: z.number().int().min(0).max(100_000),
-      slug: slug.optional(),
-      safeZones: z.boolean().optional(),
+  localTool(
+    "video_status",
+    {
+      description: "Where each video's team run stands, or for one slug: readiness, what's done, what's next. Reads only.",
+      inputSchema: { slug: slug.optional() },
+      annotations: readOnly,
     },
-    annotations: { ...readOnly, readOnlyHint: false },
-  },
-  ({ composition, frame, slug, safeZones }) => heavy(`still ${composition}`, async () => {
-    mkdirSync(join(ROOT, "out/mcp"), { recursive: true });
-    const file = join("out/mcp", `${composition}${slug ? `-${slug}` : ""}-${frame}.png`);
-    // As runbook A6.2: the video's props and --gl=angle.
-    const props = slug || safeZones ? [`--props=${JSON.stringify({ slug, safeZones })}`, "--gl=angle"] : [];
-    const r = await run(process.execPath, [REMOTION, "still", composition, file, `--frame=${frame}`, "--scale=0.5", ...props], 600_000);
-    if (!r.isError) r.content.unshift({ type: "text", text: `still: ${join(ROOT, file)}` });
-    return r;
-  }),
-);
+    ({ slug }) => node("scripts/video-status.mjs", slug ? [slug] : []),
+  );
 
-server.registerTool(
-  "render_video",
-  {
-    description:
-      "Render a finished video on this PC (scripts/render-video.py): writes out/videos/<slug>/ and puts <Topic>.mp4 in '2 - FINISHED VIDEOS'. Takes minutes. Only when Daniel has asked to render, after preflight passes. Posts nothing.",
-    inputSchema: { slug },
-    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  },
-  ({ slug }) => heavy(`render ${slug}`, () => run(PYTHON, [join(ROOT, "scripts/render-video.py"), slug], 2 * 60 * 60_000)),
-);
+  localTool(
+    "preflight",
+    {
+      description: "The checks a render must pass first (edit.json mistakes, check-schema, speech cuts, pacing). Run before render_video.",
+      inputSchema: { slug },
+      annotations: readOnly,
+    },
+    ({ slug }) => node("scripts/preflight.mjs", [slug], 600_000),
+  );
 
-server.registerTool(
-  "research",
-  {
-    description: "Before a faceless script: what's trending, or sources on a topic (scripts/research.py). Writes under out/.",
-    inputSchema: { mode: z.enum(["trending", "topic"]), query: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").optional(), slug: slug.optional() },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
-  },
-  ({ mode, query, slug }) => {
-    if (mode === "trending") return run(PYTHON, [join(ROOT, "scripts/research.py"), "trending"], 300_000);
-    if (!query || !slug) return { ...text("topic needs query and slug"), isError: true };
-    return run(PYTHON, [join(ROOT, "scripts/research.py"), "topic", query, "--slug", slug], 300_000);
-  },
-);
+  localTool(
+    "still",
+    {
+      description:
+        "One frame of a composition as a half-scale PNG in out/mcp/ (cheap to look at). Pass slug for the video being edited (without it the composition's default video renders) and safeZones to draw the SAFE band and FACE box (checking only). Returns the file path; open it to view.",
+      inputSchema: {
+        composition: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]*$/),
+        frame: z.number().int().min(0).max(100_000),
+        slug: slug.optional(),
+        safeZones: z.boolean().optional(),
+      },
+      annotations: { ...readOnly, readOnlyHint: false },
+    },
+    ({ composition, frame, slug, safeZones }) => heavy(`still ${composition}`, async () => {
+      mkdirSync(join(ROOT, "out/mcp"), { recursive: true });
+      const file = join("out/mcp", `${composition}${slug ? `-${slug}` : ""}-${frame}.png`);
+      // As runbook A6.2: the video's props and --gl=angle.
+      const props = slug || safeZones ? [`--props=${JSON.stringify({ slug, safeZones })}`, "--gl=angle"] : [];
+      const r = await run(process.execPath, [REMOTION, "still", composition, file, `--frame=${frame}`, "--scale=0.5", ...props], 600_000);
+      if (!r.isError) r.content.unshift({ type: "text", text: `still: ${join(ROOT, file)}` });
+      return r;
+    }),
+  );
 
-server.registerTool(
-  "list_designs",
-  {
-    description: "The video designs (templates) with what each is for: id, intents, data shapes, aspects, promoted.",
-    annotations: readOnly,
-  },
-  () => {
-    const dir = join(ROOT, "src/designs");
-    const rows = readdirSync(dir)
-      .filter((d) => existsSync(join(dir, d, "template.json")))
-      .map((d) => {
-        const t = JSON.parse(readFileSync(join(dir, d, "template.json"), "utf8"));
-        return { id: t.id, intents: t.intents, dataShapes: t.dataShapes, aspects: t.aspects, promoted: t.promoted };
-      });
-    return text(JSON.stringify(rows, null, 1));
-  },
-);
+  localTool(
+    "render_video",
+    {
+      description:
+        "Render a finished video on this PC (scripts/render-video.py): writes out/videos/<slug>/ and puts <Topic>.mp4 in '2 - FINISHED VIDEOS'. Takes minutes. Only when Daniel has asked to render, after preflight passes. Posts nothing.",
+      inputSchema: { slug },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    ({ slug }) => heavy(`render ${slug}`, () => run(PYTHON, [join(ROOT, "scripts/render-video.py"), slug], 2 * 60 * 60_000)),
+  );
 
-await server.connect(new StdioServerTransport());
+  server.registerTool(
+    "research",
+    {
+      description:
+        "Before a faceless script: what's trending, or sources on a topic (scripts/research.py). watch (query = an https YouTube link): a reference video's pacing, contact sheets and captions; comments: its most-liked comments, anonymised. Writes under out/.",
+      inputSchema: { mode: z.enum(remote ? ["trending", "topic", "comments"] : ["trending", "topic", "watch", "comments"]), query: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").optional(), slug: slug.optional() },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    ({ mode, query, slug }) => {
+      const py = (args, ms = 300_000) => run(PYTHON, [join(ROOT, "scripts/research.py"), ...args], ms).then((r) => (remote ? withFiles(r) : r));
+      if (mode === "trending") return py(["trending"]);
+      if (!query || !slug) return { ...text(`${mode} needs query and slug`), isError: true };
+      if (mode === "topic") return py(["topic", query, "--slug", slug]);
+      if (!query.startsWith("https://")) return { ...text(`${mode} needs query = an https:// link`), isError: true };
+      // watch downloads (480p, 20 min cap) and runs an ffmpeg sweep: one heavy job at a time.
+      return mode === "watch" ? heavy(`watch ${slug}`, () => py(["watch", query, "--slug", slug], 1_800_000)) : py(["comments", query, "--slug", slug]);
+    },
+  );
+
+  server.registerTool(
+    "list_designs",
+    {
+      description: "The video designs (templates) with what each is for: id, intents, data shapes, aspects, promoted.",
+      annotations: readOnly,
+    },
+    () => {
+      const dir = join(ROOT, "src/designs");
+      const rows = readdirSync(dir)
+        .filter((d) => existsSync(join(dir, d, "template.json")))
+        .map((d) => {
+          const t = JSON.parse(readFileSync(join(dir, d, "template.json"), "utf8"));
+          return { id: t.id, intents: t.intents, dataShapes: t.dataShapes, aspects: t.aspects, promoted: t.promoted };
+        });
+      return text(JSON.stringify(rows, null, 1));
+    },
+  );
+  return server;
+};
+
+// Run directly (npm run mcp, .mcp.json): stdio. Imported by mcp/http.mjs: nothing connects here.
+if (process.argv[1] && import.meta.filename === realpathSync(process.argv[1])) await makeServer().connect(new StdioServerTransport());

@@ -67,6 +67,7 @@ Every cue has `kind`, `fromMs`, `toMs` (on screen between them) and inner beats 
 | `lenders` | `title?` | talks about banks/lenders (shows the accredited lender logos) |
 | `change` | `kicker?`, `label` (what changed), `from`, `to` (strings, written as said: `"5,89%"`), `swapAtMs` (inside fromMs–toMs), `direction?` up/down (arrow), `tone?`, `rateType?` cash/advertised/other | says an old value became a new one (a rate cut, a repayment drop). The design picks the motion (classic: strike-through; faceless: slide) |
 | `trend` | `kicker?`, `title`, `unit?`, `decimals?` 0–3, `points:[{label,value}]` (2–8, `value` a number), `rateType?` | walks through a value over time (cash-rate path). Every point's value is printed; the axis spans the data |
+| `page` | `asset` (an image under `public/library/`, like a visual), `width`, `height` (its pixels) | walks through a long page (a fact sheet, a policy page): it scrolls top to bottom on a tilted screen. Drawn by the core in every design, full cover like a cutaway (Daniel hidden, captions on top, page clipped to SAFE), so a faceless or full-cover beat only; no other cue in its span. A screenshot of a lender page needs permission and must not suggest the lender endorses the video |
 
 Numbers kit rules: a `change` whose `from`/`to` contains `%`, or a `trend` with `unit: "%"`, needs
 `rateType` (`"cash"` = RBA cash rate, `"advertised"` = a lender's rate, `"other"`). `"advertised"`

@@ -6,10 +6,11 @@
 // first and last frame always kept. Frames are 512 px wide, so each costs
 // about a quarter of a full still to look at.
 //
-//   node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet]
+//   node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet] [--start <s>] [--end <s>]
 //   (--out must be inside out/: it is deleted and remade)
 //
-// Writes out/videos/<slug>/team/qc/sweep/sweep-<n>-<time>.jpg and sweep.json,
+// Writes out/videos/<slug>/team/qc/sweep/sweep-<n>-<time>.jpg and sweep.json (with `cuts`,
+// every scene-change time, for research.py watch's pacing),
 // and prints one line per frame: open every one and look (video-qc skill).
 // --sheet also tiles the kept frames 12 to a contact sheet (4x3, each tile
 // stamped with its time), so a long video is read in a handful of images
@@ -18,6 +19,11 @@
 // (bradautomates/claude-video, frames.py), rewritten for Node. The contact
 // sheet idea is crisng95/flowkit's fk-review-video (frames tiled with burned-in
 // timestamps), rewritten without its Google Flow generation path.
+// --start/--end: a focus window. ffmpeg decodes only that span (-ss/-to before
+// -i), the whole video's frame budget is spent on it (denser sampling), and every
+// time written (frames, cuts, sheet stamps) is absolute, the start added back.
+// Ported from claude-video's frames.py auto_fps_focus and its start offset (MIT,
+// Bradley Bonanno).
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
@@ -183,30 +189,46 @@ export const outDirProblem = (outDir, root) => {
   return null;
 };
 
-export const sweep = (file, outDir, { max = 80, sheet = false } = {}) => {
+/** Why a --start/--end window is unusable, or null. Either may be omitted; duration NaN = unknown. */
+export const windowProblem = (start, end, duration) => {
+  for (const [k, v] of [["--start", start], ["--end", end]])
+    if (v !== undefined && !(Number.isFinite(v) && v >= 0)) return `${k} must be a number of seconds, 0 or more`;
+  if ((start ?? 0) >= (end ?? duration)) return `--start ${start ?? 0} must be before --end ${end ?? duration}`;
+  if (end !== undefined && Number.isFinite(duration) && end > duration) return `--end ${end} is past the video's ${duration.toFixed(2)} s`;
+  return null;
+};
+
+export const sweep = (file, outDir, { max = 80, sheet = false, start, end } = {}) => {
   const seconds = durationOf(file);
-  const budget = Math.min(max, frameBudget(seconds, max));
+  const bad = start === undefined && end === undefined ? null : windowProblem(start, end, seconds);
+  if (bad) throw new Error(bad);
+  const from = start ?? 0;
+  const span = (end ?? seconds) - from; // what ffmpeg decodes
+  const win = [...(start === undefined ? [] : ["-ss", String(start)]), ...(end === undefined ? [] : ["-to", String(end)])];
+  const abs = (ts) => ts.map((t) => Math.round((t + from) * 1000) / 1000); // window time -> video time
+  const budget = Math.min(max, frameBudget(seconds, max)); // the whole video's budget, so a window samples denser
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   const scale = `scale=${WIDTH}:-2`;
   // Engine 1: scene cuts, whole video decoded (a cap would drop the tail).
   let engine = "scene";
-  let times = parseShowinfo(
+  let times = abs(parseShowinfo(
     withSyncFlag((sync) =>
-      ff(["-i", file, "-vf", `select='eq(n,0)+gt(scene,${SCENE_THRESHOLD})',${scale},showinfo`, ...sync, "-q:v", "3", join(outDir, "raw_%05d.jpg")], "scene pass"),
+      ff([...win, "-i", file, "-vf", `select='eq(n,0)+gt(scene,${SCENE_THRESHOLD})',${scale},showinfo`, ...sync, "-q:v", "3", join(outDir, "raw_%05d.jpg")], "scene pass"),
     ),
-  );
+  ));
+  const cuts = times.slice(1); // every scene change (frame 0 is always selected first), before any thinning
   if (times.length < SCENE_MIN_FRAMES) {
     // Engine 2: evenly spaced, at most MAX_FPS.
     engine = "uniform";
     for (const f of readdirSync(outDir)) rmSync(join(outDir, f));
-    const fps = Math.min(MAX_FPS, budget / Math.max(seconds, 1));
-    times = parseShowinfo(
-      ff(["-i", file, "-vf", `fps=${fps},${scale},showinfo`, "-frames:v", String(budget), "-q:v", "3", join(outDir, "raw_%05d.jpg")], "uniform pass"),
-    );
+    const fps = Math.min(MAX_FPS, budget / Math.max(span, 1));
+    times = abs(parseShowinfo(
+      ff([...win, "-i", file, "-vf", `fps=${fps},${scale},showinfo`, "-frames:v", String(budget), "-q:v", "3", join(outDir, "raw_%05d.jpg")], "uniform pass"),
+    ));
   }
   const raw = readdirSync(outDir).filter((f) => f.startsWith("raw_")).sort();
-  if (raw.length !== times.length) times = raw.map((_, i) => times[i] ?? (i * seconds) / Math.max(raw.length - 1, 1));
+  if (raw.length !== times.length) times = raw.map((_, i) => times[i] ?? from + (i * span) / Math.max(raw.length - 1, 1));
   const thumbs = thumbsOf(outDir, "raw_%05d.jpg", raw.length);
   const unique = thumbs ? dedupeByDeltas(thumbs) : raw.map((_, i) => i);
   const keep = evenIndices(unique.length, budget).map((i) => unique[i]);
@@ -217,7 +239,7 @@ export const sweep = (file, outDir, { max = 80, sheet = false } = {}) => {
   });
   for (const f of readdirSync(outDir)) if (f.startsWith("raw_")) rmSync(join(outDir, f));
   const sheets = sheet ? contactSheets(frames, outDir) : [];
-  const report = { file, seconds, engine, budget, candidates: raw.length, duplicatesDropped: raw.length - unique.length, frames, ...(sheet ? { sheets } : {}) };
+  const report = { file, seconds, ...(win.length ? { window: { start: from, end: from + span } } : {}), engine, budget, cuts, candidates: raw.length, duplicatesDropped: raw.length - unique.length, frames, ...(sheet ? { sheets } : {}) };
   writeFileSync(join(outDir, "sweep.json"), JSON.stringify(report, null, 2) + "\n");
   return report;
 };
@@ -227,7 +249,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const opt = (k) => (args.includes(k) ? args[args.indexOf(k) + 1] : undefined);
   const slug = args.filter((a, i) => !a.startsWith("--") && (args[i - 1] === "--sheet" || !args[i - 1]?.startsWith("--")))[0];
   if (!slug) {
-    console.error("usage: node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet]");
+    console.error("usage: node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet] [--start <s>] [--end <s>]");
     process.exit(2);
   }
   assertSlug(slug);
@@ -243,7 +265,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     console.error(`sweep: ${bad}`);
     process.exit(1);
   }
-  const r = sweep(file, outDir, { max: Number(opt("--max") ?? 80), sheet: args.includes("--sheet") });
+  const num = (k) => (args.includes(k) ? Number(opt(k) ?? NaN) : undefined);
+  const [start, end] = [num("--start"), num("--end")];
+  const badWindow = start === undefined && end === undefined ? null : windowProblem(start, end, durationOf(file));
+  if (badWindow) {
+    console.error(`sweep: ${badWindow}`);
+    process.exit(1);
+  }
+  const r = sweep(file, outDir, { max: Number(opt("--max") ?? 80), sheet: args.includes("--sheet"), start, end });
   console.log(`sweep: ${r.frames.length} frames (${r.engine}, ${r.candidates} candidates, ${r.duplicatesDropped} duplicates dropped) from ${r.seconds.toFixed(1)} s`);
   for (const f of r.frames) console.log(`- ${f.path} (t=${f.s}s)`);
   for (const h of r.sheets ?? []) console.log(`- sheet ${h.path} (${h.frames} frames, ${h.from}s-${h.to}s)`);

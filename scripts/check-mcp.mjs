@@ -3,9 +3,11 @@
 // (preflight and still; still takes a slug so it renders the video being edited).
 // Renders nothing. Run: node scripts/check-mcp.mjs
 import assert from "node:assert/strict";
+import { spawn, spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 const root = join(import.meta.dirname, "..");
 const client = new Client({ name: "check-mcp", version: "1.0.0" });
@@ -38,7 +40,36 @@ try {
   }
   const flag = await client.callTool({ name: "research", arguments: { mode: "topic", query: "--days=99999", slug: "x" } });
   assert.ok(flag.isError, "research refuses a query that reads as a flag");
+  for (const mode of ["watch", "comments"]) {
+    for (const query of ["http://www.youtube.com/watch?v=x", "file:///etc/passwd", "-o/tmp/x", "--exec=calc"]) {
+      const r = await client.callTool({ name: "research", arguments: { mode, query, slug: "x" } });
+      assert.ok(r.isError && !/^exit /.test(r.content[0].text), `research ${mode} refuses ${query} before running anything`);
+    }
+  }
   console.log(`check-mcp: ${tools.length} tools, ${designs.length} designs, bad slugs refused`);
 } finally {
   await client.close();
+}
+
+// The Railway HTTP mode (mcp/http.mjs): no token, no service; the light tools only, behind the token.
+const token = "check-mcp-token-0123456789abcdef";
+const port = 18000 + Math.floor(Math.random() * 1000);
+const http = spawn(process.execPath, [join(root, "mcp/http.mjs")], { cwd: root, env: { ...process.env, MCP_TOKEN: token, PORT: String(port) }, stdio: "ignore" });
+try {
+  const noToken = spawnSync(process.execPath, [join(root, "mcp/http.mjs")], { cwd: root, env: { ...process.env, MCP_TOKEN: "" }, encoding: "utf8" });
+  assert.equal(noToken.status, 1, "http.mjs refuses to start without MCP_TOKEN");
+  const base = `http://127.0.0.1:${port}`;
+  for (let i = 0; i < 100 && !(await fetch(`${base}/health`).then((r) => r.ok, () => false)); i++) await new Promise((r) => setTimeout(r, 100));
+  assert.equal((await fetch(`${base}/mcp`, { method: "POST" })).status, 401, "no token: 401");
+  assert.equal((await fetch(`${base}/mcp/${"x".repeat(token.length)}`, { method: "POST" })).status, 401, "wrong path token: 401");
+  const remote = new Client({ name: "check-mcp-http", version: "1.0.0" });
+  await remote.connect(new StreamableHTTPClientTransport(new URL(`${base}/mcp/${token}`)));
+  const names = (await remote.listTools()).tools.map((t) => t.name).sort();
+  assert.deepEqual(names, ["list_designs", "research"], "remote keeps only the tools that need no footage");
+  const watch = await remote.callTool({ name: "research", arguments: { mode: "watch", query: "https://x", slug: "x" } });
+  assert.ok(watch.isError, "remote research refuses watch");
+  await remote.close();
+  console.log("check-mcp http: token required, light tools only");
+} finally {
+  http.kill();
 }

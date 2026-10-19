@@ -1,11 +1,13 @@
-// edit.json `visuals`: library b-roll over the talk, drawn once here so every
-// design gets it; a design restyles only the pip/overlay frame (visualFrame).
+// edit.json `visuals` (library b-roll) and `page` cues over the talk, drawn
+// once here so every design gets it; a design restyles only the pip/overlay frame (visualFrame).
 // Sits above the talk and below the design's Overlay, so captions, cues and
 // the end cards stay on top. Footage is muted: Daniel's voice is the only
 // audio. Frame 0 is the first word of the talk (like Overlay).
 import type React from "react";
 import {
   AbsoluteFill,
+  Easing,
+  Img,
   OffthreadVideo,
   Sequence,
   interpolate,
@@ -14,9 +16,10 @@ import {
   useVideoConfig,
 } from "remotion";
 import { KenBurns } from "../elements/KenBurns";
+import { Stage } from "../elements/remocn/stage";
 import { FACE, SAFE } from "./golden";
 import { PacedVideo } from "./PacedVideo";
-import { outFrameOf, type Look, type Reel, type Visual } from "./schema";
+import { outFrameOf, type Cue, type Look, type Reel, type Visual } from "./schema";
 import { clamp, retryVideoFetch } from "./style";
 
 const FADE = 6;
@@ -146,6 +149,40 @@ const Shot: React.FC<{
   );
 };
 
+// A `page` cue: a long page scrolled top to bottom on a tilted screen. Full
+// cover like a cutaway (Daniel hidden, so no FACE to clear); the page is
+// clipped to SAFE (golden rule 3), the backdrop fills the frame. ponytail:
+// one scroll path (hold at the top 1 s, scroll, settle at the bottom); add
+// keyframes to the cue if a page needs to stop on a section.
+const Page: React.FC<{ cue: Extract<Cue, { kind: "page" }> }> = ({ cue }) => {
+  const frame = useCurrentFrame();
+  const { durationInFrames: d, fps } = useVideoConfig();
+  const end = Math.max(2 * fps + 1, d - 1);
+  const opacity = interpolate(frame, [0, FADE, end - FADE, end], [0, 1, 1, 0], clamp);
+  return (
+    <AbsoluteFill style={{ opacity, background: "linear-gradient(145deg, #17181d 0%, #09090b 72%)" }}>
+      <AbsoluteFill
+        style={{
+          clipPath: `inset(${SAFE.top}px ${1080 - SAFE.right}px ${1920 - SAFE.bottom}px ${SAFE.left}px)`,
+        }}
+      >
+        <Stage
+          contentSize={{ width: cue.width, height: cue.height }}
+          moves={[
+            { at: 0, y: 0.035, zoom: 1.04 },
+            { at: fps, y: 0.07, zoom: 1.04, easing: Easing.in(Easing.cubic) },
+            { at: end - fps, y: 0.92, zoom: 1.04, easing: Easing.linear },
+            { at: end, y: 0.955, zoom: 1.04, easing: Easing.out(Easing.cubic) },
+          ]}
+          backdrop="transparent"
+        >
+          <Img src={staticFile(cue.asset)} style={{ width: "100%", height: "100%" }} />
+        </Stage>
+      </AbsoluteFill>
+    </AbsoluteFill>
+  );
+};
+
 export const Visuals: React.FC<{
   reel: Reel;
   src: string;
@@ -178,6 +215,21 @@ export const Visuals: React.FC<{
               look={reel.edit.look}
               frameStyle={frameStyle}
             />
+          </Sequence>
+        );
+      })}
+      {(reel.edit.cues ?? []).map((c) => {
+        if (c.kind !== "page") return null;
+        const from = outFrame(c.fromMs);
+        return (
+          <Sequence
+            key={`page${c.fromMs}`}
+            from={from}
+            durationInFrames={Math.max(1, outFrame(c.toMs) - from)}
+            premountFor={fps}
+            name={`page ${c.asset}`}
+          >
+            <Page cue={c} />
           </Sequence>
         );
       })}
