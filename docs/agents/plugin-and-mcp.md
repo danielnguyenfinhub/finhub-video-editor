@@ -17,6 +17,10 @@ Part of the project guide; [AGENTS.md](../../AGENTS.md) routes here. Everything 
 
 Kept off on purpose, so no tool call can do them without Daniel in the chat: posting or staging for YouTube, Facebook or Drive (`publish-post.mjs`), voice cloning (AGENTS.md "Language"), moving recordings (ground rule 3). Safety: slugs go through `slugOk` from `scripts/listing-prep.mjs`, composition ids must be letters, digits and dashes, and every script runs through `execFile` with an argument list (no shell) from the repo root. Python is `python` (as `npm run test:py`); set `PYTHON` if yours is `python3`.
 
+### Remote mode (Railway)
+
+`mcp/http.mjs` serves the same server over Streamable HTTP for claude.ai web and the phone app, with only the tools that need no footage, Remotion or ffmpeg: `list_designs` and `research` (`trending`, `topic`, `comments`; their out/ files come back in the answer). `railway.json` builds `mcp/Dockerfile` (Node 24, the two MCP packages, Python with yt-dlp and feedparser) and checks `GET /health`. Every call needs the Railway variable `MCP_TOKEN` (24+ characters): `Authorization: Bearer <token>`, or the URL `https://<railway domain>/mcp/<token>` for a connector that cannot send a header. Without it the server will not start. `check-mcp.mjs` proves the token gate and the tool list.
+
 ## The desktop plugin
 
 `.claude-plugin/plugin.json` ships the whole harness without copying it: `skills` points at `.claude/skills/`, `agents` lists every `.claude/agents/*.md` file by name (the manifest takes no folder for agents; `check-teams.mjs` fails when an agent file and the list differ), and it has no `mcpServers`: the MCP tools come from the folder's `.mcp.json` (above). `.claude-plugin/marketplace.json` makes the repo its own marketplace (the pattern from the sibling `claude-video` repo).
