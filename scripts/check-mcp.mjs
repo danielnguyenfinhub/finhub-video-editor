@@ -14,6 +14,17 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 const root = join(import.meta.dirname, "..");
+
+// The Railway image copies scripts one by one (mcp/Dockerfile): every script the remote tools run, and
+// every script those import, must be in its COPY line, or the tool dies with "Cannot find module" there.
+{
+  const copied = new Set([...readFileSync(join(root, "mcp/Dockerfile"), "utf8").matchAll(/scripts\/[\w.-]+/g)].map((m) => m[0]));
+  const need = ["scripts/research.py", "scripts/providers.mjs"];
+  for (let i = 0; i < need.length; i++)
+    if (need[i].endsWith(".mjs"))
+      for (const [, dep] of readFileSync(join(root, need[i]), "utf8").matchAll(/^import .* from "\.\/([\w.-]+)";$/gm)) if (!need.includes(`scripts/${dep}`)) need.push(`scripts/${dep}`);
+  for (const f of need) assert.ok(copied.has(f), `mcp/Dockerfile copies ${f} (the remote tools need it)`);
+}
 const client = new Client({ name: "check-mcp", version: "1.0.0" });
 // FINHUB_FAKE_PROVIDERS: scripts/providers.mjs answers with canned data, so nothing is spent or sent.
 process.env.FINHUB_FAKE_PROVIDERS = "1";

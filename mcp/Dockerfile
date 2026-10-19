@@ -1,5 +1,5 @@
 # The Railway image for mcp/http.mjs: the MCP server's light tools over HTTP (list_designs, research
-# trending/topic/comments). Not the editing toolkit: no Remotion, Chromium or footage, so it installs
+# without watch, visuals stock search). Not the editing toolkit: no Remotion, Chromium or footage, so it installs
 # only the two MCP packages and the research script's Python deps. Built from the repo root (railway.json).
 FROM node:24-slim
 
@@ -16,7 +16,8 @@ WORKDIR /app
 RUN npm init -y >/dev/null && npm install --omit=dev --no-audit --no-fund @modelcontextprotocol/sdk@1.32.1 zod@4.5.4
 
 COPY mcp ./mcp
-COPY scripts/research.py scripts/listing-prep.mjs ./scripts/
+# providers.mjs and its static imports (scripts/check-mcp.mjs fails if one is missing here).
+COPY scripts/research.py scripts/listing-prep.mjs scripts/providers.mjs scripts/visuals.mjs scripts/library.mjs scripts/clip-score.mjs ./scripts/
 COPY src/designs ./src/designs
 # list_designs reads only the manifests.
 RUN find src/designs -type f ! -name template.json -delete
