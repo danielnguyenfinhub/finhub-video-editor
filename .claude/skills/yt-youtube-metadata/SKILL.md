@@ -77,6 +77,8 @@ Pattern: two writers (metadata, then thumbnail) → independent review. Ported f
    - `youtube_analytics_ops`: `query` only (for example views and average view percentage by video over a date range).
    Never call any other action of either tool: both tools also hold writes (`upload_video`, `update_video`, `set_video_thumbnail`, `create_job`, `delete_group`...) and are not on any agent's allowlist for that reason. If a tool is not connected, note it in `00_channel.md` and go on without it; never substitute other data.
 
+6. **Audience questions (optional, drafts only).** `python scripts/research.py audience https://www.youtube.com/@finhub-au --videos 5` writes `out/research/audience/comments.json` (latest uploads, most-liked comments, text and likes only; a `Coverage: ... FAILED` line means a video's comments could not be read, not that it has none). Read it, cluster the comments into question themes (no names, handles or quotes long enough to identify anyone), and write `_workspace/yt/<slug>/00_audience.md`: each theme, how many comments and likes, and a proposed next topic. Proposals only; Daniel picks.
+
 ## Phase 1: Metadata
 
 `yt-seo-optimizer` → `01_seo_package.md`. `blocked` → stop and tell Daniel what is missing.
@@ -113,7 +115,7 @@ First line `done`, `partly done` or `blocked`. Then the paths, the verdict, the 
 
 ## Files
 
-`_workspace/yt/<slug>/` (git-ignored by `_workspace/` in `.gitignore`): `00_input.md` · `00_channel.md` · `01_seo_package.md` · `02_thumbnail_briefs.md` · `03_review_report.md`.
+`_workspace/yt/<slug>/` (git-ignored by `_workspace/` in `.gitignore`): `00_input.md` · `00_channel.md` · `00_audience.md` · `01_seo_package.md` · `02_thumbnail_briefs.md` · `03_review_report.md`.
 
 ## Errors
 

@@ -12,7 +12,7 @@ Part of the project guide; [AGENTS.md](../../AGENTS.md) routes here. Everything 
 | `preflight` | `scripts/preflight.mjs <slug>` | nothing |
 | `still` | `remotion still <composition> out/mcp/<composition>[-<slug>]-<frame>.png --scale=0.5`; with `slug` and/or `safeZones` also `--props='{"slug":…,"safeZones":true}' --gl=angle` as runbook A6.2 (no `slug` = the composition's default video) | `out/mcp/` |
 | `render_video` | `python scripts/render-video.py <slug>` (only after Daniel asks to render, preflight first) | `out/videos/<slug>/`, `2 - FINISHED VIDEOS/` |
-| `research` | `python scripts/research.py trending` or `topic "<query>" --slug <slug>` | `out/` |
+| `research` | `python scripts/research.py trending`, `topic "<query>" --slug <slug>`, `watch <https-url> --slug <slug>` (one at a time, like `still`) or `comments <https-url> --slug <slug>`; watch/comments refuse a query that is not `https://` | `out/` |
 | `list_designs` | reads `src/designs/*/template.json` | nothing |
 
 Kept off on purpose, so no tool call can do them without Daniel in the chat: posting or staging for YouTube, Facebook or Drive (`publish-post.mjs`), voice cloning (AGENTS.md "Language"), moving recordings (ground rule 3). Safety: slugs go through `slugOk` from `scripts/listing-prep.mjs`, composition ids must be letters, digits and dashes, and every script runs through `execFile` with an argument list (no shell) from the repo root. Python is `python` (as `npm run test:py`); set `PYTHON` if yours is `python3`.

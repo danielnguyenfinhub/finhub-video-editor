@@ -9,7 +9,8 @@
 //   node scripts/sweep-render.mjs <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet]
 //   (--out must be inside out/: it is deleted and remade)
 //
-// Writes out/videos/<slug>/team/qc/sweep/sweep-<n>-<time>.jpg and sweep.json,
+// Writes out/videos/<slug>/team/qc/sweep/sweep-<n>-<time>.jpg and sweep.json (with `cuts`,
+// every scene-change time, for research.py watch's pacing),
 // and prints one line per frame: open every one and look (video-qc skill).
 // --sheet also tiles the kept frames 12 to a contact sheet (4x3, each tile
 // stamped with its time), so a long video is read in a handful of images
@@ -196,6 +197,7 @@ export const sweep = (file, outDir, { max = 80, sheet = false } = {}) => {
       ff(["-i", file, "-vf", `select='eq(n,0)+gt(scene,${SCENE_THRESHOLD})',${scale},showinfo`, ...sync, "-q:v", "3", join(outDir, "raw_%05d.jpg")], "scene pass"),
     ),
   );
+  const cuts = times.slice(1); // every scene change (frame 0 is always selected first), before any thinning
   if (times.length < SCENE_MIN_FRAMES) {
     // Engine 2: evenly spaced, at most MAX_FPS.
     engine = "uniform";
@@ -217,7 +219,7 @@ export const sweep = (file, outDir, { max = 80, sheet = false } = {}) => {
   });
   for (const f of readdirSync(outDir)) if (f.startsWith("raw_")) rmSync(join(outDir, f));
   const sheets = sheet ? contactSheets(frames, outDir) : [];
-  const report = { file, seconds, engine, budget, candidates: raw.length, duplicatesDropped: raw.length - unique.length, frames, ...(sheet ? { sheets } : {}) };
+  const report = { file, seconds, engine, budget, cuts, candidates: raw.length, duplicatesDropped: raw.length - unique.length, frames, ...(sheet ? { sheets } : {}) };
   writeFileSync(join(outDir, "sweep.json"), JSON.stringify(report, null, 2) + "\n");
   return report;
 };

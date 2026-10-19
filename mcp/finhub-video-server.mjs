@@ -104,14 +104,19 @@ server.registerTool(
 server.registerTool(
   "research",
   {
-    description: "Before a faceless script: what's trending, or sources on a topic (scripts/research.py). Writes under out/.",
-    inputSchema: { mode: z.enum(["trending", "topic"]), query: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").optional(), slug: slug.optional() },
+    description:
+      "Before a faceless script: what's trending, or sources on a topic (scripts/research.py). watch (query = an https YouTube link): a reference video's pacing, contact sheets and captions; comments: its most-liked comments, anonymised. Writes under out/.",
+    inputSchema: { mode: z.enum(["trending", "topic", "watch", "comments"]), query: z.string().min(1).max(200).regex(/^[^-]/, "must not start with -").optional(), slug: slug.optional() },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   ({ mode, query, slug }) => {
-    if (mode === "trending") return run(PYTHON, [join(ROOT, "scripts/research.py"), "trending"], 300_000);
-    if (!query || !slug) return { ...text("topic needs query and slug"), isError: true };
-    return run(PYTHON, [join(ROOT, "scripts/research.py"), "topic", query, "--slug", slug], 300_000);
+    const py = (args, ms = 300_000) => run(PYTHON, [join(ROOT, "scripts/research.py"), ...args], ms);
+    if (mode === "trending") return py(["trending"]);
+    if (!query || !slug) return { ...text(`${mode} needs query and slug`), isError: true };
+    if (mode === "topic") return py(["topic", query, "--slug", slug]);
+    if (!query.startsWith("https://")) return { ...text(`${mode} needs query = an https:// link`), isError: true };
+    // watch downloads (480p, 20 min cap) and runs an ffmpeg sweep: one heavy job at a time.
+    return mode === "watch" ? heavy(`watch ${slug}`, () => py(["watch", query, "--slug", slug], 1_800_000)) : py(["comments", query, "--slug", slug]);
   },
 );
 

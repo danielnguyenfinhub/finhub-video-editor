@@ -38,6 +38,12 @@ try {
   }
   const flag = await client.callTool({ name: "research", arguments: { mode: "topic", query: "--days=99999", slug: "x" } });
   assert.ok(flag.isError, "research refuses a query that reads as a flag");
+  for (const mode of ["watch", "comments"]) {
+    for (const query of ["http://www.youtube.com/watch?v=x", "file:///etc/passwd", "-o/tmp/x", "--exec=calc"]) {
+      const r = await client.callTool({ name: "research", arguments: { mode, query, slug: "x" } });
+      assert.ok(r.isError && !/^exit /.test(r.content[0].text), `research ${mode} refuses ${query} before running anything`);
+    }
+  }
   console.log(`check-mcp: ${tools.length} tools, ${designs.length} designs, bad slugs refused`);
 } finally {
   await client.close();

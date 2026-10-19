@@ -4,6 +4,9 @@
     python scripts/research.py topic "<query>" --slug <slug> [--days 30]
     python scripts/research.py read <url> --slug <slug>
     python scripts/research.py transcript <youtube-url> --slug <slug> [--lang vi]
+    python scripts/research.py watch <youtube-url> --slug <slug> [--lang vi]
+    python scripts/research.py comments <youtube-url> --slug <slug> [--max 20]
+    python scripts/research.py audience <channel-url> [--videos 5] [--max 20]
     python scripts/research.py selftest
 
 Sources are free and need no login: Google News RSS in English (Australia) and
@@ -19,8 +22,11 @@ story at the publisher, or better, the primary source.
 
 Headlines, posts and videos are leads, not facts. A number in the script comes
 from a page saved with `read` and is cited in facts.json by that file's name.
+`watch` studies a reference video's editing (≤480p, ≤20 min): cut sweep, contact
+sheets, captions and pacing.json (cuts per minute, mean shot, first cut). `comments`
+and `audience` keep what viewers asked (text and likes only, never who said it).
 Output goes to out/ (not committed: the saved pages are other people's work):
-out/research/ for trending, out/videos/<slug>/research/ for the rest.
+out/research/ for trending, watch, comments and audience, out/videos/<slug>/research/ for the rest.
 
 Needs: python -m pip install "yt-dlp[default]" feedparser   ([default] brings yt-dlp-ejs, which YouTube needs)
 """
@@ -518,12 +524,12 @@ def trust_windows_store_for_curl(out: Path) -> None:
     os.environ["CURL_CA_BUNDLE"] = str(bundle)
 
 
-def cmd_transcript(url: str, slug: str, lang: str) -> None:
+def cmd_transcript(url: str, slug: str, lang: str, out: Path | None = None) -> None:
     if problem := url_problem(url):
         raise SystemExit(problem)
     import yt_dlp
 
-    out = ROOT / "out" / "videos" / slug / "research"
+    out = out or ROOT / "out" / "videos" / slug / "research"
     out.mkdir(parents=True, exist_ok=True)
     trust_windows_store_for_curl(ROOT / "out")
     # One language: asking for a second track (YouTube's machine translation) got a 429.
@@ -593,6 +599,119 @@ def whisper_text(audio: Path, lang: str) -> str:
     if not lines:
         raise SystemExit("Transcription produced no text.")
     return "\n".join(lines)
+
+
+def public_https(url: str) -> None:
+    """watch/comments/audience: an https link to a public site only (url_problem, plus the scheme)."""
+    if not url.startswith("https://"):
+        raise SystemExit(f"{url}: only https:// links.")
+    if problem := url_problem(url):
+        raise SystemExit(problem)
+
+
+# watch: study how a reference video is edited. Idea from claude-video's watch.py (MIT,
+# bradautomates/claude-video: download, frames, transcript) and the pacing profile of
+# OpenMontage's video_analyzer (AGPL-3.0: the idea only, written fresh, no code copied).
+MAX_REF_S = 20 * 60  # a longer video is skipped, not cut
+MAX_REF_BYTES = 300 * 1024 * 1024
+
+
+def pacing(cut_times: list[float], duration: float) -> dict:
+    """How fast a video cuts: cuts strictly inside (0, duration) only; shots = cuts + 1."""
+    cuts = sorted(t for t in cut_times if 0 < t < duration)
+    return {"duration_s": round(duration, 2), "cuts": len(cuts),
+            "cuts_per_min": round(len(cuts) * 60 / duration, 2) if duration > 0 else 0.0,
+            "mean_shot_s": round(duration / (len(cuts) + 1), 2), "first_cut_s": cuts[0] if cuts else None}
+
+
+def cmd_watch(url: str, slug: str, lang: str) -> None:
+    public_https(url)
+    import subprocess
+
+    import yt_dlp
+
+    out = ROOT / "out" / "research" / slug
+    out.mkdir(parents=True, exist_ok=True)
+    trust_windows_store_for_curl(ROOT / "out")
+    ref = out / "ref.mp4"
+    ref.unlink(missing_ok=True)
+    opts = {**YDL, "noprogress": True, "format": "bv*[height<=480]+ba/b[height<=480]", "merge_output_format": "mp4",
+            "max_filesize": MAX_REF_BYTES, "outtmpl": str(out / "ref.%(ext)s"),
+            "match_filter": yt_dlp.utils.match_filter_func(f"duration <= {MAX_REF_S} & !is_live")}
+    try:
+        with yt_dlp.YoutubeDL(opts) as y:
+            y.download([url])
+    except yt_dlp.utils.DownloadError as err:
+        raise SystemExit(f"Couldn't download {url}: {err}") from err
+    if not ref.exists():
+        raise SystemExit(f"{url} was skipped: longer than {MAX_REF_S // 60} min, live, or over "
+                         f"{MAX_REF_BYTES // 1048576} MB at 480p.")
+    sweep = out / "sweep"
+    subprocess.run(["node", "--no-warnings", str(ROOT / "scripts" / "sweep-render.mjs"), slug, "--file", str(ref),
+                    "--out", str(sweep), "--sheet"], cwd=ROOT, check=True)
+    report = json.loads((sweep / "sweep.json").read_text(encoding="utf-8"))
+    pace = {**pacing(report["cuts"], report["seconds"]), "source": url,
+            "sheets": [Path(h["path"]).relative_to(ROOT).as_posix() for h in report.get("sheets", [])]}
+    (out / "pacing.json").write_text(json.dumps(pace, indent=1), encoding="utf-8")
+    print(f"{(out / 'pacing.json').relative_to(ROOT)}: {pace['cuts_per_min']} cuts/min, mean shot {pace['mean_shot_s']} s, "
+          f"first cut {pace['first_cut_s']} s")
+    try:  # captions are a bonus: the pacing stands without them
+        cmd_transcript(url, slug, lang, out)
+    except SystemExit as err:
+        print(f"Coverage: captions FAILED ({err})")
+
+
+# comments / audience: what viewers ask. Idea from Agent-Reach (MIT, skill/references/video.md:
+# yt-dlp comments, best-effort) and harness-100's 93-feedback-analyzer (Apache-2.0, idea only).
+def anonymise(comments: list[dict] | None) -> list[dict]:
+    """Only what was said and how many liked it, most liked first: no name, id, avatar or channel link."""
+    kept = [{"text": (c.get("text") or "").strip(), "like_count": c.get("like_count") or 0} for c in comments or []]
+    return sorted((c for c in kept if c["text"]), key=lambda c: c["like_count"], reverse=True)
+
+
+def fetch_comments(url: str, n: int) -> list[dict]:
+    import yt_dlp
+
+    opts = {**YDL, "skip_download": True, "getcomments": True,
+            "extractor_args": {"youtube": {"max_comments": [str(n)]}}}
+    with yt_dlp.YoutubeDL(opts) as y:  # download=True with skip_download: comments are fetched in process_info
+        info = y.extract_info(url, download=True)
+    return anonymise(info.get("comments"))[:n]
+
+
+def cmd_comments(url: str, slug: str, n: int) -> None:
+    public_https(url)
+    try:
+        found = fetch_comments(url, n)
+    except Exception as err:  # best-effort, as yt-dlp's comment scraping is
+        print(f"Coverage: comments FAILED ({str(err)[:120]})")
+        return
+    path = ROOT / "out" / "research" / slug / "comments.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(found, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"{path.relative_to(ROOT)}  ({len(found)} comments, most liked first)")
+
+
+def cmd_audience(channel: str, videos: int, n: int) -> None:
+    public_https(channel)
+    import yt_dlp
+
+    url = channel.rstrip("/").removesuffix("/videos") + "/videos"
+    with yt_dlp.YoutubeDL({**YDL, "extract_flat": True, "playlistend": videos}) as y:
+        entries = list(y.extract_info(url, download=False)["entries"])[:videos]
+    rows = []
+    for e in entries:
+        link = e.get("url") or f"https://www.youtube.com/watch?v={e.get('id')}"
+        try:
+            found = fetch_comments(link, n)
+        except Exception as err:
+            print(f"Coverage: {link} comments FAILED ({str(err)[:120]})")
+            found = []
+        rows.append({"video_title": e.get("title") or "", "url": link, "comments": found})
+    path = ROOT / "out" / "research" / "audience" / "comments.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"{path.relative_to(ROOT)}  ({len(rows)} videos, {sum(len(r['comments']) for r in rows)} comments)")
 
 
 def selftest() -> None:
@@ -666,6 +785,25 @@ def selftest() -> None:
                 "http://[::1]/", "http://[fe80::1]/", "http://[::ffff:127.0.0.1]/", "http://[fd00::1]/", "https:///x"]:
         assert url_problem(bad), bad
     assert url_problem("https://1.1.1.1/x") is None and url_problem("http://[2606:4700:4700::1111]/") is None
+    # watch: pacing from a fixed cut list (a cut at 0 or past the end is not a cut).
+    assert pacing([30.0, 3.0, 0.0, 9.0, 6.0, 61.0], 60) == {"duration_s": 60, "cuts": 4, "cuts_per_min": 4.0,
+                                                            "mean_shot_s": 12.0, "first_cut_s": 3.0}
+    assert pacing([], 30)["mean_shot_s"] == 30 and pacing([], 30)["first_cut_s"] is None
+    assert pacing([], 0)["cuts_per_min"] == 0.0
+    # comments: no author field survives; most liked first; empty text and missing likes handled.
+    raw = [{"text": "Lãi suất cố định hay thả nổi?", "like_count": 3, "author": "A", "author_id": "UC1",
+            "author_url": "https://youtube.com/@a", "author_thumbnail": "x", "author_is_uploader": False, "id": "1"},
+           {"text": " Vay bao nhiêu được? ", "like_count": 12, "author": "B", "channel": "c", "id": "2"},
+           {"text": "", "like_count": 99, "author": "C"}, {"text": "ok", "author": "D"}]
+    anon = anonymise(raw)
+    assert [c["text"] for c in anon] == ["Vay bao nhiêu được?", "Lãi suất cố định hay thả nổi?", "ok"], anon
+    assert all(set(c) == {"text", "like_count"} for c in anon) and anonymise(None) == []
+    for bad in ("http://1.1.1.1/x", "file:///etc/passwd"):
+        try:
+            public_https(bad)
+            raise AssertionError(f"{bad} accepted")
+        except SystemExit:
+            pass
     print("research.py selftest: OK")
 
 
@@ -678,18 +816,27 @@ def main() -> None:
     t.add_argument("query")
     t.add_argument("--slug", required=True)
     t.add_argument("--days", type=int, default=30)
-    for name in ("read", "transcript"):
+    for name in ("read", "transcript", "watch", "comments"):
         t = sub.add_parser(name)
         t.add_argument("url")
         t.add_argument("--slug", required=True)
-    t.add_argument("--lang", default="vi")
+        if name in ("transcript", "watch"):
+            t.add_argument("--lang", default="vi")
+    t = sub.add_parser("audience")
+    t.add_argument("url", metavar="channel-url")
+    t.add_argument("--videos", type=int, default=5)
+    for t in (sub.choices["comments"], t):
+        t.add_argument("--max", type=int, default=20)
     sub.add_parser("selftest")
     a = p.parse_args()
     if getattr(a, "slug", None) and not re.fullmatch(r"[a-z0-9-]+", a.slug):
         raise SystemExit(f"slug '{a.slug}' must be kebab-case ASCII (a-z, 0-9, -).")
+    if not 1 <= getattr(a, "max", 1) <= 100 or not 1 <= getattr(a, "videos", 1) <= 20:
+        raise SystemExit("--max is 1-100 comments, --videos 1-20 uploads.")
     {"trending": lambda: cmd_trending(a.days), "topic": lambda: cmd_topic(a.query, a.slug, a.days),
      "read": lambda: cmd_read(a.url, a.slug), "transcript": lambda: cmd_transcript(a.url, a.slug, a.lang),
-     "selftest": selftest}[a.cmd]()
+     "watch": lambda: cmd_watch(a.url, a.slug, a.lang), "comments": lambda: cmd_comments(a.url, a.slug, a.max),
+     "audience": lambda: cmd_audience(a.url, a.videos, a.max), "selftest": selftest}[a.cmd]()
 
 
 if __name__ == "__main__":

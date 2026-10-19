@@ -21,7 +21,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 |---|---|
 | `preflight.mjs` | Runs before every render (called by `render-video.py`): fonts, `edit.json` mistakes, pacing off, then `check-schema`, speech cuts and pacing (a check that crashes blocks). |
 | `render-video.py` | Renders a MortgageReel video end to end: master, -14 LUFS mix, mobile copy, thumbnail, `.srt`, QC sweep, publish. |
-| `sweep-render.mjs` | Sweeps a finished render for every visual change so QC sees what `edit.json` produced. |
+| `sweep-render.mjs` | Sweeps a finished render for every visual change so QC sees what `edit.json` produced (`sweep.json` `cuts` lists every scene change). |
 | `publish-video.mjs` | Hands a render to Daniel: a copy named after its topic, a caption file and a `<Topic> - COMPLETED.txt` marker (finished when, which slug, approve before posting) in `2 - FINISHED VIDEOS`; refuses a render older than its on-screen inputs (`<slug>.inputs` stamp from `render-video.py`) and another slug's same-title files (unowned older files: only with `--claim`, else exit 4 naming the videos with that title; the owner record is written under `.publish-slugs.lock`); a `rendering` stamp (a render that stopped part way) is refused, even with `--stale-ok`. |
 | `publish-post.mjs` | After COMPLETED and Daniel's yes: names the Drive files (`<date>_<Title-slug>_Video.mp4`, `_Caption.txt`, `_Thumbnail.png`), copies them into `config/publish.json` `drive.syncDir`, and keeps the ledger `team/07_published.json` (`plan` / `stage` / `mark`) so a retry never repeats a YouTube upload or a Facebook post; `plan` stops on a missing file, no final compliance PASS, or an unset config value. The Drive, YouTube and Facebook calls are the orchestrator's MCP calls. Self-test in `check-publish.mjs`. |
 | `export-srt.mjs` | Writes `out/videos/<slug>/<slug>.srt` using the same cuts as the render. |
@@ -40,7 +40,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `visuals.mjs`, `clip-score.mjs` | Gap-scene visuals and whether a stock clip matches what the scene asked for. |
 | `library.mjs` | Cross-video source library: every downloaded or generated asset is saved once. |
 | `facts.mjs` | Fact-ledger check: every factual claim a scene shows must trace to the source. |
-| `research.py` | What is trending, or research a topic, before writing a script. |
+| `research.py` | What is trending, or research a topic, before writing a script. `watch <url> --slug` studies a reference video's pacing (480p, 20 min cap; `pacing.json`, contact sheets, captions); `comments <url> --slug` and `audience <channel-url>` save the most-liked viewer comments, text and likes only. |
 
 ## Global RE listing videos
 `listing-prep.mjs` (folder to prepared listing), `listing-compliance.mjs` (copy compliance), `listing-render.py` (VI and EN versions), `listing-stills.mjs` (a still per scene), `publish-listing.mjs` (hand to Daniel).

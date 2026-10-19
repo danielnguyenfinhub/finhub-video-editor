@@ -111,6 +111,7 @@ if (ffmpeg.error) {
   check(s1.engine === "scene", `cuts: scene engine (${s1.candidates} candidates)`);
   check(s1.frames.length >= 12 && s1.frames.length <= 14, `cuts: one frame per colour, ${s1.frames.length} kept`);
   check(s1.frames[0].s === 0, "cuts: first frame is t=0");
+  check(s1.cuts.length === s1.candidates - 1 && s1.cuts.length >= 12 && s1.cuts.every((t) => t > 0), `cuts: every scene change after frame 0 listed (${s1.cuts.length})`);
   const s3 = sweep(cuts, join(dir, "sweep-sheet"), { sheet: true });
   const expected = Math.ceil(s3.frames.length / 12);
   check(s3.sheets.length === expected && s3.sheets.every((h) => existsSync(h.path)), `sheet: ${s3.frames.length} frames -> ${expected} contact sheet(s) written`);
