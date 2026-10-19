@@ -1,5 +1,5 @@
 {
-  "status": "UNTUNED: starting guesses, not fitted to any outcome data. Revisit once ~10 videos have a selection.json and Daniel's pick.",
+  "status": "UNTUNED: starting guesses, not fitted to any outcome data. Revisit once ~10 videos have a selection.json and Daniel's pick; run select-template.mjs --report on the PC before tuning.",
   "weights": {
     "intent": 3,
     "shape": 2,

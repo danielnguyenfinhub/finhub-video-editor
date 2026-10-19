@@ -1,6 +1,6 @@
 // @remotion/google-fonts fetches the actual font files from fonts.gstatic.com
 // at render/preview time (it only bundles the @font-face CSS, not the woff2
-// files) — see the remotion-markup google-fonts.md guide. Tested for real:
+// files) — see the remotion-best-practices/remotion-markup google-fonts.md guide. Tested for real:
 // even though fonts.gstatic.com answers a plain `curl` from this sandbox,
 // the SAME host fails inside the actual rendering Chromium with
 // net::ERR_CERT_AUTHORITY_INVALID (curl and the renderer's browser process

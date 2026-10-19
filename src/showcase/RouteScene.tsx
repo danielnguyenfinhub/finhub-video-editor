@@ -70,7 +70,7 @@ const centeredRoutePath = centerPath(ROUTE_PATH, {x: 640, y: 360});
 // extendViewBox() build the reversed minimap in the corner. parsePath(),
 // reduceInstructions(), serializeInstructions(), normalizePath() and
 // getSubpaths() feed the info readout — the same technique the
-// remotion-maps skill uses for animated routes. translatePath() draws a
+// remotion-best-practices/remotion-maps guide uses for animated routes. translatePath() draws a
 // drop-shadow duplicate; centerPath() (which uses translatePath()
 // internally too) re-centers the route on the canvas as the morph target
 // for interpolatePath(); cutPath() truncates the path data itself at the

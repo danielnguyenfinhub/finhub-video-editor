@@ -31,7 +31,7 @@ import {canvasCircleRevealOrFallback} from "./htmlInCanvasPresentation";
 
 // A zod schema (vs. ShowcaseReel's plain `type`) gets Studio-generated,
 // validated controls: zTextarea() for a multi-line field, zColor() for a
-// color picker. See remotion-markup/parameters.md.
+// color picker. See remotion-best-practices/remotion-markup/parameters.md.
 export const extendedReelSchema = z.object({
   title: z.string(),
   subtitle: zTextarea(),

@@ -1,9 +1,10 @@
 // Self-test for scripts/select-template.mjs on synthetic briefs (no slug, no
 // media): node scripts/check-selector.mjs -> "selector ok", exit 1 on failure.
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { intentsOf } from "./brief.mjs";
-import { confidenceOf, loadManifests, nothingFits, overrideOf, rank } from "./select-template.mjs";
+import { confidenceOf, loadManifests, nothingFits, overrideOf, rank, selectorReport } from "./select-template.mjs";
 
 const cfg = JSON.parse(readFileSync(join(import.meta.dirname, "..", "config", "selector.json"), "utf8"));
 const manifests = loadManifests();
@@ -114,6 +115,20 @@ const near = confidenceOf([{ id: "a", score: 6.1 }, { id: "b", score: 6 }]);
 check("0.1 gap is a close call", !near.confident && /gap 0\.1/.test(near.closeCall), JSON.stringify(near));
 check("2-point gap is confident", confidenceOf([{ id: "a", score: 6 }, { id: "b", score: 4 }]).confident);
 check("a single candidate is confident", confidenceOf([{ id: "a", score: 1 }]).confident);
+
+// --report: one selection agrees with the design made, one does not -> 50%; the streak is the log's tail.
+const scratch = mkdtempSync(join(tmpdir(), "selector-report-"));
+for (const [slug, top] of [["a", "cards"], ["b", "classic"]]) {
+  mkdirSync(join(scratch, slug));
+  writeFileSync(join(scratch, slug, "selection.json"), JSON.stringify({ slug, top: [{ id: top }] }));
+}
+const log = [{ slug: "x", design: "classic" }, { slug: "a", design: "cards" }, { slug: "b", design: "cards" }];
+const rep = selectorReport({ videosDir: scratch, publicVideos: scratch, log });
+rmSync(scratch, { recursive: true });
+check("--report: 1 of 2 agree = 50%", rep.rate === 50 && rep.compared === 2 && rep.rows.length === 2, rep.lines.join(" | "));
+check("--report: streak 2 x cards", rep.streak === 2 && rep.last === "cards", `${rep.streak} ${rep.last}`);
+const none = selectorReport({ videosDir: join(scratch, "missing"), log });
+check("--report: no selections says so", none.rows.length === 0 && none.rate === null && /no selection\.json/.test(none.lines.join("\n")), none.lines.join(" | "));
 
 if (failed) process.exit(1);
 console.log("selector ok");

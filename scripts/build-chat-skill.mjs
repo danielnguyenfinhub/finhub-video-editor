@@ -42,11 +42,9 @@ const entries = [
 ];
 
 // Only the vendored Remotion guides, through their router: remotion-best-practices
-// holds a copy of every other remotion-* skill, so bundling those too passed the
-// 200-entry limit (278). ponytail: a guide added only to a top-level remotion-* skill
-// (browser-transcription.md, video-matting.md today) is not in the bundle; copy it into
-// the router's copy too. The other skills in .claude/skills are for Claude Code in this
-// repository (the owner's editing skill is already in his claude.ai account).
+// holds every other remotion-* skill (the only copy since OD-22). The other skills in
+// .claude/skills are for Claude Code in this repository (the owner's editing skill is
+// already in his claude.ai account).
 const remotionSkills = walk(join(skillsDir, "remotion-best-practices"));
 
 for (const file of remotionSkills) {

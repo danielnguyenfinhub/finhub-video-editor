@@ -2,7 +2,7 @@ import type {Caption} from "@remotion/captions";
 
 // Hand-written stand-in for a transcript. In a real project this would come
 // from @remotion/install-whisper-cpp or @remotion/openai-whisper (see the
-// remotion-captions skill's transcribe-captions.md) instead of being typed
+// remotion-best-practices/remotion-captions guide's transcribe-captions.md) instead of being typed
 // out by hand. Kept under ~2.3s so it fits inside the scene's 75-frame
 // (2.5s) budget in the TransitionSeries.
 //

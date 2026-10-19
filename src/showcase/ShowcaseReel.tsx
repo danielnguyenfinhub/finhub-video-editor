@@ -17,7 +17,7 @@ export type ShowcaseReelProps = {
 
 // Every scene's length and every transition's length live here, so the
 // total duration is computed rather than hand-counted (see calculateMetadata
-// below) — the same pattern the remotion-markup calculate-metadata guide
+// below) — the same pattern the remotion-best-practices/remotion-markup calculate-metadata guide
 // recommends for data-driven duration.
 const SCENE_DURATION = 75;
 const TRANSITION_DURATION = 15;

@@ -60,7 +60,7 @@ const Pin: React.FC<{label: string}> = ({label}) => (
 
 // Demonstrates: @remotion/maptiler, Remotion's MapTiler components (an
 // internal package: no docs, so this follows packages/example/src/
-// SwitzerlandMap in the Remotion source and the remotion-maps skill's
+// SwitzerlandMap in the Remotion source and the remotion-best-practices/remotion-maps guide's
 // MapTiler technique). <MapViewport> holds the render with delayRender()
 // until the tiles have loaded; the camera stays fixed, as the skill advises
 // for stable renders, while <MapPolyline progress> draws the route and two
