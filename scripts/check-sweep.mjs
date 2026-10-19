@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { repoTmp } from "./tmp-dir.mjs";
 import { join } from "node:path";
-import { chunk, dedupeByDeltas, evenIndices, frameBudget, outDirProblem, parseShowinfo, sheetLayout, sweep, withSyncFlag } from "./sweep-render.mjs";
+import { chunk, dedupeByDeltas, evenIndices, frameBudget, outDirProblem, parseShowinfo, sheetLayout, sweep, windowProblem, withSyncFlag } from "./sweep-render.mjs";
 
 let failed = 0;
 const check = (ok, what) => {
@@ -96,6 +96,11 @@ for (const bad of [root, join(root, "out"), join(root, "public"), join(root, "ou
   check(threw && n === 1, "sync: any other ffmpeg error is rethrown, not retried");
 }
 
+// --start/--end: numbers, start before end, end inside the video when its length is known.
+for (const [a, b, why] of [[3, 2, "start after end"], [1, 99, "end past the duration"], [NaN, 2, "not a number"], [-1, 2, "negative"]])
+  check(windowProblem(a, b, 5.6) !== null, `window: refuses ${why}`);
+check(windowProblem(2.1, 3, 5.6) === null && windowProblem(undefined, 3, NaN) === null && windowProblem(4, undefined, NaN) === null, "window: a valid or open-ended window passes");
+
 const ffmpeg = spawnSync("ffmpeg", ["-version"], { encoding: "utf8" });
 if (ffmpeg.error) {
   console.log("skip ffmpeg is not on PATH: end-to-end sweep not run here");
@@ -112,6 +117,12 @@ if (ffmpeg.error) {
   check(s1.frames.length >= 12 && s1.frames.length <= 14, `cuts: one frame per colour, ${s1.frames.length} kept`);
   check(s1.frames[0].s === 0, "cuts: first frame is t=0");
   check(s1.cuts.length === s1.candidates - 1 && s1.cuts.length >= 12 && s1.cuts.every((t) => t > 0), `cuts: every scene change after frame 0 listed (${s1.cuts.length})`);
+  // Focus window 2.1-3.0 s holds the cuts at 2.4 and 2.8 (every 0.4 s): reported at video time, not window time.
+  const sw = sweep(cuts, join(dir, "sweep-window"), { start: 2.1, end: 3 });
+  const near = (a, b) => Math.abs(a - b) < 0.05;
+  check(sw.cuts.length === 2 && near(sw.cuts[0], 2.4) && near(sw.cuts[1], 2.8), `window: cuts at absolute 2.4 and 2.8 s (${sw.cuts})`);
+  check(sw.frames.length > 0 && sw.frames.every((f) => f.s >= 2.1 - 0.05 && f.s <= 3 + 0.05) && /sweep-001-00-02-1/.test(sw.frames[0].path), `window: frame times and names are absolute (${sw.frames.map((f) => f.s)})`);
+  check(sw.window?.start === 2.1 && sw.window?.end === 3, "window: recorded in sweep.json");
   const s3 = sweep(cuts, join(dir, "sweep-sheet"), { sheet: true });
   const expected = Math.ceil(s3.frames.length / 12);
   check(s3.sheets.length === expected && s3.sheets.every((h) => existsSync(h.path)), `sheet: ${s3.frames.length} frames -> ${expected} contact sheet(s) written`);
