@@ -38,6 +38,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `spend.mjs` | Spend guard for `voice-video.mjs`: a paid engine or fal.ai images need a `--dry-run` estimate, and the script may not grow more than 50% past it. |
 | `omnivoice-tts.py`, `omnivoice.mjs`, `setup-omnivoice.mjs`, `clone-voice.mjs` | Local cloned voice: runtime, location, one-time setup, cloning (consent rules in `AGENTS.md`). |
 | `visuals.mjs`, `clip-score.mjs` | Gap-scene visuals and whether a stock clip matches what the scene asked for. |
+| `providers.mjs` | The paid and free APIs behind the MCP's `audio`, `visuals` and `research ask/translate`: Perplexity, DeepSeek/Gemini, ElevenLabs music and SFX, OpenAI Whisper, fal/xAI/OpenAI images, Pixabay/Pexels. `--quote` prices a call without making it; real runs go to `out/spend-ledger.jsonl`. |
 | `library.mjs` | Cross-video source library: every downloaded or generated asset is saved once. |
 | `facts.mjs` | Fact-ledger check: every factual claim a scene shows must trace to the source. |
 | `research.py` | What is trending, or research a topic, before writing a script. `watch <url> --slug` studies a reference video's pacing (480p, 20 min cap; `pacing.json`, contact sheets, captions); `comments <url> --slug` and `audience <channel-url>` save the most-liked viewer comments, text and likes only. |

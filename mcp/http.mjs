@@ -1,5 +1,5 @@
 // The MCP server over HTTP for Railway (mcp/Dockerfile, railway.json): the light tools only
-// (list_designs, research trending/topic/comments), so claude.ai web and the phone app can reach them.
+// (list_designs, research without watch, visuals stock search), so claude.ai web and the phone app can reach them.
 // Editing, stills and renders stay on Daniel's PC over stdio (docs/agents/plugin-and-mcp.md).
 //
 // Every call needs MCP_TOKEN: as "Authorization: Bearer <token>", in the path /mcp/<token>, or through
