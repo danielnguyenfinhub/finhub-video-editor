@@ -12,6 +12,7 @@ import { execFile, spawn } from "node:child_process";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, join, resolve, sep } from "node:path";
+import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -359,19 +360,24 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         "ingest, reedit and assemble start a job (follow it with video_status job) and refuse a slug that already has an edit.json (change that one with edit). " +
         "template (slug): scripts/select-template.mjs ranks the designs (out/videos/<slug>/selection.json); pick (slug, design, reason): records Daniel's override there, then set it with edit patch design. " +
         "clean (slug): clean-clip's report of pauses, repeats and false starts (nothing applied; cut what Daniel agrees to with edit patch remove). " +
-        "music_start (file in public/music): where the track gets going, for music.startMs. reframe (file in the footage folder): where the face is (a job).",
+        "music_start (file in public/music): where the track gets going, for music.startMs. reframe (file in the footage folder): where the face is (a job). " +
+        "matte (slug; bench 3-60 seconds to test speed and the GPU first, saving nothing; headed for a visible Chrome window when headless has no GPU; redo to replace an existing cut-out): " +
+        "removes the background (foreground.webm, about 13x the video's length) through review/matte.html in Chrome, as a job.",
       inputSchema: {
-        action: z.enum(["ingest", "reedit", "assemble", "template", "pick", "clean", "music_start", "reframe"]),
+        action: z.enum(["ingest", "reedit", "assemble", "template", "pick", "clean", "music_start", "reframe", "matte"]),
         slug: slug.optional(),
         file: fileName.optional(),
         recording: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).optional(),
         noClean: z.boolean().optional(),
         design: design.optional(),
         reason: prompt.optional(),
+        bench: z.number().int().min(3).max(60).optional(),
+        headed: z.boolean().optional(),
+        redo: z.boolean().optional(),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ action, slug, file, recording, noClean, design, reason }) => {
+    async ({ action, slug, file, recording, noClean, design, reason, bench, headed, redo }) => {
       try {
         if (action === "music_start") return file ? light(() => node("scripts/music-start.mjs", [`public/music/${basename(inFolder("public/music", file))}`, "--json"])) : err("music_start needs file");
         if (action === "reframe") return file ? startJob(`reframe ${file}`, PYTHON, [join(ROOT, "scripts/reframe.py"), inFolder(FOOTAGE, file)], 600_000) : err("reframe needs file");
@@ -379,6 +385,17 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         if (action === "template") return light(() => node("scripts/select-template.mjs", [slug]));
         if (action === "pick") return design && reason ? light(() => node("scripts/select-template.mjs", [slug, "--pick", design, "--reason", reason])) : err("pick needs design and reason");
         if (action === "clean") return light(() => node("scripts/clean-clip.mjs", [slug]));
+        if (action === "matte") {
+          const editFile = join(ROOT, "public/videos", slug, "edit.json");
+          if (!existsSync(editFile)) return err(`public/videos/${slug}/edit.json doesn't exist: prep the video first`);
+          const { recordingPath } = await import(pathToFileURL(join(ROOT, "src/mortgage/recording.ts")).href);
+          const at = (f) => join(ROOT, "public", recordingPath(slug, JSON.parse(readFileSync(editFile, "utf8")).source, f));
+          if (!existsSync(at("source.mp4"))) return err(`no source.mp4 for ${slug}: prep the video first`);
+          // About 13x the video's length of GPU work, reused by every video of that recording: replace it only on purpose.
+          if (!bench && !redo && existsSync(at("foreground.webm"))) return err(`${slug} already has foreground.webm; redo: true replaces it (after clips.json changed)`);
+          const flags = [...(bench ? ["--bench", String(bench)] : []), ...(headed ? ["--headed"] : [])];
+          return startJob(`matte ${slug}`, process.execPath, [join(ROOT, "scripts/matte-headless.mjs"), slug, ...flags], 4 * 60 * 60_000);
+        }
         // prep-video.py sets "source" in an existing edit.json: every edit.json change goes through edit's preview instead.
         if (existsSync(join(ROOT, "public/videos", slug, "edit.json"))) return err(`public/videos/${slug}/edit.json exists: ${action} would change it. Change it with edit, or prep under a new slug.`);
         const prep = (args) => startJob(`prep ${slug}`, PYTHON, [join(ROOT, "scripts/prep-video.py"), ...args], 3 * 60 * 60_000);

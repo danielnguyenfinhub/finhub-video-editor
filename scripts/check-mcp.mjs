@@ -237,6 +237,17 @@ try {
     const r = await client.callTool({ name: "prep", arguments: { action, slug: testSlug, file: "x.mp4", recording: "x" } });
     assert.ok(r.isError && /edit\.json exists/.test(r.content[0].text), `prep ${action} won't touch an existing edit.json`);
   }
+  // prep matte: only a prepared video, and an existing cut-out (45 min of GPU work) is replaced only with redo.
+  const matte = (args) => client.callTool({ name: "prep", arguments: { action: "matte", ...args } });
+  assert.match((await matte({ slug: "zz-no-such-video" })).content[0].text, /edit\.json doesn't exist/, "prep matte needs a prepared video");
+  rmSync(editFile, { force: true });
+  writeFileSync(editFile, original);
+  assert.match((await matte({ slug: testSlug })).content[0].text, /no source\.mp4/, "prep matte needs the recording's source.mp4");
+  writeFileSync(join(vdir, "source.mp4"), "x");
+  writeFileSync(join(vdir, "foreground.webm"), "x");
+  const twice = await matte({ slug: testSlug });
+  assert.ok(twice.isError && /already has foreground\.webm; redo: true/.test(twice.content[0].text), "prep matte won't replace a cut-out without redo");
+  for (const bench of [2, 61, 4.5]) assert.ok((await matte({ slug: testSlug, bench })).isError, `prep matte refuses bench ${bench}`);
   const reviewTool = tools.find((t) => t.name === "review");
   assert.ok(!reviewTool.inputSchema.properties.promote, "review pack can't promote a design");
   console.log(`check-mcp: ${tools.length} tools, ${designs.length} designs, bad slugs refused, spend gate holds, edit.json saves only when confirmed`);

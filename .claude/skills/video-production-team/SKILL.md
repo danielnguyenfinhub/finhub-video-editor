@@ -123,9 +123,11 @@ Order matters: the review comes before any cut, the matte after the cut, the pla
    - `clips` is a path (kept spans; `kept_ratio` < 0.9 or several takes) → **assembly (A1.2):**
      `python scripts/prep-video.py <slug> --clips public/videos/<slug>/clips.json`, then the story editor again, pass
      `words`, on the assembled words. `clips` is `none` → the recording stays as prepped.
-5. **Matte (A1.3) ‖ visual plan (A3.5).** Now ask Daniel: "Please run `npm run review`, open
-   `http://localhost:4100/matte.html?slug=<slug>` in the Claude app browser and leave it until it says Saved (about 13×
-   the kept footage's length)." The page mattes the assembly when one exists. Don't wait. In the same breath run the
+5. **Matte (A1.3) ‖ visual plan (A3.5).** Start it yourself: `node scripts/matte-headless.mjs <slug>` (or the MCP's
+   `prep matte`, a job; about 13× the kept footage's length; exit 2 "can't run" → again with `--headed`). Only if that
+   can't work on the PC, ask Daniel: "Please run `npm run review`, open
+   `http://localhost:4100/matte.html?slug=<slug>` in the Claude app browser and leave it until it says Saved." Both matte
+   the assembly when one exists. Don't wait. In the same breath run the
    template pick if Daniel named none (`node scripts/select-template.mjs <slug>`, A3.1–A3.2 as the editor would; the
    editor keeps A3.3–A3.4) and spawn `motion-designer` → `team/02_visual_plan.json`. `open_questions` naming an
    element no design has → show Daniel the beat and its fallback; the fallback is built unless he says otherwise.
@@ -248,7 +250,7 @@ Pass the previous team files and the feedback verbatim. Downstream phases re-run
 | A worker report lacks the `STATUS` / `EVIDENCE` / `BLOCKER` lines, or claims a look it did not take | Ask it once for the lines; still missing → carry the result as `unverified` in the delivery list, never as done |
 | The plan names a beat the editor cannot build (`open_questions`) | Build the beat's rung-1 `fallback`; tell Daniel the element it wanted; no mid-run template change |
 | The marketing plan assigns a task to a role not on the team | Put it on Daniel's verify list as an open question; do not invent an agent |
-| `clips.json` changed after the matte was made | The matte is stale: ask Daniel to run matte.html again on the assembly; never render the old `foreground.webm` |
+| `clips.json` changed after the matte was made | The matte is stale: run it again on the assembly (`prep matte` with `redo: true`, or matte.html); never render the old `foreground.webm` |
 | Rounds used up (2 content, 1 cosmetic; `video-status` says `rounds exhausted, Daniel decides`) and a finding is open | Stop the loop; show Daniel the open finding |
 | `check-schema` or `check-speech-cuts` fails | Fix the cause (text, cut, `words.json`); never loosen the schema or add an exemption; no render |
 | QC and compliance, or reviewer and author, disagree | Don't pick a side; show Daniel both, rule cited |
