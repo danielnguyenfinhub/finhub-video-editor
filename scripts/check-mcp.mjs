@@ -299,6 +299,42 @@ try {
   }
 }
 
+// Over HTTP a finished sweep brings its contact sheets back as pictures; a sheet outside out/ never does.
+{
+  const { makeServer, startJob } = await import("../mcp/finhub-video-server.mjs");
+  const [a, b] = InMemoryTransport.createLinkedPair();
+  const pcClient = new Client({ name: "check-mcp-sheets", version: "1.0.0" });
+  await makeServer({ http: true }).connect(a);
+  await pcClient.connect(b);
+  const sweepDir = join(root, "out", "videos", testSlug, "team", "qc", "sweep");
+  const outside = join(root, "zz-check-mcp-outside.jpg");
+  try {
+    mkdirSync(sweepDir, { recursive: true });
+    writeFileSync(join(sweepDir, "sheet-01.jpg"), "jpeg bytes");
+    writeFileSync(outside, "not shown");
+    writeFileSync(join(sweepDir, "sweep.json"), JSON.stringify({ sheets: [{ path: join(sweepDir, "sheet-01.jpg") }, { path: outside }, { path: join(sweepDir, "gone.jpg") }] }));
+    let started;
+    for (let i = 0; i < 50 && (started = startJob(`sweep ${testSlug}`, process.execPath, ["-e", ""], 60_000)).isError; i++) await new Promise((res) => setTimeout(res, 100)); // the jobs check's last job frees the slot
+    const id = /job ([0-9a-f]{8})/.exec(started.content[0].text)[1];
+    let r;
+    for (let i = 0; i < 50 && !/finished/.test((r = await pcClient.callTool({ name: "video_status", arguments: { job: id } })).content[0].text); i++) await new Promise((res) => setTimeout(res, 100));
+    const images = r.content.filter((c) => c.type === "image");
+    assert.equal(images.length, 1, "a finished sweep brings its sheet back as a picture, and only the one inside out/");
+    assert.equal(Buffer.from(images[0].data, "base64").toString(), "jpeg bytes");
+    // A hand-broken sweep.json, or a folder named like a sheet, never turns the job's answer into an error.
+    for (const bad of ["not json", JSON.stringify({ sheets: "x" }), JSON.stringify({ sheets: [null, { path: sweepDir }] })]) {
+      writeFileSync(join(sweepDir, "sweep.json"), bad);
+      const again = await pcClient.callTool({ name: "video_status", arguments: { job: id } });
+      assert.ok(!again.isError && /finished/.test(again.content[0].text) && !again.content.some((c) => c.type === "image"), `a bad sweep.json (${bad.slice(0, 12)}) still answers`);
+    }
+    console.log("check-mcp sheets: a finished sweep's contact sheet comes back as a picture over HTTP");
+  } finally {
+    await pcClient.close();
+    rmSync(join(root, "out", "videos", testSlug), { recursive: true, force: true });
+    rmSync(outside, { force: true });
+  }
+}
+
 // The Railway HTTP mode (mcp/http.mjs): no token, no service; the light tools only, behind the token.
 const token = "check-mcp-token-0123456789abcdef";
 const port = 18000 + Math.floor(Math.random() * 1000);
