@@ -1,4 +1,4 @@
-// Self-check for mcp/finhub-video-server.mjs: it starts over stdio, lists exactly its nine tools,
+// Self-check for mcp/finhub-video-server.mjs: it starts over stdio, lists exactly its eleven tools,
 // answers list_designs and video_status, refuses a slug that could reach outside the repo
 // (preflight and still; still takes a slug so it renders the video being edited), holds the spend
 // gate, and saves edit.json only through a confirmed, schema-checked, backed-up patch.
@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
 const root = join(import.meta.dirname, "..");
 
@@ -40,7 +41,7 @@ await client.connect(new StdioClientTransport({ command: process.execPath, args:
 const testSlug = "zz-check-mcp";
 try {
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map((t) => t.name).sort(), ["audio", "edit", "list_designs", "preflight", "render_video", "research", "still", "video_status", "visuals"]);
+  assert.deepEqual(tools.map((t) => t.name).sort(), ["audio", "edit", "list_designs", "preflight", "prep", "render_video", "research", "review", "still", "video_status", "visuals"]);
   for (const t of tools) assert.ok(!/publish|upload|clone/i.test(t.name), `${t.name}: publishing and cloning stay off the MCP`);
 
   const designs = JSON.parse((await client.callTool({ name: "list_designs", arguments: {} })).content[0].text);
@@ -209,10 +210,81 @@ try {
     // no symlinks here (Windows without the right): nothing to check
   }
   if (linked) assert.ok(/outside/.test((await edit({ action: "get" })).content[0].text), "an edit.json linked outside public/videos is refused");
+  // prep and review: a footage or music file is a bare name inside its folder, refused before anything runs.
+  for (const file of ["../package.json", "a/b.mp4", "a\\b.mp4", "-x.mp4"]) {
+    const r = await client.callTool({ name: "prep", arguments: { action: "ingest", slug: "zz-new", file } });
+    assert.ok(r.isError && /Input validation error.*file/s.test(r.content[0].text), `prep ingest refuses file ${JSON.stringify(file)} at the schema`);
+  }
+  const footLink = join(root, "1 - PUT FOOTAGE HERE", "zz-check-mcp-link.mp4");
+  let footLinked = false;
+  try {
+    mkdirSync(join(root, "1 - PUT FOOTAGE HERE"), { recursive: true });
+    symlinkSync(join(root, "package.json"), footLink);
+    footLinked = true;
+  } catch {
+    // no symlinks here: nothing to check
+  }
+  if (footLinked) {
+    const r = await client.callTool({ name: "prep", arguments: { action: "ingest", slug: "zz-new", file: "zz-check-mcp-link.mp4" } });
+    rmSync(footLink, { force: true });
+    assert.ok(r.isError && /not a file in/.test(r.content[0].text), "a footage-folder link to a file outside it is refused");
+  }
+  const missing = await client.callTool({ name: "prep", arguments: { action: "ingest", slug: "zz-new", file: "no-such-take.mp4" } });
+  assert.ok(missing.isError && /not a file in 1 - PUT FOOTAGE HERE/.test(missing.content[0].text), "prep ingest takes only a file in the footage folder");
+  const music = await client.callTool({ name: "prep", arguments: { action: "music_start", file: "../package.json" } });
+  assert.ok(music.isError && !/^exit /.test(music.content[0].text), "prep music_start refuses a path");
+  for (const action of ["ingest", "reedit", "assemble"]) {
+    const r = await client.callTool({ name: "prep", arguments: { action, slug: testSlug, file: "x.mp4", recording: "x" } });
+    assert.ok(r.isError && /edit\.json exists/.test(r.content[0].text), `prep ${action} won't touch an existing edit.json`);
+  }
+  const reviewTool = tools.find((t) => t.name === "review");
+  assert.ok(!reviewTool.inputSchema.properties.promote, "review pack can't promote a design");
   console.log(`check-mcp: ${tools.length} tools, ${designs.length} designs, bad slugs refused, spend gate holds, edit.json saves only when confirmed`);
 } finally {
   await client.close();
   for (const d of [join(root, "public", "videos", testSlug), join(root, "out", "videos", testSlug)]) rmSync(d, { recursive: true, force: true });
+}
+
+// Jobs, in this process (a stand-in job, no render): the id answers at once, the slot is taken, edit.json
+// waits, and video_status follows the step to the result.
+{
+  const { makeServer, startJob } = await import("../mcp/finhub-video-server.mjs");
+  const [a, b] = InMemoryTransport.createLinkedPair();
+  const local = new Client({ name: "check-mcp-jobs", version: "1.0.0" });
+  await makeServer().connect(a);
+  await local.connect(b);
+  const vdir = join(root, "public", "videos", testSlug);
+  mkdirSync(vdir, { recursive: true });
+  writeFileSync(join(vdir, "edit.json"), '{"title":"Check","pacing":{"mode":"off"}}\n');
+  try {
+    const started = startJob(`render ${testSlug}`, process.execPath, ["-e", 'console.log("== the slow step"); setTimeout(() => {}, 1500)'], 60_000);
+    const id = /job ([0-9a-f]{8})/.exec(started.content[0].text)?.[1];
+    assert.ok(id, "startJob answers at once with a job id");
+    assert.ok(startJob("another", process.execPath, ["-e", ""], 60_000).isError, "one heavy job at a time");
+    const patch = await local.callTool({ name: "edit", arguments: { action: "patch", slug: testSlug, ops: [{ op: "set", path: "subtitle", value: "x" }] } });
+    assert.ok(patch.isError && /is running/.test(patch.content[0].text), "edit.json waits while a job for that video runs");
+    let st;
+    let sawStep = false;
+    for (let i = 0; i < 50; i++) {
+      st = (await local.callTool({ name: "video_status", arguments: { job: id } })).content[0].text;
+      if (/finished/.test(st)) break;
+      sawStep ||= /running \d+ s, at: the slow step/.test(st);
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    assert.ok(sawStep, "video_status shows the job's step while it runs");
+    assert.match(st, /finished after \d+ s\nexit 0/, "video_status shows the result when it ends");
+    assert.match((await local.callTool({ name: "video_status", arguments: { job: "all" } })).content[0].text, new RegExp(`job ${id} render ${testSlug}`), "job all lists it");
+    assert.ok((await local.callTool({ name: "video_status", arguments: { job: "00000000" } })).isError, "an unknown job id is an error");
+    // Node refuses a NUL in an argument before anything starts: the job still ends and frees the slot.
+    const bad = /job ([0-9a-f]{8})/.exec(startJob("bad start", process.execPath, ["a\0b"], 60_000).content[0].text)[1];
+    await new Promise((r) => setTimeout(r, 50));
+    assert.match((await local.callTool({ name: "video_status", arguments: { job: bad } })).content[0].text, /finished.*\ncould not start/s, "a job that can't start says so");
+    assert.ok(!startJob("after", process.execPath, ["-e", ""], 60_000).isError, "and the slot is free again");
+    console.log("check-mcp jobs: id at once, one slot, edit waits, status follows the step");
+  } finally {
+    await local.close();
+    rmSync(vdir, { recursive: true, force: true });
+  }
 }
 
 // The Railway HTTP mode (mcp/http.mjs): no token, no service; the light tools only, behind the token.
@@ -312,7 +384,7 @@ try {
   const full = new Client({ name: "check-mcp-pc", version: "1.0.0" });
   await full.connect(new StreamableHTTPClientTransport(new URL(`${pcBase}/mcp`), { requestInit: { headers: { authorization: `Bearer ${token}` } } }));
   const fullTools = (await full.listTools()).tools;
-  assert.deepEqual(fullTools.map((t) => t.name).sort(), ["audio", "edit", "list_designs", "preflight", "render_video", "research", "still", "video_status", "visuals"], "--all serves every tool");
+  assert.deepEqual(fullTools.map((t) => t.name).sort(), ["audio", "edit", "list_designs", "preflight", "prep", "render_video", "research", "review", "still", "video_status", "visuals"], "--all serves every tool");
   assert.ok(fullTools.find((t) => t.name === "research").inputSchema.properties.mode.enum.includes("watch"), "--all keeps research watch");
   const badStill = await full.callTool({ name: "still", arguments: { composition: "MortgageReel", frame: 0, slug: "../etc" } });
   assert.ok(badStill.isError, "PC connector still refuses a bad slug");
