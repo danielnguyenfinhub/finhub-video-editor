@@ -9,8 +9,8 @@
 //   node mcp/finhub-video-server.mjs        (npm run mcp; registered in .mcp.json, not in the plugin)
 //   mcp/http.mjs serves makeServer({ remote: true }) over HTTP on Railway.
 import { execFile, spawn, spawnSync } from "node:child_process";
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync } from "node:fs";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -109,7 +109,8 @@ const sheetsOf = (what) => {
   const [kind, slug] = what.split(" ");
   if (kind === "sweep") {
     const f = join(ROOT, "out/videos", slug, "team/qc/sweep/sweep.json");
-    return existsSync(f) ? (JSON.parse(readFileSync(f, "utf8")).sheets ?? []).map((h) => String(h.path)) : [];
+    const sheets = existsSync(f) ? JSON.parse(readFileSync(f, "utf8")).sheets : [];
+    return Array.isArray(sheets) ? sheets.map((h) => String(h?.path)) : [];
   }
   const d = join(ROOT, "out/review-pack", slug);
   if (kind !== "pack" || !existsSync(d)) return [];
@@ -117,33 +118,46 @@ const sheetsOf = (what) => {
   const sheets = entries.filter((e) => e.isFile() && /^sheet-.*\.jpg$/.test(e.name)).map((e) => join(d, e.name)).sort();
   return [...sheets, ...entries.filter((e) => e.isDirectory()).map((e) => join(d, e.name, "strip-01.jpg"))];
 };
+// sweep.json can be edited by hand: at most 12 entries are looked at, nothing past the cap is shrunk, a
+// shrink gets 20 s (it blocks the server), and a bad entry or file is skipped, never an error.
 const withSheets = (r, job) => {
   if (!job.result || r.isError) return r;
   let bytes = 0;
   let shown = 0;
   const left = [];
-  for (const f of sheetsOf(job.what)) {
-    let p;
+  let list = [];
+  try {
+    list = sheetsOf(job.what).slice(0, 12);
+  } catch {
+    // a corrupt sweep.json: the job's text still comes back
+  }
+  for (const f of list) {
     try {
-      p = realpathSync(resolve(ROOT, f));
+      const out = realpathSync(join(ROOT, "out")) + sep;
+      let p = realpathSync(resolve(ROOT, f));
+      if (!p.startsWith(out) || !/\.jpe?g$/i.test(p) || !statSync(p).isFile()) continue;
+      if (shown >= 4) {
+        left.push(relative(ROOT, p));
+        continue;
+      }
+      if (statSync(p).size > 1_000_000) {
+        mkdirSync(join(ROOT, "out/mcp"), { recursive: true });
+        const small = join(ROOT, "out/mcp", `small-${createHash("sha1").update(p).digest("hex").slice(0, 12)}.jpg`);
+        rmSync(small, { force: true }); // a link planted at that name is removed, not written through
+        if (spawnSync("ffmpeg", ["-loglevel", "error", "-i", p, "-vf", "scale=1280:-2", "-q:v", "5", small], { windowsHide: true, timeout: 20_000 }).status !== 0) continue;
+        p = small;
+      }
+      const data = readFileSync(p);
+      if (bytes + data.length > 4_000_000) {
+        left.push(relative(ROOT, p));
+        continue;
+      }
+      shown++;
+      bytes += data.length;
+      r.content.push({ type: "image", mimeType: "image/jpeg", data: data.toString("base64") });
     } catch {
-      continue; // listed but gone
+      // gone, unreadable or a folder by that name: skip it
     }
-    if (!p.startsWith(OUT) || !/\.jpe?g$/i.test(p)) continue;
-    if (statSync(p).size > 1_000_000) {
-      mkdirSync(join(ROOT, "out/mcp"), { recursive: true });
-      const small = join(ROOT, "out/mcp", `small-${relative(OUT, p).replace(/[\\/]/g, "_")}`);
-      if (spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-i", p, "-vf", "scale=1280:-2", "-q:v", "5", small], { windowsHide: true }).status !== 0) continue;
-      p = small;
-    }
-    const data = readFileSync(p);
-    if (shown >= 4 || bytes + data.length > 4_000_000) {
-      left.push(relative(ROOT, p));
-      continue;
-    }
-    shown++;
-    bytes += data.length;
-    r.content.push({ type: "image", mimeType: "image/jpeg", data: data.toString("base64") });
   }
   if (left.length) r.content.push({ type: "text", text: `more sheets on the PC:\n${left.join("\n")}` });
   return r;

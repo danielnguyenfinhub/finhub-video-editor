@@ -321,6 +321,12 @@ try {
     const images = r.content.filter((c) => c.type === "image");
     assert.equal(images.length, 1, "a finished sweep brings its sheet back as a picture, and only the one inside out/");
     assert.equal(Buffer.from(images[0].data, "base64").toString(), "jpeg bytes");
+    // A hand-broken sweep.json, or a folder named like a sheet, never turns the job's answer into an error.
+    for (const bad of ["not json", JSON.stringify({ sheets: "x" }), JSON.stringify({ sheets: [null, { path: sweepDir }] })]) {
+      writeFileSync(join(sweepDir, "sweep.json"), bad);
+      const again = await pcClient.callTool({ name: "video_status", arguments: { job: id } });
+      assert.ok(!again.isError && /finished/.test(again.content[0].text) && !again.content.some((c) => c.type === "image"), `a bad sweep.json (${bad.slice(0, 12)}) still answers`);
+    }
     console.log("check-mcp sheets: a finished sweep's contact sheet comes back as a picture over HTTP");
   } finally {
     await pcClient.close();
