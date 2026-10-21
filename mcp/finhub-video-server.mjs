@@ -73,11 +73,14 @@ export const startJob = (what, cmd, args, timeoutMs) => {
   const job = { what, started: Date.now(), buf: { stdout: "", stderr: "" }, result: null };
   jobs.set(id, job);
   for (const old of [...jobs.keys()].slice(0, -20)) if (jobs.get(old).result) jobs.delete(old);
-  run(cmd, args, timeoutMs, job.buf).then((r) => {
-    job.result = r;
-    job.ended = Date.now();
-    busy = null;
-  });
+  // A spawn that throws (a bad PYTHON, an argument Node refuses) ends the job too, so the slot is freed.
+  run(cmd, args, timeoutMs, job.buf)
+    .catch((e) => ({ ...text(`could not start: ${e.message}`), isError: true }))
+    .then((r) => {
+      job.result = r;
+      job.ended = Date.now();
+      busy = null;
+    });
   return text(`started ${what}: job ${id}. Check it with video_status job "${id}" every minute or so.`);
 };
 const jobStatus = (id, job) => {
@@ -356,7 +359,7 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         "ingest, reedit and assemble start a job (follow it with video_status job) and refuse a slug that already has an edit.json (change that one with edit). " +
         "template (slug): scripts/select-template.mjs ranks the designs (out/videos/<slug>/selection.json); pick (slug, design, reason): records Daniel's override there, then set it with edit patch design. " +
         "clean (slug): clean-clip's report of pauses, repeats and false starts (nothing applied; cut what Daniel agrees to with edit patch remove). " +
-        "music_start (file in public/music): where the track gets going, for music.startMs. reframe (file in the footage folder): where the face is.",
+        "music_start (file in public/music): where the track gets going, for music.startMs. reframe (file in the footage folder): where the face is (a job).",
       inputSchema: {
         action: z.enum(["ingest", "reedit", "assemble", "template", "pick", "clean", "music_start", "reframe"]),
         slug: slug.optional(),
@@ -371,7 +374,7 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
     ({ action, slug, file, recording, noClean, design, reason }) => {
       try {
         if (action === "music_start") return file ? light(() => node("scripts/music-start.mjs", [`public/music/${basename(inFolder("public/music", file))}`, "--json"])) : err("music_start needs file");
-        if (action === "reframe") return file ? heavy("reframe", () => run(PYTHON, [join(ROOT, "scripts/reframe.py"), inFolder(FOOTAGE, file)], 600_000)) : err("reframe needs file");
+        if (action === "reframe") return file ? startJob(`reframe ${file}`, PYTHON, [join(ROOT, "scripts/reframe.py"), inFolder(FOOTAGE, file)], 600_000) : err("reframe needs file");
         if (!slug) return err(`${action} needs slug`);
         if (action === "template") return light(() => node("scripts/select-template.mjs", [slug]));
         if (action === "pick") return design && reason ? light(() => node("scripts/select-template.mjs", [slug, "--pick", design, "--reason", reason])) : err("pick needs design and reason");

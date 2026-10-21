@@ -275,6 +275,11 @@ try {
     assert.match(st, /finished after \d+ s\nexit 0/, "video_status shows the result when it ends");
     assert.match((await local.callTool({ name: "video_status", arguments: { job: "all" } })).content[0].text, new RegExp(`job ${id} render ${testSlug}`), "job all lists it");
     assert.ok((await local.callTool({ name: "video_status", arguments: { job: "00000000" } })).isError, "an unknown job id is an error");
+    // Node refuses a NUL in an argument before anything starts: the job still ends and frees the slot.
+    const bad = /job ([0-9a-f]{8})/.exec(startJob("bad start", process.execPath, ["a\0b"], 60_000).content[0].text)[1];
+    await new Promise((r) => setTimeout(r, 50));
+    assert.match((await local.callTool({ name: "video_status", arguments: { job: bad } })).content[0].text, /finished.*\ncould not start/s, "a job that can't start says so");
+    assert.ok(!startJob("after", process.execPath, ["-e", ""], 60_000).isError, "and the slot is free again");
     console.log("check-mcp jobs: id at once, one slot, edit waits, status follows the step");
   } finally {
     await local.close();
