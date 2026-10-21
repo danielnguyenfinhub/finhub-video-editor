@@ -1,10 +1,11 @@
-// Self-check for mcp/finhub-video-server.mjs: it starts over stdio, lists exactly the six tools,
-// answers list_designs and video_status, and refuses a slug that could reach outside the repo
-// (preflight and still; still takes a slug so it renders the video being edited).
+// Self-check for mcp/finhub-video-server.mjs: it starts over stdio, lists exactly its nine tools,
+// answers list_designs and video_status, refuses a slug that could reach outside the repo
+// (preflight and still; still takes a slug so it renders the video being edited), holds the spend
+// gate, and saves edit.json only through a confirmed, schema-checked, backed-up patch.
 // Renders nothing. Run: node scripts/check-mcp.mjs
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { connect } from "node:net";
 import { networkInterfaces } from "node:os";
@@ -24,6 +25,9 @@ const root = join(import.meta.dirname, "..");
     if (need[i].endsWith(".mjs"))
       for (const [, dep] of readFileSync(join(root, need[i]), "utf8").matchAll(/^import .* from "\.\/([\w.-]+)";$/gm)) if (!need.includes(`scripts/${dep}`)) need.push(`scripts/${dep}`);
   for (const f of need) assert.ok(copied.has(f), `mcp/Dockerfile copies ${f} (the remote tools need it)`);
+  // The server's static imports must load in that image too: mcp/edit.mjs needs src/ and esbuild, so it is imported lazily.
+  for (const [, m] of readFileSync(join(root, "mcp/finhub-video-server.mjs"), "utf8").matchAll(/^import (?:.* from )?"([^"]+)";$/gm))
+    assert.ok(/^(node:|@modelcontextprotocol\/sdk\/)|^zod$/.test(m) || copied.has(m.replace(/^\.\.\//, "")), `mcp/finhub-video-server.mjs imports ${m} statically; the Railway image can't load it`);
 }
 const client = new Client({ name: "check-mcp", version: "1.0.0" });
 // FINHUB_FAKE_PROVIDERS: scripts/providers.mjs answers with canned data, so nothing is spent or sent.
@@ -32,7 +36,7 @@ await client.connect(new StdioClientTransport({ command: process.execPath, args:
 const testSlug = "zz-check-mcp";
 try {
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map((t) => t.name).sort(), ["audio", "list_designs", "preflight", "render_video", "research", "still", "video_status", "visuals"]);
+  assert.deepEqual(tools.map((t) => t.name).sort(), ["audio", "edit", "list_designs", "preflight", "render_video", "research", "still", "video_status", "visuals"]);
   for (const t of tools) assert.ok(!/publish|upload|clone/i.test(t.name), `${t.name}: publishing and cloning stay off the MCP`);
 
   const designs = JSON.parse((await client.callTool({ name: "list_designs", arguments: {} })).content[0].text);
@@ -110,7 +114,68 @@ try {
   assert.match(tr.content[0].text, /bản dịch giả/, "research translate returns the translation");
   const term = await client.callTool({ name: "visuals", arguments: { action: "library", term: "house --kind music" } });
   assert.ok(term.isError, "visuals refuses a term that carries a flag");
-  console.log(`check-mcp: ${tools.length} tools, ${designs.length} designs, bad slugs refused, spend gate holds`);
+
+  // edit: a change is previewed first, saved only with that preview's code, checked by the render's schema and backed up.
+  const vdir = join(root, "public", "videos", testSlug);
+  mkdirSync(vdir, { recursive: true });
+  const editFile = join(vdir, "edit.json");
+  const original = '{"title":"Check","pacing":{"mode":"off"}}\n';
+  writeFileSync(editFile, original);
+  writeFileSync(join(vdir, "words.json"), JSON.stringify([" Lãi", " suất", " 4,1", " phần", " trăm."].map((text, i) => ({ text, startMs: i * 300, endMs: i * 300 + 300 }))));
+  const edit = (args) => client.callTool({ name: "edit", arguments: { slug: testSlug, ...args } });
+  const fileHash = () => createHash("sha256").update(readFileSync(editFile)).digest("hex");
+  assert.match((await edit({ action: "get" })).content[0].text, /"title": "Check"/, "edit get returns the file");
+  assert.ok((await edit({ action: "get", slug: "../etc" })).isError, "edit refuses a bad slug");
+  assert.match((await edit({ action: "words", find: "4,1 phần" })).content[0].text, /^600-1200 /, "edit words finds a phrase with its source ms");
+  assert.match((await edit({ action: "words", fromMs: 0, toMs: 600 })).content[0].text, /^0-300 Lãi\n300-600 suất$/, "edit words lists a window");
+  const h0 = fileHash();
+  for (const [ops, why] of [
+    [[{ op: "set", path: "__proto__.x", value: 1 }], "a __proto__ path"],
+    [[{ op: "set", path: "constructor.prototype.polluted", value: 1 }], "a key the schema doesn't know"],
+    [[{ op: "set", path: "hook", value: {} }], "a hook without big"],
+    [[{ op: "set", path: "pacing.mode", value: "auto" }], "auto pacing on Daniel's footage"],
+    [[{ op: "set", path: "source", value: "x" }], "a new source (prep sets it)"],
+    [[{ op: "unset", path: "title" }], "an edit.json without a title"],
+  ]) {
+    const r = await edit({ action: "patch", ops });
+    assert.ok(r.isError && !/confirm:/.test(r.content[0].text), `edit patch refuses ${why}`);
+  }
+  assert.equal(fileHash(), h0, "a refused patch leaves edit.json as it was");
+  const ops = [{ op: "append", path: "remove", value: [550, 950] }, { op: "set", path: "background", value: "vignette" }];
+  const preview = (await edit({ action: "patch", ops })).content[0].text;
+  const editCode = /confirm: "([^"]+)"/.exec(preview)?.[1];
+  assert.ok(editCode && /Nothing was saved/.test(preview), "a patch without confirm returns a preview and a code");
+  assert.ok(/explicit yes:[\s\S]*drops a spoken number: "suất 4,1 phần"/.test(preview) && /explicit yes:[\s\S]*background becomes vignette/.test(preview), "the preview names what needs Daniel's yes: a cut number, vignette");
+  assert.ok(fileHash() === h0 && !existsSync(`${editFile}.bak`), "the preview saves nothing");
+  const forged = await edit({ action: "patch", ops, confirm: `${Date.now() + 60_000}.${"a".repeat(24)}` });
+  assert.ok(forged.isError && /refused/.test(forged.content[0].text), "a forged edit code is refused");
+  const otherOps = await edit({ action: "patch", ops: ops.slice(0, 1), confirm: editCode });
+  assert.ok(otherOps.isError && /refused/.test(otherOps.content[0].text), "an edit code is bound to its ops");
+  writeFileSync(editFile, '{"title":"Changed meanwhile","pacing":{"mode":"off"}}\n');
+  const stale = await edit({ action: "patch", ops, confirm: editCode });
+  assert.ok(stale.isError && /refused/.test(stale.content[0].text), "a code from before someone else saved is refused");
+  writeFileSync(editFile, original);
+  const saved = await edit({ action: "patch", ops, check: false, confirm: editCode });
+  assert.ok(!saved.isError && /saved public\/videos\/zz-check-mcp\/edit\.json/.test(saved.content[0].text), "the confirmed patch saves");
+  assert.equal(readFileSync(`${editFile}.bak`, "utf8"), original, "the old edit.json is kept as edit.json.bak");
+  const after = readFileSync(editFile, "utf8");
+  assert.ok(after.endsWith("}\n") && JSON.parse(after).remove[0][1] === 950 && JSON.parse(after).background === "vignette", "edit.json holds the change");
+  const reused = await edit({ action: "patch", ops, confirm: editCode });
+  assert.ok(reused.isError && /refused/.test(reused.content[0].text), "an edit code works once");
+  const undoCode = /confirm: "([^"]+)"/.exec((await edit({ action: "undo" })).content[0].text)?.[1];
+  assert.ok(undoCode && readFileSync(editFile, "utf8") === after, "undo previews first");
+  assert.ok(!(await edit({ action: "undo", check: false, confirm: undoCode })).isError, "the confirmed undo runs");
+  assert.ok(readFileSync(editFile, "utf8") === original && readFileSync(`${editFile}.bak`, "utf8") === after, "undo swaps edit.json and .bak (a second undo redoes)");
+  let linked = false;
+  try {
+    unlinkSync(editFile);
+    symlinkSync(join(root, "package.json"), editFile);
+    linked = true;
+  } catch {
+    // no symlinks here (Windows without the right): nothing to check
+  }
+  if (linked) assert.ok(/outside/.test((await edit({ action: "get" })).content[0].text), "an edit.json linked outside public/videos is refused");
+  console.log(`check-mcp: ${tools.length} tools, ${designs.length} designs, bad slugs refused, spend gate holds, edit.json saves only when confirmed`);
 } finally {
   await client.close();
   for (const d of [join(root, "public", "videos", testSlug), join(root, "out", "videos", testSlug)]) rmSync(d, { recursive: true, force: true });
@@ -213,7 +278,7 @@ try {
   const full = new Client({ name: "check-mcp-pc", version: "1.0.0" });
   await full.connect(new StreamableHTTPClientTransport(new URL(`${pcBase}/mcp`), { requestInit: { headers: { authorization: `Bearer ${token}` } } }));
   const fullTools = (await full.listTools()).tools;
-  assert.deepEqual(fullTools.map((t) => t.name).sort(), ["audio", "list_designs", "preflight", "render_video", "research", "still", "video_status", "visuals"], "--all serves every tool");
+  assert.deepEqual(fullTools.map((t) => t.name).sort(), ["audio", "edit", "list_designs", "preflight", "render_video", "research", "still", "video_status", "visuals"], "--all serves every tool");
   assert.ok(fullTools.find((t) => t.name === "research").inputSchema.properties.mode.enum.includes("watch"), "--all keeps research watch");
   const badStill = await full.callTool({ name: "still", arguments: { composition: "MortgageReel", frame: 0, slug: "../etc" } });
   assert.ok(badStill.isError, "PC connector still refuses a bad slug");

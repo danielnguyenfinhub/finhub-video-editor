@@ -37,7 +37,8 @@ References (read the one you need, when you need it):
 - `references/design-space.md` — the 8 design axes, directions, signature moments
 - `references/toolkit.md` — every installed Remotion package, plus the element
   libraries in `.claude/elements/`: when each earns its place, how to adapt an element
-- `references/edit-json.md` — every edit.json field
+- `references/edit-json.md` — every edit.json field. Without file access (Cowork, claude.ai over the
+  finhub-video MCP), change it with the `edit` tool: `words` for the ms, `patch`, then show Daniel the preview before confirming
 - `references/editing-principles.md` — craft: the Craft rules section only (grep ^## Craft rules:
   `sed -n '/^## Craft rules/,/^# /p'`); grep a numbered section when a step needs it (3.1
   keyword list, 6 hook and pacing checklist)
