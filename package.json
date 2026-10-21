@@ -102,6 +102,7 @@
     "video-status": "node scripts/video-status.mjs",
     "mcp": "node mcp/finhub-video-server.mjs",
     "mcp:pc": "node --env-file-if-exists=.env mcp/http.mjs --all",
+    "mcp:smoke": "node scripts/mcp-smoke.mjs",
     "sweep": "node scripts/sweep-render.mjs",
     "music-start": "node scripts/music-start.mjs",
     "listing": "node --no-warnings scripts/listing-prep.mjs",
