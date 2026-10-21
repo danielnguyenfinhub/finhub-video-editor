@@ -101,6 +101,7 @@ audio). Use one only where the picture makes the point clearer than Daniel's fac
 | `cutaway` | the asset full frame, Daniel hidden (voice continues) | describes something the viewer should see (a street, a signing) |
 | `pip` | the asset full frame, Daniel small top-right | walks through something while still talking to camera |
 | `overlay` | an image card left of Daniel's face (Ken Burns on stills) | names a thing a small picture identifies (a document, keys) |
+| `motion` | a transparent full-frame WebM over Daniel (he stays visible), from `scripts/hf-overlay.mjs` | needs a HyperFrames registry look no design or element has (skill `hyperframes-overlay`) |
 
 ```json
 "visuals": [

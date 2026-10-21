@@ -68,6 +68,9 @@ it does not:
    naming it; `element-sources.md` says where the pages are offline and online.
 5. **Remotion packages** (`reference/remotion/`, ideas; `node_modules/@remotion/*` 4.0.527, code):
    transitions, light-leaks, shapes, paths, rough-notation, rounded-text-box.
+6. **HyperFrames overlay** (`hyperframes-overlay` skill): a registry block (bar-chart race, money
+   count, flowchart, shader reveal) rendered to a transparent WebM and placed as a `visuals`
+   `motion` entry. No template change, but a second render and an HTML file per beat, so last.
 
 Rungs 2–5 need code in a design folder. In a video run that is a `open_questions` line for
 Daniel ("this beat wants X, which no design has; build it with the repo-build-team or drop to the
