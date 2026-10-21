@@ -191,11 +191,19 @@ export const aiLicence = (model) => `AI-generated image (fal.ai, model ${model})
 
 // Search only, nothing downloaded (the MCP's remote mode, where files would stay on
 // the server): both providers' candidates in word-match order, best first.
+// One provider failing (a bad key, an outage) still returns the other's candidates, as downloadStock does.
 export const searchStock = async (term, dir) => {
-  const out = [];
-  for (const [provider, key] of [[pixabay, process.env.PIXABAY_API_KEY], [pexels, process.env.PEXELS_API_KEY]])
-    if (key) out.push(...(await provider(term, key, dir)));
   if (!process.env.PIXABAY_API_KEY && !process.env.PEXELS_API_KEY) throw new Error("Neither PIXABAY_API_KEY nor PEXELS_API_KEY is set.");
+  const out = [];
+  const failed = [];
+  for (const [provider, key] of [[pixabay, process.env.PIXABAY_API_KEY], [pexels, process.env.PEXELS_API_KEY]])
+    if (key)
+      try {
+        out.push(...(await provider(term, key, dir)));
+      } catch (err) {
+        failed.push(err.message);
+      }
+  if (failed.length && !out.length) throw new Error(failed.join("; "));
   return out;
 };
 

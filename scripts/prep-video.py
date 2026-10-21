@@ -501,7 +501,8 @@ def main() -> None:
         skeleton = {
             "source": recording,
             "title": title,
-            "pacing": {"mode": "auto"},
+            # Auto pacing shifts Daniel's pitch and tone; preflight blocks it on his footage.
+            "pacing": {"mode": "off"},
             "chapters": [],
             "stats": [],
             "cues": [],

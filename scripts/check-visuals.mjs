@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { rankByScore, rerank } from "./clip-score.mjs";
 import { spendProblem } from "./spend.mjs";
-import { aiCandidates, aiStillsPerScene, generateStill, parseJudge, relevant } from "./visuals.mjs";
+import { aiCandidates, aiStillsPerScene, generateStill, parseJudge, relevant, searchStock } from "./visuals.mjs";
 import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -68,6 +68,24 @@ assert.match(spendProblem({ engine: "google", chars: 1000, aiImages: 2 }, est), 
   } finally {
     globalThis.fetch = realFetch;
     for (const k of ["FAL_KEY", "AI_CANDIDATES", "GEMINI_API_KEY"]) if (k in env) process.env[k] = env[k]; else delete process.env[k];
+  }
+}
+// Stock search: Pixabay failing (a bad key gives HTTP 400) still returns Pexels' candidates; both failing names both.
+{
+  const env = { ...process.env }, realFetch = globalThis.fetch;
+  const dir = repoTmp("stock-search-");
+  const pexelsOk = { ok: true, json: async () => ({ videos: [{ id: 1, url: "https://www.pexels.com/video/house-keys-1/", duration: 10, video_files: [{ id: 2, link: "https://x/k.mp4", width: 1080, height: 1920 }] }] }) };
+  try {
+    process.env.PIXABAY_API_KEY = "bad";
+    process.env.PEXELS_API_KEY = "test";
+    globalThis.fetch = async (url) => (String(url).includes("pixabay") ? { ok: false, status: 400 } : pexelsOk);
+    const hits = await searchStock("house keys", dir);
+    assert.deepEqual(hits.map((h) => h.id), ["pexels-1-2"], "a failing Pixabay leaves Pexels' candidates");
+    globalThis.fetch = async (url) => ({ ok: false, status: String(url).includes("pixabay") ? 400 : 401 });
+    await assert.rejects(searchStock("house roof", dir), /Pixabay .*HTTP 400.*Pexels .*HTTP 401/, "both failing: both reasons");
+  } finally {
+    globalThis.fetch = realFetch;
+    for (const k of ["PIXABAY_API_KEY", "PEXELS_API_KEY"]) if (k in env) process.env[k] = env[k]; else delete process.env[k];
   }
 }
 // AI_CANDIDATES (R2, run 3): unset, blank or non-numeric means 3; a number floors to at least 1.

@@ -70,7 +70,7 @@ def main() -> None:
             sh([sys.executable, str(PREP), str(src), take], env)
             rec = public / "recordings" / take
             edit = json.loads((public / "videos" / take / "edit.json").read_text(encoding="utf-8"))
-            assert edit == {"source": take, "title": take, "pacing": {"mode": "auto"},
+            assert edit == {"source": take, "title": take, "pacing": {"mode": "off"},
                             "chapters": [], "stats": [], "cues": [],
                             "compliance": {"illustrativeNumbers": True}}, edit
             assert probe(rec / "source.mp4", "stream=nb_frames") == "150"
