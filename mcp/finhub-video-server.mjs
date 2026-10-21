@@ -288,7 +288,7 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
           }
           return text(out.join("\n\n"));
         };
-        return await paid("edit", { action, slug, ops }, confirm, async () => text(plan.preview), save, "Nothing was saved. Show Daniel these changes");
+        return await paid("edit", { action, slug, ops, check }, confirm, async () => text(plan.preview), save, "Nothing was saved. Show Daniel these changes");
       } catch (e) {
         return err(e.message);
       }
