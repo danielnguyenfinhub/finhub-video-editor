@@ -180,10 +180,12 @@ const cue = z
 
 // B-roll from the source library over the talk, drawn by the core so every
 // design gets it (Visuals.tsx). cutaway: full frame, Daniel hidden; pip: full
-// frame with Daniel small in a corner; overlay: an image card beside him.
+// frame with Daniel small in a corner; overlay: an image card beside him;
+// motion: a transparent full-frame WebM (a HyperFrames render, scripts/hf-overlay.mjs)
+// over Daniel, who stays visible.
 // asset is a file under public/library/, or {find} keywords that
 // `node scripts/library.mjs resolve <slug>` rewrites to one before rendering.
-export const VISUAL_MODES = ["cutaway", "pip", "overlay"] as const;
+export const VISUAL_MODES = ["cutaway", "pip", "overlay", "motion"] as const;
 const visual = z.strictObject({
   mode: z.enum(VISUAL_MODES),
   atMs: ms,

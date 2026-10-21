@@ -40,6 +40,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `visuals.mjs`, `clip-score.mjs` | Gap-scene visuals and whether a stock clip matches what the scene asked for. |
 | `providers.mjs` | The paid and free APIs behind the MCP's `audio`, `visuals` and `research ask/translate`: Perplexity, DeepSeek/Gemini, ElevenLabs music, SFX and Scribe, local faster-whisper (`omnivoice-tts.py transcribe`), fal/xAI images, Pixabay/Pexels. `--quote` prices a call without making it; real runs go to `out/spend-ledger.jsonl`. |
 | `library.mjs` | Cross-video source library: every downloaded or generated asset is saved once. |
+| `hf-overlay.mjs` | Renders one HyperFrames composition (`out/videos/<slug>/hf/<name>/`) to a transparent 1080x1920 WebM after `hyperframes lint` and `check`, files it as library kind `motion-graphic` and prints the `visuals` `motion` entry (skill `hyperframes-overlay`; `--selftest`). |
 | `facts.mjs` | Fact-ledger check: every factual claim a scene shows must trace to the source. |
 | `research.py` | What is trending, or research a topic, before writing a script. `watch <url> --slug` studies a reference video's pacing (480p, 20 min cap; `pacing.json`, contact sheets, captions); `comments <url> --slug` and `audience <channel-url>` save the most-liked viewer comments, text and likes only. |
 

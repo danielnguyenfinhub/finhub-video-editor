@@ -83,6 +83,20 @@ const Shot: React.FC<{
     [0, 1, 1, 0],
     clamp,
   );
+  // motion: a transparent HyperFrames render over Daniel, full frame, no
+  // backdrop; the composition itself keeps clear of FACE and inside SAFE.
+  if (v.mode === "motion")
+    return (
+      <AbsoluteFill style={{ opacity }}>
+        <OffthreadVideo
+          src={staticFile(v.asset)}
+          muted
+          transparent
+          {...retryVideoFetch}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </AbsoluteFill>
+    );
   if (v.mode === "overlay")
     return (
       <div

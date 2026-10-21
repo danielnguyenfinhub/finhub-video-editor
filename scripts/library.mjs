@@ -24,12 +24,12 @@ import { stems } from "./visuals.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const LIBRARY = join(ROOT, "public", "library");
-export const KINDS = ["stock-video", "stock-image", "ai-image", "own-footage", "music"];
+export const KINDS = ["stock-video", "stock-image", "ai-image", "own-footage", "music", "motion-graphic"];
 
 // Cost avoided per reuse, US$. ESTIMATES, not invoices: Pexels and Pixabay
 // are free; fal FLUX dev is about US$0.03 an image (the figure voice-video.mjs
 // prints). A reuse is every usedIn slug after the first.
-const COST_PER_REUSE = { "stock-video": 0, "stock-image": 0, "ai-image": 0.03, "own-footage": 0, music: 0 };
+const COST_PER_REUSE = { "stock-video": 0, "stock-image": 0, "ai-image": 0.03, "own-footage": 0, music: 0, "motion-graphic": 0 };
 
 const norm = (s) => String(s).normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ");
 // Keywords keep their order (the first names the file); usedIn is sorted.
