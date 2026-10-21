@@ -90,13 +90,13 @@ const prov = (op, args, extra = [], ms = 300_000) => node("scripts/providers.mjs
 const GATE = randomBytes(32);
 const usedCodes = new Set();
 const mac = (tool, args, quote, exp) => createHmac("sha256", GATE).update(JSON.stringify([tool, args, quote, exp])).digest("base64url").slice(0, 24);
-const paid = async (tool, args, confirm, quote, job) => {
+const paid = async (tool, args, confirm, quote, job, nothing = "Nothing was spent. Show Daniel this cost") => {
   const q = await quote();
   if (q.isError) return q;
   const said = q.content[0].text.replace(/^exit 0\n/, "");
   if (!confirm) {
     const exp = Date.now() + 15 * 60_000;
-    return text(`${said}\n\nNothing was spent. Show Daniel this cost; only after he agrees, call ${tool} again with the same arguments and confirm: "${exp}.${mac(tool, args, said, exp)}" (valid 15 minutes, once).`);
+    return text(`${said}\n\n${nothing}; only after he agrees, call ${tool} again with the same arguments and confirm: "${exp}.${mac(tool, args, said, exp)}" (valid 15 minutes, once).`);
   }
   // One spelling of the expiry only ("0" + exp or "+exp" would be a fresh Set entry), and spent codes keyed on the MAC.
   const [e, got = ""] = String(confirm).split(".");
@@ -230,6 +230,70 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
 
   const prompt = z.string().min(1).max(500).regex(/^[^-]/, "must not start with -").regex(/^[^\x00-\x1f\x7f]*$/, "no line breaks or control characters");
   const confirm = z.string().max(80).optional();
+
+  // edit.json: every save is a preview first and a confirm second, through the spend gate. The preview
+  // carries the file's hash, so a code issued before someone else saved (the review page, another call) is refused.
+  const msIn = z.number().int().min(0).max(36_000_000);
+  localTool(
+    "edit",
+    {
+      description:
+        "Read and change a video's edit.json (public/videos/<slug>/edit.json). Times are SOURCE ms on words.json's clock; durMs is on-screen ms. " +
+        "get (fields = top-level keys, optional): the file. words (find = a phrase, or fromMs and toMs): what Daniel says, with the ms to paste into remove, captionFixes or cues. " +
+        "patch (ops: set / unset / append on a dot path such as hook.big, cues.2.toMs or remove): checked with the render's schema, then the first call returns a preview and a confirm code and saves nothing; " +
+        "show Daniel the preview (above all its 'Needs Daniel's explicit yes' lines) and call again with the same ops and confirm only after he agrees. undo: back to edit.json.bak, previewed and confirmed the same way. " +
+        "A save keeps the old file as edit.json.bak, then runs the speech-cut and pacing checks the change needs (check: false skips them).",
+      inputSchema: {
+        action: z.enum(["get", "words", "patch", "undo"]),
+        slug,
+        fields: z.array(z.string().regex(/^[A-Za-z]+$/)).max(30).optional(),
+        find: z.string().min(1).max(200).regex(/^[^\x00-\x1f\x7f]*$/, "no line breaks or control characters").optional(),
+        fromMs: msIn.optional(),
+        toMs: msIn.optional(),
+        ops: z
+          .array(
+            z.object({
+              op: z.enum(["set", "unset", "append"]),
+              path: z.string().max(120).regex(/^[A-Za-z]+(\.(\d{1,4}|[A-Za-z]+))*$/, "a dot path such as hook.big or cues.2.toMs"),
+              value: z.unknown().optional(),
+            }),
+          )
+          .min(1)
+          .max(50)
+          .optional(),
+        check: z.boolean().optional(),
+        confirm,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ action, slug, fields, find, fromMs, toMs, ops, check, confirm }) => {
+      try {
+        const ed = await import("./edit.mjs");
+        if (action === "get") return text(ed.get(slug, fields));
+        if (action === "words") return text(await ed.words(slug, { find, fromMs, toMs }));
+        if (busy?.split(" ").at(-1) === slug) return err(`${busy} is running: edit.json waits until it finishes`);
+        if (action === "patch" && !ops) return err("patch needs ops");
+        const plan = action === "patch" ? await ed.planPatch(slug, ops) : await ed.planUndo(slug);
+        const touched = new Set(action === "patch" ? ops.map((o) => o.path.split(".")[0]) : ["remove", "cues"]);
+        const save = async () => {
+          plan.save();
+          const out = [`saved public/videos/${slug}/edit.json (the old one is edit.json.bak)`];
+          const runs = [];
+          if (check !== false && ["remove", "cut", "pacing"].some((k) => touched.has(k))) runs.push(["speech cuts", "scripts/check-speech-cuts.mjs", 120_000]);
+          if (check !== false && ["remove", "cut", "cues", "chapters", "stats", "visuals", "hook"].some((k) => touched.has(k))) runs.push(["pacing", "scripts/check-pacing.mjs", 60_000]);
+          for (const [name, script, ms] of runs) {
+            const r = await node(script, [slug], ms);
+            const t = r.content[0].text;
+            out.push(name === "pacing" && /^exit 2/.test(t) ? `pacing warnings:\n${t}` : r.isError ? `${name} CHECK FAILED (saved anyway; edit undo goes back):\n${t}` : `${name}: OK`);
+          }
+          return text(out.join("\n\n"));
+        };
+        return await paid("edit", { action, slug, ops }, confirm, async () => text(plan.preview), save, "Nothing was saved. Show Daniel these changes");
+      } catch (e) {
+        return err(e.message);
+      }
+    },
+  );
 
   localTool(
     "audio",
