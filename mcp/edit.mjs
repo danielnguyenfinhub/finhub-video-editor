@@ -4,7 +4,7 @@
 // Daniel confirms. Saving is the review page's convention (review/server.ts saveEdit): the old file
 // becomes edit.json.bak; here the new one is written to .tmp and renamed, so a crash never leaves half a file.
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, readFileSync, realpathSync, renameSync, writeFileSync } from "node:fs";
+import { constants, copyFileSync, existsSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { bundleTs, repoTmp } from "../scripts/tmp-dir.mjs";
@@ -26,7 +26,10 @@ const editSchema = () =>
 // Inside public/ after symlinks are followed, so a linked edit.json or words.json can't reach other files.
 const inside = (p, dir) => realpathSync(p).startsWith(realpathSync(dir) + sep);
 const sha = (s) => createHash("sha256").update(s).digest("hex").slice(0, 12);
-const short = (v) => (v === undefined ? "(none)" : JSON.stringify(v).slice(0, 200));
+const short = (v) => {
+  const s = v === undefined ? "(none)" : JSON.stringify(v);
+  return s.length > 600 ? `${s.slice(0, 600)}… (${s.length} characters in all)` : s;
+};
 
 const read = (slug) => {
   const file = join(VIDEOS, slug, "edit.json");
@@ -43,6 +46,11 @@ const readWords = async (slug, source) => {
   return JSON.parse(readFileSync(p, "utf8"));
 };
 const norm = (s) => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+// A figure Daniel says: digits, or a number word that means nothing else. ponytail: một, hai, ba and năm
+// are left out (also "a", "father", "year"), so "một trăm" is caught by trăm but a lone "hai" is not.
+const NUMBER_WORDS = new Set(["bốn", "sáu", "bảy", "tám", "chín", "mười", "mươi", "lăm", "trăm", "nghìn", "ngàn", "triệu", "tỷ", "tỉ", "phẩy", "percent", "hundred", "thousand", "million", "billion"]);
+const hasNumber = (text) => /\d/.test(text) || text.split(/\s+/).some((t) => NUMBER_WORDS.has(norm(t)));
+const figures = (s) => (s.match(/\d[\d.,]*/g) ?? []).join("|");
 const said = (words, a, b) => words.filter((w) => w.endMs > a && w.startMs < b).map((w) => w.text.trim()).join(" ");
 
 export const get = (slug, fields) => {
@@ -79,18 +87,26 @@ const apply = (json, ops) => {
   ops.forEach(({ op, path, value }, i) => {
     const keys = path.split(".");
     let at = out;
-    for (const [j, k] of keys.slice(0, -1).entries()) {
+    // In a list only a position that exists (or, for set, the next one): "remove.length" or "cues.99"
+    // would make a huge sparse list, and "unset remove.x" would splice(NaN) and drop item 0.
+    const step = (k, end) => {
+      if (!Array.isArray(at)) return k;
+      if (!/^\d+$/.test(k) || Number(k) > at.length - (end ? 0 : 1)) throw new Error(`op ${i}: ${path}: no item ${k} in that list`);
+      return Number(k);
+    };
+    for (const [j, key] of keys.slice(0, -1).entries()) {
+      const k = step(key, false);
       if (!Object.hasOwn(at, k) || typeof at[k] !== "object" || at[k] === null) {
         if (op === "unset") throw new Error(`op ${i}: ${path} doesn't exist`);
         at[k] = /^\d+$/.test(keys[j + 1]) ? [] : {};
       }
       at = at[k];
     }
-    const last = keys.at(-1);
+    const last = step(keys.at(-1), op === "set");
     if (op === "set") at[last] = value;
     else if (op === "unset") {
       if (!Object.hasOwn(at, last)) throw new Error(`op ${i}: ${path} doesn't exist`);
-      if (Array.isArray(at)) at.splice(Number(last), 1);
+      if (Array.isArray(at)) at.splice(last, 1);
       else delete at[last];
     } else {
       at[last] ??= [];
@@ -105,7 +121,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 const validate = async (next) => {
   const r = (await editSchema()).safeParse(next);
-  if (!r.success) throw new Error(`not saved, edit.json would be invalid:\n${r.error.issues.map((i) => `${i.path.join(".") || "(top level)"}: ${i.message}`).join("\n")}`);
+  if (!r.success) throw new Error(`not saved, edit.json would be invalid:\n${r.error.issues.slice(0, 20).map((i) => `${i.path.join(".") || "(top level)"}: ${i.message}`).join("\n")}`);
 };
 
 // What the new version changes, and what Daniel has to say yes to by name (his meaning, his look, compliance).
@@ -115,20 +131,29 @@ const review = async (slug, cur, next) => {
   for (const k of ["compliance", "exemptions"]) if (!same(cur[k], next[k])) yes.push(`${k} changes`);
   const lines = [];
   const added = (next.remove ?? []).filter((s) => !(cur.remove ?? []).some((t) => same(s, t)));
-  if (added.length) {
-    const all = await readWords(slug, next.source);
-    for (const [a, b] of added) {
-      const text = all ? said(all, a, b) : "(no words.json)";
-      lines.push(`cut ${a}-${b} drops: "${text}"`);
-      if (/\d/.test(text)) yes.push(`the cut at ${a}-${b} drops a spoken number: "${text}"`);
-    }
+  const newWords = (next.cut?.words ?? []).filter((w) => !(cur.cut?.words ?? []).includes(w));
+  const all = added.length || newWords.length ? await readWords(slug, next.source) : null;
+  for (const [a, b] of added) {
+    if (!all) yes.push(`the cut at ${a}-${b}: no words.json, so what it drops can't be shown`);
+    const text = all ? said(all, a, b) : "";
+    if (all) lines.push(`cut ${a}-${b} drops: "${text}"`);
+    if (hasNumber(text)) yes.push(`the cut at ${a}-${b} drops a spoken number: "${text}"`);
+  }
+  // cut.words cuts a word or phrase everywhere it is said: show every place.
+  for (const phrase of newWords) {
+    const want = phrase.split(/\s+/).map(norm).filter(Boolean);
+    const hits = [];
+    for (let i = 0; all && want.length && i + want.length <= all.length; i++) if (want.every((t, j) => norm(all[i + j].text) === t)) hits.push(i);
+    lines.push(`cut.words "${phrase}" drops it ${hits.length} time(s)${hits.length ? ":" : ""}`, ...hits.slice(0, 10).map((i) => `  ${all[i].startMs}ms …${said(all.slice(Math.max(0, i - 4), i + want.length + 4), 0, Infinity)}…`));
+    if (!all || !hits.length) yes.push(`cut.words "${phrase}": ${all ? "never said, so nothing shows what it would cut" : "no words.json, so what it cuts can't be shown"}`);
+    else if (hasNumber(phrase)) yes.push(`cut.words "${phrase}" drops a spoken number ${hits.length} time(s)`);
   }
   for (const f of (next.captionFixes ?? []).filter((f) => !(cur.captionFixes ?? []).some((g) => same(f, g))))
-    if (f.from.replace(/\D/g, "") !== f.to.replace(/\D/g, "")) yes.push(`caption fix "${f.from}" -> "${f.to}" changes a number`);
+    if (figures(f.from) !== figures(f.to) || (hasNumber(f.from) && !hasNumber(f.to))) yes.push(`caption fix "${f.from}" -> "${f.to}" changes a number`);
   return { lines, yes };
 };
 
-const plan = async (slug, cur, next, diff, body = `${JSON.stringify(next, null, 2)}\n`) => {
+const plan = async (slug, cur, next, diff, body = `${JSON.stringify(next, null, 2)}\n`, bakSha) => {
   if (same(cur.json, next)) throw new Error("no change: edit.json would stay the same");
   if (!same(cur.json.source, next.source)) throw new Error("source is set by prep (the recording), not by edit");
   // As preflight: auto pacing shifts Daniel's pitch and tone; only faceless videos (script.json) may have it.
@@ -137,12 +162,21 @@ const plan = async (slug, cur, next, diff, body = `${JSON.stringify(next, null, 
   await validate(next);
   const { lines, yes } = await review(slug, cur.json, next);
   const preview = [`edit.json ${slug} @ ${cur.sha}`, ...diff, ...lines, ...(yes.length ? ["", "Needs Daniel's explicit yes:", ...yes.map((y) => `- ${y}`)] : [])].join("\n");
-  return { preview, save: () => save(cur.file, body) };
+  return { preview, save: () => save(cur.file, body, cur.sha, bakSha) };
 };
-const save = (file, body) => {
-  writeFileSync(`${file}.tmp`, body);
-  copyFileSync(file, `${file}.bak`);
-  renameSync(`${file}.tmp`, file);
+// The file is read again: a save between the preview's read and now (the review page, a parallel call)
+// is never overwritten. .tmp and .bak are removed first and made fresh (wx, COPYFILE_EXCL): a link
+// planted at either name is deleted, not followed, so nothing outside the folder is written.
+const save = (file, body, expect, bakSha) => {
+  const tmp = `${file}.tmp`;
+  const bak = `${file}.bak`;
+  if (sha(readFileSync(file, "utf8")) !== expect || (bakSha && sha(readFileSync(bak, "utf8")) !== bakSha))
+    throw new Error("edit.json changed since the preview: nothing saved. Call again without confirm for a fresh preview.");
+  rmSync(tmp, { force: true });
+  writeFileSync(tmp, body, { flag: "wx" });
+  rmSync(bak, { force: true });
+  copyFileSync(file, bak, constants.COPYFILE_EXCL);
+  renameSync(tmp, file);
 };
 
 export const planPatch = async (slug, ops) => {
@@ -157,9 +191,11 @@ export const planPatch = async (slug, ops) => {
 // Back to edit.json.bak; the current file becomes the .bak, so a second undo is a redo.
 export const planUndo = async (slug) => {
   const cur = read(slug);
-  if (!existsSync(`${cur.file}.bak`)) throw new Error("no edit.json.bak to go back to");
-  const raw = readFileSync(`${cur.file}.bak`, "utf8");
+  const bak = `${cur.file}.bak`;
+  if (!existsSync(bak)) throw new Error("no edit.json.bak to go back to");
+  if (!inside(bak, VIDEOS)) throw new Error("edit.json.bak points outside public/videos");
+  const raw = readFileSync(bak, "utf8");
   const old = JSON.parse(raw);
   const keys = [...new Set([...Object.keys(cur.json), ...Object.keys(old)])].filter((k) => !same(cur.json[k], old[k]));
-  return plan(slug, cur, old, ["undo to edit.json.bak:", ...keys.map((k) => `${k}: ${short(cur.json[k])} -> ${short(old[k])}`)], raw);
+  return plan(slug, cur, old, ["undo to edit.json.bak:", ...keys.map((k) => `${k}: ${short(cur.json[k])} -> ${short(old[k])}`)], raw, sha(raw));
 };

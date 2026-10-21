@@ -26,8 +26,12 @@ const root = join(import.meta.dirname, "..");
       for (const [, dep] of readFileSync(join(root, need[i]), "utf8").matchAll(/^import .* from "\.\/([\w.-]+)";$/gm)) if (!need.includes(`scripts/${dep}`)) need.push(`scripts/${dep}`);
   for (const f of need) assert.ok(copied.has(f), `mcp/Dockerfile copies ${f} (the remote tools need it)`);
   // The server's static imports must load in that image too: mcp/edit.mjs needs src/ and esbuild, so it is imported lazily.
-  for (const [, m] of readFileSync(join(root, "mcp/finhub-video-server.mjs"), "utf8").matchAll(/^import (?:.* from )?"([^"]+)";$/gm))
-    assert.ok(/^(node:|@modelcontextprotocol\/sdk\/)|^zod$/.test(m) || copied.has(m.replace(/^\.\.\//, "")), `mcp/finhub-video-server.mjs imports ${m} statically; the Railway image can't load it`);
+  for (const f of ["finhub-video-server.mjs", "http.mjs", "oauth.mjs"])
+    for (const [, a, b] of readFileSync(join(root, "mcp", f), "utf8").matchAll(/^\s*(?:import|export)\b[^;]*?\bfrom\s*["']([^"']+)["']|^\s*import\s*["']([^"']+)["']/gm)) {
+      const m = a ?? b;
+      const ok = /^(node:|@modelcontextprotocol\/sdk\/)|^zod$/.test(m) || (m.startsWith("./") && m !== "./edit.mjs") || copied.has(m.replace(/^\.\.\//, ""));
+      assert.ok(ok, `mcp/${f} imports ${m} statically; the Railway image can't load it`);
+    }
 }
 const client = new Client({ name: "check-mcp", version: "1.0.0" });
 // FINHUB_FAKE_PROVIDERS: scripts/providers.mjs answers with canned data, so nothing is spent or sent.
@@ -136,23 +140,34 @@ try {
     [[{ op: "set", path: "pacing.mode", value: "auto" }], "auto pacing on Daniel's footage"],
     [[{ op: "set", path: "source", value: "x" }], "a new source (prep sets it)"],
     [[{ op: "unset", path: "title" }], "an edit.json without a title"],
+    [[{ op: "set", path: "remove", value: [[0, 300]] }, { op: "set", path: "remove.length", value: 5_000_000 }], "a list length (a huge sparse list)"],
+    [[{ op: "set", path: "remove", value: [[0, 300]] }, { op: "unset", path: "remove.x" }], "a list item that isn't a position"],
+    [[{ op: "set", path: "remove", value: [[0, 300]] }, { op: "set", path: "remove.5", value: [600, 900] }], "a position past the end of a list"],
   ]) {
     const r = await edit({ action: "patch", ops });
     assert.ok(r.isError && !/confirm:/.test(r.content[0].text), `edit patch refuses ${why}`);
   }
   assert.equal(fileHash(), h0, "a refused patch leaves edit.json as it was");
+  assert.ok(!(await edit({ action: "get" })).isError, "the server is still up after those");
+  const yesFor = async (ops) => (await edit({ action: "patch", ops })).content[0].text.split("Needs Daniel's explicit yes:")[1] ?? "";
+  assert.match(await yesFor([{ op: "append", path: "cut.words", value: "4,1" }]), /cut\.words "4,1" drops a spoken number 1 time/, "cut.words that drops a number needs Daniel's yes");
+  assert.match(await yesFor([{ op: "append", path: "cut.words", value: "xyz" }]), /never said/, "cut.words that matches nothing needs Daniel's yes");
+  assert.match(await yesFor([{ op: "append", path: "remove", value: [1150, 1500] }]), /drops a spoken number: "phần trăm\."/, "a cut that drops a number word needs Daniel's yes");
+  assert.match(await yesFor([{ op: "append", path: "captionFixes", value: { from: "4,1", to: "41" } }]), /changes a number/, "a caption fix 4,1 -> 41 needs Daniel's yes");
   const ops = [{ op: "append", path: "remove", value: [550, 950] }, { op: "set", path: "background", value: "vignette" }];
-  const preview = (await edit({ action: "patch", ops })).content[0].text;
+  const preview = (await edit({ action: "patch", ops, check: false })).content[0].text;
   const editCode = /confirm: "([^"]+)"/.exec(preview)?.[1];
   assert.ok(editCode && /Nothing was saved/.test(preview), "a patch without confirm returns a preview and a code");
   assert.ok(/explicit yes:[\s\S]*drops a spoken number: "suất 4,1 phần"/.test(preview) && /explicit yes:[\s\S]*background becomes vignette/.test(preview), "the preview names what needs Daniel's yes: a cut number, vignette");
   assert.ok(fileHash() === h0 && !existsSync(`${editFile}.bak`), "the preview saves nothing");
-  const forged = await edit({ action: "patch", ops, confirm: `${Date.now() + 60_000}.${"a".repeat(24)}` });
+  const skipChecks = await edit({ action: "patch", ops, confirm: /confirm: "([^"]+)"/.exec((await edit({ action: "patch", ops })).content[0].text)[1], check: false });
+  assert.ok(skipChecks.isError && /refused/.test(skipChecks.content[0].text), "a code issued with the checks on can't confirm with them off");
+  const forged = await edit({ action: "patch", ops, check: false, confirm: `${Date.now() + 60_000}.${"a".repeat(24)}` });
   assert.ok(forged.isError && /refused/.test(forged.content[0].text), "a forged edit code is refused");
-  const otherOps = await edit({ action: "patch", ops: ops.slice(0, 1), confirm: editCode });
+  const otherOps = await edit({ action: "patch", ops: ops.slice(0, 1), check: false, confirm: editCode });
   assert.ok(otherOps.isError && /refused/.test(otherOps.content[0].text), "an edit code is bound to its ops");
   writeFileSync(editFile, '{"title":"Changed meanwhile","pacing":{"mode":"off"}}\n');
-  const stale = await edit({ action: "patch", ops, confirm: editCode });
+  const stale = await edit({ action: "patch", ops, check: false, confirm: editCode });
   assert.ok(stale.isError && /refused/.test(stale.content[0].text), "a code from before someone else saved is refused");
   writeFileSync(editFile, original);
   const saved = await edit({ action: "patch", ops, check: false, confirm: editCode });
@@ -160,12 +175,31 @@ try {
   assert.equal(readFileSync(`${editFile}.bak`, "utf8"), original, "the old edit.json is kept as edit.json.bak");
   const after = readFileSync(editFile, "utf8");
   assert.ok(after.endsWith("}\n") && JSON.parse(after).remove[0][1] === 950 && JSON.parse(after).background === "vignette", "edit.json holds the change");
-  const reused = await edit({ action: "patch", ops, confirm: editCode });
+  const reused = await edit({ action: "patch", ops, check: false, confirm: editCode });
   assert.ok(reused.isError && /refused/.test(reused.content[0].text), "an edit code works once");
-  const undoCode = /confirm: "([^"]+)"/.exec((await edit({ action: "undo" })).content[0].text)?.[1];
+  const undoCode = /confirm: "([^"]+)"/.exec((await edit({ action: "undo", check: false })).content[0].text)?.[1];
   assert.ok(undoCode && readFileSync(editFile, "utf8") === after, "undo previews first");
   assert.ok(!(await edit({ action: "undo", check: false, confirm: undoCode })).isError, "the confirmed undo runs");
   assert.ok(readFileSync(editFile, "utf8") === original && readFileSync(`${editFile}.bak`, "utf8") === after, "undo swaps edit.json and .bak (a second undo redoes)");
+  const target = join(root, "out", "check-mcp-link-target.txt");
+  mkdirSync(join(root, "out"), { recursive: true });
+  writeFileSync(target, "untouched");
+  let planted = false;
+  try {
+    rmSync(`${editFile}.bak`, { force: true });
+    symlinkSync(target, `${editFile}.tmp`);
+    symlinkSync(target, `${editFile}.bak`);
+    planted = true;
+  } catch {
+    // no symlinks here: nothing to check
+  }
+  if (planted) {
+    const linkOps = [{ op: "set", path: "subtitle", value: "x" }];
+    const c = /confirm: "([^"]+)"/.exec((await edit({ action: "patch", ops: linkOps, check: false })).content[0].text)[1];
+    assert.ok(!(await edit({ action: "patch", ops: linkOps, check: false, confirm: c })).isError, "a save with links planted at .tmp and .bak runs");
+    assert.equal(readFileSync(target, "utf8"), "untouched", "a link planted at edit.json.tmp or .bak is replaced, not written through");
+  }
+  rmSync(target, { force: true });
   let linked = false;
   try {
     unlinkSync(editFile);
