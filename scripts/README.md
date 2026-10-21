@@ -12,6 +12,7 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `reframe.py` | Finds the face in a landscape or square recording so the 9:16 proxy crops around it. |
 | `brief.mjs` | What a video is about, as numbers the template selector scores. |
 | `select-template.mjs` | Ranks the designs for one video and writes the top 3 with reasons; `--report` compares each `selection.json` top pick with the design made. |
+| `matte-headless.mjs` | Background removal without opening the page: drives `review/matte.html` in Chrome for Testing (`@remotion/renderer` openBrowser, WebGPU on) for `<slug>` (`--bench <3-60>` times it and saves nothing; `--headed` opens a visible window when headless has no GPU); prints `== <status>` as it goes; exit 0 saved, 1 stopped, 2 couldn't start. `--selftest` in npm test | **test** |
 | `music-start.mjs` | Where a music track gets going, so `edit.json` `music.startMs` can skip its intro. |
 | `migrate-assets.py` | Moves each recording into `public/recordings/<id>/` (the asset contract). |
 | `migrate-footage-to-library.mjs` | Imports per-slug `voice/footage/` files into the source library. |
