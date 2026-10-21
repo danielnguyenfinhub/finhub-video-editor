@@ -158,7 +158,9 @@ const plan = async (slug, cur, next, diff, body = `${JSON.stringify(next, null, 
   if (!same(cur.json.source, next.source)) throw new Error("source is set by prep (the recording), not by edit");
   // As preflight: auto pacing shifts Daniel's pitch and tone; only faceless videos (script.json) may have it.
   if (next.pacing?.mode !== "off" && !existsSync(join(VIDEOS, slug, "script.json")))
-    throw new Error(`pacing must be {"mode": "off"} on Daniel's footage (it changes his pitch and tone)`);
+    throw new Error(
+      `pacing must be {"mode": "off"} on Daniel's footage (it changes his pitch and tone; preflight blocks the render too). Add {"op": "set", "path": "pacing", "value": {"mode": "off"}} to these ops.`,
+    );
   await validate(next);
   const { lines, yes } = await review(slug, cur.json, next);
   const preview = [`edit.json ${slug} @ ${cur.sha}`, ...diff, ...lines, ...(yes.length ? ["", "Needs Daniel's explicit yes:", ...yes.map((y) => `- ${y}`)] : [])].join("\n");
