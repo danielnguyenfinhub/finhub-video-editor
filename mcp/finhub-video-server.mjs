@@ -8,10 +8,10 @@
 //
 //   node mcp/finhub-video-server.mjs        (npm run mcp; registered in .mcp.json, not in the plugin)
 //   mcp/http.mjs serves makeServer({ remote: true }) over HTTP on Railway.
-import { execFile, spawn } from "node:child_process";
+import { execFile, spawn, spawnSync } from "node:child_process";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { basename, join, resolve, sep } from "node:path";
+import { basename, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -102,6 +102,52 @@ const withFiles = (r) => {
   }
   return r;
 };
+// A finished sweep or review pack read over HTTP also carries its contact sheets as pictures: the
+// caller can't open files on this PC. Only JPEGs inside out/ after links, at most 4 and 4 MB; a sheet
+// over 1 MB (a review-pack family sheet is ~3240 px wide) is first shrunk to 1280 px by ffmpeg into out/mcp/.
+const sheetsOf = (what) => {
+  const [kind, slug] = what.split(" ");
+  if (kind === "sweep") {
+    const f = join(ROOT, "out/videos", slug, "team/qc/sweep/sweep.json");
+    return existsSync(f) ? (JSON.parse(readFileSync(f, "utf8")).sheets ?? []).map((h) => String(h.path)) : [];
+  }
+  const d = join(ROOT, "out/review-pack", slug);
+  if (kind !== "pack" || !existsSync(d)) return [];
+  const entries = readdirSync(d, { withFileTypes: true });
+  const sheets = entries.filter((e) => e.isFile() && /^sheet-.*\.jpg$/.test(e.name)).map((e) => join(d, e.name)).sort();
+  return [...sheets, ...entries.filter((e) => e.isDirectory()).map((e) => join(d, e.name, "strip-01.jpg"))];
+};
+const withSheets = (r, job) => {
+  if (!job.result || r.isError) return r;
+  let bytes = 0;
+  let shown = 0;
+  const left = [];
+  for (const f of sheetsOf(job.what)) {
+    let p;
+    try {
+      p = realpathSync(resolve(ROOT, f));
+    } catch {
+      continue; // listed but gone
+    }
+    if (!p.startsWith(OUT) || !/\.jpe?g$/i.test(p)) continue;
+    if (statSync(p).size > 1_000_000) {
+      mkdirSync(join(ROOT, "out/mcp"), { recursive: true });
+      const small = join(ROOT, "out/mcp", `small-${relative(OUT, p).replace(/[\\/]/g, "_")}`);
+      if (spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-i", p, "-vf", "scale=1280:-2", "-q:v", "5", small], { windowsHide: true }).status !== 0) continue;
+      p = small;
+    }
+    const data = readFileSync(p);
+    if (shown >= 4 || bytes + data.length > 4_000_000) {
+      left.push(relative(ROOT, p));
+      continue;
+    }
+    shown++;
+    bytes += data.length;
+    r.content.push({ type: "image", mimeType: "image/jpeg", data: data.toString("base64") });
+  }
+  if (left.length) r.content.push({ type: "text", text: `more sheets on the PC:\n${left.join("\n")}` });
+  return r;
+};
 // Over HTTP, research, preflight and video_status: at most 2 at once. Each is a process for up to
 // 5-10 minutes, and one HTTP POST can carry a batch of calls. ponytail: a client that disconnects doesn't stop its job; the timeout does.
 let researching = 0;
@@ -175,7 +221,9 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         ? text([...jobs].map(([id, j]) => jobStatus(id, j).content[0].text.split("\n")[0]).join("\n") || "no jobs since the server started")
         : job
           ? jobs.has(job)
-            ? jobStatus(job, jobs.get(job))
+            ? http
+              ? withSheets(jobStatus(job, jobs.get(job)), jobs.get(job))
+              : jobStatus(job, jobs.get(job))
             : { ...text(`no job ${job} (jobs are forgotten when the server restarts; video_status <slug> still shows a render)`), isError: true }
           : http
             ? capped(() => node("scripts/video-status.mjs", slug ? [slug] : []))
@@ -415,8 +463,8 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
     {
       description:
         "Check and export a video. srt: captions as the render shows them (out/videos/<slug>/<slug>.srt). chapters: the YouTube/Facebook chapter list. " +
-        "sweep (sheet, start, end in seconds): frames at every visual change of the finished render, for QC (out/videos/<slug>/team/qc/sweep/). " +
-        "pack (designs or family): stills of designs on this video and review.html for Daniel (out/review-pack/<slug>/); promoting a design stays a chat step. sweep and pack start a job (video_status job).",
+        "sweep (start, end in seconds; sheet: false skips the contact sheets): frames at every visual change of the finished render, for QC (out/videos/<slug>/team/qc/sweep/). " +
+        "pack (designs or family): stills of designs on this video and review.html for Daniel (out/review-pack/<slug>/); promoting a design stays a chat step. sweep and pack start a job (video_status job); over the PC connector the finished job's contact sheets come back as pictures.",
       inputSchema: {
         action: z.enum(["srt", "chapters", "sweep", "pack"]),
         slug,
@@ -432,7 +480,7 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
       if (action === "srt") return light(() => node("scripts/export-srt.mjs", [slug]));
       if (action === "chapters") return light(() => node("scripts/export-chapters.mjs", [slug]));
       if (action === "sweep")
-        return startJob(`sweep ${slug}`, process.execPath, [join(ROOT, "scripts/sweep-render.mjs"), slug, ...(sheet ? ["--sheet"] : []), ...(start !== undefined ? ["--start", String(start)] : []), ...(end !== undefined ? ["--end", String(end)] : [])], 30 * 60_000);
+        return startJob(`sweep ${slug}`, process.execPath, [join(ROOT, "scripts/sweep-render.mjs"), slug, ...(sheet !== false ? ["--sheet"] : []), ...(start !== undefined ? ["--start", String(start)] : []), ...(end !== undefined ? ["--end", String(end)] : [])], 30 * 60_000);
       return startJob(`pack ${slug}`, process.execPath, [join(ROOT, "scripts/review-pack.mjs"), slug, ...(designs ? ["--designs", designs.join(",")] : family ? ["--family", family] : [])], 60 * 60_000);
     },
   );
