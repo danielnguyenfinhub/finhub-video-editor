@@ -1,15 +1,17 @@
 // The repo's own MCP server (stdio): the editing scripts as tools for Claude Desktop, Cowork and
-// Claude Code on Daniel's PC. Every tool runs a script that already exists; nothing here edits a
-// video itself or reads an API key (scripts/providers.mjs does). Paid calls go through `paid`: a quote
-// first, the real call only with the confirm code that quote returned. Kept off on purpose: publishing (YouTube, Facebook, Drive), voice cloning and
-// moving recordings stay chat-run behind Daniel's yes (docs/agents/plugin-and-mcp.md).
+// Claude Code on Daniel's PC. Every tool runs a script that already exists or the edit.json patcher in
+// mcp/edit.mjs; nothing here renders a video itself or reads an API key (scripts/providers.mjs does). Paid calls go through `paid`: a quote
+// first, the real call only with the confirm code that quote returned; edit.json saves go through the
+// same gate (mcp/edit.mjs: a preview instead of a quote). Renders, prep and review packs run as jobs
+// that video_status follows. Kept off on purpose: publishing (YouTube, Facebook, Drive), voice cloning,
+// moving recordings and promoting a design stay chat-run behind Daniel's yes (docs/agents/plugin-and-mcp.md).
 //
 //   node mcp/finhub-video-server.mjs        (npm run mcp; registered in .mcp.json, not in the plugin)
 //   mcp/http.mjs serves makeServer({ remote: true }) over HTTP on Railway.
 import { execFile, spawn } from "node:child_process";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { join, resolve, sep } from "node:path";
+import { basename, join, resolve, sep } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -18,6 +20,7 @@ import { slugOk } from "../scripts/listing-prep.mjs";
 const ROOT = join(import.meta.dirname, "..");
 const PYTHON = process.env.PYTHON ?? "python"; // as npm run test:py calls it
 const REMOTION = join(ROOT, "node_modules/@remotion/cli/remotion-cli.js");
+const FOOTAGE = "1 - PUT FOOTAGE HERE"; // Daniel's recordings, read in place (AGENTS.md)
 const TAIL = 40; // the repo's tail -n habit: the error is at the end
 
 const slug = z.string().refine(slugOk, "lowercase letters, digits, '.', '_' or '-', no '/' or '..'");
@@ -27,10 +30,10 @@ const text = (t) => ({ content: [{ type: "text", text: t }] });
 // The timeout kills the whole process tree: a plain kill leaves Remotion's ffmpeg and Chromium (or
 // yt-dlp's ffmpeg) running, holding the output open, and the next heavy job would overlap them.
 // ponytail: off Windows the job gets its own process group, so Ctrl-C on the server doesn't reach it.
-const run = (cmd, args, timeoutMs) =>
+// buf: pass one in to read the output while the job runs (startJob).
+const run = (cmd, args, timeoutMs, buf = { stdout: "", stderr: "" }) =>
   new Promise((done) => {
     let timedOut = false;
-    const buf = { stdout: "", stderr: "" };
     const child = spawn(cmd, args, { cwd: ROOT, windowsHide: true, detached: process.platform !== "win32" });
     for (const k of ["stdout", "stderr"]) child[k].on("data", (d) => (buf[k] = (buf[k] + d).slice(-1_000_000)));
     const timer = setTimeout(() => {
@@ -57,6 +60,34 @@ const heavy = async (what, job) => {
     busy = null;
   }
 };
+// Long jobs (a render, prep, a review pack) take the same slot but answer at once with a job id: an
+// MCP client gives up on a call after about a minute. video_status with that id shows the step
+// (render-video.py's "== <step>" lines, else the last line) and the tail, then the result.
+// ponytail: jobs live in this process's memory, so a restart forgets them (a render still shows in
+// out/videos/<slug>/<slug>.inputs); add a lock file in out/mcp/ if two servers ever share the PC.
+const jobs = new Map();
+export const startJob = (what, cmd, args, timeoutMs) => {
+  if (busy) return { ...text(`busy: ${busy} is still running; video_status with job "all" shows it`), isError: true };
+  busy = what;
+  const id = randomBytes(4).toString("hex");
+  const job = { what, started: Date.now(), buf: { stdout: "", stderr: "" }, result: null };
+  jobs.set(id, job);
+  for (const old of [...jobs.keys()].slice(0, -20)) if (jobs.get(old).result) jobs.delete(old);
+  run(cmd, args, timeoutMs, job.buf).then((r) => {
+    job.result = r;
+    job.ended = Date.now();
+    busy = null;
+  });
+  return text(`started ${what}: job ${id}. Check it with video_status job "${id}" every minute or so.`);
+};
+const jobStatus = (id, job) => {
+  const secs = Math.round(((job.ended ?? Date.now()) - job.started) / 1000);
+  if (job.result) return { ...text(`job ${id} ${job.what}: finished after ${secs} s\n${job.result.content[0].text}`), isError: job.result.isError };
+  const out = `${job.buf.stdout}${job.buf.stderr}`.trim();
+  const step = [...out.matchAll(/^== (.+)$/gm)].at(-1)?.[1] ?? (out.split("\n").at(-1) || "starting");
+  return text(`job ${id} ${job.what}: running ${secs} s, at: ${step}\n${out.split("\n").slice(-15).join("\n")}`);
+};
+
 // Remotely the out/ files stay on the server, so the answer carries the files research.py says it wrote.
 // Only files inside out/: the output also carries stderr, so a printed path is never trusted as is.
 const OUT = join(ROOT, "out") + sep;
@@ -129,11 +160,22 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
   localTool(
     "video_status",
     {
-      description: "Where each video's team run stands, or for one slug: readiness, what's done, what's next. Reads only.",
-      inputSchema: { slug: slug.optional() },
+      description:
+        "Where each video's team run stands, or for one slug: readiness, what's done, what's next. Reads only. " +
+        'job (an id from render_video, prep or review, or "all"): that job\'s step and output so far, then its result.',
+      inputSchema: { slug: slug.optional(), job: z.string().regex(/^([0-9a-f]{8}|all)$/).optional() },
       annotations: readOnly,
     },
-    ({ slug }) => (http ? capped(() => node("scripts/video-status.mjs", slug ? [slug] : [])) : node("scripts/video-status.mjs", slug ? [slug] : [])),
+    ({ slug, job }) =>
+      job === "all"
+        ? text([...jobs].map(([id, j]) => jobStatus(id, j).content[0].text.split("\n")[0]).join("\n") || "no jobs since the server started")
+        : job
+          ? jobs.has(job)
+            ? jobStatus(job, jobs.get(job))
+            : { ...text(`no job ${job} (jobs are forgotten when the server restarts; video_status <slug> still shows a render)`), isError: true }
+          : http
+            ? capped(() => node("scripts/video-status.mjs", slug ? [slug] : []))
+            : node("scripts/video-status.mjs", slug ? [slug] : []),
   );
 
   localTool(
@@ -175,11 +217,11 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
     "render_video",
     {
       description:
-        "Render a finished video on this PC (scripts/render-video.py): writes out/videos/<slug>/ and puts <Topic>.mp4 in '2 - FINISHED VIDEOS'. Takes minutes. Only when Daniel has asked to render, after preflight passes. Posts nothing.",
+        "Render a finished video on this PC (scripts/render-video.py): writes out/videos/<slug>/ and puts <Topic>.mp4 in '2 - FINISHED VIDEOS'. Takes minutes, so it starts a job and answers with its id: follow it with video_status job. Only when Daniel has asked to render, after preflight passes. Posts nothing.",
       inputSchema: { slug },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
-    ({ slug }) => heavy(`render ${slug}`, () => run(PYTHON, [join(ROOT, "scripts/render-video.py"), slug], 2 * 60 * 60_000)),
+    ({ slug }) => startJob(`render ${slug}`, PYTHON, [join(ROOT, "scripts/render-video.py"), slug], 2 * 60 * 60_000),
   );
 
   const err = (t) => ({ ...text(t), isError: true });
@@ -292,6 +334,84 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
       } catch (e) {
         return err(e.message);
       }
+    },
+  );
+
+  // A file from Daniel's footage or music folder: a bare name, and after symlinks still inside that folder.
+  const fileName = z.string().min(1).max(200).regex(/^[^-\\/\x00-\x1f][^\\/\x00-\x1f]*$/, "a file name in the folder, no path");
+  const inFolder = (folder, file) => {
+    const dir = join(ROOT, folder);
+    const p = join(dir, file);
+    if (!existsSync(p) || !statSync(p).isFile() || !realpathSync(p).startsWith(realpathSync(dir) + sep)) throw new Error(`${file} is not a file in ${folder}/`);
+    return realpathSync(p);
+  };
+  const design = z.string().regex(/^[a-z0-9][a-z0-9-]*$/);
+  localTool(
+    "prep",
+    {
+      description:
+        "Start a video and choose its design. ingest (file = a recording in '1 - PUT FOOTAGE HERE', slug, recording id optional, noClean): " +
+        "scripts/prep-video.py makes public/recordings/<id>/ (9:16 proxy, transcript) and a skeleton edit.json; read in place, never moved; " +
+        "refuses a recording id that exists. reedit (slug, recording): a new edit of a prepared recording. assemble (slug): the takes in public/videos/<slug>/clips.json as one recording. " +
+        "ingest, reedit and assemble start a job (follow it with video_status job) and refuse a slug that already has an edit.json (change that one with edit). " +
+        "template (slug): scripts/select-template.mjs ranks the designs (out/videos/<slug>/selection.json); pick (slug, design, reason): records Daniel's override there, then set it with edit patch design. " +
+        "clean (slug): clean-clip's report of pauses, repeats and false starts (nothing applied; cut what Daniel agrees to with edit patch remove). " +
+        "music_start (file in public/music): where the track gets going, for music.startMs. reframe (file in the footage folder): where the face is.",
+      inputSchema: {
+        action: z.enum(["ingest", "reedit", "assemble", "template", "pick", "clean", "music_start", "reframe"]),
+        slug: slug.optional(),
+        file: fileName.optional(),
+        recording: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).optional(),
+        noClean: z.boolean().optional(),
+        design: design.optional(),
+        reason: prompt.optional(),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    },
+    ({ action, slug, file, recording, noClean, design, reason }) => {
+      try {
+        if (action === "music_start") return file ? light(() => node("scripts/music-start.mjs", [`public/music/${basename(inFolder("public/music", file))}`, "--json"])) : err("music_start needs file");
+        if (action === "reframe") return file ? heavy("reframe", () => run(PYTHON, [join(ROOT, "scripts/reframe.py"), inFolder(FOOTAGE, file)], 600_000)) : err("reframe needs file");
+        if (!slug) return err(`${action} needs slug`);
+        if (action === "template") return light(() => node("scripts/select-template.mjs", [slug]));
+        if (action === "pick") return design && reason ? light(() => node("scripts/select-template.mjs", [slug, "--pick", design, "--reason", reason])) : err("pick needs design and reason");
+        if (action === "clean") return light(() => node("scripts/clean-clip.mjs", [slug]));
+        // prep-video.py sets "source" in an existing edit.json: every edit.json change goes through edit's preview instead.
+        if (existsSync(join(ROOT, "public/videos", slug, "edit.json"))) return err(`public/videos/${slug}/edit.json exists: ${action} would change it. Change it with edit, or prep under a new slug.`);
+        const prep = (args) => startJob(`prep ${slug}`, PYTHON, [join(ROOT, "scripts/prep-video.py"), ...args], 3 * 60 * 60_000);
+        if (action === "ingest") return file ? prep([inFolder(FOOTAGE, file), slug, ...(recording ? ["--recording", recording] : []), ...(noClean ? ["--no-clean"] : [])]) : err("ingest needs file");
+        if (action === "reedit") return recording ? prep([slug, "--recording", recording]) : err("reedit needs recording");
+        return existsSync(join(ROOT, "public/videos", slug, "clips.json")) ? prep([slug, "--clips", join("public/videos", slug, "clips.json")]) : err(`assemble needs public/videos/${slug}/clips.json`);
+      } catch (e) {
+        return err(e.message);
+      }
+    },
+  );
+
+  localTool(
+    "review",
+    {
+      description:
+        "Check and export a video. srt: captions as the render shows them (out/videos/<slug>/<slug>.srt). chapters: the YouTube/Facebook chapter list. " +
+        "sweep (sheet, start, end in seconds): frames at every visual change of the finished render, for QC (out/videos/<slug>/team/qc/sweep/). " +
+        "pack (designs or family): stills of designs on this video and review.html for Daniel (out/review-pack/<slug>/); promoting a design stays a chat step. sweep and pack start a job (video_status job).",
+      inputSchema: {
+        action: z.enum(["srt", "chapters", "sweep", "pack"]),
+        slug,
+        sheet: z.boolean().optional(),
+        start: z.number().min(0).optional(),
+        end: z.number().min(0).optional(),
+        designs: z.array(design).min(1).max(12).optional(),
+        family: z.enum(["talkinghead-data", "talkinghead-story"]).optional(),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    },
+    ({ action, slug, sheet, start, end, designs, family }) => {
+      if (action === "srt") return light(() => node("scripts/export-srt.mjs", [slug]));
+      if (action === "chapters") return light(() => node("scripts/export-chapters.mjs", [slug]));
+      if (action === "sweep")
+        return startJob(`sweep ${slug}`, process.execPath, [join(ROOT, "scripts/sweep-render.mjs"), slug, ...(sheet ? ["--sheet"] : []), ...(start !== undefined ? ["--start", String(start)] : []), ...(end !== undefined ? ["--end", String(end)] : [])], 30 * 60_000);
+      return startJob(`pack ${slug}`, process.execPath, [join(ROOT, "scripts/review-pack.mjs"), slug, ...(designs ? ["--designs", designs.join(",")] : family ? ["--family", family] : [])], 60 * 60_000);
     },
   );
 
