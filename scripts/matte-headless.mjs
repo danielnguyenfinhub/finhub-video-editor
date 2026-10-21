@@ -53,10 +53,12 @@ if (!(await up())) {
   server = spawn(process.execPath, [join(ROOT, "review/dist/server.cjs")], { cwd: ROOT, env: { ...process.env, REVIEW_PORT: String(port) }, stdio: "ignore" });
   for (let i = 0; i < 60 && !(await up()); i++) await sleep(500);
 }
-const { openBrowser } = await import("@remotion/renderer");
 let browser;
 let code = 2;
 try {
+  // Inside the try: a failed import or launch still stops the server this run started.
+  if (!(await up())) throw new Error(`the review server didn't start on port ${port}`);
+  const { openBrowser } = await import("@remotion/renderer");
   browser = await openBrowser("chrome", {
     chromeMode: "chrome-for-testing",
     browserExecutable: process.env.MATTE_BROWSER ?? null,

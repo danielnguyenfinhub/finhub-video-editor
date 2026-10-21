@@ -386,6 +386,8 @@ export const makeServer = ({ remote = false, http = remote } = {}) => {
         if (action === "pick") return design && reason ? light(() => node("scripts/select-template.mjs", [slug, "--pick", design, "--reason", reason])) : err("pick needs design and reason");
         if (action === "clean") return light(() => node("scripts/clean-clip.mjs", [slug]));
         if (action === "matte") {
+          // matte.html and the review server take only these slugs (no '.' or '_').
+          if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) return err("matte takes a slug of lowercase letters, digits and hyphens");
           const editFile = join(ROOT, "public/videos", slug, "edit.json");
           if (!existsSync(editFile)) return err(`public/videos/${slug}/edit.json doesn't exist: prep the video first`);
           const { recordingPath } = await import(pathToFileURL(join(ROOT, "src/mortgage/recording.ts")).href);

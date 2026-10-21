@@ -240,6 +240,7 @@ try {
   // prep matte: only a prepared video, and an existing cut-out (45 min of GPU work) is replaced only with redo.
   const matte = (args) => client.callTool({ name: "prep", arguments: { action: "matte", ...args } });
   assert.match((await matte({ slug: "zz-no-such-video" })).content[0].text, /edit\.json doesn't exist/, "prep matte needs a prepared video");
+  assert.match((await matte({ slug: "zz_dot.slug" })).content[0].text, /hyphens/, "prep matte takes only the slugs matte.html accepts");
   rmSync(editFile, { force: true });
   writeFileSync(editFile, original);
   assert.match((await matte({ slug: testSlug })).content[0].text, /no source\.mp4/, "prep matte needs the recording's source.mp4");
