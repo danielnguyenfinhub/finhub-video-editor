@@ -100,3 +100,10 @@ Every script, grouped by what it does. Descriptions come from each file's own he
 | `tmp-dir.mjs` | Temp folders inside the repo (`node_modules/.cache/finhub-tmp`) so esbuild bundles resolve `remotion`; use it instead of `os.tmpdir()`. Removed when the process exits (`{ keep: true }` to keep one); folders a killed process left are pruned after 6 h. `bundleTs(entries, options)` bundles `.ts` to `.mjs` there with esbuild's JS API (`node node_modules/esbuild/bin/esbuild` is a native binary on Linux/macOS). |
 | `third_party/` | Licence text for borrowed code (HyperFrames, Apache-2.0). |
 | `fixtures/` | Media-free fixtures: `schema-probe/` is a video `check-schema.mjs` accepts with no recording (quick mode), for the CI probe step. |
+
+## One command: finhub
+| Script | Does |
+|---|---|
+| `finhub.mjs` | One local entry point: `npm run finhub -- <command>` with `doctor`, `status [slug]`, `render <slug> [--still <frame>] [--dry-run]` or `clean [--apply] [--older-than <days>]`, each with `--json`. It calls the scripts in this folder and rewrites none of them; run `npm link` once on the PC for a bare `finhub` |
+| `finhub-cli/` | The four commands and their shared output helpers |
+| `check-finhub-cli.mjs` | Dispatcher exit codes and help; `clean` deletes only delivered, old, finished renders (never recordings, the library, ledgers or a symlink out of the repo); `doctor` never prints a key value; `status` and `render` argument shapes and output | **test** |

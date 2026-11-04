@@ -17,6 +17,7 @@ npm run research -- trending   # what's trending for a faceless video (runbook B
 npm run listing -- "<folder>"  # Global RE listing video: prep a folder from "3 - GLOBAL RE LISTINGS" (docs/agents/listing-video.md)
 npx remotion render   # render a composition to a video file
 npm run mcp           # the repo's MCP server (stdio); normally started by .mcp.json or the plugin (docs/agents/plugin-and-mcp.md)
+npm run finhub -- doctor   # one command over the scripts: doctor | status [slug] | render <slug> [--still <n>] | clean [--apply]; each takes --json (scripts/README.md, "One command: finhub")
 ```
 
 Rendering and Studio need Node.js and a Chrome/Chromium download; they work in Claude Code, Claude Cowork and local terminals, but not in claude.ai chat.
