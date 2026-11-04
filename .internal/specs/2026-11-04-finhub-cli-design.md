@@ -26,7 +26,7 @@ The repo runs on Daniel's PC and is driven from Claude Code chat. Today it has 2
 - Default output is a few lines of text. `--json` prints exactly one JSON object on stdout; nothing else goes to stdout.
 - Exit codes: 0 ok, 1 problem found or blocked, 2 usage error (unknown command, missing or invalid argument), 3 passed through from `render-video.py` (rendered, not published).
 - `finhub --help` and `finhub <cmd> --help` list every command and flag.
-- A slug is validated with the existing `assertSlug` (`listing-prep.mjs`) before any path is built.
+- A slug is validated with `slugOk` (`listing-prep.mjs`, the check `assertSlug` uses) before any path is built; a bad slug exits 2. `assertSlug` itself is not used because it calls `process.exit(1)`.
 - Children are spawned with an argument array and never through a shell. Secrets: only API key *names* are ever read into output.
 
 ## Commands
@@ -49,7 +49,7 @@ If `out/videos/<slug>/<slug>.inputs` equals `node scripts/publish-video.mjs <slu
 Dry run by default; `--apply` deletes. `--older-than <days>` is an integer >= 1 (default 30); anything else exits 2.
 
 Allow-list, the only places `clean` can delete from:
-- `node_modules/.cache/finhub-tmp/` (temp; no age or delivery gate)
+- `node_modules/.cache/finhub-tmp/<child>` for children untouched for 6 h, the rule `tmp-dir.mjs` uses to prune crashed runs (a younger folder may belong to a running process)
 - `out/videos/*/team/qc/sweep/` (regenerable QC frames; no age or delivery gate)
 - Render outputs of one slug: `out/videos/<slug>/<slug>.mp4`, `-mobile.mp4`, `-feed.mp4`, `thumbnail.png`, `<slug>.srt`, `<slug>.inputs`. These are candidates only when **all three** hold: `out/videos/<slug>/team/06_delivery.md` exists (the video was handed over); the files are older than `--older-than` days; `unfinishedRender` is false. Otherwise they are listed under `kept` with the reason (`not delivered`, `too new`, `render unfinished`) and size. A video with no `team/` folder is never cleaned.
 
@@ -61,7 +61,7 @@ Anything not matching the allow-list is never a candidate, so these are unreacha
 
 `scripts/check-finhub-cli.mjs`, added to `npm test` and marked **test** in `scripts/README.md`. It builds a temp tree with `repoTmp` and calls the commands with that root. It asserts:
 - `--help` names all four commands; an unknown command exits 2; a bad slug exits 2; `--older-than 0` and `--older-than abc` exit 2.
-- `clean` without `--apply` deletes nothing; with `--apply` it deletes exactly the old, delivered, finished renders plus the temp and sweep folders. Survivors: a recordings file, a `team/` ledger, a render with no `06_delivery.md`, a render newer than the cutoff, a render whose `.inputs` says `rendering`, and a symlink to outside the root. (Mutation to prove it: widening the allow-list to `out/`, or dropping the delivery gate, must fail this test.)
+- `clean` without `--apply` deletes nothing; with `--apply` it deletes exactly the old, delivered, finished renders plus the temp and sweep folders. Survivors: a recordings file, a `team/` ledger, a render with no `06_delivery.md`, a render newer than the cutoff, a render whose `.inputs` says `rendering`, a temp folder touched within 6 h, and a symlink to outside the root. (Mutation to prove it: widening the allow-list to `out/`, or dropping the delivery gate, must fail this test.)
 - `doctor` with `FAL_KEY=sentinel-value-123` in the environment never prints the sentinel, in text or JSON; with a temp `package.json` whose `engines.node` is `>=999` it reports `blocked`.
 - Every `process.env.<NAME>` ending in `_KEY` or `_TOKEN` found in `scripts/` and `mcp/` is in `KEYS` (drift guard).
 - `--json` output parses and has the documented fields.
@@ -89,7 +89,7 @@ Not testable in the cloud and tagged `verify on PC`: a real `render` and `--stil
 ### Resolved Decisions
 - Render skip-if-up-to-date: removed. `--inputs-hash` covers only `edit.json` (minus `post`), `script.json` and `words.json`, not design code, source video, cut-out, music or library assets, so a skip could keep a stale video silently. Agreed by Daniel.
 - `clean` and renders: only delivered (`06_delivery.md`), old enough, finished renders are candidates; undelivered renders are listed as kept. Agreed by Daniel.
-- Security: slug via `assertSlug`; argument-array spawns, no shell; key names only; `realpath` containment; `--older-than` integer >= 1.
+- Security: slug via `slugOk`; argument-array spawns, no shell; key names only; `realpath` containment; `--older-than` integer >= 1.
 - Import side effects: `video-status.mjs` is guarded and safe to import; `--no-warnings` in the npm script.
 - Relationship to the MCP server: complementary, kept.
 - Scale, interrupted render (`unfinishedRender`), Windows path case, test root injection: resolved from code.
