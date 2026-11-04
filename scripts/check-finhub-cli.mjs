@@ -9,6 +9,7 @@ import { repoTmp } from "./tmp-dir.mjs";
 import { applyClean, planClean, run as runClean } from "./finhub-cli/clean.mjs";
 import { UsageError, rel } from "./finhub-cli/lib.mjs";
 import { KEYS, checkDoctor, run as runDoctor } from "./finhub-cli/doctor.mjs";
+import { statusData, run as runStatus } from "./finhub-cli/status.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 const FINHUB = join(import.meta.dirname, "finhub.mjs");
@@ -211,6 +212,29 @@ assert.equal(finhub(["clean", "--bogus"]).status, 2, "unknown option");
   assert.ok([0, 1].includes(real.status), real.stderr);
   assert.ok(JSON.parse(real.stdout).keys.set.includes("FAL_KEY"));
   assert.ok(!real.stdout.includes(SENTINEL) && !real.stderr.includes(SENTINEL), "the real CLI never prints a key value");
+}
+
+// --- status
+{
+  const root = repoTmp("finhub-status-");
+  touch(join(root, "out/videos/a/team/00_intake.md"));
+  const all = statusData(root);
+  assert.deepEqual(all.videos.map((v) => v.slug), ["a"]);
+  assert.equal(all.videos[0].stage, "paper edit (video-story-editor)");
+  assert.equal(all.library, null, "no public/library in the temp tree");
+  const one = statusData(root, "a");
+  assert.equal(one.slug, "a");
+  assert.equal(one.next.stage, "paper edit (video-story-editor)");
+  assert.equal(one.usage, null);
+  assert.ok(["ready", "warning", "blocked"].includes(one.readiness.level));
+  assert.throws(() => runStatus(root, { positionals: ["Bad Slug"], values: {} }), UsageError);
+  const j = capture(() => runStatus(root, { positionals: [], values: { json: true } }));
+  assert.equal(j.code, 0);
+  assert.equal(JSON.parse(j.out).videos[0].slug, "a");
+  const real = finhub(["status"]);
+  assert.equal(real.status, 0, real.stderr);
+  assert.match(real.stdout, /library:/);
+  assert.match(finhub(["status", "--help"]).stdout, /finhub status/);
 }
 
 console.log("finhub-cli ok");
