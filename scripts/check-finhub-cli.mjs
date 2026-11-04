@@ -11,6 +11,7 @@ import { UsageError, rel } from "./finhub-cli/lib.mjs";
 import { KEYS, checkDoctor, run as runDoctor } from "./finhub-cli/doctor.mjs";
 import { statusData, run as runStatus } from "./finhub-cli/status.mjs";
 import { infoLine, renderArgs, stillArgs } from "./finhub-cli/render.mjs";
+import { passthroughArgv } from "./finhub-cli/passthrough.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 const FINHUB = join(import.meta.dirname, "finhub.mjs");
@@ -49,7 +50,7 @@ const age = (p, ageDays) => {
 // --- dispatcher
 const help = finhub(["--help"]);
 assert.equal(help.status, 0, help.stderr);
-for (const c of ["doctor", "status", "render", "clean"]) assert.match(help.stdout, new RegExp(`\\b${c}\\b`), `--help names ${c}`);
+for (const c of ["doctor", "status", "render", "clean", "library", "overlay", "listing"]) assert.match(help.stdout, new RegExp(`\\b${c}\\b`), `--help names ${c}`);
 assert.equal(finhub([]).status, 2, "no command is a usage error");
 assert.equal(finhub(["nope"]).status, 2, "unknown command");
 assert.match(finhub(["nope"]).stderr, /unknown command "nope"/);
@@ -262,6 +263,43 @@ assert.equal(finhub(["clean", "--bogus"]).status, 2, "unknown option");
   for (const bad of [["render"], ["render", "Bad Slug"], ["render", "demo", "--still", "x"], ["render", "demo", "extra"]])
     assert.equal(finhub(bad).status, 2, `finhub ${bad.join(" ")} is a usage error`);
   assert.match(finhub(["render", "--help"]).stdout, /finhub render/);
+}
+
+// --- library, overlay, listing (pass-through)
+{
+  const node = (script, ...args) => [process.execPath, "--no-warnings", join(ROOT, "scripts", script), ...args];
+  assert.deepEqual(passthroughArgv(ROOT, "library", ["stats"]), node("library.mjs", "stats"));
+  assert.deepEqual(
+    passthroughArgv(ROOT, "library", ["find", "house", "--kind", "stock-video"]),
+    node("library.mjs", "find", "house", "--kind", "stock-video"),
+  );
+  assert.deepEqual(passthroughArgv(ROOT, "overlay", ["out/hf/a", "--en", "rate"]), node("hf-overlay.mjs", "out/hf/a", "--en", "rate"));
+  assert.deepEqual(passthroughArgv(ROOT, "overlay", []), node("hf-overlay.mjs"));
+  assert.deepEqual(passthroughArgv(ROOT, "listing", ["prep", "My Folder"]), node("listing-prep.mjs", "My Folder"));
+  assert.deepEqual(
+    passthroughArgv(ROOT, "listing", ["voice", "a-slug", "--lang", "en"]),
+    node("voice-video.mjs", "--listing", "a-slug", "--lang", "en"),
+  );
+  assert.deepEqual(passthroughArgv(ROOT, "listing", ["render", "a-slug"]).slice(1), [join(ROOT, "scripts", "listing-render.py"), "a-slug"]);
+  for (const [name, rest] of [["library", []], ["library", ["nope"]], ["listing", []], ["listing", ["nope"]], ["listing", ["constructor"]]])
+    assert.throws(() => passthroughArgv(ROOT, name, rest), UsageError, `${name} ${rest.join(" ")} is a usage error`);
+
+  for (const bad of [["library"], ["library", "nope"], ["listing"], ["listing", "nope"], ["listing", "constructor"]])
+    assert.equal(finhub(bad).status, 2, `finhub ${bad.join(" ")} exits 2`);
+  for (const c of ["library", "overlay", "listing"]) {
+    const h = finhub([c, "--help"]);
+    assert.equal(h.status, 0, h.stderr);
+    assert.match(h.stdout, new RegExp(`finhub ${c}`));
+  }
+  const stats = finhub(["library", "stats"]);
+  assert.equal(stats.status, 0, stats.stderr);
+  assert.match(stats.stdout, /total/, "the script's own output comes through");
+  const selftest = finhub(["overlay", "--selftest"]);
+  assert.equal(selftest.status, 0, selftest.stderr);
+  assert.match(selftest.stdout, /hf-overlay selftest: ok/, "a flag the dispatcher does not declare reaches the script");
+  const noargs = finhub(["overlay"]);
+  assert.equal(noargs.status, 1, "the script's own exit code passes through");
+  assert.match(noargs.stderr, /usage/);
 }
 
 console.log("finhub-cli ok");
