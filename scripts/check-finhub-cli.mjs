@@ -123,7 +123,14 @@ assert.equal(finhub(["clean", "--bogus"]).status, 2, "unknown option");
   // a forged plan naming the symlink: apply re-checks and leaves the link alone
   if (linked) {
     applyClean(root, { candidates: [{ kind: "sweep", path: link, bytes: 0 }] });
-    assert.ok(lstatSync(link).isSymbolicLink(), "applyClean did not follow or remove a link out of the root");
+    const stillLink = (() => {
+      try {
+        return lstatSync(link).isSymbolicLink();
+      } catch {
+        return false; // the link itself was removed
+      }
+    })();
+    assert.ok(stillLink, "applyClean left the symlink out of the root alone");
   }
 
   const dry = capture(() => runClean(root, { values: { json: true } }));
