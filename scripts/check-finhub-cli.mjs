@@ -10,6 +10,7 @@ import { applyClean, planClean, run as runClean } from "./finhub-cli/clean.mjs";
 import { UsageError, rel } from "./finhub-cli/lib.mjs";
 import { KEYS, checkDoctor, run as runDoctor } from "./finhub-cli/doctor.mjs";
 import { statusData, run as runStatus } from "./finhub-cli/status.mjs";
+import { infoLine, renderArgs, stillArgs } from "./finhub-cli/render.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 const FINHUB = join(import.meta.dirname, "finhub.mjs");
@@ -235,6 +236,32 @@ assert.equal(finhub(["clean", "--bogus"]).status, 2, "unknown option");
   assert.equal(real.status, 0, real.stderr);
   assert.match(real.stdout, /library:/);
   assert.match(finhub(["status", "--help"]).stdout, /finhub status/);
+}
+
+// --- render (only the pure parts and dry runs: a real render needs footage, so it is tagged "verify on PC")
+{
+  const still = stillArgs(ROOT, "demo", 45);
+  assert.equal(still[0], process.execPath);
+  for (const part of ["still", "MortgageReel", "--frame=45", "--scale=0.5", `--props=${JSON.stringify({ slug: "demo" })}`])
+    assert.ok(still.includes(part), `still args include ${part}`);
+  assert.ok(still.includes(join(ROOT, "out", "videos", "demo", "check-45.png")));
+  assert.deepEqual(renderArgs(ROOT, "demo").slice(1), [join(ROOT, "scripts", "render-video.py"), "demo"]);
+
+  assert.match(infoLine("abc\n", "abc"), /unchanged/);
+  assert.equal(infoLine("abc", "abd"), null);
+  assert.equal(infoLine("rendering", "abc"), null);
+  assert.equal(infoLine(null, "abc"), null);
+
+  const dry = finhub(["render", "demo", "--dry-run"]);
+  assert.equal(dry.status, 0, dry.stderr);
+  assert.match(dry.stdout, /render-video\.py demo/);
+  assert.ok(!existsSync(join(ROOT, "out", "videos", "demo")), "a dry run creates nothing");
+  const dryStill = JSON.parse(finhub(["render", "demo", "--still", "45", "--dry-run", "--json"]).stdout);
+  assert.equal(dryStill.dryRun, true);
+  assert.ok(dryStill.argv.includes("--scale=0.5"));
+  for (const bad of [["render"], ["render", "Bad Slug"], ["render", "demo", "--still", "x"], ["render", "demo", "extra"]])
+    assert.equal(finhub(bad).status, 2, `finhub ${bad.join(" ")} is a usage error`);
+  assert.match(finhub(["render", "--help"]).stdout, /finhub render/);
 }
 
 console.log("finhub-cli ok");
