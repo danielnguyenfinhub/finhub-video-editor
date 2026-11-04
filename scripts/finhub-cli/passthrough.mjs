@@ -15,6 +15,9 @@ const LISTING = {
   render: (root) => [process.env.PYTHON ?? "python", join(root, "scripts", "listing-render.py")],
 };
 
+const RESEARCH_STEPS = ["trending", "topic", "read", "transcript", "watch", "comments", "audience", "selftest"];
+const python = (root, script, ...fixed) => [process.env.PYTHON ?? "python", join(root, "scripts", script), ...fixed];
+
 export const PASSTHROUGH = {
   library: {
     help: `finhub library <step> [args]   (runs node scripts/library.mjs)
@@ -41,6 +44,33 @@ Arguments, output and exit code are the script's own; there is no --json.`,
       if (!Object.hasOwn(LISTING, rest[0])) throw new UsageError(`needs one of: ${Object.keys(LISTING).join(", ")}`);
       return [...LISTING[rest[0]](root), ...rest.slice(1)];
     },
+  },
+  prep: {
+    help: `finhub prep "<video>" <slug> [--recording <id>] [--no-clean]   (runs python scripts/prep-video.py)
+  Also: prep <slug> --recording <id>   and   prep <slug> --clips public/videos/<slug>/clips.json
+Arguments, output and exit code are the script's own; there is no --json.`,
+    argv: (root, rest) => python(root, "prep-video.py", ...rest),
+  },
+  sweep: {
+    help: `finhub sweep <slug> [--file <mp4>] [--max <n>] [--out <dir>] [--sheet] [--start <s>] [--end <s>]   (runs node scripts/sweep-render.mjs)
+  Contact frames of a finished render, for QC.
+Arguments, output and exit code are the script's own; there is no --json.`,
+    argv: (root, rest) => node(root, "sweep-render.mjs", ...rest),
+  },
+  research: {
+    help: `finhub research <${RESEARCH_STEPS.join("|")}> [args]   (runs python scripts/research.py)
+  Trending topics, topic research, page and YouTube reads, before a faceless script is written.
+Arguments, output and exit code are the script's own; there is no --json.`,
+    argv: (root, rest) => {
+      if (!RESEARCH_STEPS.includes(rest[0])) throw new UsageError(`needs one of: ${RESEARCH_STEPS.join(", ")}`);
+      return python(root, "research.py", ...rest);
+    },
+  },
+  voice: {
+    help: `finhub voice <slug> [--dry-run] [--engine google|omnivoice|elevenlabs] [--voice <profile>] [--no-chain]   (runs node scripts/voice-video.mjs)
+  Voices an approved faceless script. For Global RE listings use: finhub listing voice
+Arguments, output and exit code are the script's own; there is no --json.`,
+    argv: (root, rest) => node(root, "voice-video.mjs", ...rest),
   },
 };
 

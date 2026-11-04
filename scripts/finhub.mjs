@@ -21,10 +21,14 @@ export const HELP = `finhub <command> [options]
   library <step>    the source library: find, add, index, stats, resolve (scripts/library.mjs)
   overlay <dir>     render a HyperFrames overlay into the library (scripts/hf-overlay.mjs)
   listing <step>    Global RE listing video: prep, voice, render
+  prep <video> <slug>   prepare a recording: Whisper words, proxy, matte (scripts/prep-video.py)
+  sweep <slug>      contact frames of a finished render for QC (scripts/sweep-render.mjs)
+  research <step>   trending, topic, read, transcript, watch, comments, audience (scripts/research.py)
+  voice <slug>      voice an approved faceless script (scripts/voice-video.mjs)
 
 doctor, status, render and clean take --json (one JSON object on stdout) and --help.
-library, overlay and listing pass their arguments to the script untouched: no --json, the command
-must come first, and the exit code is the script's own.
+library, overlay, listing, prep, sweep, research and voice pass their arguments to the script
+untouched: no --json, the command must come first, and the exit code is the script's own.
 Exit codes: 0 ok, 1 problem found, 2 usage error, 3 rendered but not published.`;
 
 const OPTIONS = {

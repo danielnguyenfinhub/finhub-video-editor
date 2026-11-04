@@ -50,7 +50,7 @@ const age = (p, ageDays) => {
 // --- dispatcher
 const help = finhub(["--help"]);
 assert.equal(help.status, 0, help.stderr);
-for (const c of ["doctor", "status", "render", "clean", "library", "overlay", "listing"]) assert.match(help.stdout, new RegExp(`\\b${c}\\b`), `--help names ${c}`);
+for (const c of ["doctor", "status", "render", "clean", "library", "overlay", "listing", "prep", "sweep", "research", "voice"]) assert.match(help.stdout, new RegExp(`\\b${c}\\b`), `--help names ${c}`);
 assert.equal(finhub([]).status, 2, "no command is a usage error");
 assert.equal(finhub(["nope"]).status, 2, "unknown command");
 assert.match(finhub(["nope"]).stderr, /unknown command "nope"/);
@@ -300,6 +300,38 @@ assert.equal(finhub(["clean", "--bogus"]).status, 2, "unknown option");
   const noargs = finhub(["overlay"]);
   assert.equal(noargs.status, 1, "the script's own exit code passes through");
   assert.match(noargs.stderr, /usage/);
+}
+
+// --- prep, sweep, research, voice (pass-through)
+{
+  const node = (script, ...args) => [process.execPath, "--no-warnings", join(ROOT, "scripts", script), ...args];
+  const py = (script, ...args) => [process.env.PYTHON ?? "python", join(ROOT, "scripts", script), ...args];
+  assert.deepEqual(
+    passthroughArgv(ROOT, "prep", ["raw.mp4", "my-slug", "--recording", "r1"]),
+    py("prep-video.py", "raw.mp4", "my-slug", "--recording", "r1"),
+  );
+  assert.deepEqual(passthroughArgv(ROOT, "sweep", ["a-slug", "--sheet"]), node("sweep-render.mjs", "a-slug", "--sheet"));
+  assert.deepEqual(
+    passthroughArgv(ROOT, "research", ["topic", "rates", "--slug", "a-slug"]),
+    py("research.py", "topic", "rates", "--slug", "a-slug"),
+  );
+  assert.deepEqual(passthroughArgv(ROOT, "research", ["selftest"]), py("research.py", "selftest"));
+  assert.deepEqual(passthroughArgv(ROOT, "voice", ["a-slug", "--dry-run"]), node("voice-video.mjs", "a-slug", "--dry-run"));
+  for (const rest of [[], ["nope"], ["constructor"]])
+    assert.throws(() => passthroughArgv(ROOT, "research", rest), UsageError, `research ${rest.join(" ")} is a usage error`);
+
+  for (const bad of [["research"], ["research", "nope"], ["research", "constructor"]])
+    assert.equal(finhub(bad).status, 2, `finhub ${bad.join(" ")} exits 2`);
+  for (const c of ["prep", "sweep", "research", "voice"]) {
+    const h = finhub([c, "--help"]);
+    assert.equal(h.status, 0, h.stderr);
+    assert.match(h.stdout, new RegExp(`finhub ${c}`));
+  }
+  const voice = finhub(["voice"]);
+  assert.equal(voice.status, 1, "voice-video.mjs's own exit code passes through");
+  assert.match(voice.stderr, /usage/);
+  const sweep = finhub(["sweep"]);
+  assert.match(sweep.stderr, /usage: node scripts\/sweep-render\.mjs/, "the script's own usage comes through");
 }
 
 console.log("finhub-cli ok");
