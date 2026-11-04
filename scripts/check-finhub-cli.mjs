@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { repoTmp } from "./tmp-dir.mjs";
 import { applyClean, planClean, run as runClean } from "./finhub-cli/clean.mjs";
 import { UsageError, rel } from "./finhub-cli/lib.mjs";
+import { KEYS, checkDoctor, run as runDoctor } from "./finhub-cli/doctor.mjs";
 
 const ROOT = join(import.meta.dirname, "..");
 const FINHUB = join(import.meta.dirname, "finhub.mjs");
@@ -158,6 +159,58 @@ assert.equal(finhub(["clean", "--bogus"]).status, 2, "unknown option");
   for (const bad of ["0", "-1", "abc", "1.5", "1e1", ""])
     assert.throws(() => runClean(root, { values: { "older-than": bad } }), UsageError, `--older-than "${bad}" is a usage error`);
   assert.match(finhub(["clean", "--help"]).stdout, /finhub clean/);
+}
+
+// --- doctor
+{
+  const root = repoTmp("finhub-doctor-");
+  const SENTINEL = "sentinel-value-123";
+  writeFileSync(join(root, "package.json"), JSON.stringify({ engines: { node: ">=24" }, dependencies: { "@remotion/cli": "4.0.527" } }));
+  writeFileSync(join(root, ".env"), "GEMINI_API_KEY=sekrit-from-file\nexport PEXELS_API_KEY=also-secret\nELEVENLABS_API_KEY=\n");
+  const env = { FAL_KEY: SENTINEL };
+
+  const old = checkDoctor(root, { env, nodeVersion: "20.1.0" });
+  assert.equal(old.level, "blocked");
+  assert.ok(old.items.some((i) => i.level === "blocked" && /engines\.node >=24/.test(i.problem)), "old Node is blocked");
+  assert.ok(old.items.some((i) => i.problem === "node_modules is missing"), "missing node_modules is blocked");
+  assert.deepEqual(checkDoctor(root, { env, nodeVersion: "24.1.0" }).items.filter((i) => /engines/.test(i.problem)), [], "Node 24 passes >=24");
+  writeFileSync(join(root, "package.json"), JSON.stringify({ engines: { node: "^20" } }));
+  assert.ok(
+    checkDoctor(root, { env, nodeVersion: "24.1.0" }).items.some((i) => i.level === "warning" && /cannot parse engines/.test(i.problem)),
+    "an engines range that is not >=N is a warning",
+  );
+
+  const r = checkDoctor(root, { env });
+  for (const k of ["FAL_KEY", "GEMINI_API_KEY", "PEXELS_API_KEY"]) assert.ok(r.keys.set.includes(k), `${k} reported set`);
+  assert.ok(r.keys.unset.includes("ELEVENLABS_API_KEY"), "an empty .env value is not set");
+  for (const s of [SENTINEL, "sekrit-from-file", "also-secret"]) assert.ok(!JSON.stringify(r).includes(s), "a key value leaked into the result");
+
+  const prev = process.env.FAL_KEY;
+  process.env.FAL_KEY = SENTINEL;
+  try {
+    const text = capture(() => runDoctor(root, { values: {} }));
+    const json = capture(() => runDoctor(root, { values: { json: true } }));
+    for (const s of [SENTINEL, "sekrit-from-file", "also-secret"])
+      assert.ok(!text.out.includes(s) && !json.out.includes(s), "a key value leaked into doctor output");
+    assert.ok(JSON.parse(json.out).keys.set.includes("FAL_KEY"));
+  } finally {
+    if (prev === undefined) delete process.env.FAL_KEY;
+    else process.env.FAL_KEY = prev;
+  }
+
+  // drift guard: a script that starts reading a new key must add its name to KEYS
+  const found = new Set();
+  for (const d of ["scripts", "mcp"])
+    for (const f of readdirSync(join(ROOT, d)))
+      if (f.endsWith(".mjs"))
+        for (const m of readFileSync(join(ROOT, d, f), "utf8").matchAll(/process\.env\.([A-Z0-9_]+)/g))
+          if (/(_KEY|_TOKEN)$/.test(m[1])) found.add(m[1]);
+  assert.deepEqual([...found].filter((k) => !KEYS.includes(k)), [], "every key the scripts read is in KEYS (scripts/finhub-cli/doctor.mjs)");
+
+  const real = finhub(["doctor", "--json"], { FAL_KEY: SENTINEL });
+  assert.ok([0, 1].includes(real.status), real.stderr);
+  assert.ok(JSON.parse(real.stdout).keys.set.includes("FAL_KEY"));
+  assert.ok(!real.stdout.includes(SENTINEL) && !real.stderr.includes(SENTINEL), "the real CLI never prints a key value");
 }
 
 console.log("finhub-cli ok");
