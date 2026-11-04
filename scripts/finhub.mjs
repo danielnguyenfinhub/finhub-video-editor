@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 import { USAGE, UsageError } from "./finhub-cli/lib.mjs";
+import { PASSTHROUGH, runPassthrough } from "./finhub-cli/passthrough.mjs";
 
 export const COMMANDS = ["doctor", "status", "render", "clean"];
 
@@ -17,8 +18,13 @@ export const HELP = `finhub <command> [options]
   status [slug]     where each video stands; with a slug, readiness and what is next
   render <slug>     render one video (python scripts/render-video.py); --still <frame>, --dry-run
   clean             list, and with --apply delete, old regenerable files; --older-than <days>
+  library <step>    the source library: find, add, index, stats, resolve (scripts/library.mjs)
+  overlay <dir>     render a HyperFrames overlay into the library (scripts/hf-overlay.mjs)
+  listing <step>    Global RE listing video: prep, voice, render
 
-Every command: --json (one JSON object on stdout) and --help.
+doctor, status, render and clean take --json (one JSON object on stdout) and --help.
+library, overlay and listing pass their arguments to the script untouched: no --json, the command
+must come first, and the exit code is the script's own.
 Exit codes: 0 ok, 1 problem found, 2 usage error, 3 rendered but not published.`;
 
 const OPTIONS = {
@@ -30,7 +36,20 @@ const OPTIONS = {
   "older-than": { type: "string" },
 };
 
+// A bad argument is a UsageError: print it and exit 2.
+const guarded = async (cmd, fn) => {
+  try {
+    return await fn();
+  } catch (e) {
+    if (!(e instanceof UsageError)) throw e;
+    console.error(`finhub ${cmd}: ${e.message}`);
+    return USAGE;
+  }
+};
+
 export const main = async (argv, root = join(import.meta.dirname, "..")) => {
+  // library, overlay and listing hand every argument to their script, so they are decided before parseArgs.
+  if (Object.hasOwn(PASSTHROUGH, argv[0])) return guarded(argv[0], () => runPassthrough(root, argv[0], argv.slice(1)));
   let parsed;
   try {
     parsed = parseArgs({ args: argv, options: OPTIONS, allowPositionals: true, strict: true });
@@ -52,13 +71,7 @@ export const main = async (argv, root = join(import.meta.dirname, "..")) => {
     console.log(mod.help);
     return 0;
   }
-  try {
-    return await mod.run(root, { positionals, values: parsed.values });
-  } catch (e) {
-    if (!(e instanceof UsageError)) throw e;
-    console.error(`finhub ${cmd}: ${e.message}`);
-    return USAGE;
-  }
+  return guarded(cmd, () => mod.run(root, { positionals, values: parsed.values }));
 };
 
 // realpath: a bare `finhub` from `npm link` is a symlink, and argv[1] keeps the link's path.
