@@ -133,6 +133,10 @@ The log and its rules: `.claude/skills/vietnamese-finance-video-editor/reference
 
 **Trigger:** when Daniel asks to upgrade the repo as a whole ("upgrade the repo", "what can we take from the sibling repos", "add what's missing and fix the gaps", "run team 8"), including follow-ups ("only Scrapling", "build U3", "continue the upgrade run"), use the `upgrade-team` skill. It runs `bug-hunter`, `gap-analyst` and one `sibling-repo-analyst` per repo cloned next to this one as a Workflow, has each candidate verified twice against the code, gives Daniel one ranked backlog to pick from, then builds with Team 1 and Team 2 agents and has `quality-reviewer` check it. Local only: what needs a render is tagged `verify on PC`.
 
+### Harness: npm audit team
+
+**Trigger:** when Daniel asks about npm vulnerabilities or `npm audit` ("fix the npm vulnerabilities", "dependency security", "clean up the audit warnings"), including follow-ups ("re-run the verify", "try the next fix"), use the `npm-audit-fix-orchestrator` skill. It runs `npm-audit-triager` (sorts findings by whether the render/CLI path uses them), `npm-audit-fixer` (in-range bumps and `overrides` only; never `--force`, never a Remotion version change) and `npm-fix-verifier` (`npm ci`, lint, `npm test`, doctor, build, audit counts) one after another, in `_workspace/` (git-ignored). Nothing is committed or pushed by the team.
+
 ## Conventions
 
 - Videos are bilingual, Vietnamese + English: see "Language" near the top of this file before writing any on-screen text or captions.
